@@ -1,7 +1,7 @@
 ---
 name: llmfit-turbohaul
 description: "Generate optimized llama-server launch strings and turbohaul-manager manifests using llmfit hardware detection + TurboQuant flag doctrine. Use when setting up a new model in turbohaul, when someone asks 'what fits on my GPU', or when building a llama.cpp command from scratch."
-version: 1.0.0
+version: 1.1.0
 author: SouthpawIN
 license: MIT
 tags: [turbohaul, llmfit, llama.cpp, turboquant, gguf, inference, manifest]
@@ -13,6 +13,15 @@ metadata:
 # Turbohaul + llmfit
 
 Two tools, one workflow: **llmfit** detects hardware and recommends models that fit → **turbohaul-manager** manages the inference sidecar with FIFO queuing, grace windows, and model hot-swap → the bridge generates an optimized `llama-server` command string or turbohaul manifest YAML.
+
+## ⚠ Context Floor: 64K (65536 tokens)
+
+**Hermes-Agent requires at least 64K context.** Every launch string and manifest produced by this skill uses **`ctx_size: 65536` as the hard minimum**, regardless of what llmfit recommends. If a model can comfortably fit more (128K, 256K, 1M via YaRN), the script scales up — never down below 64K.
+
+- Quick checks below 64K (e.g. `-c 8192`) are **disallowed** in generated strings
+- The bridge script clamps `CTX = max(llmfit_value, 65536)`
+- Manifests default to `ctx_size: 65536` minimum
+- VRAM headroom is budgeted assuming 64K minimum; below that, the model won't actually serve Hermes
 
 ## When to Use
 
@@ -97,6 +106,9 @@ MODEL_NAME=$(echo "$MODEL_JSON" | jq -r '.models[0].name')
 MODEL_QUANT=$(echo "$MODEL_JSON" | jq -r '.models[0].recommended_quantization')
 MODEL_CTX=$(echo "$MODEL_JSON" | jq -r '.models[0].recommended_context')
 
+# Hermes-Agent 64K floor — never go below this
+MODEL_CTX=$(( MODEL_CTX < 65536 ? 65536 : MODEL_CTX ))
+
 # Build the llama-server command
 echo "llama-server \\"
 echo "  -m /path/to/${MODEL_NAME}.${MODEL_QUANT}.gguf \\"
@@ -115,12 +127,13 @@ If using TurboQuant GGUF files (TQ3_4S, TQ3_1S quantizations), the runtime fork 
 ```bash
 # TQ runtime: https://github.com/turbo-tan/llama.cpp-tq3
 # Standard llama.cpp CANNOT load TQ GGUFs
+# Hermes-Agent 64K floor — scale up via YaRN if needed
 
 CUDA_VISIBLE_DEVICES=0 /path/to/llama.cpp-tq3/build/bin/llama-server \
   -m /path/to/Model-TQ3_4S.gguf \
   --host 127.0.0.1 --port 8080 -ngl 99 \
   -fa on -ctk tq3_0 -ctv tq3_0 \
-  -c 262144 --jinja
+  -c 65536 --jinja   # 64K minimum, scale to 262144+ if VRAM allows
 ```
 
 ## Step 3: Generate a Turbohaul Manifest
@@ -133,7 +146,7 @@ Turbohaul manifests are YAML files registered via `PUT /api/manifests/{tag}`. Th
 tag: my-model:latest
 model_path: /var/lib/turbohaul/blobs/sha256:<hash>
 llama_flags:
-  ctx_size: 8192
+  ctx_size: 65536      # Hermes-Agent 64K floor — do not go lower
   n_gpu_layers: 99
   threads: 32
   batch_size: 512
@@ -239,7 +252,9 @@ One-liner pipeline: scan → pick top model → generate launch string.
 TOP=$(llmfit fit --perfect -n 1 --json 2>/dev/null)
 NAME=$(echo "$TOP" | jq -r '.models[0].name // empty')
 QUANT=$(echo "$TOP" | jq -r '.models[0].recommended_quantization // "Q4_K_M"')
-CTX=$(echo "$TOP" | jq -r '.models[0].recommended_context // 8192')
+# Hermes-Agent 64K context floor — clamp whatever llmfit recommends
+CTX=$(echo "$TOP" | jq -r '.models[0].recommended_context // 65536')
+CTX=$(( CTX < 65536 ? 65536 : CTX ))
 TPS=$(echo "$TOP" | jq -r '.models[0].estimated_tps // "unknown"')
 
 if [ -z "$NAME" ]; then
@@ -248,6 +263,7 @@ if [ -z "$NAME" ]; then
 fi
 
 echo "# Model: $NAME ($QUANT, ctx=$CTX, est. $TPS tok/s)"
+echo "# (64K context floor enforced for Hermes-Agent)"
 echo "#"
 echo "# Raw llama-server command:"
 echo "llama-server -m ${NAME}.${QUANT}.gguf --host 0.0.0.0 --port 8080 -ngl 99 -fa on -c ${CTX} --jinja -t $(nproc)"
@@ -320,6 +336,32 @@ Both `-ngl 99` and `-ngl all` / `n_gpu_layers: "all"` work. The allowlist valida
 
 ### 6. State mount is required for Docker
 Always bind-mount `-v $(pwd)/state:/var/lib/turbohaul`. Without it, manifests, state.sqlite, and blob store live in the container layer and die on `docker rm`.
+
+### 7. Context below 64K breaks Hermes-Agent (HARD FLOOR)
+Hermes-Agent requires `context_length >= 65536`. A launch string with `-c 8192` will load fine but Hermes will crash the moment it tries to use its full system prompt + tool registry + history.
+
+**Symptoms of violation:**
+- Hermes fails to initialize (`context_length too small`)
+- Tool registry truncates mid-load
+- `InvalidRequestError` on the first multi-turn message
+- The model "works" for trivial prompts but dies on real workloads
+
+**Rule:** every string/manifest this skill produces uses `ctx_size: 65536` minimum, regardless of what llmfit recommends. The bridge script clamps `CTX = max(llmfit_value, 65536)` before printing.
+
+**VRAM budget at 64K:**
+| Model size | 64K KV cache (q8_0) | Total VRAM needed |
+|------------|---------------------|-------------------|
+| 8B Q4_K_M  | ~2 GB               | ~7 GB             |
+| 27B Q4_K_M | ~2 GB               | ~19 GB            |
+| 35B A3B TQ3_4S | ~2 GB           | ~15 GB            |
+
+On a 24GB GPU (RTX 3090/4090), 64K context fits all models up to ~27B dense. Above 27B, expect CPU offload for KV cache or scale down to Q4_0/Q3_K.
+
+### 8. YaRN scaling beyond 64K
+If the model natively supports less than 64K, use `--rope-scaling yarn --yarn-orig-ctx <native>` to extend:
+- Qwen3 256K native → use as-is up to 256K
+- Older models 8K native → extend with YaRN to 64K+ (`--rope-scaling yarn --yarn-orig-ctx 8192 -c 65536`)
+- 1M context → `--rope-scaling yarn --yarn-orig-ctx 262144 -c 1048576` (extreme, monitor VRAM)
 
 ## See Also
 
