@@ -1,46 +1,53 @@
 ---
 name: turbofit
-description: "Generate optimized llama-server launch strings and turbohaul-manager manifests using llmfit hardware detection + TurboQuant flag doctrine. Use when setting up a new model in turbohaul, when someone asks 'what fits on my GPU', or when building a llama.cpp command from scratch."
-version: 1.2.0
+description: "Generate optimized llama.cpp (llama-server) launch strings using llmfit hardware detection. Answers 'will this model fit in my VRAM/RAM?' and produces a copy-pasteable command with sensible defaults. Enforces a 64K context floor. No manager dependency — direct llama.cpp launch."
+version: 2.0.0
 author: SouthpawIN
 license: MIT
-tags: [turbohaul, llmfit, llama.cpp, turboquant, gguf, inference, manifest]
+tags: [llama.cpp, llama-server, llmfit, gguf, inference, hardware-fit]
 metadata:
   hermes:
-    related_skills: [local-llm-fleet-management, omni-va-local-server, llama-cpp, gguf-quantization]
+    related_skills: [local-llm-fleet-management, llama-cpp, gguf-quantization]
 ---
 
 # Turbofit
 
-Two tools, one workflow: **llmfit** detects hardware and recommends models that fit → **turbohaul-manager** (renamed from `llmfit-turbohaul` — same content, simpler name) manages the inference sidecar with FIFO queuing, grace windows, and model hot-swap → the bridge generates an optimized `llama-server` command string or turbohaul manifest YAML.
+Two questions, one workflow:
+
+1. **Will this model fit in my system memory?** → `llmfit plan` / `llmfit fit`
+2. **What's the optimal llama-server launch string for it?** → bridge script below
+
+Turbofit bridges [`llmfit`](https://github.com/AlexsJones/llmfit) (hardware scan + fit analysis) to `llama-server` (the inference engine from [llama.cpp](https://github.com/ggerganov/llama.cpp)). It produces a copy-pasteable command line with sensible defaults — no manager, no sidecar, no orchestration layer.
 
 ## ⚠ Context Floor: 64K (65536 tokens)
 
-**Hermes-Agent requires at least 64K context.** Every launch string and manifest produced by this skill uses **`ctx_size: 65536` as the hard minimum**, regardless of what llmfit recommends. If a model can comfortably fit more (128K, 256K, 1M via YaRN), the script scales up — never down below 64K.
+Hermes-Agent requires at least 64K context. Every launch string this skill produces uses **`ctx_size: 65536` as the hard minimum**, regardless of what llmfit recommends. If a model can fit more (128K, 256K, 1M via YaRN), the script scales up — never down below 64K.
 
-- Quick checks below 64K (e.g. `-c 8192`) are **disallowed** in generated strings
+- Quick checks below 64K are **disallowed** in generated strings
 - The bridge script clamps `CTX = max(llmfit_value, 65536)`
-- Manifests default to `ctx_size: 65536` minimum
-- VRAM headroom is budgeted assuming 64K minimum; below that, the model won't actually serve Hermes
+- VRAM headroom is budgeted assuming 64K minimum
 
 ## When to Use
 
-- Setting up a new model in turbohaul-manager and need the right flags
-- Someone asks "what model fits on my GPU" → run llmfit, then generate a launch string
-- Building a turbohaul manifest from scratch for a model found via llmfit
-- Testing a friend's inference engine and need a baseline launch string
-- Comparing what runs on different hardware before recommending models
+- "Will this model fit on my machine?" — run `llmfit fit` or `llmfit plan`
+- "Give me a llama-server command for this model" — bridge script
+- "What's the largest model I can run with 64K context?" — `llmfit fit --perfect -n 5`
+- "How much VRAM do I need for model X at context Y?" — `llmfit plan`
+- Comparing what runs on different hardware before recommending a model
+- Testing a new model's compatibility with the standard llama.cpp runtime
 
 ## Prerequisites
 
 ```bash
 # llmfit (hardware detection + model recommendations)
 which llmfit && llmfit --version    # should be >= 0.9.31
-# Install: brew install AlexsJones/llmfit/llmfit  OR  curl -fsSL https://llmfit.axjns.dev/install.sh | sh
+# Install: brew install AlexsJones/llmfit/llmfit
+#      OR: curl -fsSL https://llmfit.axjns.dev/install.sh | sh
+#      OR: uv tool install -U llmfit
 
-# turbohaul-manager (inference manager)
-which turbohaul-manager             # or: docker ps | grep turbohaul
-# Docker: ghcr.io/MrTrenchTrucker/turbohaul-manager:v0.2.3
+# llama.cpp build (you need the llama-server binary)
+which llama-server
+# Build from source: https://github.com/ggerganov/llama.cpp#build
 ```
 
 ## Step 1: Detect Hardware with llmfit
@@ -70,32 +77,18 @@ llmfit --memory=24G --ram=64G --cpu-cores=8 fit --cli -n 5
 | Marginal | CPU offload needed or tight fit |
 | Too Tight | Won't run acceptably |
 
-## Step 2: Build the llama.cpp Launch String
+## Step 2: Build the llama-server Launch String
 
-### TurboQuant Flag Doctrine (5 flags, enabled by default)
-
-These are **spawn argv** arguments for turbohaul manifests. From turbohaul-manager's manifest.py (`SAFE_LLAMA_FLAGS` allowlist):
+### Default Flags (applied automatically)
 
 | Flag | Value | Purpose |
 |------|-------|---------|
-| `flash_attn` | `on` | Flash attention (critical for perf) |
-| `no_context_shift` | `true` | Prevents context auto-shifting |
-| `cache_reuse` | `256` | KV cache token reuse threshold |
-| `slot_prompt_similarity` | `0.5` | Warm-slot match threshold |
-| `no_perf` | `true` | Disables perf metrics overhead |
-
-### Common Additional Flags
-
-| Flag | Notes |
-|------|-------|
-| `-ngl 99` | All GPU layers (or `-ngl all`) |
-| `-fa on` | Flash attention (alias for `flash_attn`) |
-| `-ctk tq3_0` / `-ctv tq3_0` | TurboQuant KV cache (TQ fork only!) |
-| `-c` | Context size from llmfit recommendation |
-| `--jinja` | Enable Jinja chat templates |
-| `--reasoning off` | Disable reasoning budget for agentic use |
-| `--host 0.0.0.0 --port PORT` | Bind address |
-| `-t N` | Thread count (llmfit detects CPU cores) |
+| `-ngl 99` | all GPU layers | Offload everything to GPU (fall back to `-ngl` int if no GPU) |
+| `-fa on` | Flash attention | Critical for performance |
+| `--jinja` | Jinja templates | Required for modern chat templates |
+| `-c` | from llmfit (clamped to 65536) | Context window |
+| `-t` | `nproc` | Thread count (llmfit detects CPU cores) |
+| `--host`, `--port` | configurable | Bind address (default 127.0.0.1:8080) |
 
 ### Generate Command String (from llmfit output)
 
@@ -106,7 +99,7 @@ MODEL_NAME=$(echo "$MODEL_JSON" | jq -r '.models[0].name')
 MODEL_QUANT=$(echo "$MODEL_JSON" | jq -r '.models[0].recommended_quantization')
 MODEL_CTX=$(echo "$MODEL_JSON" | jq -r '.models[0].recommended_context')
 
-# Hermes-Agent 64K floor — never go below this
+# 64K floor — never go below this
 MODEL_CTX=$(( MODEL_CTX < 65536 ? 65536 : MODEL_CTX ))
 
 # Build the llama-server command
@@ -120,130 +113,37 @@ echo "  --jinja \\"
 echo "  -t $(nproc)"
 ```
 
-### TurboQuant-Specific (TQ fork required)
+### TurboQuant-Specific (optional, requires TQ runtime)
 
-If using TurboQuant GGUF files (TQ3_4S, TQ3_1S quantizations), the runtime fork is mandatory:
+If using TurboQuant GGUF files (TQ3_4S, TQ3_1S), the llama.cpp TQ fork is mandatory:
 
 ```bash
 # TQ runtime: https://github.com/turbo-tan/llama.cpp-tq3
 # Standard llama.cpp CANNOT load TQ GGUFs
-# Hermes-Agent 64K floor — scale up via YaRN if needed
+# 64K floor — scale up via YaRN if VRAM allows
 
-CUDA_VISIBLE_DEVICES=0 /path/to/llama.cpp-tq3/build/bin/llama-server \
+/path/to/llama.cpp-tq3/build/bin/llama-server \
   -m /path/to/Model-TQ3_4S.gguf \
   --host 127.0.0.1 --port 8080 -ngl 99 \
   -fa on -ctk tq3_0 -ctv tq3_0 \
   -c 65536 --jinja   # 64K minimum, scale to 262144+ if VRAM allows
 ```
 
-## Step 3: Generate a Turbohaul Manifest
+## Step 3: Common Optional Flags
 
-Turbohaul manifests are YAML files registered via `PUT /api/manifests/{tag}`. The `llama_flags` dict maps to llama-server argv.
+| Flag | Use case |
+|------|----------|
+| `--reasoning off` / `--reasoning-budget 0` | Disable reasoning for agentic/tool-use workloads |
+| `--rope-scaling yarn --yarn-orig-ctx N` | Extend native context via YaRN (e.g. 8K → 64K) |
+| `-ctk q8_0 -ctv q8_0` | Quantize KV cache (saves VRAM) |
+| `--parallel N` | Number of concurrent slots |
+| `--cont-batching` | Continuous batching (default in most builds) |
+| `--mlock` | Lock model in RAM (prevents swap) |
+| `--no-mmap` | Disable memory-mapping (slower startup, faster inference) |
+| `--batch-size 512 --ubatch-size 512` | Prompt processing batch sizing |
+| `-sm row --split-mode layer` | Multi-GPU split mode |
 
-### Minimal Manifest
-
-```yaml
-tag: my-model:latest
-model_path: /var/lib/turbohaul/blobs/sha256:<hash>
-llama_flags:
-  ctx_size: 65536      # Hermes-Agent 64K floor — do not go lower
-  n_gpu_layers: 99
-  threads: 32
-  batch_size: 512
-  ubatch_size: 512
-  flash_attn: "on"
-  cache_type_k: "q8_0"
-  cache_type_v: "q8_0"
-  no_context_shift: true
-  cache_reuse: 256
-  slot_prompt_similarity: 0.5
-  no_perf: true
-  jinja: true
-keep_alive_default: 600
-grace_seconds: 30
-idle_hot_load_seconds: 600
-parallel: 1
-```
-
-### TurboQuant Manifest (TQ3 GGUF)
-
-```yaml
-tag: qwen3-tq:latest
-model_path: /var/lib/turbohaul/blobs/sha256:<hash>
-llama_flags:
-  ctx_size: 131072
-  n_gpu_layers: 99
-  threads: 32
-  batch_size: 512
-  ubatch_size: 512
-  flash_attn: "on"
-  cache_type_k: "tq3_0"
-  cache_type_v: "tq3_0"
-  no_context_shift: true
-  cache_reuse: 256
-  slot_prompt_similarity: 0.5
-  no_perf: true
-  jinja: true
-keep_alive_default: 600
-grace_seconds: 30
-idle_hot_load_seconds: 600
-parallel: 1
-```
-
-### MoE Model Manifest (35B A3B style)
-
-```yaml
-tag: moe-35b:latest
-model_path: /var/lib/turbohaul/blobs/sha256:<hash>
-llama_flags:
-  ctx_size: 262144
-  n_gpu_layers: 99
-  threads: 32
-  batch_size: 512
-  ubatch_size: 512
-  flash_attn: "on"
-  cache_type_k: "tq3_0"
-  cache_type_v: "tq3_0"
-  no_context_shift: true
-  cache_reuse: 256
-  slot_prompt_similarity: 0.5
-  no_perf: true
-  jinja: true
-  cpu_moe: true
-  reasoning: "off"
-  reasoning_budget: 0
-keep_alive_default: 600
-grace_seconds: 30
-idle_hot_load_seconds: 600
-parallel: 1
-```
-
-## Step 4: Register in Turbohaul
-
-```bash
-# Pull a model from HuggingFace into turbohaul's blob store
-curl -X POST http://localhost:11401/api/pull-hf \
-  -H "Content-Type: application/json" \
-  -d '{"repo_id": "YTan2000/Qwen3.6-35B-A3B-TQ3_4S", "filename": "*.gguf"}'
-
-# Import a local GGUF file
-curl -X POST http://localhost:11401/api/import \
-  -F "file=@/path/to/model.gguf" \
-  -F "tag=my-model:latest"
-
-# Register/update a manifest (ETag for concurrency)
-curl -X PUT http://localhost:11401/api/manifests/my-model:latest \
-  -H "Content-Type: application/yaml" \
-  -d @manifest.yaml
-
-# List registered models
-curl -s http://localhost:11401/api/tags | jq '.models[].name'
-
-# Check live status
-curl -s http://localhost:11401/status | jq
-```
-
-## llmfit → Turbohaul Quick Bridge Script
+## Quick Bridge Script
 
 One-liner pipeline: scan → pick top model → generate launch string.
 
@@ -252,7 +152,7 @@ One-liner pipeline: scan → pick top model → generate launch string.
 TOP=$(llmfit fit --perfect -n 1 --json 2>/dev/null)
 NAME=$(echo "$TOP" | jq -r '.models[0].name // empty')
 QUANT=$(echo "$TOP" | jq -r '.models[0].recommended_quantization // "Q4_K_M"')
-# Hermes-Agent 64K context floor — clamp whatever llmfit recommends
+# 64K context floor — clamp whatever llmfit recommends
 CTX=$(echo "$TOP" | jq -r '.models[0].recommended_context // 65536')
 CTX=$(( CTX < 65536 ? 65536 : CTX ))
 TPS=$(echo "$TOP" | jq -r '.models[0].estimated_tps // "unknown"')
@@ -263,81 +163,89 @@ if [ -z "$NAME" ]; then
 fi
 
 echo "# Model: $NAME ($QUANT, ctx=$CTX, est. $TPS tok/s)"
-echo "# (64K context floor enforced for Hermes-Agent)"
+echo "# (64K context floor enforced)"
 echo "#"
 echo "# Raw llama-server command:"
-echo "llama-server -m ${NAME}.${QUANT}.gguf --host 0.0.0.0 --port 8080 -ngl 99 -fa on -c ${CTX} --jinja -t $(nproc)"
-echo "#"
-echo "# Turbohaul manifest (put to /api/manifests/${NAME,,}:latest):"
-cat <<EOF
-tag: ${NAME,,}:latest
-llama_flags:
-  ctx_size: ${CTX}
-  n_gpu_layers: 99
-  threads: $(nproc)
-  flash_attn: "on"
-  no_context_shift: true
-  cache_reuse: 256
-  slot_prompt_similarity: 0.5
-  no_perf: true
-  jinja: true
-  cache_type_k: "q8_0"
-  cache_type_v: "q8_0"
-keep_alive_default: 600
-grace_seconds: 30
-parallel: 1
-EOF
+echo "llama-server -m ${NAME}.${QUANT}.gguf --host 127.0.0.1 --port 8080 -ngl 99 -fa on -c ${CTX} --jinja -t $(nproc)"
 ```
 
-## API Integration with AI Agents
+### Pipe to clipboard for easy paste
 
-Point Hermes, LangChain, or any OpenAI-compatible client at turbohaul:
+```bash
+# Linux
+llmfit fit --perfect -n 1 --json | <bridge-script-above> | tail -1 | xclip -selection clipboard
 
-```yaml
-# Hermes config.yaml
-model:
-  base_url: http://localhost:11401/v1
-  api_key: dummy
-  default: my-model:latest
+# macOS
+llmfit fit --perfect -n 1 --json | <bridge-script-above> | tail -1 | pbcopy
 ```
 
-Turbohaul's FIFO queue + grace windows handle multi-agent concurrency automatically. Same-model requests from the same `thread_id` get sub-second warm-slot reuse (ACTIVE_MATCH cascade).
+## API Integration
 
-## Turbohaul Flag Security Notes
+Point any OpenAI-compatible client at the running llama-server:
 
-Manifest flags go through a closed allowlist (`SAFE_LLAMA_FLAGS`, ~80 flags). Blocked categories:
+```python
+from openai import OpenAI
 
-- **Path/file injection**: `mmproj`, `lora*`, `grammar_file`, `log_file`, `model_draft`
-- **SSRF/Network**: `model_url`, `hf_repo*`, `docker_repo`
-- **Credentials**: `hf_token`, `api_key`, `ssl_*`
-- **RCE**: `tools` (enables shell exec), `override_kv`, `binary_override`
+client = OpenAI(
+    base_url="http://127.0.0.1:8080/v1",
+    api_key="not-needed",  # llama-server doesn't require auth by default
+)
 
-Suffix guard catches future path/credential flags: anything ending in `_file`, `_path`, `_dir`, `_url`, `_repo`, `_key` is rejected unless explicitly allowlisted.
+response = client.chat.completions.create(
+    model="local-model",  # ignored by llama-server
+    messages=[{"role": "user", "content": "Hello!"}],
+)
+print(response.choices[0].message.content)
+```
+
+The `OpenAI`-compatible client works for Hermes, LangChain, LlamaIndex, LiteLLM, and the official OpenAI SDK.
+
+## Memory-Fit Reference
+
+### Quick decision tree
+
+| System | Best fit |
+|--------|----------|
+| 8 GB VRAM (RTX 3060/3070, M1/M2 base) | 7B-8B Q4_K_M, up to 13B Q3 |
+| 12 GB VRAM (RTX 3060 12GB, 4070) | 13B Q4_K_M, 8B Q8_0 |
+| 16 GB VRAM (RTX 4060 Ti 16, 4080) | 14B-15B Q4_K_M, 27B Q3 |
+| 24 GB VRAM (RTX 3090/4090) | 27B Q4_K_M, 35B A3B TQ3_4S, up to 70B Q2 |
+| 48 GB VRAM (A6000, RTX 6000 Ada) | 70B Q4_K_M, 120B Q3 |
+| 80 GB VRAM (H100, A100) | 70B Q8_0, 120B+ Q4 |
+| Apple Silicon unified memory | scales linearly (M2 Max 96GB ≈ 96GB VRAM) |
+
+### 64K context VRAM budget
+
+At 64K context with `q8_0` KV cache:
+
+| Model size | 64K KV cache | Total VRAM needed |
+|------------|--------------|-------------------|
+| 8B Q4_K_M  | ~2 GB        | ~7 GB             |
+| 13B Q4_K_M | ~2 GB        | ~10 GB            |
+| 27B Q4_K_M | ~2 GB        | ~19 GB            |
+| 35B A3B TQ3_4S | ~2 GB    | ~15 GB            |
+| 70B Q4_K_M | ~2 GB        | ~42 GB            |
+
+KV cache scales with context: 64K → ~2 GB, 128K → ~4 GB, 256K → ~8 GB, 1M → ~32 GB (per slot).
 
 ## Pitfalls
 
 ### 1. TurboQuant GGUFs need the TQ fork
-Stock llama.cpp will NOT load TQ3_4S/TQ3_1S files. Get `llama.cpp-tq3` from `https://github.com/turbo-tan/llama.cpp-tq3`. Also applies to turbohaul — it supervises a llama-server subprocess, so that subprocess must be the TQ fork.
+Stock llama.cpp will NOT load TQ3_4S/TQ3_1S files. Get `llama.cpp-tq3` from `https://github.com/turbo-tan/llama.cpp-tq3` if you want to use TurboQuant quants.
 
-### 2. Manifest changes don't take effect on running sidecars
-Updating a manifest via PUT does NOT restart the running `llama-server`. Force a cold-spawn:
-- Set `keep_alive: 0` on the next request
-- Wait for natural idle-hot teardown (default 600s)
-- Restart the turbohaul container
+### 2. `flash_attn` is tri-state, not a bare flag
+`--flash-attn` (bare) errors out. Use `-fa on` / `-fa off` / `-fa auto`.
 
-### 3. `flash_attn` is tri-state, not a bare flag
-Accepts `"on"`, `"off"`, `"auto"`, `true`, `false`. A bare `--flash-attn` on the command line errors out. In YAML manifests, use `flash_attn: "on"`.
+### 3. `--gpu` is not a valid flag
+Use `-ngl N` to control GPU layers (or `--device CUDA0` + `--main-gpu 0` for device selection). `--gpu` will error.
 
-### 4. Parallel > 1 requires `kv_unified: true`
-If you set `parallel: 2` (or higher) in a manifest, `kv_unified: true` is mandatory. Also `ctx_size` must be evenly divisible by `parallel`, and per-slot context floor is 8192.
+### 4. `--batch-size` vs `--ubatch-size`
+- `--batch-size` = prompt processing batch (logical batch)
+- `--ubatch-size` = micro-batch (actual physical batch on GPU)
+- `ubatch-size <= batch-size` is required
+- Both default to 512; tune down if you OOM
 
-### 5. `n_gpu_layers` accepts int OR `"all"`
-Both `-ngl 99` and `-ngl all` / `n_gpu_layers: "all"` work. The allowlist validates both forms.
-
-### 6. State mount is required for Docker
-Always bind-mount `-v $(pwd)/state:/var/lib/turbohaul`. Without it, manifests, state.sqlite, and blob store live in the container layer and die on `docker rm`.
-
-### 7. Context below 64K breaks Hermes-Agent (HARD FLOOR)
+### 5. Context below 64K breaks Hermes-Agent (HARD FLOOR)
 Hermes-Agent requires `context_length >= 65536`. A launch string with `-c 8192` will load fine but Hermes will crash the moment it tries to use its full system prompt + tool registry + history.
 
 **Symptoms of violation:**
@@ -346,26 +254,25 @@ Hermes-Agent requires `context_length >= 65536`. A launch string with `-c 8192` 
 - `InvalidRequestError` on the first multi-turn message
 - The model "works" for trivial prompts but dies on real workloads
 
-**Rule:** every string/manifest this skill produces uses `ctx_size: 65536` minimum, regardless of what llmfit recommends. The bridge script clamps `CTX = max(llmfit_value, 65536)` before printing.
+**Rule:** every string this skill produces uses `-c 65536` minimum. The bridge script clamps `CTX = max(llmfit_value, 65536)` before printing.
 
-**VRAM budget at 64K:**
-| Model size | 64K KV cache (q8_0) | Total VRAM needed |
-|------------|---------------------|-------------------|
-| 8B Q4_K_M  | ~2 GB               | ~7 GB             |
-| 27B Q4_K_M | ~2 GB               | ~19 GB            |
-| 35B A3B TQ3_4S | ~2 GB           | ~15 GB            |
-
-On a 24GB GPU (RTX 3090/4090), 64K context fits all models up to ~27B dense. Above 27B, expect CPU offload for KV cache or scale down to Q4_0/Q3_K.
-
-### 8. YaRN scaling beyond 64K
+### 6. YaRN scaling beyond native context
 If the model natively supports less than 64K, use `--rope-scaling yarn --yarn-orig-ctx <native>` to extend:
 - Qwen3 256K native → use as-is up to 256K
 - Older models 8K native → extend with YaRN to 64K+ (`--rope-scaling yarn --yarn-orig-ctx 8192 -c 65536`)
 - 1M context → `--rope-scaling yarn --yarn-orig-ctx 262144 -c 1048576` (extreme, monitor VRAM)
 
+### 7. `--no-warmup` for fast iteration
+Default llama-server warms up the model (loads + runs dummy prompt) before serving. Add `--no-warmup` during development for ~10× faster restarts when iterating on flags.
+
+### 8. KV cache quantization trades quality for VRAM
+`-ctk q4_0 -ctv q4_0` cuts KV cache size by ~50% vs q8_0, but degrades long-context recall. For 64K or less, q8_0 is the sweet spot.
+
+### 9. CPU-only inference is slow but works
+If you have no GPU (or `--memory` override shows `unified_memory: false`), drop `-ngl 99` entirely. The model runs on CPU using RAM. Expect ~2-10 tok/s for 7B models, much slower for larger ones. Use `llmfit --memory=0G fit` to see CPU-only recommendations.
+
 ## See Also
 
 - `local-llm-fleet-management` — fleet catalog + llama-launch pattern
-- `omni-va-local-server` — always-on VA server with VRAM cascade
-- `hermes-agent` / `references/turboquant-setup.md` — TurboQuant model sizes, YaRN 1M scaling
+- `llama-cpp` — llama.cpp build + GGUF discovery
 - `gguf-quantization` — GGUF format deep dive

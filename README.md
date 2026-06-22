@@ -1,6 +1,6 @@
 # turbofit
 
-Hardware-fit + TurboQuant launch string generator. Bridges `llmfit` to `turbohaul-manager` with a 64K Hermes-Agent context floor.
+Hardware-fit checker + llama.cpp launch string generator. Bridges `llmfit` (system memory analysis) to `llama-server` (the inference engine from llama.cpp). Enforces a 64K Hermes-Agent context floor.
 
 ## Install
 
@@ -12,17 +12,17 @@ hermes skills install SouthpawIN/turbofit
 
 ## What it does
 
-- **Hardware scan** — runs `llmfit system` and `llmfit fit` to find models that fit your GPU
-- **Launch string generator** — produces a copy-pasteable `llama-server` command with the TurboQuant Flag Doctrine baked in
-- **Turbohaul manifest builder** — generates the YAML for `PUT /api/manifests/{tag}` including the 5 required TQ flags
-- **Bridge script** — `llmfit → turbohaul` pipeline in one command
+- **Memory-fit analysis** — answers "will this model fit in my system memory?" using `llmfit fit` and `llmfit plan`
+- **Launch string generator** — produces a copy-pasteable `llama-server` command with sensible defaults (flash attention, jinja, 64K context floor)
+- **Hardware-fit decision tree** — matches GPU/RAM tier to recommended model sizes
+- **VRAM budget reference** — KV cache + model size tables at common context lengths
 
 ## When to use it
 
-- Setting up a new model in turbohaul-manager and need the right flags
-- Asking "what model fits on my GPU" and want a launch string immediately
-- Testing turbohaul-manager (MrTrench's Ollama-shape inference engine) on your hardware
-- Comparing what runs on different hardware before recommending models
+- "What model fits on my hardware?" — `llmfit fit --perfect`
+- "Give me a llama-server command for this model" — bridge script
+- "How much VRAM do I need for X at context Y?" — `llmfit plan`
+- Picking a model to download — see top fits before pulling 20+ GB
 
 ## License
 
