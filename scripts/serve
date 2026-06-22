@@ -1,108 +1,232 @@
 #!/usr/bin/env bash
-# serve — turbofit's model launcher + Hermes-Agent config manager
+# serve — turbofit model launcher + Hermes-Agent config manager
 # Part of the turbofit skill: github.com/SouthpawIN/turbofit
+# v4.0.0: multi-launcher (llama.cpp / Ollama / vllm / SGlang), hardware-fit check,
+# NVIDIA NIM API curated list, Desktop/Dashboard UI support.
 
 set -euo pipefail
 
-# Paths
 TURBOFIT_ROOT="${TURBOFIT_ROOT:-${HOME}/.local/share/turbofit}"
 CATALOG="${HOME}/.config/turbofit/models.yaml"
 HERMES_CONFIG="${HOME}/.hermes/config.yaml"
-LLAMA_CPP_SRC="${HOME}/.local/src/llama.cpp"
-LLAMA_CPP_PREFIX="${HOME}/.local"
+NVIDIA_API_BASE="https://integrate.api.nvidia.com/v1"
 
-mkdir -p "${TURBOFIT_ROOT}"/{logs,pid,port,strings} "${HOME}/.config/turbofit"
+mkdir -p "${TURBOFIT_ROOT}"/{logs,pid,port,strings,launchers} "${HOME}/.config/turbofit"
+
+# ---- Launcher registry (extensible — add more here) ----
+# Each entry: name | install_cmd | launch_template | base_url_default | api_style
+declare -A LAUNCHER_NAME=(
+    [llama-cpp]="llama.cpp (ggerganov)"
+    [ollama]="Ollama"
+    [vllm]="vLLM"
+    [sglang]="SGlang"
+)
+
+declare -A LAUNCHER_INSTALL=(
+    [llama-cpp]="llama.cpp:git_clone"
+    [ollama]="ollama:curl_install"
+    [vllm]="vllm:pip_install"
+    [sglang]="sglang:pip_install"
+)
+
+# launch_template uses these variables:
+#   $PORT  - port to bind
+#   $HOST  - host to bind
+#   $MODEL_PATH or $HF_REPO - what to load
+#   $CTX   - context size
+#   $NGL   - GPU layers
+declare -A LAUNCHER_TEMPLATE=(
+    [llama-cpp]='llama-server -m "$MODEL_PATH" --host "$HOST" --port "$PORT" -ngl "$NGL" -fa on -c "$CTX" --jinja'
+    [ollama]='OLLAMA_HOST="$HOST:$PORT" ollama serve'
+    [vllm]='vllm serve "$MODEL_PATH" --host "$HOST" --port "$PORT" --max-model-len "$CTX" --gpu-memory-utilization 0.9'
+    [sglang]='python -m sglang.launch_server --model-path "$MODEL_PATH" --host "$HOST" --port "$PORT" --context-length "$CTX" --tp 1'
+)
+
+declare -A LAUNCHER_URL=(
+    [llama-cpp]='http://$HOST:$PORT/v1'
+    [ollama]='http://$HOST:$PORT/v1'
+    [vllm]='http://$HOST:$PORT/v1'
+    [sglang]='http://$HOST:$PORT/v1'
+)
+
+# ---- NVIDIA NIM curated API list (verified 2026-06-22) ----
+# Rank order matters — serve rank <alias> picks top available
+NVIDIA_NIM_FILE="${TURBOFIT_ROOT}/nvidia-nim-curated.yaml"
+
+write_nvidia_nim_list() {
+    cat > "${NVIDIA_NIM_FILE}" <<'YAML'
+# Southpaw's NVIDIA NIM curated list (verified 2026-06-22 via build.nvidia.com)
+# Rank 1 = best main, 5 = worst. Aux column is the recommended auxiliary.
+# Use `serve api <rank>` or `serve api <api_id>` to switch.
+provider: nvidia-nim
+base_url: https://integrate.api.nvidia.com/v1
+api_key_env: NVIDIA_API_KEY
+context_length: 1000000
+models:
+  - rank: 1
+    name: DeepSeek V4 Pro
+    api_id: deepseek-ai/deepseek-v4-pro
+    aux: MiniMax M3
+    has_vision: false
+    price_input: 1.30
+    price_output: 2.60
+    notes: Strongest reasoning + coding. Best main pick.
+  - rank: 2
+    name: GLM 5.1
+    api_id: z-ai/glm-5.1
+    aux: MiniMax M3
+    has_vision: false
+    price_input: 0.85
+    price_output: 3.10
+    notes: Agentic + long-horizon reasoning flagship.
+  - rank: 3
+    name: DeepSeek V4 Flash
+    api_id: deepseek-ai/deepseek-v4-flash
+    aux: MiniMax M3
+    has_vision: false
+    price_input: 0.10
+    price_output: 0.20
+    notes: Cheapest; reasoning_effort=high.
+  - rank: 4
+    name: MiniMax M3
+    api_id: minimaxai/minimax-m3
+    aux: DeepSeek V4 Flash
+    has_vision: true
+    price_input: 0.30
+    price_output: 1.20
+    notes: Multimodal MoE; image+video support.
+  - rank: 5
+    name: Nemotron Ultra
+    api_id: nvidia/nemotron-3-ultra-550b-a55b
+    aux: MiniMax M3
+    has_vision: true
+    price_input: 0.60
+    price_output: 3.60
+    notes: NVIDIA flagship; reasoning budget 16384.
+YAML
+}
 
 # ---- llama.cpp management ----
 
 ensure_llama_cpp() {
     if ! command -v llama-server >/dev/null 2>&1; then
-        echo "llama-server not found. Installing llama.cpp..."
-        install_llama_cpp
+        install_launcher llama-cpp
     fi
 }
 
-install_llama_cpp() {
-    mkdir -p "${LLAMA_CPP_SRC%/*}"
-    if [ ! -d "${LLAMA_CPP_SRC}/.git" ]; then
-        echo "Cloning llama.cpp..."
-        git clone https://github.com/ggerganov/llama.cpp.git "${LLAMA_CPP_SRC}"
-    fi
-    cd "${LLAMA_CPP_SRC}"
-    git pull --rebase --autostash 2>/dev/null || git pull --rebase
-    cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON \
-        -DCMAKE_INSTALL_PREFIX="${LLAMA_CPP_PREFIX}"
-    cmake --build build --config Release -j"$(nproc)"
-    cmake --install build
-    export PATH="${LLAMA_CPP_PREFIX}/bin:${PATH}"
-    echo "✓ llama.cpp installed to ${LLAMA_CPP_PREFIX}/bin/llama-server"
+install_launcher() {
+    local which="$1"
+    case "${which}" in
+        llama-cpp)
+            local src="${HOME}/.local/src/llama.cpp"
+            local prefix="${HOME}/.local"
+            mkdir -p "${src%/*}"
+            if [ ! -d "${src}/.git" ]; then
+                echo "Cloning llama.cpp..."
+                git clone https://github.com/ggerganov/llama.cpp.git "${src}"
+            fi
+            cd "${src}"
+            git pull --rebase --autostash 2>/dev/null || git pull --rebase
+            cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON \
+                -DCMAKE_INSTALL_PREFIX="${prefix}"
+            cmake --build build --config Release -j"$(nproc)"
+            cmake --install build
+            export PATH="${prefix}/bin:${PATH}"
+            echo "✓ llama.cpp installed"
+            ;;
+        ollama)
+            echo "Installing Ollama..."
+            curl -fsSL https://ollama.com/install.sh | sh
+            echo "✓ Ollama installed"
+            ;;
+        vllm)
+            echo "Installing vllm (pip)..."
+            pip install -U vllm
+            echo "✓ vllm installed"
+            ;;
+        sglang)
+            echo "Installing SGlang (pip)..."
+            pip install -U "sglang[all]"
+            echo "✓ SGlang installed"
+            ;;
+        *)
+            echo "✗ Unknown launcher: ${which}"
+            echo "  Supported: ${!LAUNCHER_NAME[*]}"
+            return 1
+            ;;
+    esac
 }
 
 update_llama_cpp() {
-    if [ ! -d "${LLAMA_CPP_SRC}/.git" ]; then
-        install_llama_cpp
+    local src="${HOME}/.local/src/llama.cpp"
+    if [ ! -d "${src}/.git" ]; then
+        install_launcher llama-cpp
         return
     fi
     echo "Updating llama.cpp..."
-    cd "${LLAMA_CPP_SRC}"
+    cd "${src}"
     git fetch origin
-    if ! git pull --rebase --autostash 2>/dev/null; then
-        git pull --rebase
-    fi
+    git pull --rebase --autostash 2>/dev/null || git pull --rebase
     cmake --build build --config Release -j"$(nproc)"
     cmake --install build
     echo "✓ llama.cpp updated"
 }
 
-check_llama_cpp() {
-    local binary_version
-    binary_version=$(llama-server --version 2>/dev/null | head -1 || echo "not in PATH")
-    echo "Binary:  ${binary_version}"
-    if [ -d "${LLAMA_CPP_SRC}/.git" ]; then
-        local current remote
-        current=$(cd "${LLAMA_CPP_SRC}" && git rev-parse --short HEAD)
-        remote=$(cd "${LLAMA_CPP_SRC}" && git rev-parse --short origin/master 2>/dev/null) || remote="unknown"
-        echo "Local:   ${current}"
-        echo "Remote:  ${remote}"
-        if [ "${current}" != "${remote}" ]; then
-            echo "Status:  OUT OF DATE — run 'serve update'"
-        else
-            echo "Status:  up to date"
-        fi
+update_all_launchers() {
+    local target="${1:-all}"
+    if [ "${target}" = "all" ]; then
+        for l in "${!LAUNCHER_NAME[@]}"; do
+            echo "--- Updating ${l} ---"
+            case "${l}" in
+                llama-cpp) update_llama_cpp ;;
+                ollama)    install_launcher ollama ;;
+                vllm)      pip install -U vllm ;;
+                sglang)    pip install -U "sglang[all]" ;;
+            esac
+        done
     else
-        echo "Source:  not cloned — run 'serve install'"
+        case "${target}" in
+            llama-cpp) update_llama_cpp ;;
+            ollama)    install_launcher ollama ;;
+            vllm)      pip install -U vllm ;;
+            sglang)    pip install -U "sglang[all]" ;;
+            *) echo "Unknown launcher: ${target}"; return 1 ;;
+        esac
     fi
 }
 
-# ---- llmfit integration ----
+check_llama_cpp() {
+    local binary_version
+    binary_version=$(llama-server --version 2>/dev/null | head -1 || echo "not in PATH")
+    echo "llama.cpp: ${binary_version}"
+    local src="${HOME}/.local/src/llama.cpp"
+    if [ -d "${src}/.git" ]; then
+        local current remote
+        current=$(cd "${src}" && git rev-parse --short HEAD)
+        remote=$(cd "${src}" && git rev-parse --short origin/master 2>/dev/null) || remote="unknown"
+        echo "  local commit:  ${current}"
+        echo "  remote commit: ${remote}"
+        [ "${current}" != "${remote}" ] && echo "  status: OUT OF DATE — run 'serve update'" || echo "  status: up to date"
+    fi
+    echo ""
+    echo "Other launchers:"
+    for l in ollama vllm sglang; do
+        local ver="missing"
+        command -v "${l}" >/dev/null 2>&1 && ver="$(${l} --version 2>&1 | head -1 || echo 'present')"
+        printf "  %-10s %s\n" "${l}:" "${ver}"
+    done
+}
+
+# ---- Hardware fit check ----
 
 check_fit() {
     local model_ref="$1"
     local requested_ctx="${2:-65536}"
-    llmfit plan "${model_ref}" --context "${requested_ctx}" --json || true
-}
-
-# ---- Launch string generation ----
-
-generate_string() {
-    local model_path="$1"
-    local ctx="${2:-65536}"
-    local port="${3:-8080}"
-    local host="${4:-127.0.0.1}"
-    local ngl="${5:-99}"
-    local threads="${6:-$(nproc)}"
-
-    ctx=$(( ctx < 65536 ? 65536 : ctx ))
-
-    cat <<EOF
-llama-server \\
-  -m "${model_path}" \\
-  --host ${host} --port ${port} \\
-  -ngl ${ngl} -fa on \\
-  -c ${ctx} \\
-  --jinja \\
-  -t ${threads}
-EOF
+    if ! command -v llmfit >/dev/null 2>&1; then
+        echo "llmfit not installed. Run: pip install -U llmfit  (or brew install AlexsJones/llmfit/llmfit)"
+        return 1
+    fi
+    llmfit plan "${model_ref}" --context "${requested_ctx}" --json
 }
 
 # ---- Alias lookup ----
@@ -122,28 +246,92 @@ m = cfg.get("models", {}).get(alias)
 if not m:
     print("", file=sys.stderr)
     sys.exit(1)
-print(m.get("path", ""), m.get("port", 8080), m.get("ctx", 65536))
+# Format: launcher path port ctx
+print(m.get("launcher", "llama-cpp"),
+      m.get("path", ""),
+      m.get("port", 8080),
+      m.get("ctx", 65536))
 PYEOF
 }
 
 alias_exists() {
+    [ -n "$(alias_info "$1" 2>/dev/null)" ]
+}
+
+# ---- Generate launch string for a registered alias ----
+
+generate_string() {
     local alias="$1"
-    [ -n "$(alias_info "$alias" 2>/dev/null)" ]
+    local info launcher path port ctx
+    info=$(alias_info "${alias}")
+    launcher=$(echo "${info}" | awk '{print $1}')
+    path=$(echo "${info}" | awk '{print $2}')
+    port=$(echo "${info}" | awk '{print $3}')
+    ctx=$(echo "${info}" | awk '{print $4}')
+    ctx=$(( ctx < 65536 ? 65536 : ctx ))
+
+    local host="127.0.0.1"
+    local ngl=99
+
+    case "${launcher}" in
+        llama-cpp)
+            cat <<EOF
+llama-server \\
+  -m "${path}" \\
+  --host ${host} --port ${port} \\
+  -ngl ${ngl} -fa on \\
+  -c ${ctx} \\
+  --jinja \\
+  -t $(nproc)
+EOF
+            ;;
+        ollama)
+            cat <<EOF
+# Pull the model first (one-time)
+ollama pull ${path}
+
+# Launch Ollama server
+OLLAMA_HOST="${host}:${port}" ollama serve
+EOF
+            ;;
+        vllm)
+            cat <<EOF
+vllm serve ${path} \\
+  --host ${host} \\
+  --port ${port} \\
+  --max-model-len ${ctx} \\
+  --gpu-memory-utilization 0.9 \\
+  --served-model-name ${alias}
+EOF
+            ;;
+        sglang)
+            cat <<EOF
+python -m sglang.launch_server \\
+  --model-path ${path} \\
+  --host ${host} \\
+  --port ${port} \\
+  --context-length ${ctx} \\
+  --served-model-name ${alias} \\
+  --tp 1
+EOF
+            ;;
+    esac
 }
 
 # ---- Server lifecycle ----
 
 launch_server() {
     local alias="$1"
-    local info path port ctx
-    info=$(alias_info "$alias")
-    path=$(echo "$info" | awk '{print $1}')
-    port=$(echo "$info" | awk '{print $2}')
-    ctx=$(echo "$info" | awk '{print $3}')
+    local info launcher path port ctx
+    info=$(alias_info "${alias}")
+    launcher=$(echo "${info}" | awk '{print $1}')
+    path=$(echo "${info}" | awk '{print $2}')
+    port=$(echo "${info}" | awk '{print $3}')
+    ctx=$(echo "${info}" | awk '{print $4}')
 
-    if [ -z "$path" ]; then
-        echo "✗ Unknown alias: $alias"
-        echo "  Register with: name $alias <path-to-gguf>"
+    if [ -z "${path}" ]; then
+        echo "✗ Unknown alias: ${alias}"
+        echo "  Register with: name ${alias} <path-or-hf-repo> [--launcher llama-cpp|ollama|vllm|sglang]"
         return 1
     fi
 
@@ -162,28 +350,53 @@ launch_server() {
 
     # Write launch string
     local cmd_file="${TURBOFIT_ROOT}/strings/${alias}.sh"
-    generate_string "${path}" "${ctx}" "${port}" > "${cmd_file}"
+    generate_string "${alias}" > "${cmd_file}"
     chmod +x "${cmd_file}"
 
-    # Launch detached
+    # Launch detached (use the launcher-specific command)
     local log_file="${TURBOFIT_ROOT}/logs/${alias}.log"
-    nohup bash -c "$(cat "${cmd_file}")" > "${log_file}" 2>&1 &
+    local host="127.0.0.1"
+    local ngl=99
+    ctx=$(( ctx < 65536 ? 65536 : ctx ))
+
+    case "${launcher}" in
+        llama-cpp)
+            nohup llama-server -m "${path}" --host "${host}" --port "${port}" \
+                -ngl "${ngl}" -fa on -c "${ctx}" --jinja -t "$(nproc)" \
+                > "${log_file}" 2>&1 &
+            ;;
+        ollama)
+            OLLAMA_HOST="${host}:${port}" nohup ollama serve > "${log_file}" 2>&1 &
+            ;;
+        vllm)
+            nohup vllm serve "${path}" --host "${host}" --port "${port}" \
+                --max-model-len "${ctx}" --gpu-memory-utilization 0.9 \
+                --served-model-name "${alias}" > "${log_file}" 2>&1 &
+            ;;
+        sglang)
+            nohup python -m sglang.launch_server --model-path "${path}" \
+                --host "${host}" --port "${port}" --context-length "${ctx}" \
+                --served-model-name "${alias}" --tp 1 > "${log_file}" 2>&1 &
+            ;;
+    esac
+
     disown
     local pid=$!
     echo "${pid}" > "${TURBOFIT_ROOT}/pid/${alias}"
     echo "${port}" > "${TURBOFIT_ROOT}/port/${alias}"
 
-    # Wait for ready (up to 120s)
-    echo "Launching ${alias} (pid ${pid}) on :${port}..."
+    echo "Launching ${alias} (pid ${pid}) via ${launcher} on :${port}..."
     for i in $(seq 1 120); do
-        if curl -sf "http://127.0.0.1:${port}/health" >/dev/null 2>&1; then
+        if curl -sf "http://127.0.0.1:${port}/health" >/dev/null 2>&1 || \
+           curl -sf "http://127.0.0.1:${port}/v1/models" >/dev/null 2>&1; then
             echo ""
             echo "✓ ${alias} ready"
             echo ""
-            echo "  Port:  :${port}"
-            echo "  PID:   ${pid}"
-            echo "  Logs:  ${log_file}"
-            echo "  Stop:  serve stop ${alias}"
+            echo "  Backend: ${launcher}"
+            echo "  Port:   :${port}"
+            echo "  PID:    ${pid}"
+            echo "  Logs:   ${log_file}"
+            echo "  Stop:   serve stop ${alias}"
             return 0
         fi
         if ! kill -0 "${pid}" 2>/dev/null; then
@@ -233,25 +446,13 @@ list_running() {
             fi
         done
     fi
-    if [ -d "${TURBOFIT_ROOT}/port" ]; then
-        echo ""
-        echo "Ports:"
-        for port_file in "${TURBOFIT_ROOT}/port"/*; do
-            [ -f "${port_file}" ] || continue
-            local alias port
-            alias=$(basename "${port_file}")
-            port=$(cat "${port_file}")
-            echo "  :${port} → ${alias}"
-        done
-    fi
 }
 
 # ---- Hermes-Agent config ----
 
 set_hermes_main() {
     local model_name="$1"
-    local port="$2"
-    local base_url="http://127.0.0.1:${port}/v1"
+    local base_url="$2"
 
     python3 - <<PYEOF
 import yaml, os
@@ -266,13 +467,12 @@ cfg["model"]["api_key"] = "not-needed"
 with open(cfg_path, "w") as f:
     yaml.safe_dump(cfg, f, default_flow_style=False, sort_keys=False)
 PYEOF
-    echo "✓ Hermes-Agent main: ${model_name} @ ${base_url}"
+    echo "✓ Hermes main: ${model_name} @ ${base_url}"
 }
 
 set_hermes_aux() {
     local model_name="$1"
-    local port="$2"
-    local base_url="http://127.0.0.1:${port}/v1"
+    local base_url="$2"
     local tasks=(vision web_extract compression session_search skills_hub approval mcp title_generation curator)
 
     python3 - <<PYEOF
@@ -291,7 +491,60 @@ for task in tasks:
 with open(cfg_path, "w") as f:
     yaml.safe_dump(cfg, f, default_flow_style=False, sort_keys=False)
 PYEOF
-    echo "✓ Hermes-Agent aux: ${model_name} @ ${base_url} (${#tasks[@]} tasks)"
+    echo "✓ Hermes aux: ${model_name} @ ${base_url} (${#tasks[@]} tasks)"
+}
+
+# ---- NVIDIA NIM API helpers ----
+
+nvidia_nim_list() {
+    [ -f "${NVIDIA_NIM_FILE}" ] || write_nvidia_nim_list
+    python3 - <<'PYEOF'
+import yaml
+with open("/root/.local/share/turbofit/nvidia-nim-curated.yaml".replace("/root", __import__("os").path.expanduser("~"))) as f:
+    cfg = yaml.safe_load(f)
+print(f"Provider: {cfg['provider']}  base_url: {cfg['base_url']}")
+print(f"{'Rank':<5} {'Model':<22} {'Vision':<7} {'$/in':<8} {'$/out':<8} API ID")
+print("-" * 100)
+for m in cfg['models']:
+    vis = "👁 yes" if m['has_vision'] else "  no"
+    print(f"{m['rank']:<5} {m['name']:<22} {vis:<7} ${m['price_input']:<7.2f} ${m['price_output']:<7.2f} {m['api_id']}")
+PYEOF
+}
+
+nvidia_nim_use() {
+    local rank_or_id="$1"
+    local role="${2:-main}"
+    [ -f "${NVIDIA_NIM_FILE}" ] || write_nvidia_nim_list
+
+    python3 - "${rank_or_id}" "${role}" "${HERMES_CONFIG}" <<'PYEOF'
+import sys, os, yaml
+target, role, cfg_path = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(os.path.expanduser("~/.local/share/turbofit/nvidia-nim-curated.yaml")) as f:
+    cfg = yaml.safe_load(f)
+m = next((x for x in cfg['models'] if x['rank'] == int(target) or x['api_id'] == target), None)
+if not m:
+    print(f"Unknown rank/id: {target}")
+    sys.exit(1)
+os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
+with open(cfg_path) if os.path.exists(cfg_path) else open(cfg_path, "w") as f:
+    cfg2 = yaml.safe_load(f) if os.path.getsize(cfg_path) > 0 else {}
+cfg2.setdefault("model", {})
+cfg2["model"]["default"] = m['api_id']
+cfg2["model"]["base_url"] = "https://integrate.api.nvidia.com/v1"
+cfg2["model"]["api_key"] = "${NVIDIA_API_KEY}"
+cfg2["model"]["context_length"] = cfg.get("context_length", 1000000)
+if role == "aux":
+    cfg2.setdefault("auxiliary", {})
+    for task in ("vision","web_extract","compression","session_search","skills_hub","approval","mcp","title_generation","curator"):
+        cfg2["auxiliary"].setdefault(task, {})
+        cfg2["auxiliary"][task]["provider"] = "openai"
+        cfg2["auxiliary"][task]["base_url"] = "https://integrate.api.nvidia.com/v1"
+        cfg2["auxiliary"][task]["api_key"] = "${NVIDIA_API_KEY}"
+        cfg2["auxiliary"][task]["model"] = m['api_id']
+with open(cfg_path, "w") as f:
+    yaml.safe_dump(cfg2, f, default_flow_style=False, sort_keys=False)
+print(f"✓ Hermes {role}: {m['name']} ({m['api_id']})")
+PYEOF
 }
 
 # ---- Catalog ----
@@ -309,12 +562,23 @@ next_port() {
 register_alias() {
     local alias="$1"
     local path="$2"
+    local launcher="llama-cpp"
+    local port
+    shift 2
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --launcher) launcher="$2"; shift 2 ;;
+            --port)     port="$2"; shift 2 ;;
+            *) shift ;;
+        esac
+    done
+
     if [ -z "${alias}" ] || [ -z "${path}" ]; then
-        echo "Usage: name <alias> <path-to-gguf-or-hf-repo>"
+        echo "Usage: name <alias> <path-or-hf-repo> [--launcher llama-cpp|ollama|vllm|sglang] [--port N]"
         return 1
     fi
-    local port
-    port=$(next_port)
+    [ -z "${port:-}" ] && port=$(next_port)
+
     python3 - <<PYEOF
 import yaml, os
 cfg_path = "${CATALOG}"
@@ -322,11 +586,16 @@ os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
 with open(cfg_path) if os.path.exists(cfg_path) else open(cfg_path, "w") as f:
     cfg = yaml.safe_load(f) if os.path.getsize(cfg_path) > 0 else {}
 cfg.setdefault("models", {})
-cfg["models"]["${alias}"] = {"path": "${path}", "port": ${port}}
+cfg["models"]["${alias}"] = {
+    "launcher": "${launcher}",
+    "path": "${path}",
+    "port": ${port},
+    "ctx": 65536,
+}
 with open(cfg_path, "w") as f:
     yaml.safe_dump(cfg, f, default_flow_style=False, sort_keys=False)
 PYEOF
-    echo "✓ Registered '${alias}' → ${path} on :${port}"
+    echo "✓ Registered '${alias}' → ${path} (launcher=${launcher}) on :${port}"
 }
 
 list_catalog() {
@@ -334,175 +603,194 @@ list_catalog() {
         echo "Catalog empty. Use 'name <alias> <path>' to register a model."
         return
     fi
-    python3 - <<PYEOF
-import yaml
-with open("${CATALOG}") as f:
+    python3 - <<'PYEOF'
+import yaml, os
+catalog = os.path.expanduser("~/.config/turbofit/models.yaml")
+with open(catalog) as f:
     cfg = yaml.safe_load(f) or {}
 models = cfg.get("models", {})
 if not models:
     print("Catalog empty.")
 else:
-    print(f"{'Alias':<25} {'Port':<8} Path")
+    print(f"{'Alias':<25} {'Launcher':<12} {'Port':<8} Path")
     print("-" * 80)
     for alias, info in sorted(models.items()):
-        print(f"{alias:<25} {info.get('port', '?'):<8} {info.get('path', '?')}")
+        print(f"{alias:<25} {info.get('launcher','llama-cpp'):<12} {info.get('port','?'):<8} {info.get('path','?')}")
 PYEOF
 }
 
-# ---- High-level: launch + set as main/aux + start hermes/herm ----
+# ---- High-level: launch + set as main/aux + start UI ----
+
+start_ui() {
+    local ui="${1:-tui}"   # tui|dashboard|gateway|desktop|herm|herm_main|herm_aux
+    case "${ui}" in
+        tui)       exec hermes --tui ;;
+        dashboard) exec hermes dashboard ;;
+        desktop)   exec hermes desktop ;;
+        gateway)   exec hermes gateway run ;;
+        herm)
+            if command -v herm >/dev/null 2>&1; then
+                nohup herm >/dev/null 2>&1 &
+                disown
+                sleep 1
+            else
+                echo "(herm TUI not in PATH — skipping)"
+            fi
+            exec hermes --tui
+            ;;
+        *)
+            echo "Unknown UI: ${ui}"
+            echo "  Supported: tui, dashboard, desktop, gateway, herm"
+            return 1
+            ;;
+    esac
+}
 
 serve_main() {
     local alias="$1"
-    local use_gateway="${USE_GATEWAY:-0}"
+    local ui="${UI:-tui}"
     launch_server "${alias}" || return 1
     local port
     port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo 8080)
-    set_hermes_main "${alias}" "${port}"
-    if [ "${use_gateway}" = "1" ]; then
-        echo "Starting hermes gateway..."
-        exec hermes gateway run
-    else
-        echo "Starting hermes TUI..."
-        exec hermes --tui
-    fi
+    set_hermes_main "${alias}" "http://127.0.0.1:${port}/v1"
+    start_ui "${ui}"
 }
 
 serve_aux() {
     local alias="$1"
-    local use_gateway="${USE_GATEWAY:-0}"
+    local ui="${UI:-tui}"
     launch_server "${alias}" || return 1
     local port
     port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo 8080)
-    set_hermes_aux "${alias}" "${port}"
-    if [ "${use_gateway}" = "1" ]; then
-        echo "Starting hermes gateway (aux model)..."
-        exec hermes gateway run
-    else
-        echo "Starting hermes TUI (aux model)..."
-        exec hermes --tui
-    fi
+    set_hermes_aux "${alias}" "http://127.0.0.1:${port}/v1"
+    start_ui "${ui}"
 }
 
-# serve herm <alias> — launch + set main + start herm TUI + hermes
-# serve herm aux <alias> — launch + set aux + start herm TUI + hermes
 serve_herm() {
     local first="${1:-}"
-    local alias
     if [ "${first}" = "aux" ]; then
-        alias="${2:-}"
-        [ -z "${alias}" ] && { echo "Usage: serve herm aux <alias>"; return 1; }
-        launch_server "${alias}" || return 1
-        local port
-        port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo 8080)
-        set_hermes_aux "${alias}" "${port}"
+        shift
+        UI="herm_aux" serve_aux "${1:-}"
     else
-        alias="${first}"
-        [ -z "${alias}" ] && { echo "Usage: serve herm <alias>"; return 1; }
-        launch_server "${alias}" || return 1
-        local port
-        port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo 8080)
-        set_hermes_main "${alias}" "${port}"
+        UI="herm_main" serve_main "${first}"
     fi
-
-    # Start herm TUI in background (if installed), then hermes in foreground
-    if command -v herm >/dev/null 2>&1; then
-        echo "Starting herm TUI..."
-        nohup herm >/dev/null 2>&1 &
-        disown
-        sleep 1
-    else
-        echo "(herm TUI not in PATH — skipping)"
-    fi
-
-    echo "Starting hermes TUI..."
-    exec hermes --tui
 }
 
-# ---- Command dispatcher ----
+# ---- Usage ----
 
 usage() {
     cat <<EOF
-turbofit serve — llama.cpp launcher + Hermes-Agent config
+turbofit serve — hardware-fit + launcher + Hermes config
 
-USAGE:
-  serve install                                 Install llama.cpp from source
-  serve update                                  Update llama.cpp to latest master
-  serve check                                   Show binary version + commit status
-  serve fit <model> [ctx]                       Run llmfit fit check
+INSTALL / UPDATE
+  serve install                            Install llama.cpp from source
+  serve install <launcher>                 Install one launcher: llama-cpp, ollama, vllm, sglang
+  serve update                             Update llama.cpp
+  serve update <launcher|all>              Update a specific launcher or all
+  serve check                              Show version status for all installed
 
-  serve register <alias> <path>                 Register a model alias
-  serve catalog                                 Show registered aliases
+FIT CHECK
+  serve fit <model> [ctx]                  Run llmfit fit check (default ctx=65536)
 
-  serve <alias>                                 Launch the server (detached, shows port + logs)
-  serve string <alias>                          Print launch string (no launch)
-  serve stop <alias>                            Stop a running server
-  serve list                                    List running servers
+CATALOG
+  serve register <alias> <path>            Register model (launcher=llama-cpp)
+           [--launcher llama-cpp|ollama|vllm|sglang]
+           [--port N]
+  serve catalog                            Show registered aliases
 
-  serve main <alias>                            Launch + set as Hermes main + start hermes
-  serve aux <alias>                             Launch + set as Hermes aux + start hermes
-  serve herm <alias>                            Launch + set main + start herm TUI + hermes
-  serve herm aux <alias>                        Launch + set aux + start herm TUI + hermes
+LAUNCH
+  serve <alias>                            Launch (detached, shows backend/port/logs)
+  serve string <alias>                     Print launch string (no launch)
+  serve stop <alias>                       Stop a running server
+  serve list                               List running servers
 
-Append --gateway to 'serve main' or 'serve aux' to start the hermes gateway
-instead of the TUI.
+HERMES MODEL ROUTING
+  serve main <alias> [--ui tui|dashboard|gateway|desktop|herm]
+                                           Launch + set main + start UI
+  serve aux  <alias> [--ui tui|dashboard|gateway|desktop|herm]
+                                           Launch + set aux + start UI
+  serve herm <alias>                       Launch + main + herm TUI + hermes
+  serve herm aux <alias>                   Launch + aux + herm TUI + hermes
+
+NVIDIA NIM API (curated, 5 models)
+  serve api list                           Show the curated NVIDIA NIM list
+  serve api use <rank|api_id> [main|aux]   Wire a NIM model into Hermes config
 
 SHELL ALIASES (installed to ~/.bashrc):
-  name <alias> <path>                           Register a model alias
-  serve <alias>                                 Launch + show port/logs
-  serve main <alias>                            Launch + set main + start hermes TUI
-  serve aux <alias>                             Launch + set aux + start hermes TUI
-  serve herm <alias>                            Launch + main + herm TUI + hermes
-  serve herm aux <alias>                        Launch + aux + herm TUI + hermes
+  name <alias> <path> [--launcher ...]     Register a model alias
+  serve <alias>                            Launch + show backend/port/logs
+  serve main <alias>                       Launch + main + hermes TUI
+  serve main <alias> --ui dashboard        Launch + main + web dashboard
+  serve main <alias> --ui gateway          Launch + main + hermes gateway
+  serve aux <alias> [--ui ...]             Launch + aux + chosen UI
+  serve herm <alias>                       Launch + main + herm + hermes
+  serve herm aux <alias>                   Launch + aux + herm + hermes
 EOF
 }
 
-# Detect --gateway flag anywhere in args
+# ---- Parse top-level flags (only --ui VALUE and --gateway;
+#      other flags pass through to subcommands like register's --launcher) ----
+
+UI=""
 gateway_flag=0
-new_args=()
-for a in "$@"; do
-    if [ "$a" = "--gateway" ] || [ "$a" = "-gateway" ]; then
-        gateway_flag=1
-    else
-        new_args+=("$a")
-    fi
+positional=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --ui)
+            UI="$2"
+            shift 2
+            ;;
+        --ui=*)
+            UI="${1#--ui=}"
+            shift
+            ;;
+        --gateway|-gateway)
+            gateway_flag=1
+            shift
+            ;;
+        *)
+            positional+=("$1")
+            shift
+            ;;
+    esac
 done
-if [ "${#new_args[@]}" -gt 0 ]; then
-    set -- "${new_args[@]}"
-else
-    set --
+if [ "${gateway_flag}" = "1" ] && [ -z "${UI}" ]; then
+    UI="gateway"
 fi
-export USE_GATEWAY="${gateway_flag}"
+set -- "${positional[@]+"${positional[@]}"}"
 
 cmd="${1:-help}"
 shift || true
 
 case "${cmd}" in
-    install)        install_llama_cpp ;;
-    update)         update_llama_cpp ;;
+    install)        install_launcher "${1:-llama-cpp}" ;;
+    update)         update_all_launchers "${1:-llama-cpp}" ;;
     check)          check_llama_cpp ;;
     fit)            check_fit "$@" ;;
-    string)         if [ -z "${1:-}" ]; then
-                        echo "Usage: serve string <alias>"
-                        exit 1
-                    fi
-                    info=$(alias_info "$1" 2>/dev/null) || { echo "Unknown alias: $1"; exit 1; }
-                    path=$(echo "$info" | awk '{print $1}')
-                    port=$(echo "$info" | awk '{print $2}')
-                    ctx=$(echo "$info" | awk '{print $3}')
-                    generate_string "$path" "$ctx" "$port"
-                    ;;
+    string)
+        info=$(alias_info "${1:-}" 2>/dev/null) || { echo "Usage: serve string <alias>"; exit 1; }
+        generate_string "${1}"
+        ;;
     stop)           stop_server "${1:-}" ;;
     list|ls|ps)     list_running ;;
     catalog)        list_catalog ;;
-    register|name)  register_alias "${1:-}" "${2:-}" ;;
+    register|name)  register_alias "$@" ;;
     main)           serve_main "${1:-}" ;;
     aux)            serve_aux "${1:-}" ;;
     herm)           shift; serve_herm "$@" ;;
-    help|*)         # If first arg matches a registered alias, launch it
-                    if alias_exists "${cmd}" 2>/dev/null; then
-                        launch_server "${cmd}"
-                    else
-                        usage
-                    fi
-                    ;;
+    api)
+        shift
+        case "${1:-list}" in
+            list) nvidia_nim_list ;;
+            use)  shift; nvidia_nim_use "${1:-}" "${2:-main}" ;;
+            *)    echo "Usage: serve api {list|use <rank|api_id> [main|aux]}"; exit 1 ;;
+        esac
+        ;;
+    help|*)
+        if alias_exists "${cmd}" 2>/dev/null; then
+            launch_server "${cmd}"
+        else
+            usage
+        fi
+        ;;
 esac

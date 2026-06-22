@@ -1,8 +1,6 @@
 # turbofit
 
-Checks if a model fits on your hardware, and launches it for you. Can self-configure for Main or Auxiliary model in Hermes-Agent.
-
-Generate, install, and launch llama.cpp (llama-server) with the `serve` and `name` shell commands. Auto-installs llama.cpp from source, updates it when stale, uses llmfit to verify model fit in VRAM/RAM, launches the server detached, and wires it into Hermes-Agent as the main or auxiliary model. Enforces a 64K context floor.
+Hardware-fit checker + multi-launcher installer for Hermes-Agent. Uses `llmfit` to verify if a model fits your VRAM/RAM, generates accurate launch strings for **llama.cpp / Ollama / vllm / SGlang**, launches the server detached, and wires it into Hermes as main or auxiliary. Also bundles a curated NVIDIA NIM API list.
 
 ## Install
 
@@ -13,49 +11,76 @@ source ~/.bashrc
 serve install
 ```
 
-## What it does
+## Supported backends
 
-- **Auto-installs llama.cpp** from source (`serve install`), keeps it updated (`serve update`)
-- **Checks model fit** via `llmfit` (VRAM + RAM) — refuses to launch models that won't fit
-- **Launches servers detached** — survives shell death, logs to `~/.local/share/turbofit/logs/`
-- **Wires models into Hermes-Agent** as main or auxiliary (all 9 aux tasks)
+| Launcher | Binary | Use case |
+|----------|--------|----------|
+| `llama-cpp` (default) | `llama-server` | GGUF files, custom builds, TurboQuant |
+| `ollama` | `ollama serve` | Standard ollama models |
+| `vllm` | `vllm serve` | HuggingFace Safetensors, high throughput |
+| `sglang` | `python -m sglang.launch_server` | RadixAttention, low-latency |
+
+Future community projects can be added by extending the launcher registry.
+
+## UI choices (`--ui`)
+
+| UI | Command | Use case |
+|----|---------|----------|
+| `tui` (default) | `hermes --tui` | Terminal session |
+| `dashboard` | `hermes dashboard` | Web UI in browser |
+| `gateway` | `hermes gateway run` | Discord/Telegram/etc. bot |
+| `desktop` | `hermes desktop` | Native desktop app |
+| `herm` | `herm` + `hermes --tui` | Both UIs |
 
 ## Commands
 
 ```bash
-serve install                              # Install llama.cpp from source
-serve update                               # Update to latest master
-serve check                                # Show version status
-serve fit <model>                          # Run llmfit fit check
-serve string <alias>                       # Print launch string
-serve <alias>                              # Launch detached, show port + logs
-serve stop <alias>                         # Stop a server
-serve list                                 # List running servers
-serve catalog                              # Show registered aliases
-name <alias> <path>                        # Register a model alias
-serve main <alias>                         # Launch + set Hermes main + start hermes
-serve aux <alias>                          # Launch + set Hermes aux + start hermes
-serve herm <alias>                         # Launch + main + herm TUI + hermes
-serve herm aux <alias>                     # Launch + aux + herm TUI + hermes
+# Install / update
+serve install [launcher]              # Install (default: llama-cpp)
+serve update [launcher|all]           # Update a launcher or all
+serve check                           # Show all version status
+
+# Hardware fit
+serve fit <model>                     # Run llmfit fit check (default ctx=65536)
+
+# Catalog
+serve register <alias> <path>         # Register model
+           [--launcher llama-cpp|ollama|vllm|sglang]
+           [--port N]
+serve catalog                         # Show registered aliases
+
+# Launch
+serve <alias>                         # Launch detached, show backend/port/logs
+serve string <alias>                  # Print launch string (no launch)
+serve stop <alias>                    # Stop a running server
+serve list                            # List running servers
+
+# Hermes routing + UI
+serve main <alias> [--ui ...]         # Launch + set main + start UI
+serve aux <alias> [--ui ...]          # Launch + set aux + start UI
+serve herm <alias>                    # Launch + main + herm + hermes
+serve herm aux <alias>                # Launch + aux + herm + hermes
+
+# NVIDIA NIM API
+serve api list                        # Show curated NIM list
+serve api use <rank|api_id> [main|aux]# Wire NIM model into Hermes config
 ```
 
-## Shell aliases (installed by install.sh)
+## NVIDIA NIM API (curated)
 
-```bash
-name qwen-8b ~/models/Qwen3-8B.Q4_K_M.gguf    # register
+5 models verified 2026-06-22 via build.nvidia.com:
 
-serve qwen-8b              # launch + show port/logs
-serve main qwen-8b         # launch + main + hermes TUI
-serve aux qwen-8b          # launch + aux + hermes TUI
-serve herm qwen-8b         # launch + main + herm TUI + hermes
-serve herm aux qwen-8b     # launch + aux + herm TUI + hermes
-serve main qwen-8b --gateway  # launch + main + hermes gateway
-serve aux qwen-8b --gateway   # launch + aux + hermes gateway
-```
+| Rank | Model | Vision | $/in | $/out |
+|------|-------|--------|------|-------|
+| 1 | DeepSeek V4 Pro | no | $1.30 | $2.60 |
+| 2 | GLM 5.1 | no | $0.85 | $3.10 |
+| 3 | DeepSeek V4 Flash | no | $0.10 | $0.20 |
+| 4 | MiniMax M3 | 👁 yes | $0.30 | $1.20 |
+| 5 | Nemotron Ultra | 👁 yes | $0.60 | $3.60 |
 
 ## Enforces a 64K context floor
 
-Every launch string and server uses `ctx_size: 65536` minimum (Hermes-Agent requirement). Smaller context values are clamped automatically.
+Every launch string and server uses `ctx_size: 65536` minimum (Hermes-Agent requirement).
 
 ## License
 
