@@ -55,19 +55,22 @@ update_llama_cpp() {
 }
 
 check_llama_cpp() {
-    local current_commit
-    current_commit=$(cd "${LLAMA_CPP_SRC}" 2>/dev/null && git rev-parse --short HEAD 2>/dev/null) || current_commit="not-installed"
-    local remote_commit
-    remote_commit=$(cd "${LLAMA_CPP_SRC}" 2>/dev/null && git rev-parse --short origin/master 2>/dev/null) || remote_commit="unknown"
     local binary_version
     binary_version=$(llama-server --version 2>/dev/null | head -1 || echo "not in PATH")
-    echo "Binary: ${binary_version}"
-    echo "Local commit: ${current_commit}"
-    echo "Remote commit: ${remote_commit}"
-    if [ "${current_commit}" != "${remote_commit}" ] && [ "${current_commit}" != "not-installed" ]; then
-        echo "Status: OUT OF DATE — run 'serve update'"
+    echo "Binary:  ${binary_version}"
+    if [ -d "${LLAMA_CPP_SRC}/.git" ]; then
+        local current remote
+        current=$(cd "${LLAMA_CPP_SRC}" && git rev-parse --short HEAD)
+        remote=$(cd "${LLAMA_CPP_SRC}" && git rev-parse --short origin/master 2>/dev/null) || remote="unknown"
+        echo "Local:   ${current}"
+        echo "Remote:  ${remote}"
+        if [ "${current}" != "${remote}" ]; then
+            echo "Status:  OUT OF DATE — run 'serve update'"
+        else
+            echo "Status:  up to date"
+        fi
     else
-        echo "Status: up to date"
+        echo "Source:  not cloned — run 'serve install'"
     fi
 }
 
@@ -76,13 +79,7 @@ check_llama_cpp() {
 check_fit() {
     local model_ref="$1"
     local requested_ctx="${2:-65536}"
-    if [ -f "${model_ref}" ]; then
-        echo "Checking fit for GGUF: ${model_ref}"
-        llmfit plan "${model_ref}" --context "${requested_ctx}" --json || true
-    else
-        echo "Checking fit for HF model: ${model_ref}"
-        llmfit plan "${model_ref}" --context "${requested_ctx}" --json || true
-    fi
+    llmfit plan "${model_ref}" --context "${requested_ctx}" --json || true
 }
 
 # ---- Launch string generation ----
@@ -95,39 +92,78 @@ generate_string() {
     local ngl="${5:-99}"
     local threads="${6:-$(nproc)}"
 
-    # Enforce 64K floor
     ctx=$(( ctx < 65536 ? 65536 : ctx ))
 
     cat <<EOF
-llama-server \
-  -m "${model_path}" \
-  --host ${host} --port ${port} \
-  -ngl ${ngl} -fa on \
-  -c ${ctx} \
-  --jinja \
+llama-server \\
+  -m "${model_path}" \\
+  --host ${host} --port ${port} \\
+  -ngl ${ngl} -fa on \\
+  -c ${ctx} \\
+  --jinja \\
   -t ${threads}
 EOF
+}
+
+# ---- Alias lookup ----
+
+alias_info() {
+    local alias="$1"
+    python3 - "$alias" <<'PYEOF'
+import sys, os, yaml
+alias = sys.argv[1]
+catalog = os.path.expanduser("~/.config/turbofit/models.yaml")
+if not os.path.exists(catalog):
+    print("", file=sys.stderr)
+    sys.exit(1)
+with open(catalog) as f:
+    cfg = yaml.safe_load(f) or {}
+m = cfg.get("models", {}).get(alias)
+if not m:
+    print("", file=sys.stderr)
+    sys.exit(1)
+print(m.get("path", ""), m.get("port", 8080), m.get("ctx", 65536))
+PYEOF
+}
+
+alias_exists() {
+    local alias="$1"
+    [ -n "$(alias_info "$alias" 2>/dev/null)" ]
 }
 
 # ---- Server lifecycle ----
 
 launch_server() {
     local alias="$1"
-    local model_path="$2"
-    local port="$3"
-    local ctx="${4:-65536}"
+    local info path port ctx
+    info=$(alias_info "$alias")
+    path=$(echo "$info" | awk '{print $1}')
+    port=$(echo "$info" | awk '{print $2}')
+    ctx=$(echo "$info" | awk '{print $3}')
 
-    local cmd_file="${TURBOFIT_ROOT}/strings/${alias}.sh"
-    generate_string "${model_path}" "${ctx}" "${port}" > "${cmd_file}"
-    chmod +x "${cmd_file}"
+    if [ -z "$path" ]; then
+        echo "✗ Unknown alias: $alias"
+        echo "  Register with: name $alias <path-to-gguf>"
+        return 1
+    fi
 
     # Kill any existing process on this port
-    if [ -f "${TURBOFIT_ROOT}/port/${alias}" ]; then
-        local old_port
-        old_port=$(cat "${TURBOFIT_ROOT}/port/${alias}")
-        pkill -f "llama-server.*--port ${old_port}" 2>/dev/null || true
-        sleep 1
+    if [ -f "${TURBOFIT_ROOT}/pid/${alias}" ]; then
+        local old_pid
+        old_pid=$(cat "${TURBOFIT_ROOT}/pid/${alias}")
+        if kill -0 "${old_pid}" 2>/dev/null; then
+            echo "Stopping existing ${alias} (pid ${old_pid})..."
+            kill "${old_pid}" 2>/dev/null || true
+            sleep 1
+            kill -9 "${old_pid}" 2>/dev/null || true
+        fi
+        rm -f "${TURBOFIT_ROOT}/pid/${alias}" "${TURBOFIT_ROOT}/port/${alias}"
     fi
+
+    # Write launch string
+    local cmd_file="${TURBOFIT_ROOT}/strings/${alias}.sh"
+    generate_string "${path}" "${ctx}" "${port}" > "${cmd_file}"
+    chmod +x "${cmd_file}"
 
     # Launch detached
     local log_file="${TURBOFIT_ROOT}/logs/${alias}.log"
@@ -137,22 +173,30 @@ launch_server() {
     echo "${pid}" > "${TURBOFIT_ROOT}/pid/${alias}"
     echo "${port}" > "${TURBOFIT_ROOT}/port/${alias}"
 
-    # Wait for ready (up to 120s — large models need time)
+    # Wait for ready (up to 120s)
     echo "Launching ${alias} (pid ${pid}) on :${port}..."
     for i in $(seq 1 120); do
         if curl -sf "http://127.0.0.1:${port}/health" >/dev/null 2>&1; then
-            echo "✓ ${alias} ready on :${port} (pid ${pid})"
+            echo ""
+            echo "✓ ${alias} ready"
+            echo ""
+            echo "  Port:  :${port}"
+            echo "  PID:   ${pid}"
+            echo "  Logs:  ${log_file}"
+            echo "  Stop:  serve stop ${alias}"
             return 0
         fi
-        # Check if process died
         if ! kill -0 "${pid}" 2>/dev/null; then
+            echo ""
             echo "✗ ${alias} died during startup. Tail of log:"
             tail -20 "${log_file}" 2>/dev/null || true
             return 1
         fi
         sleep 1
     done
-    echo "✗ ${alias} did not become healthy within 120s. Log: ${log_file}"
+    echo ""
+    echo "✗ ${alias} did not become healthy within 120s"
+    echo "  Logs: ${log_file}"
     return 1
 }
 
@@ -168,25 +212,36 @@ stop_server() {
         fi
         rm -f "${TURBOFIT_ROOT}/pid/${alias}" "${TURBOFIT_ROOT}/port/${alias}"
         echo "✓ Stopped ${alias}"
+    else
+        echo "No running server for: ${alias}"
     fi
 }
 
 list_running() {
-    echo "Running models:"
+    echo "Running servers:"
     if [ -d "${TURBOFIT_ROOT}/pid" ]; then
         for pid_file in "${TURBOFIT_ROOT}/pid"/*; do
             [ -f "${pid_file}" ] || continue
-            local alias
+            local alias pid port
             alias=$(basename "${pid_file}")
-            local pid
             pid=$(cat "${pid_file}")
-            local port
             port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo "?")
             if kill -0 "${pid}" 2>/dev/null; then
                 echo "  ${alias}: pid ${pid}, :${port}"
             else
                 rm -f "${pid_file}"
             fi
+        done
+    fi
+    if [ -d "${TURBOFIT_ROOT}/port" ]; then
+        echo ""
+        echo "Ports:"
+        for port_file in "${TURBOFIT_ROOT}/port"/*; do
+            [ -f "${port_file}" ] || continue
+            local alias port
+            alias=$(basename "${port_file}")
+            port=$(cat "${port_file}")
+            echo "  :${port} → ${alias}"
         done
     fi
 }
@@ -211,7 +266,7 @@ cfg["model"]["api_key"] = "not-needed"
 with open(cfg_path, "w") as f:
     yaml.safe_dump(cfg, f, default_flow_style=False, sort_keys=False)
 PYEOF
-    echo "✓ Hermes-Agent main model: ${model_name} @ ${base_url}"
+    echo "✓ Hermes-Agent main: ${model_name} @ ${base_url}"
 }
 
 set_hermes_aux() {
@@ -236,7 +291,7 @@ for task in tasks:
 with open(cfg_path, "w") as f:
     yaml.safe_dump(cfg, f, default_flow_style=False, sort_keys=False)
 PYEOF
-    echo "✓ Hermes-Agent aux model: ${model_name} @ ${base_url} (${#tasks[@]} tasks)"
+    echo "✓ Hermes-Agent aux: ${model_name} @ ${base_url} (${#tasks[@]} tasks)"
 }
 
 # ---- Catalog ----
@@ -245,7 +300,7 @@ next_port() {
     local used=()
     [ -f "${CATALOG}" ] && used+=($(grep -oE "port: [0-9]+" "${CATALOG}" 2>/dev/null | grep -oE "[0-9]+" || true))
     local port=8080
-    while printf "%s\n" "${used[@]}" | grep -qx "${port}"; do
+    while printf "%s\\n" "${used[@]}" | grep -qx "${port}" 2>/dev/null; do
         port=$((port + 1))
     done
     echo "${port}"
@@ -294,6 +349,75 @@ else:
 PYEOF
 }
 
+# ---- High-level: launch + set as main/aux + start hermes/herm ----
+
+serve_main() {
+    local alias="$1"
+    local use_gateway="${USE_GATEWAY:-0}"
+    launch_server "${alias}" || return 1
+    local port
+    port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo 8080)
+    set_hermes_main "${alias}" "${port}"
+    if [ "${use_gateway}" = "1" ]; then
+        echo "Starting hermes gateway..."
+        exec hermes gateway run
+    else
+        echo "Starting hermes TUI..."
+        exec hermes --tui
+    fi
+}
+
+serve_aux() {
+    local alias="$1"
+    local use_gateway="${USE_GATEWAY:-0}"
+    launch_server "${alias}" || return 1
+    local port
+    port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo 8080)
+    set_hermes_aux "${alias}" "${port}"
+    if [ "${use_gateway}" = "1" ]; then
+        echo "Starting hermes gateway (aux model)..."
+        exec hermes gateway run
+    else
+        echo "Starting hermes TUI (aux model)..."
+        exec hermes --tui
+    fi
+}
+
+# serve herm <alias> — launch + set main + start herm TUI + hermes
+# serve herm aux <alias> — launch + set aux + start herm TUI + hermes
+serve_herm() {
+    local first="${1:-}"
+    local alias
+    if [ "${first}" = "aux" ]; then
+        alias="${2:-}"
+        [ -z "${alias}" ] && { echo "Usage: serve herm aux <alias>"; return 1; }
+        launch_server "${alias}" || return 1
+        local port
+        port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo 8080)
+        set_hermes_aux "${alias}" "${port}"
+    else
+        alias="${first}"
+        [ -z "${alias}" ] && { echo "Usage: serve herm <alias>"; return 1; }
+        launch_server "${alias}" || return 1
+        local port
+        port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo 8080)
+        set_hermes_main "${alias}" "${port}"
+    fi
+
+    # Start herm TUI in background (if installed), then hermes in foreground
+    if command -v herm >/dev/null 2>&1; then
+        echo "Starting herm TUI..."
+        nohup herm >/dev/null 2>&1 &
+        disown
+        sleep 1
+    else
+        echo "(herm TUI not in PATH — skipping)"
+    fi
+
+    echo "Starting hermes TUI..."
+    exec hermes --tui
+}
+
 # ---- Command dispatcher ----
 
 usage() {
@@ -302,66 +426,83 @@ turbofit serve — llama.cpp launcher + Hermes-Agent config
 
 USAGE:
   serve install                                 Install llama.cpp from source
-  serve update                                  Update llama.cpp to latest
-  serve check                                   Check llama.cpp version status
-  serve fit <model> [ctx]                       Run llmfit fit check for a model
-  serve string <alias>                          Print the launch string for an alias
-  serve launch <alias>                          Launch the server for an alias (detached)
+  serve update                                  Update llama.cpp to latest master
+  serve check                                   Show binary version + commit status
+  serve fit <model> [ctx]                       Run llmfit fit check
+
+  serve register <alias> <path>                 Register a model alias
+  serve catalog                                 Show registered aliases
+
+  serve <alias>                                 Launch the server (detached, shows port + logs)
+  serve string <alias>                          Print launch string (no launch)
   serve stop <alias>                            Stop a running server
   serve list                                    List running servers
-  serve catalog                                 Show model catalog
-  serve register <alias> <path>                 Register a model alias
-  serve config main <alias>                     Set as Hermes-Agent main model
-  serve config aux <alias>                      Set as Hermes-Agent aux model (all tasks)
 
-SHELL ALIASES (auto-installed to ~/.bashrc):
-  serve <alias>                                 Print launch string + check fit
-  serve <alias> -main                           Launch + set as Hermes main
-  serve <alias> --aux                           Launch + set as Hermes aux
-  serve <alias> hermes                          Launch + set main + start hermes TUI
-  serve <alias> hermes --aux                    Launch + set aux + start hermes TUI
-  serve <alias> gateway                         Launch + set main + start hermes gateway
-  serve <alias> gateway --aux                   Launch + set aux + start hermes gateway
+  serve main <alias>                            Launch + set as Hermes main + start hermes
+  serve aux <alias>                             Launch + set as Hermes aux + start hermes
+  serve herm <alias>                            Launch + set main + start herm TUI + hermes
+  serve herm aux <alias>                        Launch + set aux + start herm TUI + hermes
+
+Append --gateway to 'serve main' or 'serve aux' to start the hermes gateway
+instead of the TUI.
+
+SHELL ALIASES (installed to ~/.bashrc):
   name <alias> <path>                           Register a model alias
+  serve <alias>                                 Launch + show port/logs
+  serve main <alias>                            Launch + set main + start hermes TUI
+  serve aux <alias>                             Launch + set aux + start hermes TUI
+  serve herm <alias>                            Launch + main + herm TUI + hermes
+  serve herm aux <alias>                        Launch + aux + herm TUI + hermes
 EOF
 }
 
-case "${1:-help}" in
+# Detect --gateway flag anywhere in args
+gateway_flag=0
+new_args=()
+for a in "$@"; do
+    if [ "$a" = "--gateway" ] || [ "$a" = "-gateway" ]; then
+        gateway_flag=1
+    else
+        new_args+=("$a")
+    fi
+done
+if [ "${#new_args[@]}" -gt 0 ]; then
+    set -- "${new_args[@]}"
+else
+    set --
+fi
+export USE_GATEWAY="${gateway_flag}"
+
+cmd="${1:-help}"
+shift || true
+
+case "${cmd}" in
     install)        install_llama_cpp ;;
     update)         update_llama_cpp ;;
     check)          check_llama_cpp ;;
-    fit)            shift; check_fit "$@" ;;
-    string)         shift
-                    info=$(python3 -c "import yaml; cfg=yaml.safe_load(open('${CATALOG}')); print(cfg['models'].get('$1', {}).get('path', ''), cfg['models'].get('$1', {}).get('port', 8080), cfg['models'].get('$1', {}).get('ctx', 65536))" 2>/dev/null || echo "")
-                    path=$(echo "$info" | awk '{print $1}')
-                    port=$(echo "$info" | awk '{print $2}')
-                    ctx=$(echo "$info" | awk '{print $3}')
-                    if [ -z "$path" ]; then
-                        echo "Unknown alias: $1. Use 'serve register <alias> <path>' or 'name <alias> <path>'."
+    fit)            check_fit "$@" ;;
+    string)         if [ -z "${1:-}" ]; then
+                        echo "Usage: serve string <alias>"
                         exit 1
                     fi
-                    generate_string "$path" "$ctx" "$port"
-                    ;;
-    launch)         shift
-                    info=$(python3 -c "import yaml; cfg=yaml.safe_load(open('${CATALOG}')); print(cfg['models'].get('$1', {}).get('path', ''), cfg['models'].get('$1', {}).get('port', 8080), cfg['models'].get('$1', {}).get('ctx', 65536))" 2>/dev/null || echo "")
+                    info=$(alias_info "$1" 2>/dev/null) || { echo "Unknown alias: $1"; exit 1; }
                     path=$(echo "$info" | awk '{print $1}')
                     port=$(echo "$info" | awk '{print $2}')
                     ctx=$(echo "$info" | awk '{print $3}')
-                    launch_server "$1" "$path" "$port" "$ctx"
+                    generate_string "$path" "$ctx" "$port"
                     ;;
-    stop)           shift; stop_server "$1" ;;
+    stop)           stop_server "${1:-}" ;;
     list|ls|ps)     list_running ;;
     catalog)        list_catalog ;;
-    register|name)  shift; register_alias "$@" ;;
-    config)         shift
-                    role="${1:-}"; shift
-                    alias="${1:-}"; shift
-                    port=$(python3 -c "import yaml; cfg=yaml.safe_load(open('${CATALOG}')); print(cfg['models'].get('$alias', {}).get('port', 8080))" 2>/dev/null || echo 8080)
-                    case "${role}" in
-                        main) set_hermes_main "${alias}" "${port}" ;;
-                        aux)  set_hermes_aux "${alias}" "${port}" ;;
-                        *)    echo "Usage: serve config {main|aux} <alias>"; exit 1 ;;
-                    esac
+    register|name)  register_alias "${1:-}" "${2:-}" ;;
+    main)           serve_main "${1:-}" ;;
+    aux)            serve_aux "${1:-}" ;;
+    herm)           shift; serve_herm "$@" ;;
+    help|*)         # If first arg matches a registered alias, launch it
+                    if alias_exists "${cmd}" 2>/dev/null; then
+                        launch_server "${cmd}"
+                    else
+                        usage
+                    fi
                     ;;
-    help|*)         usage ;;
 esac

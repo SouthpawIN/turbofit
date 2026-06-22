@@ -1,7 +1,7 @@
 ---
 name: turbofit
-description: "Generate, install, and launch llama.cpp (llama-server) with `serve` and `name` shell commands. Auto-installs llama.cpp from source, updates it when stale, uses llmfit to verify model fit in VRAM/RAM, writes a copy-pasteable launch string, launches the server detached, and wires it into Hermes-Agent as the main or auxiliary model. Enforces a 64K context floor."
-version: 3.0.0
+description: "Generate, install, and launch llama.cpp (llama-server) with the `serve` and `name` shell commands. Auto-installs llama.cpp from source, updates it when stale, uses llmfit to verify model fit in VRAM/RAM, launches the server detached, and wires it into Hermes-Agent as the main or auxiliary model. Enforces a 64K context floor."
+version: 3.2.0
 author: SouthpawIN
 license: MIT
 tags: [llama.cpp, llama-server, llmfit, gguf, inference, hermes-agent]
@@ -15,10 +15,10 @@ metadata:
 Three questions, one workflow:
 
 1. **Will this model fit in my system memory?** → `serve fit <model>`
-2. **What's the launch string?** → `serve string <alias>` (or just `serve <alias>`)
-3. **Launch it and wire it into Hermes-Agent?** → `serve <alias> -main`, `--aux`, `hermes`, `gateway`
+2. **Launch it on a port** → `serve <alias>` (or `name <alias> <path>` to register first)
+3. **Launch it and run Hermes on it** → `serve main <alias>` / `serve aux <alias>` / `serve herm <alias>` / `serve herm aux <alias>`
 
-Turbofit installs and updates `llama.cpp` from source, uses [`llmfit`](https://github.com/AlexsJones/llmfit) for fit analysis, generates a `llama-server` command string with sensible defaults, launches the server detached (so it survives shell death), and rewrites `~/.hermes/config.yaml` to make it the main or auxiliary model for Hermes-Agent.
+Turbofit installs and updates `llama.cpp` from source, uses [`llmfit`](https://github.com/AlexsJones/llmfit) for fit analysis, launches `llama-server` detached (so it survives shell death), and rewrites `~/.hermes/config.yaml` to make the running server the main or auxiliary model for Hermes-Agent.
 
 ## ⚠ Context Floor: 64K (65536 tokens)
 
@@ -53,40 +53,54 @@ serve install                                 Install llama.cpp from source
 serve update                                  Update llama.cpp to latest master
 serve check                                   Show binary version + commit status
 serve fit <model> [ctx]                       Run llmfit fit check
-serve string <alias>                          Print launch string for an alias
-serve launch <alias>                          Launch the server detached
+
+serve register <alias> <path>                 Register a model alias
+serve catalog                                 Show registered aliases
+
+serve <alias>                                 Launch the server (detached, shows port + logs)
+serve string <alias>                          Print launch string (no launch)
 serve stop <alias>                            Stop a running server
 serve list                                    List running servers
-serve catalog                                 Show registered model aliases
-serve register <alias> <path>                 Register a model alias
-serve config main <alias>                     Set as Hermes-Agent main model
-serve config aux <alias>                      Set as Hermes-Agent aux model (all tasks)
+
+serve main <alias>                            Launch + set as Hermes main + start hermes
+serve aux <alias>                             Launch + set as Hermes aux + start hermes
+serve herm <alias>                            Launch + set main + start herm TUI + hermes
+serve herm aux <alias>                        Launch + set aux + start herm TUI + hermes
 ```
 
-### Shell aliases (auto-installed)
+Append `--gateway` to `serve main` or `serve aux` to start the hermes gateway instead of the TUI:
 
-After `install.sh`, you get these convenience wrappers:
+```bash
+serve main my-alias --gateway                 Launch + main model + start hermes gateway
+serve aux my-alias --gateway                  Launch + aux model + start hermes gateway
+```
+
+## Shell aliases (auto-installed)
+
+After `install.sh`, you get `serve` and `name` shell functions:
 
 ```bash
 # Register a model alias
 name <alias> <path-to-gguf-or-hf-repo>
 # e.g.
 name my-qwen ~/models/Qwen3-8B.Q4_K_M.gguf
-name hermes-main ~/models/Qwen3-27B.Q4_K_M.gguf
+name hermes-main ~/models/Darwin-Reason-28B.Q4_K_M.gguf
 
-# Print launch string (no server started)
+# Launch the server (detached) — shows port, PID, logs
 serve <alias>
 
-# Launch the server (detached, persistent)
-serve <alias> -main        # launch + set as Hermes main model
-serve <alias> --aux        # launch + set as Hermes aux model (all tasks)
+# Launch + start Hermes with this model set as main or aux
+serve main <alias>                  # TUI with main model
+serve main <alias> --gateway        # gateway with main model
+serve aux <alias>                   # TUI with aux model
+serve aux <alias> --gateway         # gateway with aux model
 
-# Launch + start Hermes
-serve <alias> hermes       # launch + set main + start hermes TUI
-serve <alias> hermes --aux # launch + set aux + start hermes TUI
-serve <alias> gateway      # launch + set main + start hermes gateway
-serve <alias> gateway --aux# launch + set aux + start hermes gateway
+# Launch + start herm TUI + hermes
+serve herm <alias>                  # herm + hermes TUI, model as main
+serve herm aux <alias>              # herm + hermes TUI, model as aux (all 9 tasks)
 ```
+
+`name` is a thin wrapper around `serve register`. `serve` passes through directly to the dispatcher, which detects whether the first argument is a registered alias, a known subcommand, or `main`/`aux`/`herm`.
 
 ## How It Works
 
@@ -109,8 +123,6 @@ serve <alias> gateway --aux# launch + set aux + start hermes gateway
 | Marginal | CPU offload needed or tight fit |
 | Too Tight | Won't run acceptably |
 
-The `serve` shell alias calls this automatically before launching — if the model won't fit, it warns you and exits without starting the server.
-
 ### 3. Launch string generation
 
 `serve string <alias>` prints a copy-pasteable `llama-server` command:
@@ -125,16 +137,29 @@ llama-server \
   -t 32
 ```
 
-The string is also written to `~/.local/share/turbofit/strings/<alias>.sh` so `serve launch <alias>` can re-execute it later.
+The string is also written to `~/.local/share/turbofit/strings/<alias>.sh` so `serve <alias>` can re-execute it later.
 
 ### 4. Server lifecycle
 
-`serve launch <alias>`:
+`serve <alias>`:
 1. Kills any existing server bound to the alias's port
 2. Writes the launch string to a file
 3. Spawns the server via `nohup bash -c "..."` (detached, survives shell death)
 4. Waits up to 120s for `/health` to respond
 5. Writes PID to `~/.local/share/turbofit/pid/<alias>`
+6. Prints port, PID, and log path on success
+
+Example output:
+
+```
+Launching qwen-8b (pid 12345) on :8080...
+✓ qwen-8b ready
+
+  Port:  :8080
+  PID:   12345
+  Logs:  /home/user/.local/share/turbofit/logs/qwen-8b.log
+  Stop:  serve stop qwen-8b
+```
 
 `serve stop <alias>` kills the process by PID and cleans up state files.
 
@@ -142,7 +167,16 @@ The string is also written to `~/.local/share/turbofit/strings/<alias>.sh` so `s
 
 ### 5. Hermes-Agent config
 
-`serve config main <alias>` rewrites `~/.hermes/config.yaml`:
+The four "launch-and-run" commands:
+
+| Command | What it does |
+|---------|-------------|
+| `serve main <alias>` | Launches server → sets Hermes-Agent main model → starts `hermes --tui` |
+| `serve aux <alias>` | Launches server → sets Hermes-Agent aux model (all 9 tasks) → starts `hermes --tui` |
+| `serve herm <alias>` | Launches server → sets main → starts `herm` (TUI) in background → starts `hermes --tui` |
+| `serve herm aux <alias>` | Launches server → sets aux → starts `herm` in background → starts `hermes --tui` |
+
+All four rewrite `~/.hermes/config.yaml` before launching Hermes, so the new config is picked up immediately:
 
 ```yaml
 model:
@@ -151,9 +185,9 @@ model:
   api_key: not-needed
 ```
 
-`serve config aux <alias>` rewrites the `auxiliary:` section to point all auxiliary tasks (vision, web_extract, compression, session_search, skills_hub, approval, mcp, title_generation, curator) at the same base_url + model name.
+For `aux` variants, the `auxiliary:` section is rewired to point all 9 auxiliary tasks (vision, web_extract, compression, session_search, skills_hub, approval, mcp, title_generation, curator) at the same base_url + model name.
 
-After either change, restart the active Hermes session (`/restart` in gateway, or exit/relaunch in TUI) for the new config to take effect.
+Append `--gateway` to `serve main` or `serve aux` to swap `hermes --tui` for `hermes gateway run`.
 
 ## Catalog format
 
@@ -176,7 +210,7 @@ Ports auto-increment (8080, 8081, 8082...) so multiple models can coexist.
 
 ## Optional Flags
 
-Append any of these to `serve launch <alias>` via `serve string <alias>` + manual edit, or pass them through the catalog YAML:
+Append any of these to `serve string <alias>` + manual edit, or pass them through the catalog YAML:
 
 | Flag | Use case |
 |------|----------|
@@ -254,22 +288,19 @@ If the model natively supports less than 64K, use `--rope-scaling yarn --yarn-or
 - Older models 8K native → extend with YaRN to 64K+ (`--rope-scaling yarn --yarn-orig-ctx 8192 -c 65536`)
 - 1M context → `--rope-scaling yarn --yarn-orig-ctx 262144 -c 1048576` (extreme, monitor VRAM)
 
-### 5. Hermes config changes need a restart
-After `serve config main` or `serve config aux`, the active Hermes session doesn't pick up the change until `/restart` (gateway) or exit/relaunch (TUI).
+### 5. `serve <alias>` waits up to 120s for health
+Large models take time to load. If `/health` doesn't respond within 120s, `serve <alias>` reports failure — but the process might still be alive. Check `~/.local/share/turbofit/logs/<alias>.log` for the real status.
 
-### 6. `serve launch` waits up to 120s for health
-Large models take time to load. If `/health` doesn't respond within 120s, `serve launch` reports failure — but the process might still be alive. Check `~/.local/share/turbofit/logs/<alias>.log` for the real status.
-
-### 7. KV cache quantization trades quality for VRAM
+### 6. KV cache quantization trades quality for VRAM
 `-ctk q4_0 -ctv q4_0` cuts KV cache size by ~50% vs q8_0, but degrades long-context recall. For 64K or less, q8_0 is the sweet spot.
 
-### 8. Multiple servers on the same port
-`serve launch` kills any existing process bound to the alias's port. If you registered two aliases to the same port manually, the second `serve launch` will kill the first.
+### 7. Multiple servers on the same port
+`serve <alias>` kills any existing process bound to the alias's port. If you registered two aliases to the same port manually, the second `serve` will kill the first.
 
-### 9. CPU-only inference works but is slow
+### 8. CPU-only inference works but is slow
 If you have no GPU, drop `-ngl 99` from the launch string manually. The model runs on CPU using RAM. Expect ~2-10 tok/s for 7B models.
 
-### 10. `serve install` requires build tools
+### 9. `serve install` requires build tools
 CMake, gcc/g++, CUDA toolkit (for GPU builds). If `cmake -B build` fails, install them first:
 ```bash
 sudo apt install cmake build-essential    # Debian/Ubuntu
@@ -277,8 +308,15 @@ sudo dnf install cmake gcc-c++            # Fedora
 brew install cmake                        # macOS (CPU only — CUDA needs NVIDIA SDK)
 ```
 
+### 10. `serve herm` starts both herm and hermes
+If `herm` isn't in PATH (e.g. you haven't run `bun add -g herm-tui`), `serve herm` silently skips it and starts hermes directly. Install herm for the full experience:
+```bash
+bun add -g herm-tui
+```
+
 ## See Also
 
 - `local-llm-fleet-management` — multi-model catalog + swap pattern
 - `llama-cpp` — llama.cpp build + GGUF discovery
 - `gguf-quantization` — GGUF format deep dive
+- `herm` — the Herm TUI dashboard (optional companion for `serve herm`)

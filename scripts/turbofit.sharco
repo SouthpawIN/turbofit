@@ -1,65 +1,8 @@
-
 # turbofit — model launcher + Hermes-Agent config
 # Source: ~/.hermes/skills/turbofit/scripts/turbofit.sharco
+
 serve() {
-    local cmd="${1:-help}"; shift || true
-
-    case "$cmd" in
-        install|update|check|list|ls|ps|catalog|help)
-            ~/.hermes/skills/turbofit/scripts/serve "$cmd" "$@"
-            return
-            ;;
-        string|launch|stop|fit)
-            ~/.hermes/skills/turbofit/scripts/serve "$cmd" "$@"
-            return
-            ;;
-        register|name)
-            ~/.hermes/skills/turbofit/scripts/serve register "$@"
-            return
-            ;;
-        config)
-            ~/.hermes/skills/turbofit/scripts/serve config "$@"
-            return
-            ;;
-        *)
-            # It's a model alias — parse flags
-            local alias="$cmd"
-            local role=""           # main|aux|""  (default: just launch)
-            local launch_hermes="" # hermes|gateway|""  (default: just print string)
-            local do_launch=0      # 1 if we should actually start the server
-
-            for arg in "$@"; do
-                case "$arg" in
-                    -main|--main)        role="main"; do_launch=1 ;;
-                    --aux)               role="aux";  do_launch=1 ;;
-                    hermes)              launch_hermes="hermes" ;;
-                    gateway)             launch_hermes="gateway" ;;
-                    *) ;;
-                esac
-            done
-
-            if [ "$do_launch" -eq 0 ] && [ -z "$launch_hermes" ]; then
-                # Just print the launch string + fit check
-                ~/.hermes/skills/turbofit/scripts/serve string "$alias"
-                return
-            fi
-
-            # Launch the server
-            ~/.hermes/skills/turbofit/scripts/serve launch "$alias" || return 1
-
-            # Apply Hermes config
-            case "$role" in
-                main) ~/.hermes/skills/turbofit/scripts/serve config main "$alias" ;;
-                aux)  ~/.hermes/skills/turbofit/scripts/serve config aux  "$alias" ;;
-            esac
-
-            # Launch Hermes
-            case "$launch_hermes" in
-                hermes)  hermes --tui ;;
-                gateway) hermes gateway run ;;
-            esac
-            ;;
-    esac
+    ~/.hermes/skills/turbofit/scripts/serve "$@"
 }
 
 name() {

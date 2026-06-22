@@ -15,7 +15,6 @@ serve install
 
 - **Auto-installs llama.cpp** from source (`serve install`), keeps it updated (`serve update`)
 - **Checks model fit** via `llmfit` (VRAM + RAM) — refuses to launch models that won't fit
-- **Generates launch strings** with sensible defaults (flash attention, jinja, 64K floor)
 - **Launches servers detached** — survives shell death, logs to `~/.local/share/turbofit/logs/`
 - **Wires models into Hermes-Agent** as main or auxiliary (all 9 aux tasks)
 
@@ -27,27 +26,29 @@ serve update                               # Update to latest master
 serve check                                # Show version status
 serve fit <model>                          # Run llmfit fit check
 serve string <alias>                       # Print launch string
-serve launch <alias>                       # Launch detached
+serve <alias>                              # Launch detached, show port + logs
 serve stop <alias>                         # Stop a server
 serve list                                 # List running servers
 serve catalog                              # Show registered aliases
 name <alias> <path>                        # Register a model alias
-serve config main <alias>                  # Set as Hermes main model
-serve config aux <alias>                   # Set as Hermes aux model
+serve main <alias>                         # Launch + set Hermes main + start hermes
+serve aux <alias>                          # Launch + set Hermes aux + start hermes
+serve herm <alias>                         # Launch + main + herm TUI + hermes
+serve herm aux <alias>                     # Launch + aux + herm TUI + hermes
 ```
 
 ## Shell aliases (installed by install.sh)
 
 ```bash
-name qwen-8b ~/models/Qwen3-8B.Q4_K_M.gguf   # register
+name qwen-8b ~/models/Qwen3-8B.Q4_K_M.gguf    # register
 
-serve qwen-8b              # print launch string
-serve qwen-8b -main        # launch + set as Hermes main
-serve qwen-8b --aux        # launch + set as Hermes aux
-serve qwen-8b hermes       # launch + set main + start hermes TUI
-serve qwen-8b hermes --aux # launch + set aux + start hermes TUI
-serve qwen-8b gateway      # launch + set main + start hermes gateway
-serve qwen-8b gateway --aux# launch + set aux + start hermes gateway
+serve qwen-8b              # launch + show port/logs
+serve main qwen-8b         # launch + main + hermes TUI
+serve aux qwen-8b          # launch + aux + hermes TUI
+serve herm qwen-8b         # launch + main + herm TUI + hermes
+serve herm aux qwen-8b     # launch + aux + herm TUI + hermes
+serve main qwen-8b --gateway  # launch + main + hermes gateway
+serve aux qwen-8b --gateway   # launch + aux + hermes gateway
 ```
 
 ## Enforces a 64K context floor
