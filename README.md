@@ -1,4 +1,4 @@
-# turbofit v5 — opinionated unified backend
+# turbofit — opinionated unified backend
 
 Hardware-fit checker + multi-launcher orchestrator for Hermes-Agent. Uses `llmfit` to verify model fit, generates accurate launch strings for **llama.cpp / Ollama / vLLM / SGlang**, launches detached, wires Hermes config, and adapts to live VRAM pressure. Also bundles a curated NVIDIA NIM free-tier API list.
 
