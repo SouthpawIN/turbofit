@@ -1,0 +1,10 @@
+# turbofit — model launcher + Hermes-Agent config
+# Source: ~/.hermes/skills/turbofit/scripts/turbofit.sharco
+
+serve() {
+    ~/.hermes/skills/turbofit/scripts/serve "$@"
+}
+
+name() {
+    ~/.hermes/skills/turbofit/scripts/serve register "$@"
+}
