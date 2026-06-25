@@ -1,0 +1,449 @@
+# Turbofit Model Database — Dynamic Source of Truth
+# Last updated: 2026-06-25
+# This file is auto-updated by the daily research cron and synced to GitHub.
+# All turbofit skill references read from this file instead of hardcoded tables.
+#
+# Schema:
+#   models:
+#     <slug>:
+#       name: Human-readable name
+#       family: Model family (Qwen, GLM, DeepSeek, Mimo, MiniMax, Kimi, Llama, Grok, Phi, Gemma, etc.)
+#       version: Version string
+#       type: api | local | both
+#       vision: true | false
+#       role: main | aux | either
+#       context_max: Maximum context in tokens
+#       context_tiers: [list of supported context tiers]
+#       pricing:
+#         nous: { input: $/M, output: $/M, slug: "nous-model-slug" }  # Through Nous gateway
+#         openrouter: { input: $/M, output: $/M, slug: "or-model-slug", free: false }
+#         nim: { input: 0, output: 0, slug: "nim-model-slug" }  # NVIDIA NIM free
+#         direct: { input: $/M, output: $/M, provider: "Z.AI" | "DeepSeek" | "DashScope" | "Xiaomi" | "Moonshot" }
+#       benchmarks:
+#         mmlu: score
+#         humaneval: score
+#         swe_verified: score
+#         aime: score
+#         math: score
+#         source: "URL or source name"
+#       local:
+#         gguf_repo: "HF repo for GGUF downloads"
+#         gguf_quants: ["Q4_K_M", "Q8_0", "BF16"]
+#         size_gb: disk footprint at Q4_K_M
+#         archetypes: ["27-28B dense", "35B MoE 3B-active", etc.]
+#         mmproj: mmproj file name
+#         n_embd: embedding dimension (for mmproj matching)
+#       notes: "Any special notes"
+#       discovered: "2026-06-25"  # Date added to database
+#       last_verified: "2026-06-25"  # Last time pricing/benchmarks were verified
+
+models:
+  # ═══════════════════════════════════════════
+  # TEXT-ONLY API MAINS (no vision — must pair with vision aux)
+  # ═══════════════════════════════════════════
+
+  glm-5.2:
+    name: "GLM 5.2"
+    family: GLM
+    version: "5.2"
+    type: api
+    vision: false
+    role: main
+    context_max: 1048576
+    context_tiers: [1048576, 524288, 262144, 131072]
+    pricing:
+      nous: { input: 0.95, output: 3.00, slug: "z-ai/glm-5.2" }
+      openrouter: { input: 0.95, output: 3.00, slug: "z-ai/glm-5.2", free: false, cache_read: 0.18 }
+      direct: { input: 1.40, output: 4.40, provider: "Z.AI", cache_read: 0.26 }
+    benchmarks:
+      source: "Z.AI blog, VentureBeat, OpenRouter API"
+      notes: "Highest-ranked open-source model on long-horizon coding benchmarks, approaches Claude Opus 4.8 on terminal tasks"
+    notes: "1M context, cache read: $0.18/M (81% savings on cache hits). Free access on Z.AI platform."
+    discovered: "2026-06-16"
+    last_verified: "2026-06-25"
+
+  qwen-3.7-max:
+    name: "Qwen 3.7 MAX"
+    family: Qwen
+    version: "3.7-MAX"
+    type: api
+    vision: false
+    role: main
+    context_max: 1048576
+    context_tiers: [1048576, 524288, 262144, 131072]
+    pricing:
+      nous: { input: 1.25, output: 3.75, slug: "qwen/qwen3.7-max" }
+      openrouter: { input: 1.25, output: 3.75, slug: "qwen/qwen3.7-max", free: false, cache_read: 0.25 }
+      direct: { input: 1.25, output: 3.75, provider: "DashScope" }
+    benchmarks:
+      source: "Qwen blog, OpenRouter"
+      notes: "Flagship Qwen 3.7, agent-focused, 1M ctx, 65K max output"
+    discovered: "2026-06-03"
+    last_verified: "2026-06-25"
+
+  deepseek-v4-pro:
+    name: "DeepSeek V4 Pro"
+    family: DeepSeek
+    version: "V4-Pro"
+    type: api
+    vision: false
+    role: main
+    context_max: 1048576
+    context_tiers: [1048576, 524288, 262144, 131072]
+    pricing:
+      nous: { input: 0.435, output: 0.87, slug: "deepseek/deepseek-v4-pro" }
+      openrouter: { input: 0.435, output: 0.87, slug: "deepseek/deepseek-v4-pro", free: false, cache_read: 0.0036 }
+      nim: { input: 0, output: 0, slug: "deepseek-ai/deepseek-v4-pro" }
+      direct: { input: 0.435, output: 0.87, provider: "DeepSeek", cache_hit_input: 0.0028 }
+    benchmarks:
+      source: "DeepSeek API docs, OpenRouter"
+      notes: "1.6T MoE, 49B active, best open reasoning + coding"
+    notes: "Free on NIM (~1000 RPM). DeepSeek direct has cache hit pricing."
+    discovered: "2026-04-24"
+    last_verified: "2026-06-25"
+
+  deepseek-v4-flash:
+    name: "DeepSeek V4 Flash"
+    family: DeepSeek
+    version: "V4-Flash"
+    type: api
+    vision: false
+    role: main
+    context_max: 1048576
+    context_tiers: [1048576, 524288, 262144, 131072]
+    pricing:
+      nous: { input: 0.09, output: 0.18, slug: "deepseek/deepseek-v4-flash" }
+      openrouter: { input: 0.09, output: 0.18, slug: "deepseek/deepseek-v4-flash", free: false, cache_read: 0.02 }
+      nim: { input: 0, output: 0, slug: "deepseek-ai/deepseek-v4-flash" }
+      direct: { input: 0.14, output: 0.28, provider: "DeepSeek", cache_hit_input: 0.0028 }
+    benchmarks:
+      source: "DeepSeek API docs, MorphLLM"
+      notes: "284B MoE, 13B active, fast reasoning, best value per token"
+    notes: "Free on NIM. Cheapest paid main on OpenRouter."
+    discovered: "2026-04-24"
+    last_verified: "2026-06-25"
+
+  mimo-v2.5-pro:
+    name: "Mimo V2.5 Pro"
+    family: Mimo
+    version: "V2.5-Pro"
+    type: api
+    vision: false
+    role: main
+    context_max: 1048576
+    context_tiers: [1048576, 524288, 262144, 131072]
+    pricing:
+      nous: { input: 0.435, output: 0.87, slug: "xiaomi/mimo-v2.5-pro" }
+      openrouter: { input: 0.435, output: 0.87, slug: "xiaomi/mimo-v2.5-pro", free: false, cache_read: 0.0036 }
+      direct: { input: 0.435, output: 0.87, provider: "Xiaomi" }
+    benchmarks:
+      source: "OpenRouter API, HuggingFace"
+      notes: "1.02T MoE, 42B active. Same pricing as DeepSeek V4 Pro."
+    notes: "Open-source weights on HuggingFace. Cache read: $0.0036/M (99% savings on cache hits)."
+    discovered: "2026-06-01"
+    last_verified: "2026-06-25"
+
+  # ═══════════════════════════════════════════
+  # VISION-CAPABLE API MODELS (main or aux)
+  # ═══════════════════════════════════════════
+
+  mimo-v2.5:
+    name: "Mimo V2.5"
+    family: Mimo
+    version: "V2.5"
+    type: api
+    vision: true
+    role: either
+    context_max: 1048576
+    context_tiers: [1048576, 524288, 262144, 131072]
+    pricing:
+      nous: { input: 0.105, output: 0.28, slug: "xiaomi/mimo-v2.5" }
+      openrouter: { input: 0.105, output: 0.28, slug: "xiaomi/mimo-v2.5", free: false }
+      direct: { input: 0.105, output: 0.28, provider: "Xiaomi" }
+    benchmarks:
+      source: "OpenRouter, Xiaomi blog"
+      notes: "Native omnimodal, 1M ctx, vision ✅"
+    notes: "Cheapest vision-capable model on Nous. Best value vision aux."
+    discovered: "2026-06-01"
+    last_verified: "2026-06-25"
+
+  qwen-3.7-plus:
+    name: "Qwen 3.7 Plus"
+    family: Qwen
+    version: "3.7-Plus"
+    type: api
+    vision: true
+    role: either
+    context_max: 1048576
+    context_tiers: [1048576, 524288, 262144, 131072]
+    pricing:
+      nous: { input: 0.32, output: 1.28, slug: "qwen/qwen3.7-plus" }
+      openrouter: { input: 0.32, output: 1.28, slug: "qwen/qwen3.7-plus", free: false, cache_read: 0.064 }
+      direct: { input: 0.50, output: 3.00, provider: "DashScope" }
+    benchmarks:
+      source: "Qwen blog, Fireworks, OpenRouter"
+      notes: "Cost-effective multimodal, 1M ctx, vision ✅"
+    notes: "Tiered pricing above 256K on some providers."
+    discovered: "2026-06-03"
+    last_verified: "2026-06-25"
+
+  minimax-m3:
+    name: "MiniMax M3"
+    family: MiniMax
+    version: "M3"
+    type: api
+    vision: true
+    role: either
+    context_max: 1048576
+    context_tiers: [1048576, 524288, 262144, 131072]
+    pricing:
+      nous: { input: 0.30, output: 1.20, slug: "minimaxai/minimax-m3" }
+      openrouter: { input: 0.30, output: 1.20, slug: "minimaxai/minimax-m3", free: false, cache_read: 0.06 }
+      nim: { input: 0, output: 0, slug: "minimaxai/minimax-m3" }
+    benchmarks:
+      source: "MiniMax blog, LushBinary"
+      notes: "22B MoE (A22B), 1M ctx, native multimodal, ~59% SWE-Bench Pro"
+    notes: "Free on NIM. Vision ✅. Best free vision aux alongside Qwen 3.6 Plus."
+    discovered: "2026-05-31"
+    last_verified: "2026-06-25"
+
+  kimi-k2.7-code:
+    name: "Kimi K2.7 Code"
+    family: Kimi
+    version: "K2.7-Code"
+    type: api
+    vision: true
+    role: either
+    context_max: 262144
+    context_tiers: [262144, 131072]
+    pricing:
+      nous: { input: 0.74, output: 3.50, slug: "moonshotai/kimi-k2.7-code" }
+      openrouter: { input: 0.74, output: 3.50, slug: "moonshotai/kimi-k2.7-code", free: false, cache_read: 0.15 }
+      direct: { input: 0.95, output: 4.00, provider: "Moonshot", cache_hit_input: 0.19 }
+    benchmarks:
+      source: "MarkTechPost, Requesty"
+      notes: "Coding-focused, 262K ctx, vision ✅, 21.8% on Kimi Code Bench V2"
+    discovered: "2026-06-12"
+    last_verified: "2026-06-25"
+
+  kimi-k2.6:
+    name: "Kimi K2.6"
+    family: Kimi
+    version: "K2.6"
+    type: api
+    vision: true
+    role: either
+    context_max: 262144
+    context_tiers: [262144, 131072]
+    pricing:
+      nous: { input: 0.66, output: 3.41, slug: "moonshotai/kimi-k2.6" }
+      openrouter: { input: 0.66, output: 3.41, slug: "moonshotai/kimi-k2.6", free: false, cache_read: 0.144 }
+    benchmarks:
+      source: "OpenRouter API"
+      notes: "Multimodal, 262K ctx. Coding-driven UI/UX generation, multi-agent orchestration."
+    notes: "Cache read: $0.144/M (78% savings). Previously free on OR via Crucible — now paid."
+    discovered: "2026-05-01"
+    last_verified: "2026-06-25"
+
+  qwen-3.6-plus:
+    name: "Qwen 3.6 Plus"
+    family: Qwen
+    version: "3.6-Plus"
+    type: api
+    vision: true
+    role: either
+    context_max: 1048576
+    context_tiers: [1048576, 524288, 262144, 131072]
+    pricing:
+      openrouter: { input: 0, output: 0, slug: "qwen/qwen3.6-plus:free", free: true }
+    benchmarks:
+      source: "OpenRouter, Reddit"
+      notes: "Hybrid linear attention + sparse MoE, 1M ctx, vision ✅, first model to break 1T tokens/day on OR"
+    notes: "FREE on OpenRouter preview. Not available through Nous gateway. Best free aux."
+    discovered: "2026-04-01"
+    last_verified: "2026-06-25"
+
+  qwen-3.5-flash:
+    name: "Qwen 3.5 Flash"
+    family: Qwen
+    version: "3.5-Flash"
+    type: api
+    vision: true
+    role: either
+    context_max: 1048576
+    context_tiers: [1048576, 524288, 262144, 131072]
+    pricing:
+      nous: { input: 0.065, output: 0.26, slug: "qwen/qwen3.5-flash-02-23" }
+      openrouter: { input: 0.065, output: 0.26, slug: "qwen/qwen3.5-flash-02-23", free: false }
+    benchmarks:
+      source: "OpenRouter"
+      notes: "Cheapest paid vision model on OpenRouter, 1M ctx"
+    notes: "Best value vision aux through Nous gateway."
+    discovered: "2026-02-23"
+    last_verified: "2026-06-25"
+
+  qwen-3.6-flash:
+    name: "Qwen 3.6 Flash"
+    family: Qwen
+    version: "3.6-Flash"
+    type: api
+    vision: true
+    role: either
+    context_max: 262144
+    context_tiers: [262144, 131072]
+    pricing:
+      nous: { input: 0.1875, output: 1.125, slug: "qwen/qwen3.6-flash" }
+      openrouter: { input: 0.1875, output: 1.125, slug: "qwen/qwen3.6-flash", free: false }
+    benchmarks:
+      source: "OpenRouter"
+      notes: "Fast, efficient, 262K ctx only"
+    discovered: "2026-04-01"
+    last_verified: "2026-06-25"
+
+  # ═══════════════════════════════════════════
+  # NEW DISCOVERIES (June 2026) — VERIFIED REAL
+  # ═══════════════════════════════════════════
+
+  qwen-agentworld-35b-a3b:
+    name: "Qwen-AgentWorld-35B-A3B"
+    family: Qwen
+    version: "AgentWorld-35B-A3B"
+    type: both
+    vision: false
+    role: main
+    context_max: 262144
+    context_tiers: [262144, 131072]
+    pricing:
+      notes: "Open-weight (Apache 2.0). No mainstream API yet — check DashScope/Qwen Studio for hosted. Self-host via SGLang."
+    benchmarks:
+      source: "arXiv:2606.24597, qwen.ai/blog?id=qwen-agentworld"
+      notes: "World model for agent simulation. 35B MoE / 3B active. 7 agent domains (Terminal, Search, MCP, SWE, Web, OS, Android). Beats GPT-5.4 on AgentWorldBench (58.71 vs 58.25). Not a general chat model — specialized for agent environment simulation."
+    local:
+      gguf_repo: "Qwen/Qwen-AgentWorld-35B-A3B (check HuggingFace for GGUF quants)"
+      gguf_quants: ["Q4_K_M", "Q8_0"]
+      size_gb: 18.0
+      archetypes: ["35B MoE 3B-active"]
+      mmproj: "N/A (text-only)"
+      n_embd: 2048
+    notes: "Released June 23, 2026. Paper: arXiv:2606.24597. SGLang deployment: python -m sglang.launch_server --model-path Qwen/Qwen-AgentWorld-35B-A3B --port 8000 --tensor-parallel-size 4 --context-length 262144 --reasoning-parser qwen3. Niche use case — not recommended for general Hermes Agent main/aux, but relevant for agent simulation research."
+    discovered: "2026-06-25"
+    last_verified: "2026-06-25"
+    new: true
+
+  # ═══════════════════════════════════════════
+  # LOCAL MODELS (in the user's catalog — archetype examples)
+  # ═══════════════════════════════════════════
+
+  # Local models are registered per-user via `serve register`.
+  # The archetypes below define what kind of model fits each VRAM tier.
+  # The serve recommend command scans the user's catalog and picks the best match.
+
+archetypes:
+  main:
+    heavy:
+      name: "27-28B dense (Q4)"
+      size_gb: 14-17
+      vram_gb: 22
+      ctx_max: 1048576
+      tier: s
+      examples: ["Darwin 28B Reason", "Qwen 3.6-27B fine-tunes", "Llama 3.3 27B"]
+    medium:
+      name: "27B hybrid/Mamba (Q4)"
+      size_gb: 14
+      vram_gb: 16
+      ctx_max: 262144
+      tier: s
+      examples: ["Prism Eagle 27B", "Mamba2+GDN hybrids"]
+    moe:
+      name: "32-35B MoE 3B-active (Q4)"
+      size_gb: 11-18
+      vram_gb: 11-17
+      ctx_max: 1048576
+      tier: sf
+      examples: ["Carnice 35A3B", "Darwin Apex", "Qwen 4 32B-A3B"]
+    light:
+      name: "27B dense + MTP (Q4)"
+      size_gb: 17
+      vram_gb: 22
+      ctx_max: 262144
+      tier: sf
+      examples: ["Carwin 28B MTP", "Qwopus 27B v2 MTP"]
+    budget:
+      name: "27B dense base (Q4)"
+      size_gb: 16-17
+      vram_gb: 22
+      ctx_max: 262144
+      tier: c
+      examples: ["Qwable 27B base", "Qwen 3.6-27B base"]
+
+  aux:
+    primary:
+      name: "35B MoE 3B-active (Q4)"
+      size_gb: 11
+      vram_gb: 17
+      ctx_max: 1048576
+      tier: sf
+      examples: ["Carnice 35A3B Apex"]
+    cpu_moe:
+      name: "35B MoE with cpu-moe"
+      size_gb: 11
+      vram_gb: 11
+      ctx_max: 1048576
+      tier: sf
+      notes: "MoE experts offloaded to CPU RAM"
+    small:
+      name: "Small multimodal (≤3B)"
+      size_gb: 2-3
+      vram_gb: 3
+      ctx_max: 32768
+      tier: c
+      examples: ["Qwen2.5-Omni-3B"]
+
+# ═══════════════════════════════════════════
+  # PROVIDER GATEWAY CONFIG
+  # ═══════════════════════════════════════════
+
+providers:
+  nous:
+    base_url: "https://inference-api.nousresearch.com/v1"
+    auth: "OAuth subscription"
+    tool_gateway: true
+    notes: "300+ models, $22/mo credits, TG included (Firecrawl, FAL, OpenAI TTS, Browser Use)"
+  openrouter:
+    base_url: "https://openrouter.ai/api/v1"
+    auth: "OPENROUTER_API_KEY"
+    tool_gateway: false
+    credit_bonus: "10% bonus on credits purchased"
+    notes: "Free models (:free suffix), pay-per-use"
+  nim:
+    base_url: "https://integrate.api.nvidia.com/v1"
+    auth: "NVIDIA_API_KEY"
+    tool_gateway: false
+    rate_limit: "~1000 RPM"
+    notes: "Free endpoints, no credit card, ~1000 RPM"
+
+# ═══════════════════════════════════════════
+  # RESEARCH SOURCES (for daily cron)
+  # ═══════════════════════════════════════════
+
+research_sources:
+  - name: "Price Per Token"
+    url: "https://pricepertoken.com/news/model-releases"
+    type: "model_releases"
+    check: "daily"
+  - name: "OpenRouter Models"
+    url: "https://openrouter.ai/models"
+    type: "pricing"
+    check: "daily"
+  - name: "LLMCheck"
+    url: "https://llmcheck.net/blog/"
+    type: "benchmarks"
+    check: "weekly"
+  - name: "NVIDIA NIM Models"
+    url: "https://build.nvidia.com/models"
+    type: "free_endpoints"
+    check: "weekly"
+  - name: "HuggingFace trending GGUF"
+    url: "https://huggingface.co/models?search=GGUF&sort=trending"
+    type: "local_models"
+    check: "daily"

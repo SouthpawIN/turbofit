@@ -1,0 +1,546 @@
+{
+  "generated": "2026-06-25T18:21:30.416537+00:00",
+  "source": "openrouter",
+  "models": [
+    {
+      "slug": "deepseek/deepseek-v3.2",
+      "input_per_m": 0.2288,
+      "output_per_m": 0.3432,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 131072,
+      "provider_context_length": 128000,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": false,
+      "max_completion_tokens": 64000
+    },
+    {
+      "slug": "deepseek/deepseek-v3.2-exp",
+      "input_per_m": 0.27,
+      "output_per_m": 0.41,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 163840,
+      "provider_context_length": 163840,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": false,
+      "max_completion_tokens": 65536
+    },
+    {
+      "slug": "deepseek/deepseek-v4-flash",
+      "input_per_m": 0.09,
+      "output_per_m": 0.18,
+      "cache_read_per_m": 0.02,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": true,
+      "has_cache_write": false,
+      "context_length": 1048576,
+      "provider_context_length": 1000000,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": false,
+      "max_completion_tokens": 65536
+    },
+    {
+      "slug": "deepseek/deepseek-v4-pro",
+      "input_per_m": 0.435,
+      "output_per_m": 0.87,
+      "cache_read_per_m": 0.003625,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": true,
+      "has_cache_write": false,
+      "context_length": 1048576,
+      "provider_context_length": 1048576,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": false,
+      "max_completion_tokens": 384000
+    },
+    {
+      "slug": "minimax/minimax-m3",
+      "input_per_m": 0.3,
+      "output_per_m": 1.2,
+      "cache_read_per_m": 0.06,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": true,
+      "has_cache_write": false,
+      "context_length": 1048576,
+      "provider_context_length": 524288,
+      "has_vision": true,
+      "input_modalities": [
+        "text",
+        "image",
+        "video"
+      ],
+      "modality": "text+image+video->text",
+      "is_free": false,
+      "max_completion_tokens": 512000
+    },
+    {
+      "slug": "moonshotai/kimi-k2.6",
+      "input_per_m": 0.66,
+      "output_per_m": 3.41,
+      "cache_read_per_m": 0.144,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": true,
+      "has_cache_write": false,
+      "context_length": 262144,
+      "provider_context_length": 262144,
+      "has_vision": true,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "modality": "text+image->text",
+      "is_free": false,
+      "max_completion_tokens": 262144
+    },
+    {
+      "slug": "moonshotai/kimi-k2.7-code",
+      "input_per_m": 0.74,
+      "output_per_m": 3.5,
+      "cache_read_per_m": 0.15,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": true,
+      "has_cache_write": false,
+      "context_length": 262144,
+      "provider_context_length": 262144,
+      "has_vision": true,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "modality": "text+image->text",
+      "is_free": false,
+      "max_completion_tokens": 16384
+    },
+    {
+      "slug": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+      "input_per_m": 0.4,
+      "output_per_m": 0.4,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 131072,
+      "provider_context_length": 131072,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": false,
+      "max_completion_tokens": 16384
+    },
+    {
+      "slug": "nvidia/nemotron-3-nano-30b-a3b",
+      "input_per_m": 0.05,
+      "output_per_m": 0.2,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 262144,
+      "provider_context_length": 262144,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": false,
+      "max_completion_tokens": 228000
+    },
+    {
+      "slug": "nvidia/nemotron-3-nano-30b-a3b:free",
+      "input_per_m": 0.0,
+      "output_per_m": 0.0,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 256000,
+      "provider_context_length": 256000,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": true,
+      "max_completion_tokens": null
+    },
+    {
+      "slug": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "input_per_m": 0.0,
+      "output_per_m": 0.0,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 256000,
+      "provider_context_length": 256000,
+      "has_vision": true,
+      "input_modalities": [
+        "text",
+        "audio",
+        "image",
+        "video"
+      ],
+      "modality": "text+image+audio+video->text",
+      "is_free": true,
+      "max_completion_tokens": 65536
+    },
+    {
+      "slug": "nvidia/nemotron-3-super-120b-a12b",
+      "input_per_m": 0.09,
+      "output_per_m": 0.45,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 1000000,
+      "provider_context_length": 262144,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": false,
+      "max_completion_tokens": null
+    },
+    {
+      "slug": "nvidia/nemotron-3-super-120b-a12b:free",
+      "input_per_m": 0.0,
+      "output_per_m": 0.0,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 1000000,
+      "provider_context_length": 262144,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": true,
+      "max_completion_tokens": 262144
+    },
+    {
+      "slug": "nvidia/nemotron-3-ultra-550b-a55b",
+      "input_per_m": 0.5,
+      "output_per_m": 2.2,
+      "cache_read_per_m": 0.1,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": true,
+      "has_cache_write": false,
+      "context_length": 1000000,
+      "provider_context_length": 262144,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": false,
+      "max_completion_tokens": 16384
+    },
+    {
+      "slug": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "input_per_m": 0.0,
+      "output_per_m": 0.0,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 1000000,
+      "provider_context_length": 1000000,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": true,
+      "max_completion_tokens": 65536
+    },
+    {
+      "slug": "nvidia/nemotron-3.5-content-safety:free",
+      "input_per_m": 0.0,
+      "output_per_m": 0.0,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 128000,
+      "provider_context_length": 128000,
+      "has_vision": true,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "modality": "text+image->text",
+      "is_free": true,
+      "max_completion_tokens": 8192
+    },
+    {
+      "slug": "nvidia/nemotron-nano-12b-v2-vl:free",
+      "input_per_m": 0.0,
+      "output_per_m": 0.0,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 128000,
+      "provider_context_length": 128000,
+      "has_vision": true,
+      "input_modalities": [
+        "image",
+        "text",
+        "video"
+      ],
+      "modality": "text+image+video->text",
+      "is_free": true,
+      "max_completion_tokens": 128000
+    },
+    {
+      "slug": "nvidia/nemotron-nano-9b-v2:free",
+      "input_per_m": 0.0,
+      "output_per_m": 0.0,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 128000,
+      "provider_context_length": 128000,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": true,
+      "max_completion_tokens": null
+    },
+    {
+      "slug": "qwen/qwen3.5-flash-02-23",
+      "input_per_m": 0.065,
+      "output_per_m": 0.26,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 1000000,
+      "provider_context_length": 1000000,
+      "has_vision": true,
+      "input_modalities": [
+        "text",
+        "image",
+        "video"
+      ],
+      "modality": "text+image+video->text",
+      "is_free": false,
+      "max_completion_tokens": 65536
+    },
+    {
+      "slug": "qwen/qwen3.6-flash",
+      "input_per_m": 0.1875,
+      "output_per_m": 1.125,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.234375,
+      "has_cache_read": false,
+      "has_cache_write": true,
+      "context_length": 1000000,
+      "provider_context_length": 1000000,
+      "has_vision": true,
+      "input_modalities": [
+        "text",
+        "image",
+        "video"
+      ],
+      "modality": "text+image+video->text",
+      "is_free": false,
+      "max_completion_tokens": 65536
+    },
+    {
+      "slug": "qwen/qwen3.6-plus",
+      "input_per_m": 0.325,
+      "output_per_m": 1.95,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.40625,
+      "has_cache_read": false,
+      "has_cache_write": true,
+      "context_length": 1000000,
+      "provider_context_length": 1000000,
+      "has_vision": true,
+      "input_modalities": [
+        "text",
+        "image",
+        "video"
+      ],
+      "modality": "text+image+video->text",
+      "is_free": false,
+      "max_completion_tokens": 65536
+    },
+    {
+      "slug": "qwen/qwen3.7-max",
+      "input_per_m": 1.25,
+      "output_per_m": 3.75,
+      "cache_read_per_m": 0.25,
+      "cache_write_per_m": 1.5625,
+      "has_cache_read": true,
+      "has_cache_write": true,
+      "context_length": 1000000,
+      "provider_context_length": 1000000,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": false,
+      "max_completion_tokens": 65536
+    },
+    {
+      "slug": "qwen/qwen3.7-plus",
+      "input_per_m": 0.32,
+      "output_per_m": 1.28,
+      "cache_read_per_m": 0.064,
+      "cache_write_per_m": 0.4,
+      "has_cache_read": true,
+      "has_cache_write": true,
+      "context_length": 1000000,
+      "provider_context_length": 1000000,
+      "has_vision": true,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "modality": "text+image->text",
+      "is_free": false,
+      "max_completion_tokens": 65536
+    },
+    {
+      "slug": "xiaomi/mimo-v2.5",
+      "input_per_m": 0.105,
+      "output_per_m": 0.28,
+      "cache_read_per_m": 0.0,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": false,
+      "has_cache_write": false,
+      "context_length": 1048576,
+      "provider_context_length": 32000,
+      "has_vision": true,
+      "input_modalities": [
+        "text",
+        "audio",
+        "image",
+        "video"
+      ],
+      "modality": "text+image+audio+video->text",
+      "is_free": false,
+      "max_completion_tokens": null
+    },
+    {
+      "slug": "xiaomi/mimo-v2.5-pro",
+      "input_per_m": 0.435,
+      "output_per_m": 0.87,
+      "cache_read_per_m": 0.0036,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": true,
+      "has_cache_write": false,
+      "context_length": 1048576,
+      "provider_context_length": 1048576,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": false,
+      "max_completion_tokens": 131072
+    },
+    {
+      "slug": "z-ai/glm-5.1",
+      "input_per_m": 0.98,
+      "output_per_m": 3.08,
+      "cache_read_per_m": 0.182,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": true,
+      "has_cache_write": false,
+      "context_length": 202752,
+      "provider_context_length": 202752,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": false,
+      "max_completion_tokens": null
+    },
+    {
+      "slug": "z-ai/glm-5.2",
+      "input_per_m": 0.95,
+      "output_per_m": 3.0,
+      "cache_read_per_m": 0.18,
+      "cache_write_per_m": 0.0,
+      "has_cache_read": true,
+      "has_cache_write": false,
+      "context_length": 1048576,
+      "provider_context_length": 1048576,
+      "has_vision": false,
+      "input_modalities": [
+        "text"
+      ],
+      "modality": "text->text",
+      "is_free": false,
+      "max_completion_tokens": 32768
+    }
+  ],
+  "usage_profiles": {
+    "light": {
+      "name": "Light user (hobbyist)",
+      "sessions_per_day": 3,
+      "tokens_per_session_input": 15000,
+      "tokens_per_session_output": 3000,
+      "cache_hit_rate": 0.3,
+      "aux_offset": 0.5
+    },
+    "moderate": {
+      "name": "Moderate user (daily agent work)",
+      "sessions_per_day": 10,
+      "tokens_per_session_input": 30000,
+      "tokens_per_session_output": 8000,
+      "cache_hit_rate": 0.4,
+      "aux_offset": 0.6
+    },
+    "heavy": {
+      "name": "Heavy user (multi-agent, long sessions)",
+      "sessions_per_day": 25,
+      "tokens_per_session_input": 60000,
+      "tokens_per_session_output": 15000,
+      "cache_hit_rate": 0.5,
+      "aux_offset": 0.7
+    },
+    "extreme": {
+      "name": "Extreme (24/7 agent fleet)",
+      "sessions_per_day": 60,
+      "tokens_per_session_input": 100000,
+      "tokens_per_session_output": 25000,
+      "cache_hit_rate": 0.55,
+      "aux_offset": 0.75
+    }
+  }
+}

@@ -72,6 +72,44 @@ serve vram
 serve downscale
 ```
 
+## Dynamic Model Database
+
+The model universe, pricing, and benchmarks are stored in [`references/model-database.yaml`](references/model-database.yaml) — a single source of truth that is **auto-updated daily** by a research cron job.
+
+### How it works
+
+1. **Daily research cron** runs at 6am — scans OpenRouter, HuggingFace, Price Per Token, and LLMCheck for new models, pricing changes, and benchmark updates
+2. **Research script** (`scripts/research-models.py`) fetches live data and generates a report
+3. **Agent reviews** the report, updates `model-database.yaml` with new models or pricing changes
+4. **GitHub sync** (`scripts/sync-github.sh`) pushes updates to `SouthpawIN/sovth-config`
+5. **All turbofit users** can pull fresh data from GitHub: `git pull origin main` in their local sovth-config repo
+
+### What's in the database
+
+Each model entry includes:
+- **Pricing** across all providers (Nous, OpenRouter, NIM, direct API)
+- **Context window** and supported context tiers
+- **Vision capability** (text-only models must pair with vision aux)
+- **Benchmark scores** (MMLU, SWE-Verified, HumanEval, AIME — when available)
+- **Local model info** (GGUF repo, quants, size, archetypes, mmproj)
+- **Discovery date** and **last verified date**
+
+### Manual usage
+
+```bash
+# Run the research script manually
+python3 ~/.hermes/skills/turbofit/scripts/research-models.py
+
+# Check the latest report
+cat ~/.hermes/skills/turbofit/references/research-report.md
+
+# Sync to GitHub manually
+bash ~/.hermes/skills/turbofit/scripts/sync-github.sh
+
+# Pull fresh data from GitHub (for end users)
+cd ~/projects/sovth-config && git pull origin main
+```
+
 ## Opinionated defaults (turbofit v5)
 
 | Setting | Value | Source |
@@ -187,10 +225,13 @@ serve downscale                          # adapt to current VRAM pressure
 AUTO_CTX=131072 serve auto main          # override ctx target
 
 # Hardware-aware auto-detection:
-#   ≥24GB VRAM → local main + local aux
-#   8-24GB VRAM → API main + local aux (or local main + API aux)
-#   <8GB / no GPU → API main + API aux (free: DeepSeek V4 Pro + Kimi K2.6)
+#   ≥24GB VRAM → local main + local aux (Beefy)
+#   8-24GB VRAM → API main + free/cheap aux (Modest)
+#   <8GB / no GPU → API main + API aux, zero cost with free endpoints (Thin)
 # Use --api to force API mode, --free to restrict to free endpoints
+#
+# API pairings use the model universe from references/api-pairing-matrix.md
+# Gateway indicators: 🟢 NOUS+TG (full Tool Gateway), 🟡 NOUS+OR, 🟠 NOUS+NIM, ⚪ NIM (free, no TG)
 
 # Hermes routing
 serve main <alias> [--ui tui|dashboard|gateway|desktop|herm]
@@ -214,61 +255,87 @@ serve api use <rank|api_id> [main|aux]
 
 The auto-picker does NOT yet weight by current VRAM headroom. Use `serve downscale` to adapt after the fact, or run `serve vram` first to know.
 
-## How the scaling ladder works (v5.1 — 7 steps + 3 hardware tiers)
+## How the scaling ladder works (v5.1 — 3 hardware tiers, universal)
 
-The ladder now covers three hardware profiles, not just beefy GPU owners:
+The ladder covers three hardware profiles and is **hardware-neutral** — any user can plug in their GPU and get the right setup. See [`references/scaling-ladder.md`](references/scaling-ladder.md) for full step-by-step details.
 
 ### Hardware Tiers (auto-detected by `serve auto`)
 
-| Tier | VRAM | Recommendation | Default Main | Default Aux |
-|------|------|----------------|-------------|-------------|
-| **Beefy** | ≥24GB | Local main + local aux | Darwin Reason 28B | Carnice 35A3B |
-| **Modest** | 8-24GB | API main + local aux (or local main + API aux) | DeepSeek V4 Pro (API) | Carnice (cpu-moe) |
-| **Thin** | <8GB or no GPU | API main + API aux | DeepSeek V4 Pro (free, NIM) | Kimi K2.6 (free) |
+| Tier | VRAM | Typical GPUs | Default Main | Default Aux |
+|------|------|-------------|-------------|-------------|
+| **Beefy** | ≥24GB | Dual GPU or single 24GB+ | Local 27-28B dense (Q4) | Local 35B MoE 3B-active |
+| **Modest** | 8-24GB | RTX 3060/4060/4070 (8-16GB) | DeepSeek V4 Pro (API) | Qwen 3.6 Plus (OR free) or MiniMax M3 (NIM free) |
+| **Thin** | <8GB or no GPU | Integrated graphics, no GPU | DeepSeek V4 Flash (free NIM) | MiniMax M3 (free NIM) |
 
-`serve auto` detects which tier you're in by probing `nvidia-smi`. If no NVIDIA GPU is found, it defaults to **Thin** (API-only). Use `--api` to force API mode regardless.
+`serve auto` detects which tier you're in by probing `nvidia-smi`. If no NVIDIA GPU is found, it defaults to **Thin** (API-only). Use `--api` to force API mode, `--free` to restrict to free endpoints.
+
+### Context-Level Ladder (4 tiers)
+
+| Level | Context | Local VRAM (Beefy) | API Price Tier |
+|-------|---------|-------------------|---------------|
+| 1 | 1M | ~40GB+ (dual GPU) | Free-Budget |
+| 2 | 512K | ~28GB (pressured) | Budget-Mid |
+| 3 | 262K | ~16GB (single GPU) | Mid-Premium |
+| 4 | 132K | ~8GB (survival) | Budget |
 
 ### Beefy-tier scaling ladder (7 steps, triggered by `serve downscale`)
 
-Full ladder defined in `curated.yaml` under `scaling_ladder.steps`:
+Uses model **archetypes** — users register their own local models that match the archetype. `serve recommend` scans the catalog and picks the best fit.
 
 ```
-Step  1: Ideal          — Darwin Reason 28B @ 1M + Carnice 35A3B @ 1M aux (dual GPU)
-Step  2: Mild pressure  — Offload MoE experts from Carnice to CPU (--cpu-moe-4), ~27 tok/s
-Step  3: Moderate       — Drop both models' context to 128K
-Step  4: High pressure  — Drop Carnice entirely, route aux to API (Kimi K2.6 free)
-Step  5: Swap dense     — Swap main to Prism Eagle 27B (14GB, 121 tok/s, Mamba2+GDN hybrid)
-Step  6: Apex MoE       — Swap to Darwin Apex 35A3B MoE + CPU-offload experts (--cpu-moe-4)
+Step  1: Ideal          — 27-28B dense (Q4) + 35B MoE (3B active) aux, both @ 1M
+Step  2: Mild pressure  — Offload aux MoE experts to CPU (--cpu-moe), ~10 tok/s
+Step  3: Moderate       — Drop both models' context to 512K
+Step  4: High pressure  — Drop local aux, route aux to API (free vision model)
+Step  5: Swap main       — Swap to 27B hybrid/Mamba (lighter, ~14 GB)
+Step  6: MoE main        — Swap to 35B MoE 3B-active main + API aux @ 132K
 Step  7: API-only       — No local serving viable. API main + API aux. Zero cost with free endpoints.
 ```
 
-Each step preserves maximum intelligence while respecting VRAM. The cascade is the **hand-picked sequence for this system** — not a generic "shrink everything" rule. Never auto-skip steps based on free VRAM alone; always present the user with the ladder and let them choose, or use `serve downscale` which walks it conservatively.
+Each step preserves maximum intelligence while respecting VRAM. Never auto-skip steps based on free VRAM alone — present the ladder and let users choose, or use `serve downscale` which walks it conservatively.
+
+### API Pairing Matrix
+
+For API-only users (Modest/Thin tiers) or Beefy API fallback, see [`references/api-pairing-matrix.md`](references/api-pairing-matrix.md) for the complete pairing matrix — all model combinations across 4 context tiers and 5 price tiers, with Provider Gateway indicators showing whether the Nous Tool Gateway is active.
+
+**Gateway indicators:**
+- 🟢 **NOUS+TG** — Both through Nous → Tool Gateway active
+- 🟡 **NOUS+OR** — Main through Nous (TG), aux through OpenRouter (10% bonus)
+- 🟠 **NOUS+NIM** — Main through Nous (TG), aux through NIM (free)
+- ⚪ **NIM** — Both through NIM (free, no TG)
 
 ### API model rankings (by volume performance)
 
-**Main API (ranked by reasoning/coding quality, free first):**
+**Main API — text-only (must pair with vision aux), ranked by reasoning quality:**
 
-| Tier | Model | Vision | Cost | Why |
-|------|-------|--------|------|-----|
-| S | DeepSeek V4 Pro | No | FREE (NIM) | Best open reasoning + coding, 1M ctx |
-| S | Kimi K2.6 | Yes | FREE (OpenRouter) | Strong coding, vision, 1M ctx |
-| S | GLM 5.1 | No | Paid | Agentic + long-horizon |
-| S | Qwen 3.7 Max | No | Paid | Qwen frontier, 1M ctx |
-| SF | DeepSeek V4 Flash | No | FREE (NIM) | Fast reasoning, best value |
-| SF | MiniMax M3 | Yes | FREE (NIM) | Vision + 1M ctx |
-| SF | Nemotron Ultra | No | FREE (NIM) | 550B MoE, reasoning budget |
-| F | DeepSeek V4 Flash | No | $0.10/$0.20 | Cheapest paid main |
-| F | Qwen 3.5 Flash | Yes | $0.065/$0.26 | Cheapest vision main |
+| Tier | Model | Vision | Cost | Context | Through Nous? |
+|------|-------|--------|------|---------|---------------|
+| S | GLM 5.2 | No | $0.95/$3.00 (OR) / $1.40/$4.40 (Z.AI) | 1M | ✅ `z-ai/glm-5.2` |
+| S | Qwen 3.7 MAX | No | $1.25/$3.75 | 1M | ✅ `qwen/qwen3.7-max` |
+| S | DeepSeek V4 Pro | No | FREE (NIM) / $0.435/$0.87 (DS) | 1M | ✅ `deepseek/deepseek-v4-pro` |
+| SF | DeepSeek V4 Flash | No | FREE (NIM) / $0.09/$0.18 (OR) | 1M | ✅ `deepseek/deepseek-v4-flash` |
+| SF | Mimo V2.5 Pro | No | ~$1.00/$3.00 | 1M | ✅ `xiaomi/mimo-v2.5-pro` |
 
-**Aux API (ranked by vision > speed > cost, free first):**
+**Vision-capable models (main or aux):**
 
-| Tier | Model | Vision | Cost | Why |
-|------|-------|--------|------|-----|
-| SD | Kimi K2.6 | Yes | FREE | Best free aux — vision + reasoning |
-| SD | MiniMax M3 | Yes | FREE (NIM) | Vision + 1M ctx |
-| SD | Step 3.7 Flash | Yes | FREE | Fast, vision |
-| SD | DeepSeek V4 Flash | No | FREE (NIM) | Fast reasoning (no vision — pair with vision main) |
-| F | Qwen 3.5 Flash | Yes | $0.065/$0.26 | Cheapest paid vision aux |
+| Tier | Model | Cost | Context | Through Nous? |
+|------|-------|------|---------|---------------|
+| SF | MiniMax M3 | FREE (NIM) / ~$0.30/$1.20 | 1M | ✅ `minimaxai/minimax-m3` |
+| SF | Qwen 3.7 Plus | $0.32/$1.28 (OR) | 1M | ✅ `qwen/qwen3.7-plus` |
+| F | Mimo V2.5 | $0.105/$0.28 | 1M | ✅ `xiaomi/mimo-v2.5` |
+| F | Qwen 3.6 Plus | FREE (OR preview) | 1M | ❌ OR only |
+| SD | Qwen 3.5 Flash | $0.065/$0.26 | 1M | ✅ `qwen/qwen3.5-flash-02-23` |
+
+**Aux API — ranked by vision > speed > cost, free first:**
+
+| Tier | Model | Vision | Cost | Context |
+|------|-------|--------|------|---------|
+| F | Qwen 3.6 Plus | Yes | FREE (OR) | 1M |
+| SF | MiniMax M3 | Yes | FREE (NIM) | 1M |
+| F | Mimo V2.5 | Yes | $0.105/$0.28 | 1M |
+| SD | Qwen 3.5 Flash | Yes | $0.065/$0.26 | 1M |
+
+See [`references/api-pairing-matrix.md`](references/api-pairing-matrix.md) for optimal main+aux pairings at each price point and context level.
 
 ## Pitfalls
 
@@ -279,7 +346,7 @@ Each step preserves maximum intelligence while respecting VRAM. The cascade is t
 - **`--main-gpu` must be 0 when `CUDA_VISIBLE_DEVICES` is set.** The llama-proxy sets `CUDA_VISIBLE_DEVICES=<gpu_id>` which makes only one GPU visible to llama-server. But the catalog's `--main-gpu N` flag uses the physical GPU index. When `CUDA_VISIBLE_DEVICES=1` is set, `--main-gpu 1` is invalid (only device 0 exists). Fixed in llama-proxy by rewriting `--main-gpu` to 0 in the extra args before spawning.
 - **`LLAMA_LIB_DIR` must be set in the systemd service, not just `LD_LIBRARY_PATH`.** The llama-proxy reads `LLAMA_LIB_DIR` (not `LD_LIBRARY_PATH`) to set the library path for the spawned backend process. If only `LD_LIBRARY_PATH` is set, the proxy uses its default (stock llama.cpp path) and the atomic fork's symbols aren't found.
 - **`--cpu-moe-draft` and `--mmproj-draft` are not supported by the current atomic fork.** The `generate_string` function was adding these automatically for MoE models with spec decoding. Removed — the draft model shares the same GGUF, so `--cpu-moe` applies to both automatically.
-- **Carnice mmproj-BF16.gguf crashes the atomic fork's clip loader.** The 35B-A3B mmproj file causes `ggml_backend_buffer_set_usage` abort in `clip_model_loader::load_tensors`. Vision disabled for Carnice until the atomic fork is fixed or stock llama.cpp is used.
+- **Atomic fork clip loader crashes on 35B-A3B mmproj.** The atomic fork's `clip_model_loader::load_tensors` aborts on `ggml_backend_buffer_set_usage` when loading the 35B-A3B mmproj (n_embd=2048). Stock llama.cpp loads it fine. Fix: remove the `binary:` field from the catalog entry so it uses stock llama-server, and switch presets from `turbo2-kv` to `q8-kv` (stock doesn't support turbo cache types). Also remove `nextn`/`draft-mtp` presets if GPU VRAM is tight — the draft model loads a second copy of the GGUF, doubling VRAM. Stock supports `draft-mtp` but not `nextn`.
 
 - **Systemd services override turbofit.** If legacy `llama-*.service` or `omni-va.service` units are running, they will hold ports and restart killed processes, silently replacing turbofit-managed launches. Before `serve <alias>`, run `systemctl --user list-units | grep llama` and stop+disable any conflicting units on the target port.
 - **YAML duplicate keys silently overwrite.** When editing `models.yaml`, never paste a new entry that shares keys with the one above it (e.g. two `role:` lines, two `mmproj:` lines). YAML last-key-wins means the earlier value is silently discarded. Always verify with `grep` after editing.
@@ -434,9 +501,15 @@ Extend the four `declare -A LAUNCHER_*` arrays at the top, add cases in `install
 
 ## See also
 
-- `references/scaling-ladder.md` — full 7-step polite VRAM scaling ladder
-- `references/curated-lineup.md` — the hand-picked cascade with per-model rationale
+- `references/model-database.yaml` — **dynamic source of truth** for all model specs, pricing, benchmarks. Auto-updated daily via research cron, synced to GitHub.
+- `references/api-pairing-matrix.md` — complete main+aux pairing matrix by price tier × context level, with gateway indicators
+- `references/binary-selection.md` — atomic fork vs stock decision tree (which binary for which model, VRAM considerations for spec decoding)
+- `references/scaling-ladder.md` — full scaling ladders for all three hardware tiers (Beefy 7-step, Modest 5-step, Thin 4-step)
+- `references/curated-lineup.md` — the curated picks (local archetypes + API models, pairing rules)
 - `references/api-model-rankings.md` — API main + aux rankings by volume performance, hardware tier mapping
+- `references/api-tier-rankings.md` — quick-reference API tier rankings with provider details
+- `scripts/research-models.py` — daily research script (scans OpenRouter, HuggingFace, Price Per Token, LLMCheck)
+- `scripts/sync-github.sh` — GitHub sync script (pushes to SouthpawIN/sovth-config)
 - `southpaw-models` — curated lineup rationale (Darwin / Prism / Carnice / Carwin / Qwopus)
 - `local-llm-fleet-management` — legacy catalog mechanics (now subsumed by turbofit)
 - `llama-cpp` — llama.cpp build + GGUF discovery
@@ -449,3 +522,5 @@ Extend the four `declare -A LAUNCHER_*` arrays at the top, add cases in `install
 2. **tok/s varies by GPU.** Catalog `tok_s_target` values are measured locally — mark them as approximate. Use relative ranking (tier priority > vision bonus > speed bonus) rather than absolute claims.
 3. **All models get vision.** Every local Qwen-family model can use the same `mmproj-F32.gguf` via symlink. Set `vision: true` and `mmproj:` in every catalog entry. One mmproj file serves the entire fleet.
 4. **Model picks ARE the cascade.** The slot-ordered picks are the hand-chosen scale-down sequence — not generic examples. When building recommendations, preserve the actual model aliases and their tier assignments.
+5. **No workarounds — fix the root cause.** When a backend fails to load, fix the binary, flags, or catalog entry. Do NOT disable features as a workaround. Do NOT route around turbofit to another backend. The whole point of turbofit is that ALL local model servers are managed through it.
+6. **If a model can't load with one binary, try the other.** The atomic fork has turbo KV cache and NextN but crashes on 35B-A3B mmproj. Stock has q8 KV and draft-mtp but no turbo/nextn. Use whichever binary makes the model work. See `references/binary-selection.md` for the decision tree.
