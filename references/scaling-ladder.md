@@ -82,7 +82,7 @@ Ctx stays at 128K. Spec decoding (draft-mtp) stays active.
 
 ### Step 6: Extreme — Swap to Darwin Apex 36B Opus APEX MoE
 
-User is still filling the GPU. Prism Eagle isn't enough. Swap to the only MoE Chris will sometimes use as main:
+User is still filling the GPU. Prism Eagle isn't enough. Swap to the only MoE recommended for main:
 
 - **main:** Darwin Apex 36B Opus APEX (MoE, 3B active per token, ~17 GB)
 
@@ -120,7 +120,7 @@ Steps 1-4 only touch aux. Main stays at Darwin 28B until VRAM truly forces a swa
 
 ### MoE for headroom, not size
 
-Darwin Apex (35A3B MoE) is only 3B-active per token. It's smaller than a dense 27B under load but has more parameters available. **It's the only MoE Chris recommends for main** because:
+Darwin Apex (35A3B MoE) is only 3B-active per token. It's smaller than a dense 27B under load but has more parameters available. **It's the only MoE recommended for main** because:
 - MoE expert offload is a free tier-downgrade
 - Spec decoding (NextN) gives ~107 tok/s on par with dense 27B
 - The ladder prefers MoE for the auto-pick when VRAM is borderline

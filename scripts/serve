@@ -686,6 +686,8 @@ stop_all() {
 
 list_running() {
     echo "Running servers:"
+    local found=0
+    # PID-file managed (direct serve launches)
     if [ -d "${TURBOFIT_ROOT}/pid" ]; then
         for pid_file in "${TURBOFIT_ROOT}/pid"/*; do
             [ -f "${pid_file}" ] || continue
@@ -695,18 +697,31 @@ list_running() {
             port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo "?")
             if kill -0 "${pid}" 2>/dev/null; then
                 echo "  ${alias}: pid ${pid}, :${port}"
+                found=1
             else
                 rm -f "${pid_file}"
             fi
         done
     fi
+    # systemd-managed daemons (turbofit-<alias>.service)
+    while IFS= read -r svc; do
+        local alias
+        alias=$(echo "$svc" | sed 's/turbofit-//; s/\.service//')
+        local port
+        port=$(systemctl --user cat "turbofit-${alias}.service" 2>/dev/null | grep '^ExecStart=' | grep -oE '[0-9]+' | head -1)
+        local state
+        state=$(systemctl --user is-active "turbofit-${alias}.service" 2>/dev/null)
+        echo "  ${alias}: systemd (${state}), :${port:-?}"
+        found=1
+    done < <(systemctl --user list-units --all --no-legend 2>/dev/null | grep -o 'turbofit-[^ ]*\.service' | sort -u)
+    [ "$found" -eq 0 ] && echo "  (none)"
     # Also scan ports for rogue llama-servers (started manually outside turbofit)
     echo ""
     echo "Detected llama-server processes on any port:"
     for p in $(ss -ltn 2>/dev/null | awk '{print $4}' | grep -oE ':[0-9]+' | tr -d ':' | sort -nu); do
-        if curl -sf "http://127.0.0.1:${p}/v1/models" >/dev/null 2>&1; then
+        if curl -sf --max-time 2 "http://127.0.0.1:${p}/v1/models" >/dev/null 2>&1; then
             local model_id
-            model_id=$(curl -sf "http://127.0.0.1:${p}/v1/models" 2>/dev/null \
+            model_id=$(curl -sf --max-time 2 "http://127.0.0.1:${p}/v1/models" 2>/dev/null \
                 | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['data'][0]['id'] if d.get('data') else '?')" 2>/dev/null || echo "?")
             echo "  :${p}  →  ${model_id}"
         fi
@@ -833,6 +848,66 @@ print(json.dumps({"pick": None, "reason": "no candidate met constraints in any s
 PYEOF
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# API model picker — reads curated.yaml API slots, ranks by tier
+# ─────────────────────────────────────────────────────────────────────────────
+
+pick_api_model() {
+    local role="${1:-main}"
+    local want_vision="${2:-false}"
+    local prefer_free="${3:-false}"
+    python3 - "$role" "$want_vision" "$prefer_free" <<'PYEOF'
+import sys, os, yaml, json
+
+role = sys.argv[1]
+want_vision = sys.argv[2] == "true"
+prefer_free = sys.argv[3] == "true"
+
+curated_path = os.path.expanduser("~/.config/turbofit/curated.yaml")
+if not os.path.exists(curated_path):
+    print(json.dumps({"error": "curated.yaml missing"}))
+    sys.exit(1)
+
+with open(curated_path) as f:
+    curated = yaml.safe_load(f) or {}
+
+slot_key = "main_api" if role == "main" else "aux_api"
+slot_data = curated.get("slots", {}).get(slot_key, {})
+
+tier_rank = {"s": 0, "sf": 1, "sd": 2, "f": 3, "c": 4}
+entries = []
+for tier_name in ["s", "sf", "sd", "f", "c"]:
+    for idx, e in enumerate(slot_data.get(tier_name, [])):
+        entries.append((tier_rank[tier_name], idx, e))
+
+entries.sort(key=lambda x: (x[0], x[1]))
+
+for tr, idx, e in entries:
+    # Vision filter
+    if want_vision and not e.get("vision", False):
+        continue
+    # Free filter
+    if prefer_free and e.get("free") is False:
+        continue
+    print(json.dumps({
+        "type": "api",
+        "slot": slot_key,
+        "tier": ["s","sf","sd","f","c"][tr],
+        "alias": e.get("alias"),
+        "provider": e.get("provider"),
+        "model_id": e.get("model_id"),
+        "vision": e.get("vision", False),
+        "free": e.get("free", False),
+        "price_input": e.get("price_input"),
+        "price_output": e.get("price_output"),
+        "reason": f"{slot_key} tier={['s','sf','sd','f','c'][tr]} ({e.get('why','')[:80]})",
+    }))
+    sys.exit(0)
+
+print(json.dumps({"error": f"no API candidate met constraints for {role}"}))
+PYEOF
+}
+
 wire_hermes_api_main() {
     local model_id="$1"
     local base_url="$2"
@@ -895,17 +970,75 @@ serve_auto() {
     local role="main"
     local want_vision="false"
     local prefer_free="false"
+    local force_api="false"
 
-    # Parse: serve_auto [main|aux] [--vision] [--free] [--ui ...]
+    # Parse: serve_auto [main|aux] [--vision] [--free] [--api] [--ui ...]
     while [ $# -gt 0 ]; do
         case "$1" in
             main|aux) role="$1"; shift ;;
             --vision) want_vision="true"; shift ;;
             --free)   prefer_free="true"; shift ;;
+            --api)    force_api="true"; shift ;;
             *) shift ;;
         esac
     done
 
+    # If --api flag or no NVIDIA GPU detected, skip local and go straight to API
+    if [ "${force_api}" = "true" ]; then
+        echo "→ API mode forced. Skipping local catalog."
+    elif ! command -v nvidia-smi >/dev/null 2>&1; then
+        echo "→ No NVIDIA GPU detected. Defaulting to API mode."
+        force_api="true"
+    else
+        # Check VRAM — if <8GB free, suggest API
+        local vram_json
+        vram_json=$(probe_vram 2>/dev/null || echo '{"free_GB":0}')
+        local free_gb
+        free_gb=$(echo "${vram_json}" | python3 -c "import sys,json; print(json.loads(sys.stdin.read()).get('free_GB',0))" 2>/dev/null || echo "0")
+        local total_gb
+        total_gb=$(echo "${vram_json}" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print(round(d.get('total_MiB',0)/1024,1))" 2>/dev/null || echo "0")
+
+        if awk "BEGIN{exit !(${total_gb} < 8)}"; then
+            echo "→ GPU VRAM too small (${total_gb}GB total). Defaulting to API mode."
+            echo "  Recommended: API main (DeepSeek V4 Pro, free on NIM) + API aux (Kimi K2.6, free)"
+            force_api="true"
+        elif awk "BEGIN{exit !(${total_gb} < 16)}"; then
+            echo "→ Modest GPU (${total_gb}GB). Can run local aux with cpu-moe, or API main + local aux."
+            echo "  Recommended: API main (DeepSeek V4 Pro) + local aux (Carnice with cpu-moe)"
+            echo "  Alternative: Small local main (Prism Eagle 14GB) + API aux"
+        elif [ "${free_gb}" != "?" ] && awk "BEGIN{exit !(${free_gb} < 8)}"; then
+            echo "→ Tight VRAM (${free_gb}GB free of ${total_gb}GB). Consider API aux to free space."
+        fi
+    fi
+
+    # If API mode, pick from curated API slots directly
+    if [ "${force_api}" = "true" ]; then
+        local pick_json
+        pick_json=$(pick_api_model "${role}" "${want_vision}" "${prefer_free}")
+        local pick_provider pick_model_id pick_alias pick_base_url pick_key_env
+        pick_provider=$(echo "${pick_json}" | python3 -c "import sys,json; print(json.loads(sys.stdin.read()).get('provider',''))" 2>/dev/null || echo "")
+        pick_model_id=$(echo "${pick_json}"  | python3 -c "import sys,json; print(json.loads(sys.stdin.read()).get('model_id',''))" 2>/dev/null || echo "")
+        pick_alias=$(echo "${pick_json}"     | python3 -c "import sys,json; print(json.loads(sys.stdin.read()).get('alias',''))" 2>/dev/null || echo "")
+        local pick_reason
+        pick_reason=$(echo "${pick_json}"    | python3 -c "import sys,json; print(json.loads(sys.stdin.read()).get('reason',''))" 2>/dev/null || echo "")
+
+        pick_base_url="${API_BASE_URL[${pick_provider}]:-https://openrouter.ai/api/v1}"
+        pick_key_env="${API_KEY_ENV[${pick_provider}]:-OPENROUTER_API_KEY}"
+
+        echo "→ Auto-pick for ${role} (API): ${pick_alias}"
+        echo "  Provider: ${pick_provider}  Model: ${pick_model_id}"
+        echo "  ${pick_reason}"
+        echo ""
+
+        if [ "${role}" = "main" ]; then
+            wire_hermes_api_main "${pick_model_id}" "${pick_base_url}" "${pick_key_env}"
+        else
+            wire_hermes_api_aux "${pick_model_id}" "${pick_base_url}" "${pick_key_env}"
+        fi
+        return 0
+    fi
+
+    # Local path — use curated.yaml
     local pick_json
     pick_json=$(pick_from_curated "${role}" "${want_vision}" "${prefer_free}")
     local pick_type
@@ -986,10 +1119,10 @@ print(cfg.get('model', {}).get('default', '') or '')
 
     # Heuristic ladder (simplified — full ladder in serve auto):
     if [ "${free_gb}" != "?" ] && awk "BEGIN{exit !(${free_gb} < 4)}"; then
-        echo "⚠ Critical VRAM (<4GB). Stop aux, swap to OmniStep-SFT-8B, CPU-only."
-        stop_all
-        serve_auto main
-        return $?
+        echo "⚠ Critical VRAM (<4GB). Consider API-only mode."
+        echo "  Run: serve auto main --api --free && serve auto aux --free"
+        echo "  Free option: DeepSeek V4 Pro (NIM) + Kimi K2.6 — zero cost, strong performance."
+        return 0
     fi
     if [ "${free_gb}" != "?" ] && awk "BEGIN{exit !(${free_gb} < 8)}"; then
         echo "⚠ Tight VRAM (<8GB). Stop aux, shrink main ctx to 64K."
@@ -1220,7 +1353,7 @@ start_ui() {
         dashboard) exec hermes dashboard ;;
         desktop)   exec hermes desktop ;;
         gateway)   exec hermes gateway run ;;
-        herm)
+        herm|herm_main|herm_aux)
             exec herm
             ;;
         *)
@@ -1234,6 +1367,24 @@ start_ui() {
 serve_main() {
     local alias="$1"
     local ui="${UI:-tui}"
+    # Check if a systemd daemon is already running for this alias
+    if systemctl --user is-active "turbofit-${alias}.service" >/dev/null 2>&1; then
+        local port
+        port=$(systemctl --user cat "turbofit-${alias}.service" 2>/dev/null | grep '^ExecStart=' | grep -oE '[0-9]+' | head -1)
+        echo "✓ ${alias} already running as systemd daemon on :${port}"
+        set_hermes_main "${alias}" "http://127.0.0.1:${port}/v1"
+        start_ui "${ui}"
+        return 0
+    fi
+    # Check if a PID-file managed server is already running
+    if [ -f "${TURBOFIT_ROOT}/pid/${alias}" ] && kill -0 "$(cat "${TURBOFIT_ROOT}/pid/${alias}")" 2>/dev/null; then
+        local port
+        port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo 8080)
+        echo "✓ ${alias} already running (pid $(cat "${TURBOFIT_ROOT}/pid/${alias}")) on :${port}"
+        set_hermes_main "${alias}" "http://127.0.0.1:${port}/v1"
+        start_ui "${ui}"
+        return 0
+    fi
     launch_server "${alias}" || return 1
     local port
     port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo 8080)
@@ -1244,6 +1395,24 @@ serve_main() {
 serve_aux() {
     local alias="$1"
     local ui="${UI:-tui}"
+    # Check if a systemd daemon is already running for this alias
+    if systemctl --user is-active "turbofit-${alias}.service" >/dev/null 2>&1; then
+        local port
+        port=$(systemctl --user cat "turbofit-${alias}.service" 2>/dev/null | grep '^ExecStart=' | grep -oE '[0-9]+' | head -1)
+        echo "✓ ${alias} already running as systemd daemon on :${port}"
+        set_hermes_aux "${alias}" "http://127.0.0.1:${port}/v1"
+        start_ui "${ui}"
+        return 0
+    fi
+    # Check if a PID-file managed server is already running
+    if [ -f "${TURBOFIT_ROOT}/pid/${alias}" ] && kill -0 "$(cat "${TURBOFIT_ROOT}/pid/${alias}")" 2>/dev/null; then
+        local port
+        port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo 8080)
+        echo "✓ ${alias} already running (pid $(cat "${TURBOFIT_ROOT}/pid/${alias}")) on :${port}"
+        set_hermes_aux "${alias}" "http://127.0.0.1:${port}/v1"
+        start_ui "${ui}"
+        return 0
+    fi
     launch_server "${alias}" || return 1
     local port
     port=$(cat "${TURBOFIT_ROOT}/port/${alias}" 2>/dev/null || echo 8080)
@@ -1255,10 +1424,427 @@ serve_herm() {
     local first="${1:-}"
     if [ "${first}" = "aux" ]; then
         shift
-        UI="herm_aux" serve_aux "${1:-}"
-    else
+        local aux_alias="${1:-}"
+        if [ -z "${aux_alias}" ]; then
+            # No alias given — auto-pick aux, but use herm UI
+            local pick_json
+            pick_json=$(pick_from_curated "aux" "false" "false" 2>/dev/null)
+            aux_alias=$(echo "${pick_json}" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print(d.get('alias',''))" 2>/dev/null || echo "")
+            if [ -z "${aux_alias}" ]; then
+                echo "✗ No aux model found. Usage: serve herm [aux] [alias]"
+                return 1
+            fi
+            echo "→ Auto-pick for aux: ${aux_alias}"
+        fi
+        UI="herm_aux" serve_aux "${aux_alias}"
+    elif [ -n "${first}" ]; then
         UI="herm_main" serve_main "${first}"
+    else
+        # No args — auto-pick main and launch herm TUI
+        local pick_json
+        pick_json=$(pick_from_curated "main" "false" "false" 2>/dev/null)
+        local main_alias
+        main_alias=$(echo "${pick_json}" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print(d.get('alias',''))" 2>/dev/null || echo "")
+        if [ -z "${main_alias}" ]; then
+            echo "✗ No main model found. Usage: serve herm [alias]"
+            return 1
+        fi
+        echo "→ Auto-pick for main: ${main_alias}"
+        UI="herm_main" serve_main "${main_alias}"
     fi
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Daemon management — systemd user services with wake-on-ping proxy
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Consolidates omni-va.service, llama-proxy-main.service, llama-darwin.service,
+# model-rotation.service into turbofit-managed daemon services.
+#
+# Each daemon is a systemd user service named turbofit-<alias>.service that:
+#   - Uses llama-proxy (wake-on-ping) to auto-spawn the backend on first request
+#   - Idle-kills the backend after IDLE_KILL_SECS (default 1800 = 30 min)
+#   - Auto-heals on crash (Restart=on-failure + clean-exit-0 pattern)
+#   - Starts at boot (enabled in default.target.wants)
+#   - Reads all flags from the catalog entry automatically
+#
+# Usage:
+#   serve daemon install <alias>     Generate + enable systemd service for catalog model
+#   serve daemon remove <alias>     Stop + disable + remove systemd service
+#   serve daemon start <alias>      Start the daemon (proxy only — backend wakes on ping)
+#   serve daemon stop <alias>       Stop the daemon (also kills backend, frees VRAM)
+#   serve daemon restart <alias>    Stop + start
+#   serve daemon status [alias]     Show status of one or all turbofit daemons
+#   serve daemon list               List all turbofit-managed daemon services
+#   serve daemon migrate <legacy>   Migrate a legacy service to turbofit daemon
+
+DAEMON_UNIT_DIR="${HOME}/.config/systemd/user"
+LLAMA_PROXY_BIN="${HOME}/bin/llama-proxy"
+
+# Resolve the full extra args string for a daemon from the catalog entry
+# This produces the value for LLAMA_SERVER_EXTRA_ARGS
+daemon_extra_args() {
+    local alias="$1"
+    python3 - "$alias" <<'PYEOF'
+import sys, os, yaml, json
+
+alias = sys.argv[1]
+catalog = os.path.expanduser("~/.config/turbofit/models.yaml")
+if not os.path.exists(catalog):
+    sys.exit(1)
+
+with open(catalog) as f:
+    cfg = yaml.safe_load(f) or {}
+models = cfg.get("models", {})
+
+# Resolve alias
+m = models.get(alias)
+if not m:
+    for canonical, info in models.items():
+        if alias in (info.get("aliases") or []):
+            m = info; alias = canonical; break
+if not m:
+    sys.exit(1)
+
+# Build extra args
+args = []
+
+# 1) Presets
+preset_map = {
+    "nextn": ["--spec-type", "nextn", "--draft-block-size", "3"],
+    "nextn-tight": ["--spec-type", "nextn", "--draft-block-size", "2"],
+    "draft-mtp": ["--spec-type", "draft-mtp"],
+    "draft-mtp-tight": ["--spec-type", "draft-mtp", "--draft-block-size", "2"],
+    "turbo4-kv": ["-ctk", "turbo4", "-ctv", "turbo4"],
+    "turbo3-kv": ["-ctk", "turbo3", "-ctv", "turbo3"],
+    "turbo2-kv": ["-ctk", "turbo2", "-ctv", "turbo2"],
+    "q8-kv": ["-ctk", "q8_0", "-ctv", "q8_0"],
+    "q4-kv": ["-ctk", "q4_0", "-ctv", "q4_0"],
+    "no-mmap": ["--no-mmap"],
+    "split-none": ["--split-mode", "none"],
+    "mlock": ["--mlock"],
+    "parallel-4": ["--parallel", "4"],
+    "parallel-2": ["--parallel", "2"],
+    "parallel-1": ["--parallel", "1"],
+    "cpu-moe-2": ["--n-cpu-moe", "2"],
+    "cpu-moe-4": ["--n-cpu-moe", "4"],
+    "cpu-moe-8": ["--n-cpu-moe", "8"],
+}
+
+for p in (m.get("presets") or []):
+    if p in preset_map:
+        args.extend(preset_map[p])
+
+# 2) Extra args
+for a in (m.get("extra_args") or []):
+    args.append(str(a))
+
+# 3) GPU selection → --main-gpu
+gpu = m.get("gpu")
+if gpu is not None:
+    args.extend(["--main-gpu", str(gpu)])
+
+# 4) mmproj
+if m.get("mmproj"):
+    args.extend(["--mmproj", m["mmproj"]])
+
+# 5) Context (enforce 64K floor)
+ctx = m.get("ctx", 65536)
+if ctx < 65536:
+    ctx = 65536
+args.extend(["-c", str(ctx)])
+
+# 6) Flash attention
+args.extend(["--flash-attn", "on"])
+
+# 7) model-draft for spec decoding (if nextn/draft-mtp preset, use same GGUF)
+presets = m.get("presets") or []
+has_spec = any(p in presets for p in ["nextn", "nextn-tight", "draft-mtp", "draft-mtp-tight"])
+if has_spec:
+    model_path = m.get("path", "")
+    args.extend(["--model-draft", model_path])
+    # Note: --cpu-moe-draft and --mmproj-draft are not supported in the current
+    # atomic fork. The draft model shares the same GGUF so cpu-moe applies
+    # automatically if set on the main model.
+
+# 9) Parallel override
+if m.get("parallel"):
+    args.extend(["--parallel", str(m["parallel"])])
+
+# Print as single string (space-joined)
+print(" ".join(args))
+PYEOF
+}
+
+# Generate a systemd user service unit for a catalog alias
+daemon_install() {
+    local alias="$1"
+    shift || true
+
+    # Parse optional flags
+    local idle_secs="${DAEMON_IDLE_SECS:-1800}"
+    local startup_timeout="${DAEMON_STARTUP_TIMEOUT:-900}"
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --idle)      idle_secs="$2"; shift 2 ;;
+            --timeout)   startup_timeout="$2"; shift 2 ;;
+            *) shift ;;
+        esac
+    done
+
+    # Resolve alias from catalog
+    local info
+    info=$(alias_info "${alias}" 2>/dev/null)
+    [ -z "${info}" ] && { echo "✗ Unknown alias: ${alias}"; return 1; }
+
+    local launcher path port ctx
+    launcher=$(echo "${info}" | awk '{print $1}')
+    path=$(echo "${info}"     | awk '{print $2}')
+    port=$(echo "${info}"     | awk '{print $3}')
+    ctx=$(echo "${info}"      | awk '{print $4}')
+
+    # Only llama-cpp supports wake-on-ping proxy
+    if [ "${launcher}" != "llama-cpp" ]; then
+        echo "✗ Daemon mode only supports llama-cpp launcher (got: ${launcher})"
+        return 1
+    fi
+
+    # Get full model info
+    local catalog_json
+    catalog_json=$(alias_full "${alias}" 2>/dev/null || true)
+    local binary=""
+    local gpu=0
+    local description=""
+    if [ -n "${catalog_json}" ]; then
+        binary=$(echo "${catalog_json}" | python3 -c "import sys,json; print(json.loads(sys.stdin.read()).get('binary','') or '')" 2>/dev/null || echo "")
+        gpu=$(echo "${catalog_json}" | python3 -c "import sys,json; print(json.loads(sys.stdin.read()).get('gpu',0))" 2>/dev/null || echo "0")
+        description=$(echo "${catalog_json}" | python3 -c "import sys,json; print((json.loads(sys.stdin.read()).get('description','') or '').replace(chr(10),' ')[:120])" 2>/dev/null || echo "")
+    fi
+    [ -z "${binary}" ] && binary="llama-server"
+
+    # Resolve extra args from catalog
+    local extra_args
+    extra_args=$(daemon_extra_args "${alias}" 2>/dev/null || echo "")
+
+    # Calculate proxy and backend ports
+    local proxy_port="${port}"
+    local backend_port=$((port + 1000))
+
+    # Generate the service unit
+    local unit_name="turbofit-${alias}.service"
+    local unit_path="${DAEMON_UNIT_DIR}/${unit_name}"
+    mkdir -p "${DAEMON_UNIT_DIR}"
+
+    # Build LD_LIBRARY_PATH + LLAMA_LIB_DIR lines only if using custom binary
+    local ld_line=""
+    local lib_line=""
+    if [ -n "${binary}" ] && [ "${binary}" != "llama-server" ]; then
+        local lib_dir
+        lib_dir=$(dirname "${binary}")
+        ld_line="Environment=\"LD_LIBRARY_PATH=${lib_dir}\""
+        lib_line="Environment=\"LLAMA_LIB_DIR=${lib_dir}\""
+    fi
+
+    cat > "${unit_path}" <<EOF
+[Unit]
+Description=turbofit daemon — ${alias}${description:+ (${description})}
+Documentation=https://github.com/SouthpawIN/turbofit
+After=network.target
+
+[Service]
+# turbofit-managed daemon — wake-on-ping proxy + auto-heal
+# Proxy listens on :${proxy_port}, spawns backend on :${backend_port} (GPU ${gpu}) on first request
+# Idle-kills backend after ${idle_secs}s of no traffic (frees VRAM)
+# Auto-heals on crash (Restart=on-failure), clean stops stay down (exit 0)
+
+# Binary + library paths
+Environment="LLAMA_SERVER=${binary}"
+${ld_line}
+${lib_line}
+
+# Extra args resolved from catalog entry
+Environment="LLAMA_SERVER_EXTRA_ARGS=${extra_args}"
+
+# Idle timeout (seconds of no traffic before backend is killed)
+Environment="IDLE_KILL_SECS=${idle_secs}"
+
+# Startup timeout (max seconds to wait for backend to become healthy)
+Environment="STARTUP_TIMEOUT=${startup_timeout}"
+
+# ExecStart: proxy <listen_port> <backend_port> <gpu_id> <model_path>
+ExecStart=${LLAMA_PROXY_BIN} ${proxy_port} ${backend_port} ${gpu} ${path}
+
+# Auto-heal policy: restart ONLY on actual failures (non-zero exit, signal, OOM)
+# NOT on clean stops. Combined with proxy SIGTERM/SIGINT handler (exit 0):
+#   crash (segfault, OOM)     -> systemd restarts
+#   systemctl stop             -> exits 0, no restart
+#   boot                       -> starts because [Install] enabled
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillMode=mixed
+
+StandardOutput=append:${TURBOFIT_ROOT}/logs/daemon-${alias}.log
+StandardError=append:${TURBOFIT_ROOT}/logs/daemon-${alias}.log
+
+[Install]
+WantedBy=default.target
+EOF
+
+    # Reload systemd
+    systemctl --user daemon-reload
+
+    # Enable + start
+    systemctl --user enable "${unit_name}"
+    systemctl --user start "${unit_name}"
+
+    echo "✓ Daemon installed: ${alias}"
+    echo ""
+    echo "  Service:  ${unit_name}"
+    echo "  Proxy:    :${proxy_port} (wake-on-ping)"
+    echo "  Backend:  :${backend_port} (GPU ${gpu})"
+    echo "  Model:    ${path}"
+    echo "  Binary:   ${binary}"
+    echo "  Extra:    ${extra_args}"
+    echo "  Idle:     ${idle_secs}s"
+    echo "  Logs:     ${TURBOFIT_ROOT}/logs/daemon-${alias}.log"
+    echo ""
+    echo "  Commands:"
+    echo "    serve daemon status ${alias}"
+    echo "    serve daemon stop ${alias}"
+    echo "    serve daemon remove ${alias}"
+}
+
+# Remove a turbofit-managed daemon
+daemon_remove() {
+    local alias="$1"
+    local unit_name="turbofit-${alias}.service"
+    local unit_path="${DAEMON_UNIT_DIR}/${unit_name}"
+
+    if [ ! -f "${unit_path}" ]; then
+        echo "✗ No turbofit daemon for: ${alias}"
+        echo "  Looking for: ${unit_path}"
+        # Check if there's a legacy service to clean up
+        echo ""
+        echo "  Legacy services to consider removing:"
+        for svc in omni-va llama-darwin llama-proxy-main model-rotation; do
+            if systemctl --user list-unit-files "${svc}.service" 2>/dev/null | grep -q "enabled\|disabled"; then
+                echo "    ${svc}.service ($(systemctl --user is-active "${svc}.service" 2>/dev/null || echo "unknown"))"
+            fi
+        done
+        return 1
+    fi
+
+    # Stop + disable
+    systemctl --user stop "${unit_name}" 2>/dev/null || true
+    systemctl --user disable "${unit_name}" 2>/dev/null || true
+
+    # Remove the unit file
+    rm -f "${unit_path}"
+    systemctl --user daemon-reload
+
+    echo "✓ Daemon removed: ${alias}"
+}
+
+# Start/stop/restart a daemon
+daemon_start() {
+    local alias="$1"
+    local unit_name="turbofit-${alias}.service"
+    if [ ! -f "${DAEMON_UNIT_DIR}/${unit_name}" ]; then
+        echo "✗ No daemon for ${alias}. Run: serve daemon install ${alias}"
+        return 1
+    fi
+    systemctl --user start "${unit_name}"
+    echo "✓ Daemon started: ${alias}"
+}
+
+daemon_stop() {
+    local alias="$1"
+    local unit_name="turbofit-${alias}.service"
+    if [ ! -f "${DAEMON_UNIT_DIR}/${unit_name}" ]; then
+        echo "✗ No daemon for ${alias}"
+        return 1
+    fi
+    systemctl --user stop "${unit_name}"
+    echo "✓ Daemon stopped: ${alias} (backend killed, VRAM freed)"
+}
+
+daemon_restart() {
+    local alias="$1"
+    local unit_name="turbofit-${alias}.service"
+    if [ ! -f "${DAEMON_UNIT_DIR}/${unit_name}" ]; then
+        echo "✗ No daemon for ${alias}"
+        return 1
+    fi
+    systemctl --user restart "${unit_name}"
+    echo "✓ Daemon restarted: ${alias}"
+}
+
+# Show daemon status
+daemon_status() {
+    local alias="${1:-}"
+    if [ -n "${alias}" ]; then
+        local unit_name="turbofit-${alias}.service"
+        if [ ! -f "${DAEMON_UNIT_DIR}/${unit_name}" ]; then
+            echo "✗ No daemon for ${alias}"
+            return 1
+        fi
+        systemctl --user status "${unit_name}" 2>/dev/null || true
+    else
+        # Show all turbofit daemons
+        echo "turbofit-managed daemons:"
+        echo ""
+        for unit_path in "${DAEMON_UNIT_DIR}"/turbofit-*.service; do
+            [ -f "${unit_path}" ] || continue
+            local unit_name
+            unit_name=$(basename "${unit_path}")
+            local dalias="${unit_name#turbofit-}"
+            dalias="${dalias%.service}"
+            local active
+            active=$(systemctl --user is-active "${unit_name}" 2>/dev/null || echo "unknown")
+            local enabled
+            enabled=$(systemctl --user is-enabled "${unit_name}" 2>/dev/null || echo "unknown")
+            local proxy_port
+            proxy_port=$(grep -oP 'ExecStart=.*?\s+\K\d+' "${unit_path}" | head -1 || echo "?")
+            printf "  %-35s  %-10s  %-8s  :%s\n" "${dalias}" "${active}" "${enabled}" "${proxy_port}"
+        done
+        if [ -z "$(ls "${DAEMON_UNIT_DIR}"/turbofit-*.service 2>/dev/null)" ]; then
+            echo "  (none installed)"
+        fi
+    fi
+}
+
+# List all turbofit daemons
+daemon_list() {
+    daemon_status
+}
+
+# Migrate a legacy service to a turbofit daemon
+daemon_migrate() {
+    local service_name="$1"
+    local alias="$2"
+
+    if [ -z "${alias}" ]; then
+        # Try to infer alias from service name
+        case "${service_name}" in
+            omni-va)          alias="carnice-apex" ;;
+            llama-darwin)     alias="darwin-28b-reason" ;;
+            llama-proxy-main) alias="carnice-apex-compact" ;;
+            *)                echo "✗ Specify target alias: serve daemon migrate <legacy-service> <alias>"; return 1 ;;
+        esac
+    fi
+
+    # Stop + disable the legacy service
+    echo "→ Migrating ${service_name}.service → turbofit-${alias}.service"
+    systemctl --user stop "${service_name}.service" 2>/dev/null || true
+    systemctl --user disable "${service_name}.service" 2>/dev/null || true
+
+    # Install the turbofit daemon
+    daemon_install "${alias}"
+
+    echo ""
+    echo "  Legacy service ${service_name}.service is stopped+disabled."
+    echo "  To fully remove it: rm ${DAEMON_UNIT_DIR}/${service_name}.service && systemctl --user daemon-reload"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1381,11 +1967,16 @@ LAUNCH
   serve stop-all                           Stop everything
   serve list                               List running servers + rogue llama-servers on any port
 
-OPINIONATED AUTO (turbofit v5 — pick best fit for system state)
-  serve auto main [--vision] [--ui ...]    Pick best main model (tier ladder), launch + wire
-  serve auto aux [--ui ...]                Pick best aux model, launch + wire
+OPINIONATED AUTO (turbofit v5.1 — hardware-aware, API-aware)
+  serve auto main [--vision] [--api] [--free] [--ui ...]   Pick best main (auto-detects GPU, suggests API if needed)
+  serve auto aux [--vision] [--api] [--free] [--ui ...]    Pick best aux
   serve downscale                          Probe VRAM, shrink ctx / drop aux / swap tier if needed
   AUTO_CTX=131072 serve auto main          Override ctx target
+
+  Hardware tiers (auto-detected):
+    ≥24GB VRAM: Local main + local aux (full ladder)
+    8-24GB VRAM: API main + local aux OR local main + API aux
+    <8GB / no GPU: API main + API aux (free: DeepSeek V4 Pro + Kimi K2.6)
 
 FETCH / BENCH (from llama-launch)
   serve fetch <alias>                      Download missing model from HF (uses hf_repo in catalog)
@@ -1401,6 +1992,16 @@ HERMES MODEL ROUTING
 NVIDIA NIM API (curated, 5 models)
   serve api list                           Show the curated NVIDIA NIM list
   serve api use <rank|api_id> [main|aux]   Wire a NIM model into Hermes config
+
+DAEMON (systemd services with wake-on-ping proxy)
+  serve daemon install <alias> [--idle N]  Generate + enable systemd service for catalog model
+  serve daemon remove <alias>             Stop + disable + remove daemon service
+  serve daemon start <alias>              Start daemon (proxy only — backend wakes on ping)
+  serve daemon stop <alias>               Stop daemon (also kills backend, frees VRAM)
+  serve daemon restart <alias>            Stop + start
+  serve daemon status [alias]             Show status of one or all turbofit daemons
+  serve daemon list                       List all turbofit-managed daemon services
+  serve daemon migrate <legacy> [alias]   Migrate a legacy service to turbofit daemon
 
 SHELL ALIASES (installed to ~/.bashrc):
   name <alias> <path> [--launcher ...]     Register a model alias
@@ -1482,13 +2083,29 @@ case "${cmd}" in
     downscale)      serve_downscale ;;
     main)           serve_main "${1:-}" ;;
     aux)            serve_aux "${1:-}" ;;
-    herm)           shift; serve_herm "$@" ;;
+    herm)           serve_herm "$@" ;;
     api)
         shift
         case "${1:-list}" in
             list) nvidia_nim_list ;;
             use)  shift; nvidia_nim_use "${1:-}" "${2:-main}" ;;
             *)    echo "Usage: serve api {list|use <rank|api_id> [main|aux]}"; exit 1 ;;
+        esac
+        ;;
+    daemon)
+        # $1 is the daemon subcommand (install/remove/etc) — already shifted past 'daemon'
+        daemon_cmd="${1:-list}"
+        shift || true
+        case "${daemon_cmd}" in
+            install)  daemon_install "$@" ;;
+            remove)   daemon_remove "$@" ;;
+            start)    daemon_start "$@" ;;
+            stop)     daemon_stop "$@" ;;
+            restart)  daemon_restart "$@" ;;
+            status)   daemon_status "$@" ;;
+            list)     daemon_list ;;
+            migrate)  daemon_migrate "$@" ;;
+            *)        echo "Usage: serve daemon {install|remove|start|stop|restart|status|list|migrate}"; exit 1 ;;
         esac
         ;;
     help|*)

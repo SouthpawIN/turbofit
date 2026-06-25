@@ -1,6 +1,6 @@
 ---
 name: turbofit
-description: "Opinionated unified local LLM backend (turbofit v5). Picks the best main + aux model for your hardware, launches them detached, wires Hermes-Agent config, and adapts to live VRAM pressure via a scaling ladder. Replaces llama-launch, omni-va, and ad-hoc llama-server scripts. Catalog schema supports per-model binary pinning (atomic fork vs stock), named flag presets (nextn, draft-mtp, turbo4-kv, vision-mmproj), tier ladder (s/sf/sd/f/c), and the 64K Hermes context floor is enforced everywhere. End-user UX is `serve auto main` and the user is done."
+description: "Opinionated unified LLM backend (turbofit v5.1). Picks the best main + aux model for your hardware — local or API — launches them detached, wires Hermes-Agent config, and adapts to live VRAM pressure via a scaling ladder. Three hardware tiers: Beefy (local+local), Modest (API+local), Thin (API+API). `serve auto main` auto-detects GPU and suggests the right setup. API fallback is always available (free: DeepSeek V4 Pro + Kimi K2.6). Replaces llama-launch, omni-va, and ad-hoc llama-server scripts. Catalog schema supports per-model binary pinning (atomic fork vs stock), named flag presets (nextn, draft-mtp, turbo4-kv, vision-mmproj), tier ladder (s/sf/sd/f/c), and the 64K Hermes context floor is enforced everywhere. End-user UX is `serve auto main` and the user is done."
 version: 1.1.0
 author: SouthpawIN + Nous Girl
 license: MIT
@@ -42,8 +42,10 @@ Trigger phrases: "set up my local LLM", "launch a model", "what model should I r
 source ~/.hermes/skills/turbofit/scripts/turbofit.sharco
 
 # One-shot: pick best main for your box, launch, wire Hermes
-serve auto main                    # opinionated: tier ladder, ≥25 tok/s, 64K ctx
+serve auto main                    # opinionated: auto-detects hardware, picks local or API
 serve auto main --vision           # require vision
+serve auto main --api              # force API mode (no local GPU needed)
+serve auto main --free             # only free API endpoints
 AUTO_CTX=131072 serve auto main    # raise ctx target
 
 # Stop everything
@@ -178,17 +180,24 @@ serve list                               # list running + detect rogue llama-ser
 serve fetch <alias>                      # download missing model from HF (uses hf_repo)
 serve bench <alias>                      # lm-eval-harness benchmark (launches if needed)
 
-# Opinionated auto (turbofit v5)
-serve auto main [--vision] [--ui ...]    # pick best main, launch, wire Hermes
-serve auto aux [--ui ...]                # pick best aux, launch, wire Hermes
+# Opinionated auto (turbofit v5.1 — hardware-aware, API-aware)
+serve auto main [--vision] [--api] [--free] [--ui ...]    # pick best main (auto-detects hardware, picks local or API)
+serve auto aux [--vision] [--api] [--free] [--ui ...]     # pick best aux
 serve downscale                          # adapt to current VRAM pressure
-AUTO_CTX=131072 serve auto main          # raise ctx target
+AUTO_CTX=131072 serve auto main          # override ctx target
+
+# Hardware-aware auto-detection:
+#   ≥24GB VRAM → local main + local aux
+#   8-24GB VRAM → API main + local aux (or local main + API aux)
+#   <8GB / no GPU → API main + API aux (free: DeepSeek V4 Pro + Kimi K2.6)
+# Use --api to force API mode, --free to restrict to free endpoints
 
 # Hermes routing
 serve main <alias> [--ui tui|dashboard|gateway|desktop|herm]
 serve aux  <alias> [--ui ...]
 serve herm <alias>                       # launch + main + herm TUI (herm handles hermes internally)
 serve herm aux <alias>
+serve herm                               # auto-pick main + launch herm TUI
 
 # NVIDIA NIM API (curated)
 serve api list
@@ -205,26 +214,89 @@ serve api use <rank|api_id> [main|aux]
 
 The auto-picker does NOT yet weight by current VRAM headroom. Use `serve downscale` to adapt after the fact, or run `serve vram` first to know.
 
-## How the scaling ladder works (v5.1 — 8 steps)
+## How the scaling ladder works (v5.1 — 7 steps + 3 hardware tiers)
 
-Triggered by `serve downscale`. Full ladder defined in `curated.yaml` under `scaling_ladder.steps`:
+The ladder now covers three hardware profiles, not just beefy GPU owners:
+
+### Hardware Tiers (auto-detected by `serve auto`)
+
+| Tier | VRAM | Recommendation | Default Main | Default Aux |
+|------|------|----------------|-------------|-------------|
+| **Beefy** | ≥24GB | Local main + local aux | Darwin Reason 28B | Carnice 35A3B |
+| **Modest** | 8-24GB | API main + local aux (or local main + API aux) | DeepSeek V4 Pro (API) | Carnice (cpu-moe) |
+| **Thin** | <8GB or no GPU | API main + API aux | DeepSeek V4 Pro (free, NIM) | Kimi K2.6 (free) |
+
+`serve auto` detects which tier you're in by probing `nvidia-smi`. If no NVIDIA GPU is found, it defaults to **Thin** (API-only). Use `--api` to force API mode regardless.
+
+### Beefy-tier scaling ladder (7 steps, triggered by `serve downscale`)
+
+Full ladder defined in `curated.yaml` under `scaling_ladder.steps`:
 
 ```
-Step  1: Ideal          — Darwin Reason 28B @ 1M + Carnice 35A3B @ 1M aux (dual 3090)
+Step  1: Ideal          — Darwin Reason 28B @ 1M + Carnice 35A3B @ 1M aux (dual GPU)
 Step  2: Mild pressure  — Offload MoE experts from Carnice to CPU (--cpu-moe-4), ~27 tok/s
 Step  3: Moderate       — Drop both models' context to 128K
-Step  4: High pressure  — Drop Carnice entirely, route aux to API (Step 3.7 Flash free)
+Step  4: High pressure  — Drop Carnice entirely, route aux to API (Kimi K2.6 free)
 Step  5: Swap dense     — Swap main to Prism Eagle 27B (14GB, 121 tok/s, Mamba2+GDN hybrid)
-Step  5.5: OmniStep     — If vision needed on tight GPU: swap to OmniStep True or Predict (16GB, all modality heads in one model)
 Step  6: Apex MoE       — Swap to Darwin Apex 35A3B MoE + CPU-offload experts (--cpu-moe-4)
-Step  7: Survival       — Darwin Apex fully offloaded to CPU, 64K ctx (~27 tok/s but alive)
+Step  7: API-only       — No local serving viable. API main + API aux. Zero cost with free endpoints.
 ```
 
-Each step preserves maximum intelligence while respecting VRAM. The cascade is **Chris's hand-picked sequence** — not a generic "shrink everything" rule. Never auto-skip steps based on free VRAM alone; always present the user with the ladder and let them choose, or use `serve downscale` which walks it conservatively.
+Each step preserves maximum intelligence while respecting VRAM. The cascade is the **hand-picked sequence for this system** — not a generic "shrink everything" rule. Never auto-skip steps based on free VRAM alone; always present the user with the ladder and let them choose, or use `serve downscale` which walks it conservatively.
 
-**OmniStep variants are step 5.5 fallbacks** — not main cascade picks. They're 16GB all-in-one (text + vision + music/ACE-Step or Cosmos-Predict for images) and earn their slot when the user explicitly needs multimodal generation on tight VRAM.
+### API model rankings (by volume performance)
+
+**Main API (ranked by reasoning/coding quality, free first):**
+
+| Tier | Model | Vision | Cost | Why |
+|------|-------|--------|------|-----|
+| S | DeepSeek V4 Pro | No | FREE (NIM) | Best open reasoning + coding, 1M ctx |
+| S | Kimi K2.6 | Yes | FREE (OpenRouter) | Strong coding, vision, 1M ctx |
+| S | GLM 5.1 | No | Paid | Agentic + long-horizon |
+| S | Qwen 3.7 Max | No | Paid | Qwen frontier, 1M ctx |
+| SF | DeepSeek V4 Flash | No | FREE (NIM) | Fast reasoning, best value |
+| SF | MiniMax M3 | Yes | FREE (NIM) | Vision + 1M ctx |
+| SF | Nemotron Ultra | No | FREE (NIM) | 550B MoE, reasoning budget |
+| F | DeepSeek V4 Flash | No | $0.10/$0.20 | Cheapest paid main |
+| F | Qwen 3.5 Flash | Yes | $0.065/$0.26 | Cheapest vision main |
+
+**Aux API (ranked by vision > speed > cost, free first):**
+
+| Tier | Model | Vision | Cost | Why |
+|------|-------|--------|------|-----|
+| SD | Kimi K2.6 | Yes | FREE | Best free aux — vision + reasoning |
+| SD | MiniMax M3 | Yes | FREE (NIM) | Vision + 1M ctx |
+| SD | Step 3.7 Flash | Yes | FREE | Fast, vision |
+| SD | DeepSeek V4 Flash | No | FREE (NIM) | Fast reasoning (no vision — pair with vision main) |
+| F | Qwen 3.5 Flash | Yes | $0.065/$0.26 | Cheapest paid vision aux |
 
 ## Pitfalls
+
+- **`serve list` hangs on wake-on-ping proxy ports.** The rogue-port scanner iterates ALL listening ports and curls each one. When it hits a turbofit daemon's proxy port, the proxy tries to wake the backend (which takes 30+ seconds to load), causing a hang. Fixed by adding `--max-time 2` to all curl calls in the port scanner.
+- **`serve auto main` double-launches on occupied ports.** If a systemd daemon is already running for the picked model, `serve_main` still calls `launch_server`, which tries to bind the same port and hangs in the health-check loop. Fixed by checking `systemctl --user is-active turbofit-${alias}.service` and PID files before launching — if already running, skip launch and just wire Hermes config.
+- **`serve herm` crashes with `set -euo pipefail` + shift.** The case statement had `shift; serve_herm "$@"` but after the command parser already shifted past the command name, the extra shift fails on empty args and `set -e` causes silent exit. Fixed by removing the redundant shift.
+- **`start_ui` doesn't recognize `herm_main`/`herm_aux` UI values.** `serve_herm` sets `UI="herm_main"` or `UI="herm_aux"` but `start_ui` only matched the case `herm)`. The unrecognized case falls through to "Unknown UI" error. Fixed by matching `herm|herm_main|herm_aux)`.
+- **`serve list` doesn't show systemd-managed daemons.** The `list_running()` function only checked PID files in `~/.local/share/turbofit/pid/`, but systemd-managed daemons don't write PID files there. Fixed by also scanning `systemctl --user list-units` for `turbofit-*.service` entries and parsing the port from the ExecStart line.
+
+- **Systemd services override turbofit.** If legacy `llama-*.service` or `omni-va.service` units are running, they will hold ports and restart killed processes, silently replacing turbofit-managed launches. Before `serve <alias>`, run `systemctl --user list-units | grep llama` and stop+disable any conflicting units on the target port.
+- **YAML duplicate keys silently overwrite.** When editing `models.yaml`, never paste a new entry that shares keys with the one above it (e.g. two `role:` lines, two `mmproj:` lines). YAML last-key-wins means the earlier value is silently discarded. Always verify with `grep` after editing.
+- **mmproj must match the text model's `n_embd`.** A 27B-dense mmproj (`n_embd=5120`) will NOT work with a 35A3B MoE (`n_embd=2048`). The error is `mismatch between text model (n_embd = X) and mmproj (n_embd = Y)`. For Qwen3.6-35B-A3B MoE models, use the mmproj from `unsloth/Qwen3.6-35B-A3B-GGUF` (mmproj-BF16.gguf, ~889MB). For 27B dense models, use the per-model F32 mmproj.
+- **Symlink mmproj files can be stale.** Several model directories had `mmproj-F32.gguf` symlinked to a different model's mmproj (e.g. Carnice → Qwopus 27B). Always verify with `ls -la` and `readlink -f`. If the target is wrong, delete the symlink and download the correct file from the matching HF repo.
+- **`serve <alias>` may report success but launch the wrong model** if a stale systemd service or leftover process holds the port. Always verify with `ps aux | grep <port>` that the actual command line matches the catalog entry.
+- **The `serve` script reads the catalog fresh each time.** If you edit `models.yaml` while a serve command is running, the next invocation will pick up the changes. But the *currently running* process won't be affected — you must `serve stop <alias>` and re-launch.
+- **GitHub repo creation requires explicit user permission.** Never create new repos or publish anything publicly without the user explicitly asking. Existing repos can be updated when the user directs work on them.
+
+## mmproj Reference
+
+Vision-capable models need the correct mmproj file. Architecture mismatch (`n_embd` difference) causes a hard crash at load time.
+
+| Model family | n_embd | mmproj source | File |
+|---|---|---|---|
+| Qwen3.6-27B dense (Darwin Reason, Prism Eagle, Carwin, Qwopus, Qwable) | 5120 | Per-model `mmproj-F32.gguf` in GGUF dir | mmproj-F32.gguf |
+| Qwen3.6-35B-A3B MoE (Carnice, Darwin APEX) | 2048 | `unsloth/Qwen3.6-35B-A3B-GGUF` | mmproj-BF16.gguf |
+| Qwen2.5-Omni-3B | 2048 | Per-model dir | mmproj-F32.gguf |
+
+**Check before launch:** `ls -la <model_dir>/mmproj*.gguf` — if it's a symlink, verify the target is the right architecture.
 
 ### 7. HF download: use exact filenames, never wildcards
 
@@ -262,12 +334,76 @@ Use `-ngl N` to control GPU layers, or `--device CUDA0` + `--main-gpu 0` for dev
 ### 6. NVIDIA NIM has TWO tiers — free and paid serverless
 The 5 models listed all have **free endpoints** at `https://integrate.api.nvidia.com/v1` — covered by your `NVIDIA_API_KEY` from a free `build.nvidia.com` signup (~1000 RPM, no credit card).
 
+### 7. Never create new GitHub repos without explicit user permission
+Existing repos can be updated when the user directs work on them. Publishing, creating, or making anything public always requires the user to say so first.
+
 NVIDIA also sells a paid serverless tier with the same model IDs (e.g. $1.30/$2.60 for DeepSeek V4 Pro) under the same base URL. The same API key works for both, but the free tier has tighter rate limits.
 
-### 7. The 12 Omni*/Senter* training artifacts are excluded
-These are user-made Darwin-merged models used for training research, not fleet picks. They live in `~/.config/llama-launch/models.yaml` (legacy) but not in the turbofit catalog. Add them back with `name <alias> <path>` if needed.
+### 7. The Omni*/Senter* training artifacts and OmniStep are excluded
+OmniStep-SFT-8B was removed from the fleet catalog in v1.1.0 — it's no longer a fleet pick. The 12 other Omni*/Senter* training artifacts are user-made Darwin-merged models for training research. They live in the legacy catalog but not in the turbofit catalog. Add them back with `name <alias> <path>` if needed.
+
+### 8. Hermes Desktop → Android APK via Capacitor
+The Hermes Desktop app (`apps/desktop/`) is an Electron + React + Vite + Tailwind app. It can be wrapped for Android using Capacitor:
+
+```bash
+# 1. Install deps + Capacitor
+cd ~/.hermes/hermes-agent && npm install --workspace apps/desktop
+npm install --workspace apps/desktop @capacitor/core @capacitor/cli @capacitor/android
+
+# 2. Init Capacitor (in apps/desktop/)
+cd apps/desktop && npx cap init "Hermes" "com.nousresearch.hermes" --web-dir dist
+
+# 3. Add Android platform
+npx cap add android
+
+# 4. Build the Vite renderer
+npm run build
+
+# 5. Sync to Android
+npx cap sync android
+
+# 6. Build APK (requires Android SDK)
+export ANDROID_HOME=~/android-sdk
+cd android && ./gradlew assembleDebug
+
+# 7. Install on phone
+adb install app/build/outputs/apk/debug/app-debug.apk
+```
+
+**Key insight:** The Desktop app's React renderer talks to the Hermes gateway via WebSocket — it doesn't need Electron's Node.js backend. On Android, it connects to the gateway running on the host machine. The gateway URL is configured at first launch.
+
+**Android SDK setup (if not installed):**
+```bash
+mkdir -p ~/android-sdk/cmdline-tools
+cd /tmp && curl -sSL -o cmdline-tools.zip \
+  "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+unzip -q cmdline-tools.zip -d ~/android-sdk/cmdline-tools/
+mv ~/android-sdk/cmdline-tools/cmdline-tools ~/android-sdk/cmdline-tools/latest
+export ANDROID_HOME=~/android-sdk
+yes | ~/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+```
 
 ## Extending turbofit
+
+### Removing a model from the catalog
+
+```bash
+# Use Python to safely remove an entry from models.yaml
+python3 -c "
+import yaml
+with open('$HOME/.config/turbofit/models.yaml') as f:
+    cfg = yaml.safe_load(f)
+if '<alias>' in cfg.get('models', {}):
+    del cfg['models']['<alias>']
+    print('REMOVED <alias>')
+with open('$HOME/.config/turbofit/models.yaml', 'w') as f:
+    yaml.dump(cfg, f, default_flow_style=False, sort_keys=False)
+print(f'Total models: {len(cfg[\"models\"])}')
+"
+```
+
+After removal, also check if the model appears in the scaling ladder (`references/scaling-ladder.md` or `references/curated-lineup.md`) and remove/update those references.
 
 ### Adding a new model
 
@@ -297,6 +433,7 @@ Extend the four `declare -A LAUNCHER_*` arrays at the top, add cases in `install
 
 - `references/scaling-ladder.md` — full 7-step polite VRAM scaling ladder
 - `references/curated-lineup.md` — the hand-picked cascade with per-model rationale
+- `references/api-model-rankings.md` — API main + aux rankings by volume performance, hardware tier mapping
 - `southpaw-models` — curated lineup rationale (Darwin / Prism / Carnice / Carwin / Qwopus)
 - `local-llm-fleet-management` — legacy catalog mechanics (now subsumed by turbofit)
 - `llama-cpp` — llama.cpp build + GGUF discovery
@@ -308,4 +445,4 @@ Extend the four `declare -A LAUNCHER_*` arrays at the top, add cases in `install
 1. **No multi-GPU hardcoding.** Tensor split is user-configurable via catalog `extra_args: ['--tensor-split', 'X,Y']`. No preset assumes dual-GPU or specific VRAM amounts.
 2. **tok/s varies by GPU.** Catalog `tok_s_target` values are measured locally — mark them as approximate. Use relative ranking (tier priority > vision bonus > speed bonus) rather than absolute claims.
 3. **All models get vision.** Every local Qwen-family model can use the same `mmproj-F32.gguf` via symlink. Set `vision: true` and `mmproj:` in every catalog entry. One mmproj file serves the entire fleet.
-4. **Model picks ARE the cascade.** The `curated.yaml` slot-ordered picks are Chris's hand-chosen scale-down sequence — not generic examples. When building recommendations, preserve the actual model aliases and their tier assignments.
+4. **Model picks ARE the cascade.** The slot-ordered picks are the hand-chosen scale-down sequence — not generic examples. When building recommendations, preserve the actual model aliases and their tier assignments.

@@ -1,0 +1,53 @@
+# distribution.yaml — turbofit profile/skill distribution manifest
+# Install with: hermes profile install SouthpawIN/turbofit
+name: turbofit
+version: 1.1.0
+description: >-
+  Opinionated unified LLM backend (turbofit v5.1). Picks the best main + aux
+  model for your hardware — local or API — launches them detached, wires
+  Hermes-Agent config, and adapts to live VRAM pressure via a scaling ladder.
+  Three hardware tiers: Beefy (local+local), Modest (API+local), Thin (API+API).
+  `serve auto main` auto-detects GPU and suggests the right setup. API fallback
+  is always available (free: DeepSeek V4 Pro + Kimi K2.6). Replaces
+  llama-launch, omni-va, and ad-hoc llama-server scripts.
+author: SouthpawIN
+license: MIT
+homepage: https://github.com/SouthpawIN/turbofit
+repo: https://github.com/SouthpawIN/turbofit
+
+# Hermes-Agent version requirement (turbofit needs profile-install support)
+hermes_requires: ">=0.12.0"
+
+# Optional environment variables the user may set for API fallback mode
+env_requires:
+  - name: NVIDIA_API_KEY
+    description: >-
+      NVIDIA NIM API key for free-tier API fallback models
+      (DeepSeek V4 Pro, GLM 5.1, DS V4 Flash, MiniMax M3, Nemotron Ultra).
+      Sign up free at https://build.nvidia.com — ~1000 RPM, no credit card.
+    required: false
+  - name: OPENROUTER_API_KEY
+    description: >-
+      OpenRouter API key for API fallback models (Kimi K2.6, Step 3.7 Flash).
+      Only needed if using API aux models not on NVIDIA NIM.
+    required: false
+
+# Files owned by this distribution — overwritten on `hermes profile update`
+# User data (memories, sessions, auth) is NEVER touched by the installer.
+distribution_owned:
+  - SKILL.md
+  - README.md
+  - scripts/serve
+  - scripts/turbofit.sharco
+  - scripts/install.sh
+  - references/
+
+# Post-install hook: wire the serve/name shell functions into the user's shell
+post_install:
+  - command: bash scripts/install.sh
+    description: Wire serve/name shell functions into ~/.bashrc
+
+# Optional env template (renamed to .env.EXAMPLE by the installer safety filter)
+env_template:
+  NVIDIA_API_KEY: "nvapi-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  OPENROUTER_API_KEY: "sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
