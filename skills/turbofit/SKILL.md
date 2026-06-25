@@ -299,10 +299,12 @@ Each step preserves maximum intelligence while respecting VRAM. Never auto-skip 
 For API-only users (Modest/Thin tiers) or Beefy API fallback, see [`references/api-pairing-matrix.md`](references/api-pairing-matrix.md) for the complete pairing matrix — all model combinations across 4 context tiers and 5 price tiers, with Provider Gateway indicators showing whether the Nous Tool Gateway is active.
 
 **Gateway indicators:**
-- 🟢 **NOUS+TG** — Both through Nous → Tool Gateway active
-- 🟡 **NOUS+OR** — Main through Nous (TG), aux through OpenRouter (10% bonus)
-- 🟠 **NOUS+NIM** — Main through Nous (TG), aux through NIM (free)
-- ⚪ **NIM** — Both through NIM (free, no TG)
+- 🟢 **NOUS** — Both through Nous
+- 🟡 **NOUS+OR** — Main through Nous, aux through OpenRouter (10% bonus)
+- 🟠 **NOUS+NIM** — Main through Nous, aux through NIM (free)
+- ⚪ **NIM** — Both through NIM (free)
+
+Note: The Nous Tool Gateway (Firecrawl, FAL, OpenAI TTS, Browser Use) is a subscription feature — it is active whenever the user has a Nous Portal subscription, regardless of which models are used for main or aux.
 
 ### API model rankings (by volume performance)
 

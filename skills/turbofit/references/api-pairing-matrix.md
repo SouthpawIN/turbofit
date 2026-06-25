@@ -42,12 +42,14 @@ Aux offset: 40-85% of total tokens route to aux (compression, vision, web summar
 
 | Indicator | Meaning |
 |-----------|---------|
-| 🟢 **NOUS+TG** | Both main+aux through Nous → Tool Gateway active (Firecrawl, FAL, OpenAI TTS, Browser Use) |
-| 🟡 **NOUS+OR** | Main through Nous (TG active), aux through OpenRouter (10% credit bonus) |
-| 🟠 **NOUS+NIM** | Main through Nous (TG active), aux through NIM (free, separate key) |
-| 🔵 **OR** | Both through OpenRouter (10% bonus, no Tool Gateway) |
-| ⚪ **NIM** | Both through NIM (free, no Tool Gateway, separate key) |
+| 🟢 **NOUS** | Both main+aux through Nous. Tool Gateway is active (Firecrawl, FAL, OpenAI TTS, Browser Use) — TG is a subscription feature, active whenever the user has a Nous Portal subscription regardless of which models are selected. |
+| 🟡 **NOUS+OR** | Main through Nous, aux through OpenRouter (10% credit bonus on OR credits) |
+| 🟠 **NOUS+NIM** | Main through Nous, aux through NIM (free, separate key) |
+| 🔵 **OR** | Both through OpenRouter (10% bonus, no TG) |
+| ⚪ **NIM** | Both through NIM (free, no TG, separate key) |
 | 🆓 **FREE** | Zero cost |
+
+**Note:** The Nous Tool Gateway is a subscription feature — it is active whenever the user has a Nous Portal subscription, regardless of which models are used for main or aux. The gateway indicators above show routing paths, not TG activation. TG covers Firecrawl (web search), FAL (image generation), OpenAI TTS, and Browser Use.
 
 ## Pairing Matrix — by Price Tier × Context Level
 

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-25T18:21:30.416537+00:00",
+  "generated": "2026-06-25T23:12:28.217621+00:00",
   "source": "openrouter",
   "models": [
     {
@@ -11,12 +11,10 @@
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 131072,
-      "provider_context_length": 128000,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": false,
       "max_completion_tokens": 64000
     },
@@ -29,12 +27,10 @@
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 163840,
-      "provider_context_length": 163840,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": false,
       "max_completion_tokens": 65536
     },
@@ -47,12 +43,10 @@
       "has_cache_read": true,
       "has_cache_write": false,
       "context_length": 1048576,
-      "provider_context_length": 1000000,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": false,
       "max_completion_tokens": 65536
     },
@@ -65,12 +59,10 @@
       "has_cache_read": true,
       "has_cache_write": false,
       "context_length": 1048576,
-      "provider_context_length": 1048576,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": false,
       "max_completion_tokens": 384000
     },
@@ -83,14 +75,12 @@
       "has_cache_read": true,
       "has_cache_write": false,
       "context_length": 1048576,
-      "provider_context_length": 524288,
       "has_vision": true,
       "input_modalities": [
         "text",
         "image",
         "video"
       ],
-      "modality": "text+image+video->text",
       "is_free": false,
       "max_completion_tokens": 512000
     },
@@ -103,13 +93,11 @@
       "has_cache_read": true,
       "has_cache_write": false,
       "context_length": 262144,
-      "provider_context_length": 262144,
       "has_vision": true,
       "input_modalities": [
         "text",
         "image"
       ],
-      "modality": "text+image->text",
       "is_free": false,
       "max_completion_tokens": 262144
     },
@@ -122,13 +110,11 @@
       "has_cache_read": true,
       "has_cache_write": false,
       "context_length": 262144,
-      "provider_context_length": 262144,
       "has_vision": true,
       "input_modalities": [
         "text",
         "image"
       ],
-      "modality": "text+image->text",
       "is_free": false,
       "max_completion_tokens": 16384
     },
@@ -141,12 +127,10 @@
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 131072,
-      "provider_context_length": 131072,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": false,
       "max_completion_tokens": 16384
     },
@@ -159,12 +143,10 @@
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 262144,
-      "provider_context_length": 262144,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": false,
       "max_completion_tokens": 228000
     },
@@ -177,12 +159,10 @@
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 256000,
-      "provider_context_length": 256000,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": true,
       "max_completion_tokens": null
     },
@@ -195,7 +175,6 @@
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 256000,
-      "provider_context_length": 256000,
       "has_vision": true,
       "input_modalities": [
         "text",
@@ -203,27 +182,24 @@
         "image",
         "video"
       ],
-      "modality": "text+image+audio+video->text",
       "is_free": true,
       "max_completion_tokens": 65536
     },
     {
       "slug": "nvidia/nemotron-3-super-120b-a12b",
-      "input_per_m": 0.09,
-      "output_per_m": 0.45,
+      "input_per_m": 0.085,
+      "output_per_m": 0.4,
       "cache_read_per_m": 0.0,
       "cache_write_per_m": 0.0,
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 1000000,
-      "provider_context_length": 262144,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": false,
-      "max_completion_tokens": null
+      "max_completion_tokens": 16384
     },
     {
       "slug": "nvidia/nemotron-3-super-120b-a12b:free",
@@ -234,12 +210,10 @@
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 1000000,
-      "provider_context_length": 262144,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": true,
       "max_completion_tokens": 262144
     },
@@ -252,12 +226,10 @@
       "has_cache_read": true,
       "has_cache_write": false,
       "context_length": 1000000,
-      "provider_context_length": 262144,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": false,
       "max_completion_tokens": 16384
     },
@@ -270,12 +242,10 @@
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 1000000,
-      "provider_context_length": 1000000,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": true,
       "max_completion_tokens": 65536
     },
@@ -288,13 +258,11 @@
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 128000,
-      "provider_context_length": 128000,
       "has_vision": true,
       "input_modalities": [
         "text",
         "image"
       ],
-      "modality": "text+image->text",
       "is_free": true,
       "max_completion_tokens": 8192
     },
@@ -307,14 +275,12 @@
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 128000,
-      "provider_context_length": 128000,
       "has_vision": true,
       "input_modalities": [
         "image",
         "text",
         "video"
       ],
-      "modality": "text+image+video->text",
       "is_free": true,
       "max_completion_tokens": 128000
     },
@@ -327,12 +293,10 @@
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 128000,
-      "provider_context_length": 128000,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": true,
       "max_completion_tokens": null
     },
@@ -345,14 +309,12 @@
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 1000000,
-      "provider_context_length": 1000000,
       "has_vision": true,
       "input_modalities": [
         "text",
         "image",
         "video"
       ],
-      "modality": "text+image+video->text",
       "is_free": false,
       "max_completion_tokens": 65536
     },
@@ -365,14 +327,12 @@
       "has_cache_read": false,
       "has_cache_write": true,
       "context_length": 1000000,
-      "provider_context_length": 1000000,
       "has_vision": true,
       "input_modalities": [
         "text",
         "image",
         "video"
       ],
-      "modality": "text+image+video->text",
       "is_free": false,
       "max_completion_tokens": 65536
     },
@@ -385,14 +345,12 @@
       "has_cache_read": false,
       "has_cache_write": true,
       "context_length": 1000000,
-      "provider_context_length": 1000000,
       "has_vision": true,
       "input_modalities": [
         "text",
         "image",
         "video"
       ],
-      "modality": "text+image+video->text",
       "is_free": false,
       "max_completion_tokens": 65536
     },
@@ -405,12 +363,10 @@
       "has_cache_read": true,
       "has_cache_write": true,
       "context_length": 1000000,
-      "provider_context_length": 1000000,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": false,
       "max_completion_tokens": 65536
     },
@@ -423,13 +379,11 @@
       "has_cache_read": true,
       "has_cache_write": true,
       "context_length": 1000000,
-      "provider_context_length": 1000000,
       "has_vision": true,
       "input_modalities": [
         "text",
         "image"
       ],
-      "modality": "text+image->text",
       "is_free": false,
       "max_completion_tokens": 65536
     },
@@ -442,7 +396,6 @@
       "has_cache_read": false,
       "has_cache_write": false,
       "context_length": 1048576,
-      "provider_context_length": 32000,
       "has_vision": true,
       "input_modalities": [
         "text",
@@ -450,7 +403,6 @@
         "image",
         "video"
       ],
-      "modality": "text+image+audio+video->text",
       "is_free": false,
       "max_completion_tokens": null
     },
@@ -463,12 +415,10 @@
       "has_cache_read": true,
       "has_cache_write": false,
       "context_length": 1048576,
-      "provider_context_length": 1048576,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": false,
       "max_completion_tokens": 131072
     },
@@ -481,12 +431,10 @@
       "has_cache_read": true,
       "has_cache_write": false,
       "context_length": 202752,
-      "provider_context_length": 202752,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": false,
       "max_completion_tokens": null
     },
@@ -499,48 +447,23 @@
       "has_cache_read": true,
       "has_cache_write": false,
       "context_length": 1048576,
-      "provider_context_length": 1048576,
       "has_vision": false,
       "input_modalities": [
         "text"
       ],
-      "modality": "text->text",
       "is_free": false,
       "max_completion_tokens": 32768
     }
   ],
-  "usage_profiles": {
-    "light": {
-      "name": "Light user (hobbyist)",
-      "sessions_per_day": 3,
-      "tokens_per_session_input": 15000,
-      "tokens_per_session_output": 3000,
-      "cache_hit_rate": 0.3,
-      "aux_offset": 0.5
-    },
-    "moderate": {
-      "name": "Moderate user (daily agent work)",
-      "sessions_per_day": 10,
-      "tokens_per_session_input": 30000,
-      "tokens_per_session_output": 8000,
-      "cache_hit_rate": 0.4,
-      "aux_offset": 0.6
-    },
-    "heavy": {
-      "name": "Heavy user (multi-agent, long sessions)",
-      "sessions_per_day": 25,
-      "tokens_per_session_input": 60000,
-      "tokens_per_session_output": 15000,
-      "cache_hit_rate": 0.5,
-      "aux_offset": 0.7
-    },
-    "extreme": {
-      "name": "Extreme (24/7 agent fleet)",
-      "sessions_per_day": 60,
-      "tokens_per_session_input": 100000,
-      "tokens_per_session_output": 25000,
-      "cache_hit_rate": 0.55,
-      "aux_offset": 0.75
-    }
+  "usage": {
+    "total_input": 17427559,
+    "total_output": 561384,
+    "total_cache_read": 88038531,
+    "effective_cache_rate": 0.8347567545170206,
+    "active_days": 5,
+    "avg_sessions_per_day": 13.4,
+    "avg_input_per_session": 260112.8208955224,
+    "avg_output_per_session": 8378.865671641792,
+    "total_est_cost": 33.35621774999999
   }
 }
