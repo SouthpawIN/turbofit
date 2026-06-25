@@ -1,7 +1,7 @@
 # distribution.yaml — turbofit skill distribution manifest
 # Install with: hermes skills install SouthpawIN/turbofit/skills/turbofit
 name: turbofit
-version: "5.2.0"
+version: "1.1.0"
 description: >-
   Opinionated unified LLM backend (turbofit v5.2). Picks the best main + aux
   model for your hardware — local or API — launches them detached, wires
