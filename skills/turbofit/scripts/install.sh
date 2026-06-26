@@ -3,34 +3,37 @@
 set -e
 SHELL_RC="${SHELL_RC:-${HOME}/.bashrc}"
 
-# Resolve the skill directory the same way the shim does
-_turbofit_find_skill_dir() {
-    if [ -n "${HERMES_HOME:-}" ] && [ -f "${HERMES_HOME}/skills/turbofit/scripts/serve" ]; then
-        echo "${HERMES_HOME}/skills/turbofit"
-        return
-    fi
-    if [ -f "${HOME}/.hermes/skills/turbofit/scripts/serve" ]; then
-        echo "${HOME}/.hermes/skills/turbofit"
-        return
-    fi
-    local _profile
-    for _profile in "${HOME}/.hermes/profiles/"*; do
-        if [ -f "${_profile}/skills/turbofit/scripts/serve" ]; then
-            echo "${_profile}/skills/turbofit"
-            return
+# Resolve the skill directory relative to where THIS file lives
+_turbofit_this_file="${BASH_SOURCE[0]:-$0}"
+_turbofit_this_dir=""
+if [ -n "${_turbofit_this_file}" ]; then
+    _turbofit_this_dir="$(cd "$(dirname "${_turbofit_this_file}")" 2>/dev/null && pwd)"
+fi
+
+if [ -n "${_turbofit_this_dir}" ] && [ -f "${_turbofit_this_dir}/serve" ]; then
+    SKILL_DIR="$(dirname "${_turbofit_this_dir}")"
+elif [ -n "${HERMES_HOME:-}" ] && [ -f "${HERMES_HOME}/skills/turbofit/scripts/serve" ]; then
+    SKILL_DIR="${HERMES_HOME}/skills/turbofit"
+elif [ -f "${HOME}/.hermes/skills/turbofit/scripts/serve" ]; then
+    SKILL_DIR="${HOME}/.hermes/skills/turbofit"
+else
+    # Walk profiles
+    SKILL_DIR=""
+    for _turbofit_profile in "${HOME}/.hermes/profiles/"*; do
+        if [ -f "${_turbofit_profile}/skills/turbofit/scripts/serve" ]; then
+            SKILL_DIR="${_turbofit_profile}/skills/turbofit"
+            break
         fi
     done
-    echo ""
-}
+fi
 
-SKILL_DIR="$(_turbofit_find_skill_dir)"
 if [ -z "${SKILL_DIR}" ]; then
     echo "ERROR: could not locate turbofit skill directory."
     echo "Set HERMES_HOME or reinstall with 'hermes skills install turbofit'."
     exit 1
 fi
 
-# Source the shim (which now resolves SKILL_DIR dynamically)
+# Source the shim (which resolves SKILL_DIR dynamically via BASH_SOURCE)
 SNIPPET="
 # turbofit — added by turbofit skill (auto-generated)
 [ -f \"${SKILL_DIR}/scripts/turbofit.sharco\" ] && source \"${SKILL_DIR}/scripts/turbofit.sharco\"
@@ -43,14 +46,13 @@ if ! grep -q "turbofit.sharco" "${SHELL_RC}" 2>/dev/null; then
     echo "  Run 'source ~/.bashrc' or open a new shell to use them."
 else
     # Update the path in case the install location changed
-    # Remove old turbofit block and re-add with current path
     sed -i '/# turbofit — added by turbofit skill/,/source.*turbofit\.sharco/d' "${SHELL_RC}" 2>/dev/null || true
     echo "" >> "${SHELL_RC}"
     echo "${SNIPPET}" >> "${SHELL_RC}"
     echo "✓ Updated serve/name path in ${SHELL_RC}"
 fi
 
-# Bootstrap config directory with empty catalog if missing
+# Bootstrap config directory with catalog and curated slots if missing
 TURBOFIT_CONFIG_DIR="${HOME}/.config/turbofit"
 mkdir -p "${TURBOFIT_CONFIG_DIR}"
 
@@ -68,27 +70,63 @@ fi
 if [ ! -f "${TURBOFIT_CONFIG_DIR}/curated.yaml" ]; then
     cat > "${TURBOFIT_CONFIG_DIR}/curated.yaml" <<'YAML'
 # turbofit curated slots — used by `serve auto` to pick models
-# Define which model fills each role for your hardware.
-# Leave slots empty to let serve auto fall back to API mode.
+# Each slot has tier keys (s/sf/sd/f/c) with lists of entries.
+# Edit to match your local models and API preferences.
 slots:
+  # LOCAL MAIN — your GPU models, ranked by tier
   main_local:
-    # alias: my-27b-model        # uncomment and set to a catalog alias
-    archetype: "27-28B dense (Q4)"
-    tier: s
+    description: Local main — runs on your GPU. Register models with `serve register`.
+    # Uncomment and set to your models:
+    # s:
+    # - alias: my-27b-model
+    #   why: Smartest model I have
+    #   tok_s_target: 38
+    #   ctx_target: 262144
+    #   vision: true
+    #   vram_gb: 17
+
+  # LOCAL AUX — secondary model for vision/aux tasks
   aux_local:
-    # alias: my-35b-moe
-    archetype: "35B MoE (3B active)"
-    tier: sd
+    description: Local aux — secondary model (vision, compression, etc.)
+    # sd:
+    # - alias: my-35b-moe
+    #   why: MoE 35B/3B-active, vision, 1M ctx
+    #   tok_s_target: 110
+    #   ctx_target: 262144
+    #   vision: true
+    #   vram_gb: 11
+
+  # API MAIN — used when no local GPU or --api flag
   main_api:
-    archetype: "DeepSeek V4 Pro"
-    api_id: deepseek-ai/deepseek-v4-pro
-    tier: s
+    description: API main picks — free models first, ranked by reasoning quality.
+    s:
+    - alias: deepseek-v4-pro
+      provider: nvidia-nim
+      model_id: deepseek-ai/deepseek-v4-pro
+      why: Best free reasoning + coding. 1M ctx. Free on NIM.
+      vision: false
+      free: true
+    sf:
+    - alias: deepseek-v4-flash
+      provider: nvidia-nim
+      model_id: deepseek-ai/deepseek-v4-flash
+      why: Fast reasoning, free tier.
+      vision: false
+      free: true
+
+  # API AUX — vision-capable, free first
   aux_api:
-    archetype: "MiniMax M3"
-    api_id: minimaxai/minimax-m3
-    tier: sf
+    description: API aux picks — vision required, free first.
+    sf:
+    - alias: minimax-m3
+      provider: nvidia-nim
+      model_id: minimaxai/minimax-m3
+      why: Free vision model. 1M ctx, image+video.
+      vision: true
+      free: true
 YAML
     echo "✓ Created curated slots at ${TURBOFIT_CONFIG_DIR}/curated.yaml"
+    echo "  Edit this file to add your local models."
 fi
 
 echo ""

@@ -48,25 +48,60 @@ fi
 if [ ! -f "${CURATED}" ]; then
     cat > "${CURATED}" <<'YAML'
 # turbofit curated slots — used by `serve auto` to pick models
-# Define which model fills each role for your hardware.
-# Leave slots empty to let serve auto fall back to API mode.
+# Each slot has tier keys (s/sf/sd/f/c) with lists of entries.
+# Edit to match your local models and API preferences.
 slots:
+  # LOCAL MAIN — your GPU models, ranked by tier
   main_local:
-    # alias: my-27b-model        # uncomment and set to a catalog alias
-    archetype: "27-28B dense (Q4)"
-    tier: s
+    description: Local main — runs on your GPU. Register models with `serve register`.
+    # Uncomment and set to your models:
+    # s:
+    # - alias: my-27b-model
+    #   why: Smartest model I have
+    #   tok_s_target: 38
+    #   ctx_target: 262144
+    #   vision: true
+    #   vram_gb: 17
+
+  # LOCAL AUX — secondary model for vision/aux tasks
   aux_local:
-    # alias: my-35b-moe
-    archetype: "35B MoE (3B active)"
-    tier: sd
+    description: Local aux — secondary model (vision, compression, etc.)
+    # sd:
+    # - alias: my-35b-moe
+    #   why: MoE 35B/3B-active, vision, 1M ctx
+    #   tok_s_target: 110
+    #   ctx_target: 262144
+    #   vision: true
+    #   vram_gb: 11
+
+  # API MAIN — used when no local GPU or --api flag
   main_api:
-    archetype: "DeepSeek V4 Pro"
-    api_id: deepseek-ai/deepseek-v4-pro
-    tier: s
+    description: API main picks — free models first, ranked by reasoning quality.
+    s:
+    - alias: deepseek-v4-pro
+      provider: nvidia-nim
+      model_id: deepseek-ai/deepseek-v4-pro
+      why: Best free reasoning + coding. 1M ctx. Free on NIM.
+      vision: false
+      free: true
+    sf:
+    - alias: deepseek-v4-flash
+      provider: nvidia-nim
+      model_id: deepseek-ai/deepseek-v4-flash
+      why: Fast reasoning, free tier.
+      vision: false
+      free: true
+
+  # API AUX — vision-capable, free first
   aux_api:
-    archetype: "MiniMax M3"
-    api_id: minimaxai/minimax-m3
-    tier: sf
+    description: API aux picks — vision required, free first.
+    sf:
+    - alias: minimax-m3
+      provider: nvidia-nim
+      model_id: minimaxai/minimax-m3
+      why: Free vision model. 1M ctx, image+video.
+      vision: true
+      free: true
 YAML
 fi
 
@@ -1072,8 +1107,8 @@ serve_auto() {
         local pick_reason
         pick_reason=$(echo "${pick_json}"    | python3 -c "import sys,json; print(json.loads(sys.stdin.read()).get('reason',''))" 2>/dev/null || echo "")
 
-        pick_base_url="${API_BASE_URL[${pick_provider}]:-https://openrouter.ai/api/v1}"
-        pick_key_env="${API_KEY_ENV[${pick_provider}]:-OPENROUTER_API_KEY}"
+        pick_base_url="${API_BASE_URL[${pick_provider:-unknown}]:-https://openrouter.ai/api/v1}"
+        pick_key_env="${API_KEY_ENV[${pick_provider:-unknown}]:-OPENROUTER_API_KEY}"
 
         echo "→ Auto-pick for ${role} (API): ${pick_alias}"
         echo "  Provider: ${pick_provider}  Model: ${pick_model_id}"
@@ -1123,8 +1158,8 @@ serve_auto() {
         local pick_reason
         pick_reason=$(echo "${pick_json}"    | python3 -c "import sys,json; print(json.loads(sys.stdin.read()).get('reason',''))"   2>/dev/null || echo "")
 
-        local base_url="${API_BASE_URL[${pick_provider}]:-https://openrouter.ai/api/v1}"
-        local key_env="${API_KEY_ENV[${pick_provider}]:-OPENROUTER_API_KEY}"
+        local base_url="${API_BASE_URL[${pick_provider:-unknown}]:-https://openrouter.ai/api/v1}"
+        local key_env="${API_KEY_ENV[${pick_provider:-unknown}]:-OPENROUTER_API_KEY}"
 
         echo "→ Auto-pick for ${role} (API): ${pick_alias}"
         echo "  Provider: ${pick_provider}  Model: ${pick_model_id}"
