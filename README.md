@@ -291,13 +291,21 @@ Multi-GPU tensor split: use `extra_args: ['--tensor-split', 'X,Y']` — no hardc
 
 ### Tier Ladder (used by `serve auto`)
 
+**Main candidates (Tier S + SF only):**
+
 | Tier | Meaning | Examples |
 |------|---------|----------|
 | `s` | Smartest | Darwin Reason, Darwin Apex-Compact, Prism Eagle |
-| `sf` | Smart + fast | Carwin-MTP, Qwopus v2-MTP, Qwopus Coder-MTP |
-| `sd` | Smart + dense | Carnice Apex Compact |
-| `f` | Fast | Qwable MTP, Qwopus abliterated-MTP |
+| `sf` | Smart + fast | Carwin-MTP, Qwopus v2-MTP, Qwopus Coder-MTP, Carnice |
+
+**Auxiliary only (Tier F + C — not recommended for main):**
+
+| Tier | Meaning | Examples |
+|------|---------|----------|
+| `f` | Fast | Qwable MTP, Qwopus Abliterated-MTP |
 | `c` | Cheap | Qwen legacy, devstral, step-flash, omni-3b |
+
+`serve auto main` will only pick from tiers S and SF. Tier F and C models are reserved for the aux role, vision fallback, or lightweight tasks.
 
 ---
 
