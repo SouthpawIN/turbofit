@@ -41,7 +41,7 @@ rsync -av --delete \
     --exclude='.git' \
     --exclude='__pycache__' \
     --exclude='*.pyc' \
-    "$SOURCE_SKILL_DIR/" "$TURBOFIT_REPO_DIR/skills/turbofit/"
+    "$SOURCE_SKILL_DIR/" "$TURBOFIT_REPO_DIR/"
 echo "   Primary repo synced."
 
 # 2. Sync to SouthpawIN/sovth-config (collection)
@@ -60,12 +60,12 @@ fi
 # 3. Commit and push turbofit repo
 echo "3. Committing turbofit repo..."
 cd "$TURBOFIT_REPO_DIR"
-CHANGES=$(git status --short skills/turbofit/)
+CHANGES=$(git status --short SKILL.md references/ scripts/ distribution.yaml)
 if [ -z "$CHANGES" ]; then
     echo "   No changes in turbofit repo."
 else
     echo "   Changes: $CHANGES"
-    git add skills/turbofit/
+    git add SKILL.md references/ scripts/ distribution.yaml
     COMMIT_MSG="turbofit: daily model database sync $(date +%Y-%m-%d)"
     git commit -m "$COMMIT_MSG" --no-verify 2>&1 || true
     echo "   Committed: $COMMIT_MSG"
