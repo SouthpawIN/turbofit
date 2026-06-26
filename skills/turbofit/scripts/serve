@@ -1982,6 +1982,255 @@ bench_model() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# mmproj management: verify, find, download, set correct mmproj per model
+# ─────────────────────────────────────────────────────────────────────────────
+
+# n_embd mapping by model family
+# Qwen3.6-27B dense (Darwin, Prism, Qwopus, Qwable, Carwin): n_embd=5120
+# Qwen3.6-35B-A3B MoE (Carnice, Darwin Apex): n_embd=2048
+# Qwen2.5-Omni-3B: n_embd=2048
+
+manage_mmproj() {
+    local action="${1:-check}"
+    local alias="${2:-}"
+
+    case "${action}" in
+        check)
+            echo "Checking mmproj for all vision models..."
+            python3 - "$CATALOG" <<'PYEOF'
+import sys, os, yaml
+
+catalog_path = sys.argv[1]
+with open(catalog_path) as f:
+    cfg = yaml.safe_load(f) or {}
+
+models = cfg.get("models", {})
+issues = []
+
+for alias, m in sorted(models.items()):
+    vision = m.get("vision", False)
+    mmproj = m.get("mmproj", "")
+    
+    if not vision:
+        continue
+    
+    if not mmproj:
+        issues.append(f"  ❌ {alias}: vision=true but NO mmproj set")
+        continue
+    
+    if not os.path.exists(mmproj):
+        issues.append(f"  ❌ {alias}: mmproj MISSING — {mmproj}")
+        continue
+    
+    # Check if it's a symlink and verify target
+    if os.path.islink(mmproj):
+        target = os.readlink(mmproj)
+        if not os.path.exists(target):
+            issues.append(f"  ❌ {alias}: mmproj BROKEN SYMLINK — {mmproj} → {target}")
+            continue
+    
+    # Determine n_embd from model path
+    path = m.get("path", "")
+    n_embd_model = "?"
+    n_embd_mmproj = "?"
+    
+    # Try to get n_embd from running model
+    port = m.get("port", 0)
+    if port:
+        try:
+            import httpx
+            resp = httpx.get(f"http://127.0.0.1:{port}/v1/models", timeout=2)
+            if resp.status_code == 200:
+                data = resp.json()
+                n_embd_model = data["data"][0]["meta"].get("n_embd", "?")
+        except:
+            pass
+    
+    # Infer n_embd from mmproj filename
+    if "mmproj-BF16" in mmproj or "mmproj-F16" in mmproj:
+        n_embd_mmproj = "2048 (MoE)"
+    elif "mmproj-F32" in mmproj:
+        # Could be 5120 (27B) or 2048 (Omni-3B) — check path
+        if "Omni" in mmproj:
+            n_embd_mmproj = "2048 (Omni-3B)"
+        else:
+            n_embd_mmproj = "5120 (27B dense)"
+    elif "Omni-3B" in mmproj:
+        n_embd_mmproj = "2048 (Omni-3B)"
+    else:
+        n_embd_mmproj = "unknown"
+    
+    # Check for mismatch
+    match = "✅" if (n_embd_model == "?" or n_embd_mmproj == "?" or str(n_embd_model) in n_embd_mmproj) else "⚠️ MISMATCH"
+    
+    if "MISMATCH" in match:
+        issues.append(f"  ⚠️ {alias}: n_embd MISMATCH — model={n_embd_model}, mmproj={n_embd_mmproj}")
+    
+    size = os.path.getsize(mmproj) if os.path.exists(mmproj) else 0
+    size_mb = size // (1024*1024)
+    link = " (symlink)" if os.path.islink(mmproj) else ""
+    print(f"  {match} {alias}: n_embd={n_embd_model} mmproj={n_embd_mmproj} ({size_mb}MB){link}")
+    print(f"       {mmproj}")
+
+if issues:
+    print("\nISSUES FOUND:")
+    for issue in issues:
+        print(issue)
+    print(f"\n{len(issues)} issue(s) found. Run 'serve mmproj fix <alias>' to resolve.")
+else:
+    print("\n✅ All mmproj files verified.")
+PYEOF
+            ;;
+        fix)
+            if [ -z "$alias" ]; then
+                echo "Usage: serve mmproj fix <alias>"
+                echo "  Finds, downloads, and sets the correct mmproj for a model."
+                echo ""
+                echo "  If the model's HF repo has an mmproj, it downloads it."
+                echo "  If not, it finds a compatible mmproj from the same model family."
+                exit 1
+            fi
+            
+            local model_path hf_repo current_mmproj
+            model_path=$(python3 -c "
+import yaml, os
+with open('$CATALOG') as f: cfg = yaml.safe_load(f)
+m = cfg.get('models', {}).get('$alias', {})
+print(m.get('path', ''))
+" 2>/dev/null)
+            hf_repo=$(python3 -c "
+import yaml, os
+with open('$CATALOG') as f: cfg = yaml.safe_load(f)
+m = cfg.get('models', {}).get('$alias', {})
+print(m.get('hf_repo', ''))
+" 2>/dev/null)
+            current_mmproj=$(python3 -c "
+import yaml, os
+with open('$CATALOG') as f: cfg = yaml.safe_load(f)
+m = cfg.get('models', {}).get('$alias', {})
+print(m.get('mmproj', ''))
+" 2>/dev/null)
+            
+            if [ -z "$model_path" ]; then
+                echo "❌ Model '$alias' not found in catalog."
+                exit 1
+            fi
+            
+            local model_dir
+            model_dir=$(dirname "$model_path")
+            
+            echo "Model: $alias"
+            echo "Path:  $model_path"
+            echo "HF:    ${hf_repo:-not set}"
+            echo "Current mmproj: ${current_mmproj:-none}"
+            echo ""
+            
+            # Check if current mmproj exists and is valid
+            if [ -n "$current_mmproj" ] && [ -f "$current_mmproj" ]; then
+                echo "✅ mmproj exists at $current_mmproj"
+                # Verify n_embd match
+                echo "Run 'serve mmproj check' to verify n_embd compatibility."
+                return 0
+            fi
+            
+            # Try to download from HF repo
+            if [ -n "$hf_repo" ]; then
+                echo "Downloading mmproj from HF repo: $hf_repo"
+                # Try common mmproj filenames
+                for mmproj_name in "mmproj-F32.gguf" "mmproj-BF16.gguf" "mmproj-f16.gguf" "mmproj-model-f16.gguf"; do
+                    echo "  Trying: $mmproj_name"
+                    if hf download "$hf_repo" --include="$mmproj_name" --local-dir "$model_dir" 2>/dev/null; then
+                        local new_mmproj="$model_dir/$mmproj_name"
+                        if [ -f "$new_mmproj" ]; then
+                            echo "  ✅ Downloaded: $new_mmproj"
+                            # Update catalog
+                            python3 -c "
+import yaml
+path = '$CATALOG'
+with open(path) as f: cfg = yaml.safe_load(f)
+cfg['models']['$alias']['mmproj'] = '$new_mmproj'
+cfg['models']['$alias']['vision'] = True
+with open(path, 'w') as f: yaml.dump(cfg, f, default_flow_style=False, sort_keys=False)
+print(f'Updated catalog: mmproj set to $new_mmproj')
+" 2>/dev/null
+                            echo "✅ mmproj set permanently in catalog."
+                            return 0
+                        fi
+                    fi
+                done
+                echo "  ⚠️ No mmproj found in HF repo."
+            fi
+            
+            # Fallback: find compatible mmproj from same model family
+            echo ""
+            echo "Searching for compatible mmproj from same model family..."
+            local model_base
+            model_base=$(basename "$model_path")
+            
+            # Determine model family
+            local n_embd_target
+            if echo "$model_base" | grep -qi "35B\|A3B\|MoE\|Apex\|Carnice"; then
+                n_embd_target="2048"
+                echo "  Model family: MoE (n_embd=2048)"
+            elif echo "$model_base" | grep -qi "Omni\|3B"; then
+                n_embd_target="2048"
+                echo "  Model family: Omni-3B (n_embd=2048)"
+            else
+                n_embd_target="5120"
+                echo "  Model family: 27B dense (n_embd=5120)"
+            fi
+            
+            # Search for existing mmproj files with matching n_embd
+            local found_mmproj=""
+            if [ "$n_embd_target" = "2048" ]; then
+                # Look for mmproj-BF16 or mmproj-f16 (MoE)
+                found_mmproj=$(find /home/sovthpaw/Models/ -name "mmproj-BF16.gguf" -o -name "mmproj-f16.gguf" 2>/dev/null | head -1)
+            else
+                # Look for mmproj-F32 (27B dense)
+                found_mmproj=$(find /home/sovthpaw/Models/ -name "mmproj-F32.gguf" -not -path "*Omni*" 2>/dev/null | head -1)
+            fi
+            
+            if [ -n "$found_mmproj" ]; then
+                echo "  Found compatible mmproj: $found_mmproj"
+                # Symlink it into the model dir
+                local new_mmproj="$model_dir/mmproj-F32.gguf"
+                if [ "$n_embd_target" = "2048" ]; then
+                    new_mmproj="$model_dir/mmproj-BF16.gguf"
+                fi
+                ln -sf "$found_mmproj" "$new_mmproj"
+                echo "  Symlinked: $new_mmproj → $found_mmproj"
+                # Update catalog
+                python3 -c "
+import yaml
+path = '$CATALOG'
+with open(path) as f: cfg = yaml.safe_load(f)
+cfg['models']['$alias']['mmproj'] = '$new_mmproj'
+cfg['models']['$alias']['vision'] = True
+with open(path, 'w') as f: yaml.dump(cfg, f, default_flow_style=False, sort_keys=False)
+print(f'Updated catalog: mmproj set to $new_mmproj')
+" 2>/dev/null
+                echo "✅ mmproj set permanently in catalog."
+                return 0
+            else
+                echo "  ❌ No compatible mmproj found on disk."
+                echo ""
+                echo "To fix manually:"
+                echo "  1. Find the correct mmproj from the model's HF repo"
+                echo "  2. Download it: hf download $hf_repo --include='mmproj*' --local-dir $model_dir"
+                echo "  3. Set it: serve register $alias $model_path --mmproj <path>"
+                return 1
+            fi
+            ;;
+        *)
+            echo "Usage: serve mmproj {check|fix <alias>}"
+            echo ""
+            echo "  check          Verify all vision models have correct mmproj"
+            echo "  fix <alias>    Find/download/set correct mmproj for a model"
+            ;;
+    esac
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Recommend: scan catalog, rank by Chris's criteria
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -2066,6 +2315,10 @@ OPINIONATED AUTO (turbofit v5.1 — hardware-aware, API-aware)
 FETCH / BENCH (from llama-launch)
   serve fetch <alias>                      Download missing model from HF (uses hf_repo in catalog)
   serve bench <alias>                      Run lm-eval-harness benchmark (launches model first)
+
+MMPROJ MANAGEMENT
+  serve mmproj check                      Verify all vision models have correct mmproj (n_embd match)
+  serve mmproj fix <alias>                 Find/download/set correct mmproj for a model
 
 HERMES MODEL ROUTING
   serve main <alias> [--ui tui|dashboard|gateway|desktop|herm]
@@ -2160,6 +2413,7 @@ case "${cmd}" in
     fetch)          fetch_model "${1:-}" ;;
     bench)          bench_model "${1:-}" ;;
     recommend)      recommend_fit ;;
+    mmproj)         manage_mmproj "$@" ;;
     auto)
         # serve auto [main|aux] [--vision] [--free] [--ui ...]
         # Forward everything to serve_auto which parses its own flags
