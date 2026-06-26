@@ -40,15 +40,25 @@ Ranked by composite score (GPQA + SWE-bench + MMLU + AIME weighted equally):
 - **Best paid vision aux**: Qwen 3.7 Plus ($0.32/$1.28, through Nous for Tool Gateway + 10% bonus)
 - **Best coding vision**: Kimi K2.6 (90.5% GPQA, vision, 1M ctx)
 
-### API Aux — ranked by vision > speed > cost, free first
+### API Aux — the aux role is three things, not just "the other model"
 
-| Rank | Model | Vision | Cost | Context | Why |
-|------|-------|--------|------|---------|-----|
-| 1 | **MiniMax M3** | ✅ | FREE (NIM) | 1M | 69.3% SWE-bench, vision, free. Best all-around aux. |
-| 2 | **Qwen 3.6 Plus** | ✅ | FREE (OR) | 1M | Free on OR, vision, 1M ctx. No Nous = no Tool Gateway. |
-| 3 | **Qwen 3.7 Plus** | ✅ | $0.32/$1.28 | 1M | Through Nous for Tool Gateway + 10% bonus. Good value. |
-| 4 | **Mimo V2.5** | ✅ | $0.105/$0.28 | 1M | Cheapest paid vision through Nous. |
-| 5 | **Qwen 3.5 Flash** | ✅ | $0.065/$0.26 | 1M | Cheapest overall, but weakest reasoning. |
+The auxiliary model handles **three critical jobs** that make or break the fleet:
+
+1. **Cost offset (40-85% of all tokens)**: Hermes routes vision, web extraction, compression, skills hub, and other auxiliary tasks to the aux model. A paid main at $1.25/$3.75 becomes affordable when 40-85% of the traffic hits a free or cheap aux instead. Without this offset, a paid main alone would burn through a monthly budget in days.
+
+2. **Vision injection**: Text-only mains (DeepSeek V4 Pro/Flash, Qwen 3.7 MAX, GLM 5.2, Mimo V2.5 Pro) have zero image understanding. The aux provides vision — screenshot analysis, image generation review, OCR, browser automation screenshots. Without a vision-capable aux, the fleet is blind.
+
+3. **Context compression**: When the main's context fills up, the aux compresses it — summarizing prior turns so the main can keep going with full intelligence. The aux needs enough context window to hold the compressed conversation (262K minimum, 1M ideal) so compression doesn't lose information.
+
+Ranked by all three roles (vision required, cost minimized, context ≥262K):
+
+| Rank | Model | Vision | Cost | Context | SWE-bench | Why |
+|------|-------|--------|------|---------|-----------|-----|
+| 1 | **MiniMax M3** | ✅ | FREE (NIM) | 1M | 69.3% | Free, vision, 1M ctx, strong reasoning. Best all-around aux. Offsets 40-85% of main cost to $0. |
+| 2 | **Qwen 3.6 Plus** | ✅ | FREE (OR) | 1M | — | Free on OR, vision, 1M ctx. No Nous = no Tool Gateway. Good for compression + vision, but misses Tool Gateway routing. |
+| 3 | **Qwen 3.7 Plus** | ✅ | $0.32/$1.28 | 1M | — | Through Nous for Tool Gateway + 10% credit bonus. Best paid aux — cheap enough to offset a premium main. |
+| 4 | **Mimo V2.5** | ✅ | $0.105/$0.28 | 1M | — | Cheapest paid vision through Nous. Good for budget-constrained setups that need Tool Gateway. |
+| 5 | **Qwen 3.5 Flash** | ✅ | $0.065/$0.26 | 1M | — | Cheapest overall. Weakest reasoning — acceptable for vision + compression but don't expect quality aux tasks. |
 
 ## Hardware Tiers
 
@@ -110,13 +120,15 @@ Ranked by composite score (GPQA + SWE-bench + MMLU + AIME weighted equally):
 
 ## Pairing Rules
 
-1. **Text-only mains MUST pair with vision aux.** DeepSeek V4 Pro/Flash, Qwen 3.7 MAX, GLM 5.2 → need vision aux.
-2. **Vision mains can pair with any aux.** MiniMax M3, Kimi K2.6, Qwen 3.7 Plus can be main or aux.
-3. **Free NIM pairings beat everything on cost.** DeepSeek V4 Pro + MiniMax M3 = zero cost, 90.5% GPQA, vision, 1M ctx.
-4. **Route through Nous for Tool Gateway.** When using paid API models, route through Nous (not direct OpenRouter) for Firecrawl + FAL + OpenAI TTS + Browser Use + 10% credit bonus.
-5. **Qwen 3.7 MAX is the MMLU king.** 93.7% MMLU — #1 globally. Best for knowledge-heavy tasks.
-6. **DeepSeek V4 Pro is the SWE-bench king.** 80.6% SWE-bench Verified — highest open model. Best for coding.
-7. **Qwen 3.7 MAX is the agentic king.** SWE-bench Pro 60.6%, SWE-bench Multilingual 78.3%, HMMT 97.1%. Best for long-horizon agent tasks.
+1. **Text-only mains MUST pair with vision aux.** DeepSeek V4 Pro/Flash, Qwen 3.7 MAX, GLM 5.2, Mimo V2.5 Pro → need vision aux. Without it, the fleet can't see images, screenshots, or browser output.
+2. **The aux offsets 40-85% of token cost.** A paid main at $1.25/$3.75 is only affordable when most traffic routes to a free or cheap aux. Always pick the cheapest aux that has vision + 262K+ context.
+3. **The aux must have 262K+ context for compression.** When the main's context fills, the aux compresses it. If the aux has less than 262K context, compression loses information and the main degrades.
+4. **Free NIM pairings beat everything on cost.** DeepSeek V4 Pro + MiniMax M3 = zero cost, 90.5% GPQA main, 69.3% SWE-bench aux, vision, 1M ctx on both. Unbeatable for free.
+5. **Route through Nous for Tool Gateway.** When using paid API models, route through Nous (not direct OpenRouter) for Firecrawl + FAL + OpenAI TTS + Browser Use + 10% credit bonus.
+6. **Qwen 3.7 MAX is the MMLU king.** 93.7% MMLU — #1 globally. Best for knowledge-heavy tasks. Pair with MiniMax M3 (free vision + compression).
+7. **DeepSeek V4 Pro is the SWE-bench king.** 80.6% SWE-bench Verified — highest open model. Best for coding. Pair with MiniMax M3 (free vision + compression).
+8. **Qwen 3.7 MAX is the agentic king.** SWE-bench Pro 60.6%, SWE-bench Multilingual 78.3%, HMMT 97.1%. Best for long-horizon agent tasks. Pair with Qwen 3.7 Plus (same family, Tool Gateway, vision).
+9. **Same-family pairings are efficient.** Qwen MAX + Qwen Plus share tokenizers. DeepSeek Pro + DeepSeek Flash share architecture. Same-family = better compression handoff.
 
 ## Key Principles
 
