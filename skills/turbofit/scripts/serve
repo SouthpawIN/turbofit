@@ -15,11 +15,60 @@
 set -euo pipefail
 
 TURBOFIT_ROOT="${TURBOFIT_ROOT:-${HOME}/.local/share/turbofit}"
-CATALOG="${HOME}/.config/turbofit/models.yaml"
-HERMES_CONFIG="${HOME}/.hermes/config.yaml"
+TURBOFIT_CONFIG_DIR="${HOME}/.config/turbofit"
+CATALOG="${TURBOFIT_CONFIG_DIR}/models.yaml"
+CURATED="${TURBOFIT_CONFIG_DIR}/curated.yaml"
+
+# Resolve Hermes config path — works on standard, profile, and Docker installs
+if [ -n "${HERMES_HOME:-}" ]; then
+    HERMES_CONFIG="${HERMES_HOME}/config.yaml"
+else
+    HERMES_CONFIG="${HOME}/.hermes/config.yaml"
+fi
 NVIDIA_API_BASE="https://integrate.api.nvidia.com/v1"
 
-mkdir -p "${TURBOFIT_ROOT}"/{logs,pid,port,strings,launchers} "${HOME}/.config/turbofit"
+mkdir -p "${TURBOFIT_ROOT}"/{logs,pid,port,strings,launchers} "${TURBOFIT_CONFIG_DIR}"
+
+# Export paths for embedded Python heredocs
+export TURBOFIT_CATALOG="${CATALOG}"
+export TURBOFIT_CURATED="${CURATED}"
+export TURBOFIT_HERMES_CONFIG="${HERMES_CONFIG}"
+
+# Bootstrap empty catalog + curated slots if missing (first run)
+if [ ! -f "${CATALOG}" ]; then
+    cat > "${CATALOG}" <<'YAML'
+# turbofit model catalog
+# Register models with: serve register <alias> <path> [--launcher llama-cpp] [--port N]
+# Or edit this file directly.
+# Schema: https://github.com/SouthpawIN/turbofit#catalog-schema
+models: {}
+YAML
+fi
+
+if [ ! -f "${CURATED}" ]; then
+    cat > "${CURATED}" <<'YAML'
+# turbofit curated slots — used by `serve auto` to pick models
+# Define which model fills each role for your hardware.
+# Leave slots empty to let serve auto fall back to API mode.
+slots:
+  main_local:
+    # alias: my-27b-model        # uncomment and set to a catalog alias
+    archetype: "27-28B dense (Q4)"
+    tier: s
+  aux_local:
+    # alias: my-35b-moe
+    archetype: "35B MoE (3B active)"
+    tier: sd
+  main_api:
+    archetype: "DeepSeek V4 Pro"
+    api_id: deepseek-ai/deepseek-v4-pro
+    tier: s
+  aux_api:
+    archetype: "MiniMax M3"
+    api_id: minimaxai/minimax-m3
+    tier: sf
+YAML
+fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Launcher registry
@@ -99,6 +148,7 @@ declare -A PRESET_FLAGS=(
 # ─────────────────────────────────────────────────────────────────────────────
 
 NVIDIA_NIM_FILE="${TURBOFIT_ROOT}/nvidia-nim-curated.yaml"
+export TURBOFIT_NIM_FILE="${NVIDIA_NIM_FILE}"
 
 write_nvidia_nim_list() {
     cat > "${NVIDIA_NIM_FILE}" <<'YAML'
@@ -333,7 +383,7 @@ alias_info() {
     python3 - "$alias" <<'PYEOF'
 import sys, os, yaml
 alias = sys.argv[1]
-catalog = os.path.expanduser("~/.config/turbofit/models.yaml")
+catalog = os.environ.get("TURBOFIT_CATALOG", os.path.expanduser("~/.config/turbofit/models.yaml"))
 if not os.path.exists(catalog):
     print("", file=sys.stderr); sys.exit(1)
 with open(catalog) as f:
@@ -363,7 +413,7 @@ alias_full() {
     python3 - "$alias" <<'PYEOF'
 import sys, os, yaml, json
 alias = sys.argv[1]
-catalog = os.path.expanduser("~/.config/turbofit/models.yaml")
+catalog = os.environ.get("TURBOFIT_CATALOG", os.path.expanduser("~/.config/turbofit/models.yaml"))
 if not os.path.exists(catalog):
     print("{}", file=sys.stderr); sys.exit(1)
 with open(catalog) as f:
@@ -393,7 +443,7 @@ resolve_extra_args() {
     python3 - "$alias" <<'PYEOF'
 import sys, os, yaml
 alias = sys.argv[1]
-catalog = os.path.expanduser("~/.config/turbofit/models.yaml")
+catalog = os.environ.get("TURBOFIT_CATALOG", os.path.expanduser("~/.config/turbofit/models.yaml"))
 if not os.path.exists(catalog):
     sys.exit(0)
 with open(catalog) as f:
@@ -767,8 +817,8 @@ slot = sys.argv[1]             # "main" or "aux"
 want_vision = sys.argv[2] == "true"
 prefer_free = sys.argv[3] == "true"
 
-curated_path = os.path.expanduser("~/.config/turbofit/curated.yaml")
-catalog_path = os.path.expanduser("~/.config/turbofit/models.yaml")
+curated_path = os.environ.get("TURBOFIT_CURATED", os.path.expanduser("~/.config/turbofit/curated.yaml"))
+catalog_path = os.environ.get("TURBOFIT_CATALOG", os.path.expanduser("~/.config/turbofit/models.yaml"))
 
 if not os.path.exists(curated_path):
     print(json.dumps({"error": "curated.yaml missing"})); sys.exit(1)
@@ -863,7 +913,7 @@ role = sys.argv[1]
 want_vision = sys.argv[2] == "true"
 prefer_free = sys.argv[3] == "true"
 
-curated_path = os.path.expanduser("~/.config/turbofit/curated.yaml")
+curated_path = os.environ.get("TURBOFIT_CURATED", os.path.expanduser("~/.config/turbofit/curated.yaml"))
 if not os.path.exists(curated_path):
     print(json.dumps({"error": "curated.yaml missing"}))
     sys.exit(1)
@@ -1136,7 +1186,7 @@ print(cfg.get('model', {}).get('default', '') or '')
         python3 - "${current_main}" <<'PYEOF'
 import sys, yaml, os
 alias = sys.argv[1]
-p = os.path.expanduser("~/.config/turbofit/models.yaml")
+p = os.environ.get("TURBOFIT_CATALOG", os.path.expanduser("~/.config/turbofit/models.yaml"))
 with open(p) as f: cfg = yaml.safe_load(f) or {}
 if alias in cfg.get("models", {}):
     cfg["models"][alias]["ctx"] = 65536
@@ -1212,7 +1262,7 @@ nvidia_nim_list() {
     [ -f "${NVIDIA_NIM_FILE}" ] || write_nvidia_nim_list
     python3 - <<'PYEOF'
 import yaml, os
-with open(os.path.expanduser("~/.local/share/turbofit/nvidia-nim-curated.yaml")) as f:
+with open(os.environ.get("TURBOFIT_NIM_FILE", os.path.expanduser("~/.local/share/turbofit/nvidia-nim-curated.yaml"))) as f:
     cfg = yaml.safe_load(f)
 print(f"Provider: {cfg['provider']}  base_url: {cfg['base_url']}")
 print(f"All 5 models have FREE endpoints on build.nvidia.com (NVIDIA_API_KEY, ~1000 RPM at signup)")
@@ -1234,7 +1284,7 @@ nvidia_nim_use() {
     python3 - "${rank_or_id}" "${role}" "${HERMES_CONFIG}" <<'PYEOF'
 import sys, os, yaml
 target, role, cfg_path = sys.argv[1], sys.argv[2], sys.argv[3]
-with open(os.path.expanduser("~/.local/share/turbofit/nvidia-nim-curated.yaml")) as f:
+with open(os.environ.get("TURBOFIT_NIM_FILE", os.path.expanduser("~/.local/share/turbofit/nvidia-nim-curated.yaml"))) as f:
     cfg = yaml.safe_load(f)
 m = next((x for x in cfg['models'] if x['rank'] == int(target) or x['api_id'] == target), None)
 if not m:
@@ -1317,7 +1367,7 @@ list_catalog() {
     fi
     python3 - <<'PYEOF'
 import yaml, os
-catalog = os.path.expanduser("~/.config/turbofit/models.yaml")
+catalog = os.environ.get("TURBOFIT_CATALOG", os.path.expanduser("~/.config/turbofit/models.yaml"))
 with open(catalog) as f:
     cfg = yaml.safe_load(f) or {}
 models = cfg.get("models", {})
@@ -1489,7 +1539,7 @@ daemon_extra_args() {
 import sys, os, yaml, json
 
 alias = sys.argv[1]
-catalog = os.path.expanduser("~/.config/turbofit/models.yaml")
+catalog = os.environ.get("TURBOFIT_CATALOG", os.path.expanduser("~/.config/turbofit/models.yaml"))
 if not os.path.exists(catalog):
     sys.exit(1)
 

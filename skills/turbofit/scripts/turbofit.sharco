@@ -1,10 +1,50 @@
-# turbofit — model launcher + Hermes-Agent config
-# Source: ~/.hermes/skills/turbofit/scripts/turbofit.sharco
+#!/usr/bin/env bash
+# turbofit.sharco — shell shim for serve/name functions
+# Source: <skill-dir>/scripts/turbofit.sharco
+#
+# Resolves the skill directory dynamically so it works on any Hermes install:
+#   - Standard: ~/.hermes/skills/turbofit/
+#   - Profile:  $HERMES_HOME/skills/turbofit/ (e.g. ~/.hermes/profiles/senter/skills/turbofit/)
+#   - Docker:    $HERMES_HOME/skills/turbofit/ (e.g. /opt/data/skills/turbofit/)
 
-serve() {
-    ~/.hermes/skills/turbofit/scripts/serve "$@"
+_turbofit_find_skill_dir() {
+    # 1. HERMES_HOME is set — use it directly
+    if [ -n "${HERMES_HOME:-}" ] && [ -f "${HERMES_HOME}/skills/turbofit/scripts/serve" ]; then
+        echo "${HERMES_HOME}/skills/turbofit"
+        return
+    fi
+
+    # 2. Standard location
+    if [ -f "${HOME}/.hermes/skills/turbofit/scripts/serve" ]; then
+        echo "${HOME}/.hermes/skills/turbofit"
+        return
+    fi
+
+    # 3. Walk profiles to find it
+    local _profile
+    for _profile in "${HOME}/.hermes/profiles/"*; do
+        if [ -f "${_profile}/skills/turbofit/scripts/serve" ]; then
+            echo "${_profile}/skills/turbofit"
+            return
+        fi
+    done
+
+    # 4. Fallback — let the caller fail with a clear error
+    echo ""
 }
 
-name() {
-    ~/.hermes/skills/turbofit/scripts/serve register "$@"
-}
+TURBOFIT_SKILL_DIR="$(_turbofit_find_skill_dir)"
+
+if [ -z "${TURBOFIT_SKILL_DIR}" ]; then
+    echo "turbofit: could not locate skill directory. Set HERMES_HOME or install with 'hermes skills install turbofit'" >&2
+else
+    serve() {
+        "${TURBOFIT_SKILL_DIR}/scripts/serve" "$@"
+    }
+
+    name() {
+        "${TURBOFIT_SKILL_DIR}/scripts/serve" register "$@"
+    }
+fi
+
+unset -f _turbofit_find_skill_dir
