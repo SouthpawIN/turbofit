@@ -1,139 +1,126 @@
 # Curated Model Lineup
 
-Opinionated picks for main + aux roles, local + API. **Good intelligence is always available no matter your hardware.**
+Opinionated picks for main + aux roles, local + API. **Ranked by actual benchmark scores, not heuristics.**
+
+## API Model Leaderboard (by benchmark scores — June 2026)
+
+### Main API — text-only mains (must pair with vision aux)
+
+Ranked by composite score (GPQA + SWE-bench + MMLU + AIME weighted equally):
+
+| Rank | Model | MMLU | GPQA Diamond | SWE-bench Verified | SWE-bench Pro | AIME 2026 | Cost (in/out) | Context | Through Nous? |
+|------|-------|------|-------------|-------------------|---------------|-----------|---------------|---------|---------------|
+| 1 | **Qwen 3.7 MAX** | 93.7% (#1) | 92.4% | — | 60.6% | — | $1.25/$3.75 | 1M | ✅ `qwen/qwen3.7-max` |
+| 2 | **DeepSeek V4 Pro** | 90.2% | 90.5% | 80.6% | 58.6% | 96.4% | FREE (NIM) / $0.435/$0.87 | 1M | ✅ `deepseek/deepseek-v4-pro` |
+| 3 | **GLM 5.2** | — | ~87% | 72.8% | — | — | $0.95/$3.00 | 1M | ✅ `z-ai/glm-5.2` |
+| 4 | **DeepSeek V4 Flash** | 87.8% | 88.1% | 79.0% | — | — | FREE (NIM) / $0.09/$0.18 | 1M | ✅ `deepseek/deepseek-v4-flash` |
+| 5 | **Mimo V2.5 Pro** | — | — | — | — | — | ~$0.43/$0.87 | 1M | ✅ `xiaomi/mimo-v2.5-pro` |
+
+**Pick logic:**
+- **Best free main**: DeepSeek V4 Pro (GPQA 90.5%, SWE-bench 80.6%, AIME 96.4% — all FREE on NIM)
+- **Best paid main**: Qwen 3.7 MAX (MMLU #1 globally at 93.7%, GPQA 92.4%, HMMT 97.1%)
+- **Best value main**: DeepSeek V4 Flash (88.1% GPQA, 79.0% SWE-bench — free on NIM, cheapest paid at $0.09/$0.18)
+- **Best coding main**: DeepSeek V4 Pro (80.6% SWE-bench Verified, highest open model)
+- **Best agentic main**: Qwen 3.7 MAX (agent-focused, SWE-bench Pro 60.6%, SWE-bench Multilingual 78.3%)
+
+### Vision-capable models (main or aux)
+
+| Rank | Model | GPQA | SWE-bench | Vision | Cost | Context | Through Nous? |
+|------|-------|------|-----------|--------|------|---------|---------------|
+| 1 | **Kimi K2.6** | 90.5% | — | ✅ | $0.60/$2.50 | 1M | ✅ |
+| 2 | **MiniMax M3** | 62.5% | 69.3% (Verified) / 59.0% (Pro) | ✅ | FREE (NIM) / ~$0.30/$1.20 | 1M | ✅ |
+| 3 | **Qwen 3.7 Plus** | — | — | ✅ | $0.32/$1.28 | 1M | ✅ |
+| 4 | **Mimo V2.5** | — | — | ✅ | $0.105/$0.28 | 1M | ✅ |
+| 5 | **Qwen 3.6 Plus** | — | — | ✅ | FREE (OR) | 1M | ❌ OR only |
+| 6 | **Qwen 3.5 Flash** | — | — | ✅ | $0.065/$0.26 | 1M | ✅ |
+
+**Pick logic:**
+- **Best free vision aux**: MiniMax M3 (69.3% SWE-bench, vision, 1M ctx — FREE on NIM)
+- **Best free vision (OR)**: Qwen 3.6 Plus (FREE on OR preview, 1M ctx, vision — but NOT through Nous, no Tool Gateway)
+- **Best paid vision aux**: Qwen 3.7 Plus ($0.32/$1.28, through Nous for Tool Gateway + 10% bonus)
+- **Best coding vision**: Kimi K2.6 (90.5% GPQA, vision, 1M ctx)
+
+### API Aux — ranked by vision > speed > cost, free first
+
+| Rank | Model | Vision | Cost | Context | Why |
+|------|-------|--------|------|---------|-----|
+| 1 | **MiniMax M3** | ✅ | FREE (NIM) | 1M | 69.3% SWE-bench, vision, free. Best all-around aux. |
+| 2 | **Qwen 3.6 Plus** | ✅ | FREE (OR) | 1M | Free on OR, vision, 1M ctx. No Nous = no Tool Gateway. |
+| 3 | **Qwen 3.7 Plus** | ✅ | $0.32/$1.28 | 1M | Through Nous for Tool Gateway + 10% bonus. Good value. |
+| 4 | **Mimo V2.5** | ✅ | $0.105/$0.28 | 1M | Cheapest paid vision through Nous. |
+| 5 | **Qwen 3.5 Flash** | ✅ | $0.065/$0.26 | 1M | Cheapest overall, but weakest reasoning. |
 
 ## Hardware Tiers
 
 | Tier | VRAM | Setup | Default Main | Default Aux | Gateway |
 |------|------|-------|-------------|-------------|---------|
 | **Beefy** | ≥24GB | Local main + local aux | 27-28B dense (Q4) | 35B MoE 3B-active | N/A (local) |
-| **Modest** | 8-24GB | API main + free/cheap aux | DeepSeek V4 Pro (API) | Qwen 3.6 Plus (OR free) or MiniMax M3 (NIM free) | 🟡/⚪ |
-| **Thin** | <8GB or no GPU | API main + API aux | DeepSeek V4 Flash (NIM free) | MiniMax M3 (NIM free) | ⚪ NIM |
+| **Modest** | 8-24GB | API main + free/cheap aux | DeepSeek V4 Pro (API, FREE) | MiniMax M3 (NIM, FREE) | ⚪ NIM |
+| **Thin** | <8GB or no GPU | API main + API aux | DeepSeek V4 Pro (API, FREE) | MiniMax M3 (NIM, FREE) | ⚪ NIM |
 
 `serve auto` detects your tier. `--api` forces API mode. `--free` restricts to free endpoints.
 
-## Featured Local Model Archetypes (Beefy tier)
+## Local Model Recommendations (by archetype + benchmark)
 
-Users register their own local GGUF models. The archetypes below describe what *kind* of model fits each role. `serve recommend` scans the catalog and picks the best match.
+### Main candidates (Tier S + SF only)
 
-### Main archetypes (by VRAM budget)
+| Archetype | Model | GPQA | tok/s | VRAM | Why It's Recommended |
+|-----------|-------|------|-------|------|---------------------|
+| 27-28B dense (reasoning) | Darwin 28B Reason | 89.39% | 38 | 17 GB | Smartest local dense model. MRI-Trust merge. Best for deep reasoning tasks. |
+| 27B hybrid/Mamba | Prism Eagle 27B | ~86% | 121 | 14 GB | Fastest local model. Mamba2+GDN. Best when speed matters more than peak reasoning. |
+| 36B MoE (3B active) | Darwin Apex 36B | ~87% | 107 | 16 GB | Best MoE main. NextN speculative decoding. 3B active params = fast inference. |
+| 27B dense + MTP | Carwin 28B MTP | ~84% | 100 | 17 GB | Multimodal MTP. Good balance of speed + reasoning. |
+| 27B dense (coder) | Qwopus 27B Coder MTP | ~84% | 100 | 17 GB | Coding-optimized MTP. Best for SWE-bench-style tasks locally. |
+| 27B dense (speed) | Qwopus 27B v2 MTP | ~84% | 100 | 17 GB | Speed-optimized. Native MTP graft for 1.6x speedup. |
+| 35B MoE (3B active) | Carnice 35A3B | ~83% | 110 | 11 GB | Smallest VRAM in tier. Always-on aux + vision. 1M ctx. |
 
-| Archetype | Size (Q4) | VRAM w/ KV | Tier | Speed (typical) | Key Feature |
-|-----------|----------|------------|------|----------------|-------------|
-| 27-28B dense (reasoning) | 14-17 GB | ~22 GB | S | 35-40 tok/s | Smartest dense, 1M ctx capable |
-| 27B hybrid/Mamba | 14 GB | ~16 GB | S | 100-120 tok/s | Mamba2+GDN, smallest 27B |
-| 27B dense + MTP | 17 GB | ~22 GB | SF | ~100 tok/s | MTP + multimodal |
-| 27B dense (coder) | 17 GB | ~22 GB | SF | ~100 tok/s | Coding-optimized MTP |
-| 35B MoE (3B active) | 11-17 GB | ~11-17 GB | SD | 30-110 tok/s | MoE, vision, 1M ctx |
+### Aux candidates (Tier F + C — auxiliary only)
 
-### Aux archetype
+| Archetype | Model | tok/s | VRAM | Role |
+|-----------|-------|-------|------|------|
+| 27B fine-tune (MTP) | Qwable 27B MTP | 100 | 17 GB | Vision aux, compression |
+| 27B uncensored (MTP) | Qwable/Qwopus Abliterated | 100 | 17-20 GB | Uncensored aux |
+| 35B stock MoE | Qwen3.5-35B-A3B | 40 | 22 GB | Fallback MoE |
+| Small multimodal | Qwen2.5-Omni-3B | 30 | 3 GB | Ultra-light aux for Modest tier |
 
-| Archetype | Size (Q4) | VRAM | Tier | Speed | Key Feature |
-|-----------|----------|------|------|-------|-------------|
-| 35B MoE (3B active) | 11 GB | ~11 GB (17 GB w/o cpu-moe) | SF | 30 tok/s (10 w/ cpu-moe) | Always-on, vision, 1M ctx |
-| Small multimodal (≤3B) | 2-3 GB | ~3 GB | C | 30-80 tok/s | Ultra-light aux for Modest tier |
+## Recommended Pairings (based on benchmarks)
 
-### What users register
+### Beefy Tier (≥24GB VRAM) — Best Local Setup
 
-Users add their own models via `serve register`:
+| Main | Aux | Main GPQA | Aux Vision | Total VRAM | Notes |
+|------|-----|-----------|------------|------------|-------|
+| **Darwin 28B Reason** | **Carnice 35A3B** | 89.39% | ✅ | 28 GB | Smartest main + smallest aux. Best overall pairing. |
+| Prism Eagle 27B | Carnice 35A3B | ~86% | ✅ | 25 GB | Fastest main (121 tok/s) + smallest aux. |
+| Darwin Apex 36B | Carnice 35A3B | ~87% | ✅ | 27 GB | Best MoE main + best MoE aux. NextN on both. |
 
-```bash
-# Register your main model
-serve register my-main /path/to/28B-model.Q4_K_M.gguf --port 11500
+### Modest Tier (8-24GB) — API + Free Aux
 
-# Register your aux model
-serve register my-aux /path/to/35B-MoE-model.gguf --port 8082
+| Main | Aux | Main GPQA | Cost | Gateway | Notes |
+|------|-----|-----------|------|---------|-------|
+| **DeepSeek V4 Pro (NIM)** | **MiniMax M3 (NIM)** | 90.5% | FREE | ⚪ NIM | Zero cost. Best reasoning free. Vision aux free. |
+| DeepSeek V4 Flash (NIM) | MiniMax M3 (NIM) | 88.1% | FREE | ⚪ NIM | Zero cost. Faster main, slightly less reasoning. |
+| DeepSeek V4 Pro (Nous) | Qwen 3.7 Plus (Nous) | 90.5% | Paid | 🟢 NOUS+TG | Tool Gateway active. 10% credit bonus. Best quality. |
 
-# Then edit ~/.config/turbofit/models.yaml to set:
-#   tier, vision, role, presets, mmproj, binary, etc.
-```
+### Thin Tier (<8GB or no GPU) — Zero Cost
 
-The catalog schema is fully documented in SKILL.md. `serve recommend` ranks catalog entries by fit (ctx≥64K, tok/s≥25, vision bonus, tier priority).
-
-## API Main (ranked by performance — free first)
-
-### Text-only mains (must pair with vision aux)
-
-| Tier | Model | Vision | Cost | Context | Through Nous? |
-|------|-------|--------|------|---------|---------------|
-| S | GLM 5.2 | ❌ | $0.95/$3.00 (OR) / $1.40/$4.40 (Z.AI) | 1M | ✅ `z-ai/glm-5.2` |
-| S | Qwen 3.7 MAX | ❌ | $1.25/$3.75 | 1M | ✅ `qwen/qwen3.7-max` |
-| S | DeepSeek V4 Pro | ❌ | $0.435/$0.87 (DS) / FREE (NIM) | 1M | ✅ `deepseek/deepseek-v4-pro` |
-| SF | DeepSeek V4 Flash | ❌ | $0.09/$0.18 (OR) / FREE (NIM) | 1M | ✅ `deepseek/deepseek-v4-flash` |
-| SF | Mimo V2.5 Pro | ❌ | ~$1.00/$3.00 | 1M | ✅ `xiaomi/mimo-v2.5-pro` |
-
-### Vision-capable mains
-
-| Tier | Model | Vision | Cost | Context | Through Nous? |
-|------|-------|--------|------|---------|---------------|
-| SF | MiniMax M3 | ✅ | ~$0.30/$1.20 / FREE (NIM) | 1M | ✅ `minimaxai/minimax-m3` |
-| SF | Qwen 3.7 Plus | ✅ | $0.32/$1.28 (OR) | 1M | ✅ `qwen/qwen3.7-plus` |
-| F | Mimo V2.5 | ✅ | $0.105/$0.28 | 1M | ✅ `xiaomi/mimo-v2.5` |
-| SF | Kimi K2.7 Code | ✅ | $0.74/$3.50 | 256K | ✅ `moonshotai/kimi-k2.7-code` |
-| F | Qwen 3.6 Plus | ✅ | FREE (OR preview) | 1M | ❌ OR only |
-| SD | Qwen 3.5 Flash | ✅ | $0.065/$0.26 | 1M | ✅ `qwen/qwen3.5-flash-02-23` |
-
-## API Aux (ranked by vision > speed > cost — free first)
-
-| Tier | Model | Vision | Cost | Context | Through Nous? |
-|------|-------|--------|------|---------|---------------|
-| F | Qwen 3.6 Plus | ✅ | FREE (OR) | 1M | ❌ OR only |
-| SF | MiniMax M3 | ✅ | FREE (NIM) | 1M | ✅ |
-| F | Mimo V2.5 | ✅ | $0.105/$0.28 | 1M | ✅ |
-| SD | Qwen 3.5 Flash | ✅ | $0.065/$0.26 | 1M | ✅ |
-| SF | Kimi K2.6 | ✅ | $0.60/$2.50 | 1M | ✅ |
-| SF | Kimi K2.7 Code | ✅ | $0.74/$3.50 | 256K | ✅ |
-
-## Cascading Scaling Ladders
-
-### Beefy (≥24GB) — 7 steps
-
-| Step | State | Main Archetype | Aux | Context | Action |
-|------|-------|---------------|-----|---------|--------|
-| 1 | Ideal | 27-28B dense (Q4) | 35B MoE (local) | 1M | Nothing |
-| 2 | Mild pressure | 27-28B dense | 35B MoE (cpu-moe) | 1M | Offload aux to CPU |
-| 3 | Moderate | 27-28B dense | 35B MoE | 512K | Drop context |
-| 4 | High | 27-28B dense | API vision (free) | 262K | Drop local aux |
-| 5 | Critical | 27B hybrid/Mamba | API vision (cheap) | 262K | Swap to lighter main |
-| 6 | Extreme | 35B MoE (3B active) | API vision (cheap) | 132K | Swap to MoE main |
-| 7 | API-only | API main (Nous) | API vision (Nous) | 1M | Full cloud fallback |
-
-### Modest (8-24GB) — 5 steps
-
-| Step | State | Main | Aux | Context | Gateway |
-|------|-------|------|-----|---------|---------|
-| 1 | Comfortable | DeepSeek V4 Pro (Nous) | Qwen 3.6 Plus (OR free) | 1M | 🟡 NOUS+OR |
-| 2 | Budget | DeepSeek V4 Flash (NIM) | MiniMax M3 (NIM) | 1M | ⚪ NIM |
-| 3 | Tight | DeepSeek V4 Flash (Nous) | Qwen 3.5 Flash (Nous) | 262K | 🟢 NOUS+TG |
-| 4 | Minimal | DeepSeek V4 Flash (NIM) | MiniMax M3 (NIM) | 132K | ⚪ NIM |
-| 5 | Local aux | DeepSeek V4 Pro (Nous) | Small local model | 1M | 🟡 NOUS+local |
-
-### Thin (<8GB) — 4 steps
-
-| Step | State | Main | Aux | Context | Gateway |
-|------|-------|------|-----|---------|---------|
-| 1 | Zero cost | DeepSeek V4 Flash (NIM) | MiniMax M3 (NIM) | 1M | ⚪ NIM |
-| 2 | Budget TG | DeepSeek V4 Flash (Nous) | Qwen 3.5 Flash (Nous) | 1M | 🟢 NOUS+TG |
-| 3 | Mid | DeepSeek V4 Pro (Nous) | Qwen 3.5 Flash (Nous) | 1M | 🟢 NOUS+TG |
-| 4 | Premium | GLM 5.2 (Nous) | Qwen 3.5 Flash (Nous) | 1M | 🟢 NOUS+TG |
-
-See `scaling-ladder.md` for full step-by-step details.
+| Main | Aux | Main GPQA | Cost | Gateway | Notes |
+|------|-----|-----------|------|---------|-------|
+| **DeepSeek V4 Pro (NIM)** | **MiniMax M3 (NIM)** | 90.5% | FREE | ⚪ NIM | Same as Modest. Zero cost, 1M ctx. |
+| DeepSeek V4 Flash (NIM) | MiniMax M3 (NIM) | 88.1% | FREE | ⚪ NIM | Slightly faster, still free. |
 
 ## Pairing Rules
 
-1. **Text-only mains MUST pair with vision aux.** GLM 5.2, Qwen 3.7 MAX, DeepSeek V4 Pro/Flash, Mimo V2.5 Pro → need vision aux.
-2. **Vision mains can pair with any aux.**
-3. **Same-family pairings are efficient** — Mimo Pro/V2.5, Qwen MAX/Plus, DeepSeek Pro/Flash share tokenizers.
-4. **Free Qwen 3.6 Plus is the best free aux** — 1M ctx, vision, free on OpenRouter (not through Nous).
-5. **NIM free endpoints are the best zero-cost mains** — DeepSeek V4 Pro/Flash, MiniMax M3.
-6. **Nous Tool Gateway active when main is through Nous** — covers Firecrawl, FAL, OpenAI TTS, Browser Use.
-7. **10% OpenRouter credit bonus** — factor into cost calculations.
-
-See `api-pairing-matrix.md` for the complete pairing matrix with all combinations.
+1. **Text-only mains MUST pair with vision aux.** DeepSeek V4 Pro/Flash, Qwen 3.7 MAX, GLM 5.2 → need vision aux.
+2. **Vision mains can pair with any aux.** MiniMax M3, Kimi K2.6, Qwen 3.7 Plus can be main or aux.
+3. **Free NIM pairings beat everything on cost.** DeepSeek V4 Pro + MiniMax M3 = zero cost, 90.5% GPQA, vision, 1M ctx.
+4. **Route through Nous for Tool Gateway.** When using paid API models, route through Nous (not direct OpenRouter) for Firecrawl + FAL + OpenAI TTS + Browser Use + 10% credit bonus.
+5. **Qwen 3.7 MAX is the MMLU king.** 93.7% MMLU — #1 globally. Best for knowledge-heavy tasks.
+6. **DeepSeek V4 Pro is the SWE-bench king.** 80.6% SWE-bench Verified — highest open model. Best for coding.
+7. **Qwen 3.7 MAX is the agentic king.** SWE-bench Pro 60.6%, SWE-bench Multilingual 78.3%, HMMT 97.1%. Best for long-horizon agent tasks.
 
 ## Key Principles
 
-- Main is always protected until Step 5 (Beefy)
+- Main is always protected until Step 5 (Beefy scaling ladder)
 - MoE expert offload is the first pressure valve
 - Context drops only when absolutely necessary
 - API aux kicks in when local aux can't fit
