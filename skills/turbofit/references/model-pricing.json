@@ -1,14 +1,14 @@
 {
-  "generated": "2026-06-25T23:12:28.217621+00:00",
+  "generated": "2026-06-26T11:00:32.371397+00:00",
   "source": "openrouter",
   "models": [
     {
       "slug": "deepseek/deepseek-v3.2",
       "input_per_m": 0.2288,
       "output_per_m": 0.3432,
-      "cache_read_per_m": 0.0,
+      "cache_read_per_m": 0.02288,
       "cache_write_per_m": 0.0,
-      "has_cache_read": false,
+      "has_cache_read": true,
       "has_cache_write": false,
       "context_length": 131072,
       "has_vision": false,
@@ -456,14 +456,14 @@
     }
   ],
   "usage": {
-    "total_input": 17427559,
-    "total_output": 561384,
-    "total_cache_read": 88038531,
-    "effective_cache_rate": 0.8347567545170206,
-    "active_days": 5,
-    "avg_sessions_per_day": 13.4,
-    "avg_input_per_session": 260112.8208955224,
-    "avg_output_per_session": 8378.865671641792,
-    "total_est_cost": 33.35621774999999
+    "total_input": 23405773,
+    "total_output": 859443,
+    "total_cache_read": 182675694,
+    "effective_cache_rate": 0.8864246584580068,
+    "active_days": 6,
+    "avg_sessions_per_day": 16.0,
+    "avg_input_per_session": 243810.13541666666,
+    "avg_output_per_session": 8952.53125,
+    "total_est_cost": 56.96438738999999
   }
 }

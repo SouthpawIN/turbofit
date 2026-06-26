@@ -1,0 +1,74 @@
+{
+  "date": "2026-06-25",
+  "ctx": 131072,
+  "results": [
+    {
+      "name": "Qwopus Coder",
+      "status": "ok",
+      "tok_s": 34.9,
+      "tokens": 256,
+      "time_s": 7.34,
+      "size_gb": 16.8
+    },
+    {
+      "name": "Qwopus v2",
+      "status": "ok",
+      "tok_s": 34.9,
+      "tokens": 256,
+      "time_s": 7.33,
+      "size_gb": 16.8
+    },
+    {
+      "name": "Abliterated Qwable",
+      "status": "ok",
+      "tok_s": 30.2,
+      "tokens": 256,
+      "time_s": 8.48,
+      "size_gb": 20.5
+    },
+    {
+      "name": "Carwin",
+      "status": "ok",
+      "tok_s": 34.8,
+      "tokens": 256,
+      "time_s": 7.35,
+      "size_gb": 16.8
+    },
+    {
+      "name": "Prism Eagle",
+      "status": "ok",
+      "tok_s": 30.8,
+      "tokens": 256,
+      "time_s": 8.3,
+      "size_gb": 13.7
+    },
+    {
+      "name": "Qwable Coder",
+      "status": "ok",
+      "tok_s": 35.2,
+      "tokens": 256,
+      "time_s": 7.27,
+      "size_gb": 16.8
+    },
+    {
+      "name": "Carnice V2",
+      "status": "ok",
+      "tok_s": 35.6,
+      "tokens": 256,
+      "time_s": 7.2,
+      "size_gb": 16.5
+    },
+    {
+      "name": "Carwin Nano",
+      "status": "failed"
+    },
+    {
+      "name": "Holo 3.1",
+      "status": "ok",
+      "tok_s": 47.4,
+      "tokens": 256,
+      "time_s": 5.4,
+      "size_gb": 21.3
+    }
+  ]
+}

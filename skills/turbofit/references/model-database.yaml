@@ -1,5 +1,5 @@
 # Turbofit Model Database — Dynamic Source of Truth
-# Last updated: 2026-06-25
+# Last updated: 2026-06-26
 # This file is auto-updated by the daily research cron and synced to GitHub.
 # All turbofit skill references read from this file instead of hardcoded tables.
 #
@@ -60,7 +60,7 @@ models:
       notes: "Highest-ranked open-source model on long-horizon coding benchmarks, approaches Claude Opus 4.8 on terminal tasks"
     notes: "1M context, cache read: $0.18/M (81% savings on cache hits). Free access on Z.AI platform."
     discovered: "2026-06-16"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
 
   qwen-3.7-max:
     name: "Qwen 3.7 MAX"
@@ -79,7 +79,7 @@ models:
       source: "Qwen blog, OpenRouter"
       notes: "Flagship Qwen 3.7, agent-focused, 1M ctx, 65K max output"
     discovered: "2026-06-03"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
 
   deepseek-v4-pro:
     name: "DeepSeek V4 Pro"
@@ -100,7 +100,7 @@ models:
       notes: "1.6T MoE, 49B active, best open reasoning + coding"
     notes: "Free on NIM (~1000 RPM). DeepSeek direct has cache hit pricing."
     discovered: "2026-04-24"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
 
   deepseek-v4-flash:
     name: "DeepSeek V4 Flash"
@@ -121,7 +121,7 @@ models:
       notes: "284B MoE, 13B active, fast reasoning, best value per token"
     notes: "Free on NIM. Cheapest paid main on OpenRouter."
     discovered: "2026-04-24"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
 
   mimo-v2.5-pro:
     name: "Mimo V2.5 Pro"
@@ -141,7 +141,7 @@ models:
       notes: "1.02T MoE, 42B active. Same pricing as DeepSeek V4 Pro."
     notes: "Open-source weights on HuggingFace. Cache read: $0.0036/M (99% savings on cache hits)."
     discovered: "2026-06-01"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
 
   # ═══════════════════════════════════════════
   # VISION-CAPABLE API MODELS (main or aux)
@@ -165,7 +165,7 @@ models:
       notes: "Native omnimodal, 1M ctx, vision ✅"
     notes: "Cheapest vision-capable model on Nous. Best value vision aux."
     discovered: "2026-06-01"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
 
   qwen-3.7-plus:
     name: "Qwen 3.7 Plus"
@@ -185,7 +185,7 @@ models:
       notes: "Cost-effective multimodal, 1M ctx, vision ✅"
     notes: "Tiered pricing above 256K on some providers."
     discovered: "2026-06-03"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
 
   minimax-m3:
     name: "MiniMax M3"
@@ -197,15 +197,15 @@ models:
     context_max: 1048576
     context_tiers: [1048576, 524288, 262144, 131072]
     pricing:
-      nous: { input: 0.30, output: 1.20, slug: "minimaxai/minimax-m3" }
-      openrouter: { input: 0.30, output: 1.20, slug: "minimaxai/minimax-m3", free: false, cache_read: 0.06 }
+      nous: { input: 0.30, output: 1.20, slug: "minimax/minimax-m3" }
+      openrouter: { input: 0.30, output: 1.20, slug: "minimax/minimax-m3", free: false, cache_read: 0.06 }
       nim: { input: 0, output: 0, slug: "minimaxai/minimax-m3" }
     benchmarks:
       source: "MiniMax blog, LushBinary"
       notes: "22B MoE (A22B), 1M ctx, native multimodal, ~59% SWE-Bench Pro"
-    notes: "Free on NIM. Vision ✅. Best free vision aux alongside Qwen 3.6 Plus."
+    notes: "Free on NIM. Vision ✅. Slug on OpenRouter changed from minimaxai/ to minimax/. Best free vision aux alongside Qwen 3.6 Plus."
     discovered: "2026-05-31"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
 
   kimi-k2.7-code:
     name: "Kimi K2.7 Code"
@@ -224,7 +224,7 @@ models:
       source: "MarkTechPost, Requesty"
       notes: "Coding-focused, 262K ctx, vision ✅, 21.8% on Kimi Code Bench V2"
     discovered: "2026-06-12"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
 
   kimi-k2.6:
     name: "Kimi K2.6"
@@ -243,7 +243,7 @@ models:
       notes: "Multimodal, 262K ctx. Coding-driven UI/UX generation, multi-agent orchestration."
     notes: "Cache read: $0.144/M (78% savings). Previously free on OR via Crucible — now paid."
     discovered: "2026-05-01"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
 
   qwen-3.6-plus:
     name: "Qwen 3.6 Plus"
@@ -255,13 +255,14 @@ models:
     context_max: 1048576
     context_tiers: [1048576, 524288, 262144, 131072]
     pricing:
-      openrouter: { input: 0, output: 0, slug: "qwen/qwen3.6-plus:free", free: true }
+      nous: { input: 0.325, output: 1.95, slug: "qwen/qwen3.6-plus" }
+      openrouter: { input: 0.325, output: 1.95, slug: "qwen/qwen3.6-plus", free: false }
     benchmarks:
       source: "OpenRouter, Reddit"
       notes: "Hybrid linear attention + sparse MoE, 1M ctx, vision ✅, first model to break 1T tokens/day on OR"
-    notes: "FREE on OpenRouter preview. Not available through Nous gateway. Best free aux."
+    notes: "Free preview on OpenRouter has ENDED — now paid ($0.325/$1.95). No cache read pricing on OR yet."
     discovered: "2026-04-01"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
 
   qwen-3.5-flash:
     name: "Qwen 3.5 Flash"
@@ -280,7 +281,7 @@ models:
       notes: "Cheapest paid vision model on OpenRouter, 1M ctx"
     notes: "Best value vision aux through Nous gateway."
     discovered: "2026-02-23"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
 
   qwen-3.6-flash:
     name: "Qwen 3.6 Flash"
@@ -289,16 +290,16 @@ models:
     type: api
     vision: true
     role: either
-    context_max: 262144
-    context_tiers: [262144, 131072]
+    context_max: 1048576
+    context_tiers: [1048576, 524288, 262144, 131072]
     pricing:
       nous: { input: 0.1875, output: 1.125, slug: "qwen/qwen3.6-flash" }
       openrouter: { input: 0.1875, output: 1.125, slug: "qwen/qwen3.6-flash", free: false }
     benchmarks:
       source: "OpenRouter"
-      notes: "Fast, efficient, 262K ctx only"
+      notes: "Fast, efficient, 1M ctx (upgraded from 262K), vision ✅"
     discovered: "2026-04-01"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
 
   # ═══════════════════════════════════════════
   # NEW DISCOVERIES (June 2026) — VERIFIED REAL
@@ -327,7 +328,120 @@ models:
       n_embd: 2048
     notes: "Released June 23, 2026. Paper: arXiv:2606.24597. SGLang deployment: python -m sglang.launch_server --model-path Qwen/Qwen-AgentWorld-35B-A3B --port 8000 --tensor-parallel-size 4 --context-length 262144 --reasoning-parser qwen3. Niche use case — not recommended for general Hermes Agent main/aux, but relevant for agent simulation research."
     discovered: "2026-06-25"
-    last_verified: "2026-06-25"
+    last_verified: "2026-06-26"
+    new: true
+
+  # ═══════════════════════════════════════════
+  # NEW DISCOVERIES (2026-06-26) — VERIFIED REAL
+  # ═══════════════════════════════════════════
+
+  glm-5.1:
+    name: "GLM 5.1"
+    family: GLM
+    version: "5.1"
+    type: api
+    vision: false
+    role: main
+    context_max: 203000
+    context_tiers: [203000, 131072]
+    pricing:
+      nous: { input: 0.98, output: 3.08, slug: "z-ai/glm-5.1" }
+      openrouter: { input: 0.98, output: 3.08, slug: "z-ai/glm-5.1", free: false, cache_read: 0.182 }
+      direct: { input: 1.40, output: 4.40, provider: "Z.AI", cache_read: 0.26 }
+    benchmarks:
+      source: "OpenRouter, Z.AI blog"
+      gpqa_diamond: 86.8
+      tau2_bench: 97.7
+      scicode: 43.8
+      terminal_bench_hard: 43.2
+      notes: "GPQA Diamond 86.8%, τ²-Bench 97.7%, Terminal-Bench Hard 43.2%. Long-horizon coding focus."
+    notes: "Released Apr 7, 2026. 203K context. Cache read: $0.182/M (81% savings). Predecessor to GLM 5.2. Direct Z.AI pricing same as GLM 5.2 ($1.40/$4.40)."
+    discovered: "2026-06-26"
+    last_verified: "2026-06-26"
+    new: true
+
+  deepseek-v3.2:
+    name: "DeepSeek V3.2"
+    family: DeepSeek
+    version: "V3.2"
+    type: api
+    vision: false
+    role: main
+    context_max: 131072
+    context_tiers: [131072, 65536]
+    pricing:
+      nous: { input: 0.2288, output: 0.3432, slug: "deepseek/deepseek-v3.2" }
+      openrouter: { input: 0.2288, output: 0.3432, slug: "deepseek/deepseek-v3.2", free: false, cache_read: 0.0229 }
+      direct: { input: 0.28, output: 0.42, provider: "DeepSeek", cache_hit_input: 0.028 }
+    benchmarks:
+      source: "DeepSeek API docs, OpenRouter"
+      notes: "Harmonizes computational efficiency with reasoning + agent performance. Supports thinking in tool-use."
+    notes: "Released Dec 1, 2025. Cache read: $0.0229/M (90% savings). Direct DeepSeek cache hit price reduced to 1/10 of launch price. Cheaper than V4 on OR."
+    discovered: "2026-06-26"
+    last_verified: "2026-06-26"
+    new: true
+
+  nemotron-3-ultra:
+    name: "Nemotron 3 Ultra"
+    family: Llama
+    version: "Nemotron-3-Ultra-550B"
+    type: api
+    vision: false
+    role: main
+    context_max: 1000000
+    context_tiers: [1000000, 524288, 131072]
+    pricing:
+      nous: { input: 0.50, output: 2.20, slug: "nvidia/nemotron-3-ultra-550b-a55b" }
+      openrouter: { input: 0.50, output: 2.20, slug: "nvidia/nemotron-3-ultra-550b-a55b", free: false, cache_read: 0.10 }
+      nim: { input: 0, output: 0, slug: "nvidia/nemotron-3-ultra-550b-a55b" }
+    benchmarks:
+      source: "NVIDIA research, OpenRouter"
+      notes: "550B MoE, 55B active. Open frontier-reasoning and orchestration model. Open weights on HuggingFace."
+    notes: "Released Jun 4, 2026. Free on NIM and OpenRouter (:free variant). Cache read: $0.10/M (80% savings). Text-only."
+    discovered: "2026-06-26"
+    last_verified: "2026-06-26"
+    new: true
+
+  nemotron-3-super-120b:
+    name: "Nemotron 3 Super 120B"
+    family: Llama
+    version: "Nemotron-3-Super-120B-A12B"
+    type: api
+    vision: false
+    role: either
+    context_max: 1000000
+    context_tiers: [1000000, 524288, 131072]
+    pricing:
+      nous: { input: 0.085, output: 0.40, slug: "nvidia/nemotron-3-super-120b-a12b" }
+      openrouter: { input: 0.085, output: 0.40, slug: "nvidia/nemotron-3-super-120b-a12b", free: false }
+      nim: { input: 0, output: 0, slug: "nvidia/nemotron-3-super-120b-a12b" }
+    benchmarks:
+      source: "NVIDIA research, OpenRouter"
+      notes: "120B MoE, 12B active. Mid-tier reasoning model. No cache read pricing."
+    notes: "Free on NIM and OpenRouter (:free variant). 1M ctx. Text-only."
+    discovered: "2026-06-26"
+    last_verified: "2026-06-26"
+    new: true
+
+  nemotron-3-nano-30b:
+    name: "Nemotron 3 Nano 30B"
+    family: Llama
+    version: "Nemotron-3-Nano-30B-A3B"
+    type: api
+    vision: false
+    role: aux
+    context_max: 262144
+    context_tiers: [262144, 131072]
+    pricing:
+      nous: { input: 0.05, output: 0.20, slug: "nvidia/nemotron-3-nano-30b-a3b" }
+      openrouter: { input: 0.05, output: 0.20, slug: "nvidia/nemotron-3-nano-30b-a3b", free: false }
+      nim: { input: 0, output: 0, slug: "nvidia/nemotron-3-nano-30b-a3b" }
+    benchmarks:
+      source: "NVIDIA research, OpenRouter"
+      notes: "30B MoE, 3B active. Small language model for specialized agentic AI. Unified reasoning + non-reasoning."
+    notes: "Free on NIM and OpenRouter (:free variant, 256K ctx). Text-only. Cheapest non-free NVIDIA model."
+    discovered: "2026-06-26"
+    last_verified: "2026-06-26"
     new: true
 
   # ═══════════════════════════════════════════

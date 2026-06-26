@@ -1,0 +1,7 @@
+# Hermes session dumps (contain tokens/secrets)
+202606*
+*_53fdefbd
+*_43bef101
+
+# Debug artifacts
+*.sharco

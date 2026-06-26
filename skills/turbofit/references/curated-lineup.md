@@ -16,9 +16,7 @@ Opinionated picks for main + aux roles, local + API. **Good intelligence is alwa
 
 Users register their own local GGUF models. The archetypes below describe what *kind* of model fits each role. `serve recommend` scans the catalog and picks the best match.
 
-### Main candidates (Tier S + SF only)
-
-Only S and SF tier models are recommended for the **main** role — they have the reasoning and agentic quality to drive Hermes Agent.
+### Main archetypes (by VRAM budget)
 
 | Archetype | Size (Q4) | VRAM w/ KV | Tier | Speed (typical) | Key Feature |
 |-----------|----------|------------|------|----------------|-------------|
@@ -26,17 +24,13 @@ Only S and SF tier models are recommended for the **main** role — they have th
 | 27B hybrid/Mamba | 14 GB | ~16 GB | S | 100-120 tok/s | Mamba2+GDN, smallest 27B |
 | 27B dense + MTP | 17 GB | ~22 GB | SF | ~100 tok/s | MTP + multimodal |
 | 27B dense (coder) | 17 GB | ~22 GB | SF | ~100 tok/s | Coding-optimized MTP |
-| 35B MoE (3B active) | 11-17 GB | ~11-17 GB | SF | 30-110 tok/s | MoE, vision, 1M ctx |
+| 35B MoE (3B active) | 11-17 GB | ~11-17 GB | SD | 30-110 tok/s | MoE, vision, 1M ctx |
 
-### Aux candidates (Tier F + C — auxiliary only)
-
-F and C tier models are **aux-only** — they lack the reasoning depth for main but serve well as vision aux, compression aux, or lightweight fallbacks.
+### Aux archetype
 
 | Archetype | Size (Q4) | VRAM | Tier | Speed | Key Feature |
 |-----------|----------|------|------|-------|-------------|
-| 27B dense (fine-tune) | 17 GB | ~17 GB | F | 100 tok/s | MTP, fine-tuned variants |
-| 27B dense (abliterated) | 20 GB | ~20 GB | F | 100 tok/s | Uncensored + MTP |
-| 35B MoE (3B active) | 11 GB | ~11 GB (17 GB w/o cpu-moe) | SD | 30 tok/s (10 w/ cpu-moe) | Always-on, vision, 1M ctx |
+| 35B MoE (3B active) | 11 GB | ~11 GB (17 GB w/o cpu-moe) | SF | 30 tok/s (10 w/ cpu-moe) | Always-on, vision, 1M ctx |
 | Small multimodal (≤3B) | 2-3 GB | ~3 GB | C | 30-80 tok/s | Ultra-light aux for Modest tier |
 
 ### What users register
