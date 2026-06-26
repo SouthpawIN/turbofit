@@ -7,8 +7,14 @@ End-user UX: `serve auto main` → done.
 ## Install
 
 ```bash
-hermes skills install SouthpawIN/turbofit/skills/turbofit
+# One-time: add the turbofit repo as a skill source
+hermes skills tap add SouthpawIN/turbofit
+
+# Install the skill
+hermes skills install turbofit
 ```
+
+Update later with `hermes skills update turbofit`.
 
 ## What's new in v1.1
 

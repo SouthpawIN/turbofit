@@ -1,5 +1,5 @@
 # distribution.yaml — turbofit skill distribution manifest
-# Install with: hermes skills install SouthpawIN/turbofit/skills/turbofit
+# Install with: hermes skills tap add SouthpawIN/turbofit && hermes skills install turbofit
 name: turbofit
 version: "1.1.0"
 description: >-
