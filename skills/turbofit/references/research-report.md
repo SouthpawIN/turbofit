@@ -1,4 +1,4 @@
-# Turbofit Model Research Report — 2026-06-26
+# Turbofit Model Research Report — 2026-06-27
 
 ## Data Sources
 - Model pricing: OpenRouter API (`/api/v1/models`) — live
@@ -6,24 +6,26 @@
 
 ## Your Real Usage (from Hermes Insights)
 
-- Active days: 6
-- Total sessions: 96
-- Total messages: 4,549
-- Total tool calls: 2,460
-- Total input tokens: 23,405,773
-- Total output tokens: 859,443
-- Total cache read tokens: 182,675,694
-- Effective cache hit rate: 88.6%
-- Avg input/session: 243,810
-- Avg output/session: 8,953
-- Avg sessions/day: 16.0
-- Total estimated cost: $56.96
+- Active days: 7
+- Total sessions: 175
+- Total messages: 10,452
+- Total tool calls: 5,364
+- Total input tokens: 60,105,269
+- Total output tokens: 1,867,554
+- Total cache read tokens: 391,759,964
+- Effective cache hit rate: 86.7%
+- Avg input/session: 343,459
+- Avg output/session: 10,672
+- Avg sessions/day: 25.0
+- Total estimated cost: $148.21
 
 ### Models You've Actually Used
 
 | Model | Sessions | Input Tokens | Output Tokens | Cache Read | Est. Cost |
 |-------|----------|-------------|--------------|------------|-----------|
-| z-ai/glm-5.2 | 87 | 22,383,623 | 849,308 | 182,675,694 | $56.69 |
+| z-ai/glm-5.2 | 140 | 28,598,885 | 1,360,076 | 218,182,792 | $70.88 |
+| qwen/qwen3.7-max | 4 | 23,468,801 | 241,614 | 98,799,228 | $55.49 |
+| deepseek/deepseek-v4-pro | 22 | 7,015,433 | 255,729 | 74,777,944 | $21.57 |
 | qwen/qwen3.6-plus | 2 | 719,357 | 8,455 | 0 | $0.25 |
 | qwen/qwen3.5-flash-02-23 | 7 | 302,793 | 1,680 | 0 | $0.02 |
 
@@ -31,11 +33,11 @@
 
 | Platform | Sessions | Input | Output | Cost |
 |----------|----------|-------|--------|------|
-| discord | 8 | 18,976,567 | 511,565 | $50.02 |
-| subagent | 52 | 2,046,479 | 223,480 | $3.91 |
-| cron | 26 | 1,352,614 | 113,644 | $2.76 |
+| discord | 17 | 46,340,599 | 938,295 | $112.20 |
+| cli | 10 | 6,266,625 | 242,616 | $20.13 |
+| subagent | 94 | 4,587,635 | 419,262 | $9.45 |
+| cron | 49 | 2,383,442 | 262,429 | $6.32 |
 | tui | 5 | 526,968 | 4,952 | $0.11 |
-| cli | 5 | 503,145 | 5,802 | $0.17 |
 
 ## Live Model Pricing (from OpenRouter API)
 
@@ -76,63 +78,63 @@ Single model = all tokens go to this model. Pairing = 60% aux offset.
 
 | Model | Single (monthly) | Notes |
 |-------|-------------------|-------|
-| deepseek/deepseek-v3.2 | $6.89 | 90% cache savings |
-| deepseek/deepseek-v3.2-exp | $33.36 |  |
-| deepseek/deepseek-v4-flash | $4.04 | 78% cache savings |
-| deepseek/deepseek-v4-pro | $9.90 | 99% cache savings |
-| minimax/minimax-m3 | $15.37 | 80% cache savings; vision |
-| moonshotai/kimi-k2.6 | $38.36 | 78% cache savings; vision |
-| moonshotai/kimi-k2.7-code | $40.44 | 80% cache savings; vision |
-| nvidia/llama-3.3-nemotron-super-49b-v1.5 | $48.53 |  |
-| nvidia/nemotron-3-nano-30b-a3b | $6.71 |  |
+| deepseek/deepseek-v3.2 | $15.70 | 90% cache savings |
+| deepseek/deepseek-v3.2-exp | $72.83 |  |
+| deepseek/deepseek-v4-flash | $8.99 | 78% cache savings |
+| deepseek/deepseek-v4-pro | $22.68 | 99% cache savings |
+| minimax/minimax-m3 | $33.28 | 80% cache savings; vision |
+| moonshotai/kimi-k2.6 | $82.07 | 78% cache savings; vision |
+| moonshotai/kimi-k2.7-code | $86.87 | 80% cache savings; vision |
+| nvidia/llama-3.3-nemotron-super-49b-v1.5 | $106.24 |  |
+| nvidia/nemotron-3-nano-30b-a3b | $14.48 |  |
 | nvidia/nemotron-3-nano-30b-a3b:free | FREE |  |
 | nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free | FREE | vision |
-| nvidia/nemotron-3-super-120b-a12b | $11.67 |  |
+| nvidia/nemotron-3-super-120b-a12b | $25.10 |  |
 | nvidia/nemotron-3-super-120b-a12b:free | FREE |  |
-| nvidia/nemotron-3-ultra-550b-a55b | $26.47 | 80% cache savings |
+| nvidia/nemotron-3-ultra-550b-a55b | $57.07 | 80% cache savings |
 | nvidia/nemotron-3-ultra-550b-a55b:free | FREE |  |
 | nvidia/nemotron-3.5-content-safety:free | FREE | vision |
 | nvidia/nemotron-nano-12b-v2-vl:free | FREE | vision |
 | nvidia/nemotron-nano-9b-v2:free | FREE |  |
-| qwen/qwen3.5-flash-02-23 | $8.72 | vision |
-| qwen/qwen3.6-flash | $26.78 | vision |
-| qwen/qwen3.6-plus | $46.41 | vision |
-| qwen/qwen3.7-max | $58.66 | 80% cache savings |
-| qwen/qwen3.7-plus | $16.39 | 80% cache savings; vision |
-| xiaomi/mimo-v2.5 | $13.49 | vision |
-| xiaomi/mimo-v2.5-pro | $9.89 | 99% cache savings |
-| z-ai/glm-5.1 | $45.14 | 81% cache savings |
-| z-ai/glm-5.2 | $44.19 | 81% cache savings |
+| qwen/qwen3.5-flash-02-23 | $18.82 | vision |
+| qwen/qwen3.6-flash | $57.30 | vision |
+| qwen/qwen3.6-plus | $99.33 | vision |
+| qwen/qwen3.7-max | $128.68 | 80% cache savings |
+| qwen/qwen3.7-plus | $35.50 | 80% cache savings; vision |
+| xiaomi/mimo-v2.5 | $29.29 | vision |
+| xiaomi/mimo-v2.5-pro | $22.67 | 99% cache savings |
+| z-ai/glm-5.1 | $98.88 | 81% cache savings |
+| z-ai/glm-5.2 | $96.76 | 81% cache savings |
 
 ### Recommended Pairings (projected on YOUR usage)
 
 | Pairing | Monthly Cost | Notes |
 |---------|-------------|-------|
-| GLM 5.2 + Qwen 3.5 Flash | $22.91 | |
-| GLM 5.2 + Mimo V2.5 | $25.77 | |
-| GLM 5.2 + MiniMax M3 | $26.90 | |
-| GLM 5.2 + Kimi K2.7 Code | $41.94 | |
-| Qwen 3.7 MAX + Qwen 3.5 Flash | $28.70 | |
-| Qwen 3.7 MAX + Mimo V2.5 | $31.56 | |
-| Qwen 3.7 MAX + MiniMax M3 | $32.69 | |
-| Qwen 3.7 MAX + Kimi K2.7 Code | $47.73 | |
-| DeepSeek V4 Pro + Qwen 3.5 Flash | $9.19 | |
-| DeepSeek V4 Pro + Mimo V2.5 | $12.05 | |
-| DeepSeek V4 Pro + MiniMax M3 | $13.18 | |
-| DeepSeek V4 Pro + Kimi K2.7 Code | $28.22 | |
-| DeepSeek V4 Flash + Qwen 3.5 Flash | $6.85 | |
-| DeepSeek V4 Flash + Mimo V2.5 | $9.71 | |
-| DeepSeek V4 Flash + MiniMax M3 | $10.84 | |
-| DeepSeek V4 Flash + Kimi K2.7 Code | $25.88 | |
-| Mimo V2.5 Pro + Qwen 3.5 Flash | $9.19 | |
-| Mimo V2.5 Pro + Mimo V2.5 | $12.05 | |
-| Mimo V2.5 Pro + MiniMax M3 | $13.18 | |
-| Mimo V2.5 Pro + Kimi K2.7 Code | $28.22 | |
+| GLM 5.2 + Qwen 3.5 Flash | $50.00 | |
+| GLM 5.2 + Mimo V2.5 | $56.28 | |
+| GLM 5.2 + MiniMax M3 | $58.67 | |
+| GLM 5.2 + Kimi K2.7 Code | $90.83 | |
+| Qwen 3.7 MAX + Qwen 3.5 Flash | $62.77 | |
+| Qwen 3.7 MAX + Mimo V2.5 | $69.04 | |
+| Qwen 3.7 MAX + MiniMax M3 | $71.44 | |
+| Qwen 3.7 MAX + Kimi K2.7 Code | $103.59 | |
+| DeepSeek V4 Pro + Qwen 3.5 Flash | $20.37 | |
+| DeepSeek V4 Pro + Mimo V2.5 | $26.64 | |
+| DeepSeek V4 Pro + MiniMax M3 | $29.04 | |
+| DeepSeek V4 Pro + Kimi K2.7 Code | $61.19 | |
+| DeepSeek V4 Flash + Qwen 3.5 Flash | $14.89 | |
+| DeepSeek V4 Flash + Mimo V2.5 | $21.17 | |
+| DeepSeek V4 Flash + MiniMax M3 | $23.57 | |
+| DeepSeek V4 Flash + Kimi K2.7 Code | $55.72 | |
+| Mimo V2.5 Pro + Qwen 3.5 Flash | $20.36 | |
+| Mimo V2.5 Pro + Mimo V2.5 | $26.64 | |
+| Mimo V2.5 Pro + MiniMax M3 | $29.04 | |
+| Mimo V2.5 Pro + Kimi K2.7 Code | $61.19 | |
 
 ## Cache Pricing Analysis
 
 Models with cache read pricing offer significant savings for repeated context.
-Your effective cache hit rate: 88.6%
+Your effective cache hit rate: 86.7%
 
 - **deepseek/deepseek-v3.2**: cache read $0.0229/M vs input $0.2288/M — 90% savings on cache hits
 - **deepseek/deepseek-v4-flash**: cache read $0.0200/M vs input $0.0900/M — 78% savings on cache hits

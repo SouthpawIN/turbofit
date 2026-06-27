@@ -165,35 +165,62 @@ def get_running_daemons():
                         "mmproj": model.get("mmproj", ""),
                     })
                     break
+        # Also check for non-turbofit-prefixed services (carnice.service, darwin.service)
+        for line in result.stdout.split("\n"):
+            for short_name in ("carnice", "darwin"):
+                if f"{short_name}.service" in line and ".service" in line:
+                    alias = short_name
+                    model = catalog.get("models", {}).get(alias, {})
+                    active = "active" in line
+                    already = any(d["alias"] == alias for d in daemons)
+                    if not already:
+                        daemons.append({
+                            "alias": alias,
+                            "role": model.get("role", ""),
+                            "gpu": model.get("gpu", 0),
+                            "port": model.get("port", 0),
+                            "ctx": model.get("ctx", 262144),
+                            "service": f"{short_name}.service",
+                            "active": active,
+                            "binary": model.get("binary", ""),
+                            "path": model.get("path", ""),
+                            "presets": model.get("presets", []),
+                            "is_moe": "apex" in alias or "a3b" in alias or "moe" in alias,
+                            "size_gb": model.get("size_gb", 0),
+                            "mmproj": model.get("mmproj", ""),
+                        })
     except Exception as e:
         log.error(f"Failed to list daemons: {e}")
     return daemons
 
 
 def daemon_action(action, alias):
-    svc = f"turbofit-{alias}.service"
-    try:
-        if action == "stop":
-            result = subprocess.run(["systemctl", "--user", "stop", svc],
-                capture_output=True, text=True, timeout=30)
-            return result.returncode == 0
-        elif action == "start":
-            result = subprocess.run(["systemctl", "--user", "start", svc],
-                capture_output=True, text=True, timeout=30)
-            return result.returncode == 0
-        elif action == "is-active":
-            result = subprocess.run(["systemctl", "--user", "is-active", svc],
-                capture_output=True, text=True, timeout=5)
-            return result.stdout.strip() == "active"
-        elif action == "restart":
-            subprocess.run(["systemctl", "--user", "stop", svc],
-                capture_output=True, text=True, timeout=30)
-            time.sleep(2)
-            subprocess.run(["systemctl", "--user", "start", svc],
-                capture_output=True, text=True, timeout=30)
-            return True
-    except Exception as e:
-        log.error(f"daemon_action {action} {alias}: {e}")
+    # Support both turbofit-{alias} and bare {alias} service names
+    for svc in (f"turbofit-{alias}.service", f"{alias}.service"):
+        try:
+            if action == "stop":
+                result = subprocess.run(["systemctl", "--user", "stop", svc],
+                    capture_output=True, text=True, timeout=30)
+                if result.returncode == 0:
+                    return True
+            elif action == "start":
+                result = subprocess.run(["systemctl", "--user", "start", svc],
+                    capture_output=True, text=True, timeout=30)
+                if result.returncode == 0:
+                    return True
+            elif action == "is-active":
+                result = subprocess.run(["systemctl", "--user", "is-active", svc],
+                    capture_output=True, text=True, timeout=5)
+                return result.stdout.strip() == "active"
+            elif action == "restart":
+                subprocess.run(["systemctl", "--user", "stop", svc],
+                    capture_output=True, text=True, timeout=30)
+                time.sleep(2)
+                subprocess.run(["systemctl", "--user", "start", svc],
+                    capture_output=True, text=True, timeout=30)
+                return True
+        except Exception as e:
+            log.error(f"daemon_action {action} {svc}: {e}")
     return False
 
 

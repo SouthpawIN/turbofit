@@ -1,0 +1,27 @@
+date: '2026-06-27'
+gpu: NVIDIA GeForce RTX 3090
+optimal_configs:
+  darwin-28b-reason_128K:
+    binary: stock
+    ctx: 131072
+    kv_type: q4_0
+    model: darwin-28b-reason
+    size_gb: 15.410963773727417
+    spec_type: none
+    tok_s: 36.5
+  darwin-28b-reason_64K:
+    binary: stock
+    ctx: 65536
+    kv_type: q4_0
+    model: darwin-28b-reason
+    size_gb: 15.410963773727417
+    spec_type: none
+    tok_s: 36.6
+  prism-eagle-27b_64K:
+    binary: atomic
+    ctx: 65536
+    kv_type: turbo4
+    model: prism-eagle-27b
+    size_gb: 12.800359338521957
+    spec_type: none
+    tok_s: 29.4

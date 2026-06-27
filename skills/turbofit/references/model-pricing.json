@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-26T11:00:32.371397+00:00",
+  "generated": "2026-06-27T11:00:23.350395+00:00",
   "source": "openrouter",
   "models": [
     {
@@ -456,14 +456,14 @@
     }
   ],
   "usage": {
-    "total_input": 23405773,
-    "total_output": 859443,
-    "total_cache_read": 182675694,
-    "effective_cache_rate": 0.8864246584580068,
-    "active_days": 6,
-    "avg_sessions_per_day": 16.0,
-    "avg_input_per_session": 243810.13541666666,
-    "avg_output_per_session": 8952.53125,
-    "total_est_cost": 56.96438738999999
+    "total_input": 60105269,
+    "total_output": 1867554,
+    "total_cache_read": 391759964,
+    "effective_cache_rate": 0.8669840815126398,
+    "active_days": 7,
+    "avg_sessions_per_day": 25.0,
+    "avg_input_per_session": 343458.68,
+    "avg_output_per_session": 10671.737142857142,
+    "total_est_cost": 148.20520570499997
   }
 }

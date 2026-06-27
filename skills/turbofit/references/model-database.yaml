@@ -108,6 +108,32 @@ models:
     type: api
     version: V3.2
     vision: false
+  deepseek-v3.2-exp:
+    benchmarks:
+      notes: 'Experimental model built on V3.1-Terminus. Debuts DeepSeek Sparse Attention
+        (DSA) for faster inference. Intermediate step between V3.1 and future architectures.'
+      source: DeepSeek API docs, OpenRouter
+    context_max: 163000
+    context_tiers:
+    - 163000
+    - 131072
+    discovered: '2026-06-27'
+    family: DeepSeek
+    last_verified: '2026-06-27'
+    name: DeepSeek V3.2 Exp
+    new: true
+    notes: 'Experimental release. No cache read pricing on OpenRouter. Higher pricing
+      than stable V3.2 ($0.27/$0.41). 163K context.'
+    pricing:
+      openrouter:
+        free: false
+        input: 0.27
+        output: 0.41
+        slug: deepseek/deepseek-v3.2-exp
+    role: main
+    type: api
+    version: V3.2-Exp
+    vision: false
   deepseek-v4-flash:
     benchmarks:
       aime_2026: null
@@ -502,6 +528,36 @@ models:
     type: api
     version: Nemotron-3-Nano-30B-A3B
     vision: false
+  nemotron-3-nano-omni-30b:
+    benchmarks:
+      notes: '30B MoE, 3B active. Omni-modal: text, image, video, speech. Designed
+        as perception and context sub-agent in enterprise agent systems. Hybrid reasoning.'
+      source: NVIDIA research, OpenRouter
+    context_max: 256000
+    context_tiers:
+    - 256000
+    - 131072
+    discovered: '2026-06-27'
+    family: Llama
+    last_verified: '2026-06-27'
+    name: Nemotron 3 Nano Omni 30B
+    new: true
+    notes: 'Free on NIM and OpenRouter (:free variant). Omni-modal — vision, video,
+      speech, text. Best free vision aux. 256K ctx.'
+    pricing:
+      nim:
+        input: 0
+        output: 0
+        slug: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+      openrouter:
+        free: true
+        input: 0
+        output: 0
+        slug: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+    role: aux
+    type: api
+    version: Nemotron-3-Nano-Omni-30B-A3B
+    vision: true
   nemotron-3-super-120b:
     benchmarks:
       notes: 120B MoE, 12B active. Mid-tier reasoning model. No cache read pricing.
@@ -570,6 +626,92 @@ models:
     role: main
     type: api
     version: Nemotron-3-Ultra-550B
+    vision: false
+  nemotron-nano-12b-v2-vl:
+    benchmarks:
+      notes: '12B vision-language model. Multi-image reasoning, video understanding.
+        Leading accuracy on OCRBench v2.'
+      source: NVIDIA research, OpenRouter
+    context_max: 128000
+    context_tiers:
+    - 128000
+    discovered: '2026-06-27'
+    family: Llama
+    last_verified: '2026-06-27'
+    name: Nemotron Nano 12B v2 VL
+    new: true
+    notes: 'Free on NIM and OpenRouter (:free variant). Vision-language model. Released
+      Oct 28, 2025. 128K ctx.'
+    pricing:
+      nim:
+        input: 0
+        output: 0
+        slug: nvidia/nemotron-nano-12b-v2-vl
+      openrouter:
+        free: true
+        input: 0
+        output: 0
+        slug: nvidia/nemotron-nano-12b-v2-vl:free
+    role: aux
+    type: api
+    version: Nemotron-Nano-12B-v2-VL
+    vision: true
+  nemotron-nano-9b-v2:
+    benchmarks:
+      notes: '9B hybrid Mamba-Transformer model. 6x faster than similarly sized models.
+        Released Aug 2025.'
+      source: NVIDIA research, OpenRouter
+    context_max: 128000
+    context_tiers:
+    - 128000
+    discovered: '2026-06-27'
+    family: Llama
+    last_verified: '2026-06-27'
+    name: Nemotron Nano 9B v2
+    new: true
+    notes: 'Free on NIM and OpenRouter (:free variant). Text-only. 128K ctx.'
+    pricing:
+      nim:
+        input: 0
+        output: 0
+        slug: nvidia/nemotron-nano-9b-v2
+      openrouter:
+        free: true
+        input: 0
+        output: 0
+        slug: nvidia/nemotron-nano-9b-v2:free
+    role: aux
+    type: api
+    version: Nemotron-Nano-9B-v2
+    vision: false
+  nemotron-super-49b-v1.5:
+    benchmarks:
+      notes: '49B dense model derived from Llama-3.3-70B-Instruct. Optimized for reasoning,
+        conversational interactions, RAG, and agentic tasks. English-centric.'
+      source: NVIDIA research, OpenRouter
+    context_max: 131072
+    context_tiers:
+    - 131072
+    discovered: '2026-06-27'
+    family: Llama
+    last_verified: '2026-06-27'
+    name: Llama 3.3 Nemotron Super 49B v1.5
+    new: true
+    notes: 'Older generation (pre-Nemotron 3). No cache read pricing. $0.40/$0.40
+      flat. 131K ctx. Text-only.'
+    pricing:
+      nim:
+        input: 0
+        output: 0
+        slug: nvidia/llama-3.3-nemotron-super-49b-v1.5
+      openrouter:
+        free: false
+        input: 0.4
+        output: 0.4
+        slug: nvidia/llama-3.3-nemotron-super-49b-v1.5
+    role: either
+    type: api
+    version: Nemotron-Super-49B-v1.5
     vision: false
   qwen-3.5-flash:
     benchmarks:

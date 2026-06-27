@@ -2500,7 +2500,7 @@ for r in sorted(data.get('results',[]), key=lambda x: x.get('tok_s',0), reverse=
     aux)            serve_aux "${1:-}" ;;
     herm)           serve_herm "$@" ;;
     api)
-        shift
+        # shift — removed: top-level cmd shift already consumed "api"; case below expects "use" or "list" as $1
         case "${1:-list}" in
             list) nvidia_nim_list ;;
             use)  shift; nvidia_nim_use "${1:-}" "${2:-main}" ;;

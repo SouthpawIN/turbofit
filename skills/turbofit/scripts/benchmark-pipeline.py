@@ -101,6 +101,16 @@ def build_launch_args(entry, ctx):
         actual_binary = STOCK
         lib_dir = LIB_STOCK
 
+    # MTP (Gemma-style): built-in draft head, no double VRAM — keep enabled
+    # nextn (Qwen-style): needs --model-draft pointing to same GGUF, doubles VRAM
+    # → requires dual-GPU with tensor-split. We handle this by removing split-none
+    #   and adding tensor-split when nextn is active
+    has_nextn = any(p in ("nextn", "nextn-tight") for p in presets)
+    has_mtp = any(p in ("draft-mtp", "mtp") for p in presets)
+    
+    # Strip split-none for nextn models (need tensor-split to use both GPUs)
+    bench_presets = [p for p in presets if not (p == "split-none" and has_nextn)]
+    
     preset_map = {
         "turbo4-kv": ["-ctk", "turbo4", "-ctv", "turbo4"],
         "turbo3-kv": ["-ctk", "turbo3", "-ctv", "turbo3"],
@@ -111,14 +121,23 @@ def build_launch_args(entry, ctx):
         "cpu-moe-2": ["--n-cpu-moe", "2"],
         "cpu-moe-4": ["--n-cpu-moe", "4"],
         "cpu-moe-8": ["--n-cpu-moe", "8"],
+        # MTP: built-in draft head, single GPU safe
+        "draft-mtp": ["--spec-type", "mtp"],
+        "mtp": ["--spec-type", "mtp"],
+        # nextn: needs --model-draft + both GPUs with tensor-split
         "nextn": ["--spec-type", "nextn", "--draft-block-size", "3"],
-        "draft-mtp": ["--spec-type", "draft-mtp"],
+        "nextn-tight": ["--spec-type", "nextn", "--draft-block-size", "2"],
     }
 
     flags = []
-    for p in presets:
+    for p in bench_presets:
         if p in preset_map:
             flags.extend(preset_map[p])
+
+    # For nextn: add model-draft (same GGUF) AND tensor-split for dual-GPU
+    if has_nextn:
+        flags.extend(["--model-draft", path])
+        flags.extend(["--tensor-split", "24,24"])
 
     extra_args = entry.get("extra_args", [])
     if extra_args:
@@ -143,12 +162,33 @@ def benchmark_model(alias, entry, ctx, gpu):
 
     kill_port(BENCH_PORT)
     cmd, lib_dir = build_launch_args(entry, ctx)
-    print(f"  Launching on GPU {gpu}...", flush=True)
+    
+    # For nextn models: need both GPUs (tensor-split 24,24)
+    # Temporarily kill Carnice on GPU 1, restore after benchmark
+    has_nextn = any(p in ("nextn", "nextn-tight") for p in entry.get("presets", []))
+    if has_nextn:
+        _carnice_was_running = False
+        # Check if Carnice is on GPU 1
+        carnice_pids = subprocess.run(
+            "ps aux | grep 'llama-server.*Carnice' | grep -v grep | awk '{print $2}'",
+            shell=True, capture_output=True, text=True
+        ).stdout.strip().split()
+        if carnice_pids:
+            _carnice_was_running = True
+            for pid in carnice_pids:
+                os.system(f"kill {pid} 2>/dev/null")
+            time.sleep(2)
+        print(f"  NextN model — using dual-GPU tensor-split (both GPUs)...", flush=True)
+        gpu_setting = "0,1"
+    else:
+        gpu_setting = str(gpu)
+    
+    print(f"  Launching on GPU {gpu_setting}...", flush=True)
 
     env = os.environ.copy()
     env["LLAMA_LIB_DIR"] = lib_dir
     env["LD_LIBRARY_PATH"] = lib_dir
-    env["CUDA_VISIBLE_DEVICES"] = str(gpu)
+    env["CUDA_VISIBLE_DEVICES"] = gpu_setting
 
     proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env)
 
@@ -158,8 +198,10 @@ def benchmark_model(alias, entry, ctx, gpu):
         kill_port(BENCH_PORT)
         return {"name": alias, "status": "failed", "reason": "startup timeout", "size_gb": round(size_gb, 1)}
 
-    print(f"  Ready, benchmarking...", flush=True)
+    print(f"  Ready, speed benchmarking...", flush=True)
     run_bench(BENCH_PORT, "Hello", max_tokens=5)  # warmup
+    
+    # Speed benchmark
     result = run_bench(BENCH_PORT, PROMPT, max_tokens=256)
     result["name"] = alias
     result["alias"] = alias
@@ -170,9 +212,23 @@ def benchmark_model(alias, entry, ctx, gpu):
     result["has_vision"] = entry.get("vision", False)
 
     if result["status"] == "ok":
-        print(f"  {result['tok_s']} tok/s ({result['tokens']} tokens in {result['time_s']}s)", flush=True)
+        print(f"  Speed: {result['tok_s']} tok/s ({result['tokens']} tokens in {result['time_s']}s)", flush=True)
     else:
-        print(f"  ERROR: {result.get('error', '?')}", flush=True)
+        print(f"  Speed ERROR: {result.get('error', '?')}", flush=True)
+
+    # Reasoning benchmark (if speed test passed)
+    if result["status"] == "ok":
+        print(f"  Running reasoning benchmark...", flush=True)
+        try:
+            from reasoning_bench import run_reasoning_bench, print_results
+            reasoning = run_reasoning_bench(BENCH_PORT)
+            result["reasoning_composite"] = reasoning["composite"]
+            result["reasoning_questions"] = reasoning["questions"]
+            print(f"  Reasoning: {reasoning['composite']}/100", flush=True)
+        except Exception as e:
+            print(f"  Reasoning ERROR: {e}", flush=True)
+            result["reasoning_composite"] = None
+            result["reasoning_questions"] = []
 
     proc.kill()
     kill_port(BENCH_PORT)
@@ -252,14 +308,21 @@ def main():
     subprocess.run(["systemctl", "--user", "start", "turbofit-scaling-watcher.service"],
                    capture_output=True, timeout=10)
 
-    print(f"\n{'Model':<30} {'tok/s':>8} {'Size':>8} {'MTP':>5} {'Vision':>7}")
-    print("-" * 65)
-    for r in sorted(results, key=lambda x: x.get("tok_s", 0), reverse=True):
+    # Sort by reasoning composite first, then speed as tiebreaker
+    def sort_key(r):
+        rc = r.get("reasoning_composite") or 0
+        speed = r.get("tok_s", 0)
+        return (rc, speed)  # primary: intelligence, secondary: speed
+    
+    print(f"\n{'Model':<30} {'IQ':>5} {'tok/s':>7} {'Size':>8} {'MTP':>5} {'Vision':>7}")
+    print("-" * 70)
+    for r in sorted(results, key=sort_key, reverse=True):
         if r["status"] == "ok":
-            print(f"{r['name']:<30} {r['tok_s']:>8.1f} {r.get('size_gb',0):>7.1f}G "
+            iq = f"{r.get('reasoning_composite', 0):.0f}" if r.get("reasoning_composite") else "—"
+            print(f"{r['name']:<30} {iq:>5} {r['tok_s']:>7.1f} {r.get('size_gb',0):>7.1f}G "
                   f"{'Y' if r.get('has_mtp') else 'N':>5} {'Y' if r.get('has_vision') else 'N':>7}")
         else:
-            print(f"{r['name']:<30} {'FAIL':>8}")
+            print(f"{r['name']:<30} {'FAIL':>5} {'—':>7}")
 
 
 if __name__ == "__main__":
