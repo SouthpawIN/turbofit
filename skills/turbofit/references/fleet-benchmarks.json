@@ -1,0 +1,134 @@
+{
+  "last_updated": "2026-06-27",
+  "hardware": "Dual RTX 3090 (48GB)",
+  "description": "Real benchmark numbers from the turbofit fleet. Other installs can pull these via 'python3 scripts/fetch-fleet-benchmarks.py'. Numbers are from Q4_K_M quants on llama.cpp atomic fork with turbo4-kv cache quantization. Auto-updated daily.",
+  "latest": {
+    "darwin-28b-reason": {
+      "alias": "darwin-28b-reason",
+      "size_gb": 16.6,
+      "tier": "s",
+      "ctx": 262144,
+      "healthy": true,
+      "speed_small_tok_s": 38.0,
+      "speed_large_tok_s": 36.0,
+      "context_8k_ok": true,
+      "context_32k_ok": true
+    },
+    "prism-eagle-27b": {
+      "alias": "prism-eagle-27b",
+      "size_gb": 13.7,
+      "tier": "s",
+      "ctx": 262144,
+      "healthy": true,
+      "speed_small_tok_s": 121.0,
+      "speed_large_tok_s": 110.0,
+      "context_8k_ok": true,
+      "context_32k_ok": true
+    },
+    "carwin-28b-mtp": {
+      "alias": "carwin-28b-mtp",
+      "size_gb": 16.8,
+      "tier": "sf",
+      "ctx": 262144,
+      "healthy": true,
+      "speed_small_tok_s": 100.0,
+      "speed_large_tok_s": 95.0,
+      "context_8k_ok": true,
+      "context_32k_ok": true
+    },
+    "carnice": {
+      "alias": "carnice",
+      "size_gb": 11.0,
+      "tier": "sf",
+      "ctx": 262144,
+      "healthy": true,
+      "speed_small_tok_s": 110.0,
+      "speed_large_tok_s": 105.0,
+      "context_8k_ok": true,
+      "context_32k_ok": true
+    },
+    "qwopus-27b-v2-mtp": {
+      "alias": "qwopus-27b-v2-mtp",
+      "size_gb": 16.8,
+      "tier": "sf",
+      "ctx": 262144,
+      "healthy": true,
+      "speed_small_tok_s": 100.0,
+      "speed_large_tok_s": 95.0,
+      "context_8k_ok": true,
+      "context_32k_ok": true
+    },
+    "carnice-v2-27b": {
+      "alias": "carnice-v2-27b",
+      "size_gb": 16.0,
+      "tier": "sf",
+      "ctx": 262144,
+      "healthy": true,
+      "speed_small_tok_s": null,
+      "speed_large_tok_s": null,
+      "context_8k_ok": null,
+      "context_32k_ok": null,
+      "note": "Newly registered — pending first benchmark"
+    },
+    "carwin-nano-35b": {
+      "alias": "carwin-nano-35b",
+      "size_gb": 12.0,
+      "tier": "sf",
+      "ctx": 262144,
+      "healthy": true,
+      "speed_small_tok_s": null,
+      "speed_large_tok_s": null,
+      "context_8k_ok": null,
+      "context_32k_ok": null,
+      "note": "Newly registered — pending first benchmark"
+    },
+    "holo-3.1-35a3b": {
+      "alias": "holo-3.1-35a3b",
+      "size_gb": 21.0,
+      "tier": "sf",
+      "ctx": 262144,
+      "healthy": true,
+      "speed_small_tok_s": null,
+      "speed_large_tok_s": null,
+      "context_8k_ok": null,
+      "context_32k_ok": null,
+      "note": "Newly registered — pending first benchmark"
+    },
+    "qwable-5-27b-coder": {
+      "alias": "qwable-5-27b-coder",
+      "size_gb": 17.0,
+      "tier": "sf",
+      "ctx": 262144,
+      "healthy": true,
+      "speed_small_tok_s": null,
+      "speed_large_tok_s": null,
+      "context_8k_ok": null,
+      "context_32k_ok": null,
+      "note": "Newly registered — pending first benchmark"
+    },
+    "ornith-35b": {
+      "alias": "ornith-35b",
+      "size_gb": 20.0,
+      "tier": "sf",
+      "ctx": 262144,
+      "healthy": true,
+      "speed_small_tok_s": null,
+      "speed_large_tok_s": null,
+      "context_8k_ok": null,
+      "context_32k_ok": null,
+      "note": "Newly registered — pending first benchmark"
+    }
+  },
+  "history": [
+    {
+      "date": "2026-06-27",
+      "models": {
+        "darwin-28b-reason": {"speed_small_tok_s": 38.0, "speed_large_tok_s": 36.0},
+        "prism-eagle-27b": {"speed_small_tok_s": 121.0, "speed_large_tok_s": 110.0},
+        "carwin-28b-mtp": {"speed_small_tok_s": 100.0, "speed_large_tok_s": 95.0},
+        "carnice": {"speed_small_tok_s": 110.0, "speed_large_tok_s": 105.0},
+        "qwopus-27b-v2-mtp": {"speed_small_tok_s": 100.0, "speed_large_tok_s": 95.0}
+      }
+    }
+  ]
+}

@@ -743,6 +743,14 @@ launch_server() {
 
 stop_server() {
     local alias="$1"
+    local stopped=0
+    # Try systemd daemon first (turbofit-<alias>.service)
+    if systemctl --user is-active "turbofit-${alias}.service" >/dev/null 2>&1; then
+        systemctl --user stop "turbofit-${alias}.service" 2>/dev/null
+        echo "✓ Stopped ${alias} (systemd daemon)"
+        stopped=1
+    fi
+    # Also check PID-file managed servers (direct serve launches)
     if [ -f "${TURBOFIT_ROOT}/pid/${alias}" ]; then
         local pid
         pid=$(cat "${TURBOFIT_ROOT}/pid/${alias}")
@@ -752,13 +760,20 @@ stop_server() {
             kill -9 "${pid}" 2>/dev/null || true
         fi
         rm -f "${TURBOFIT_ROOT}/pid/${alias}" "${TURBOFIT_ROOT}/port/${alias}"
-        echo "✓ Stopped ${alias}"
-    else
-        echo "No running server for: ${alias}"
+        echo "✓ Stopped ${alias} (pid ${pid})"
+        stopped=1
     fi
+    [ "$stopped" -eq 0 ] && echo "No running server for: ${alias}"
 }
 
 stop_all() {
+    # Stop systemd-managed daemons
+    while IFS= read -r svc; do
+        local alias
+        alias=$(echo "$svc" | sed 's/turbofit-//; s/\.service//')
+        stop_server "${alias}"
+    done < <(systemctl --user list-units --all --no-legend 2>/dev/null | grep -o 'turbofit-[^ ]*\.service' | sort -u)
+    # Stop PID-file managed servers (direct serve launches)
     if [ -d "${TURBOFIT_ROOT}/pid" ]; then
         for pid_file in "${TURBOFIT_ROOT}/pid"/*; do
             [ -f "${pid_file}" ] || continue
@@ -1202,6 +1217,41 @@ print(cfg.get('model', {}).get('default', '') or '')
     echo "Free VRAM:    ${free_gb} GB"
     echo ""
 
+    # Find running aux daemons by scanning systemd services + catalog role
+    local aux_aliases=()
+    while IFS= read -r svc; do
+        local alias
+        alias=$(echo "$svc" | sed 's/turbofit-//; s/\.service//')
+        [ -z "${alias}" ] && continue
+        # Skip the main model
+        [ "${alias}" = "${current_main}" ] && continue
+        # Check if this alias has role: aux in the catalog
+        local role
+        role=$(python3 -c "
+import yaml
+with open('${CATALOG}') as f: cfg = yaml.safe_load(f) or {}
+print(cfg.get('models', {}).get('${alias}', {}).get('role', ''))
+" 2>/dev/null || echo "")
+        if [ "${role}" = "aux" ]; then
+            aux_aliases+=("${alias}")
+        fi
+    done < <(systemctl --user list-units --all --no-legend 2>/dev/null | grep -o 'turbofit-[^ ]*\.service' | sort -u)
+
+    # Also check PID-file managed aux servers
+    if [ -d "${TURBOFIT_ROOT}/pid" ]; then
+        for pid_file in "${TURBOFIT_ROOT}/pid"/*; do
+            [ -f "${pid_file}" ] || continue
+            local a; a=$(basename "${pid_file}")
+            [ "${a}" = "${current_main}" ] && continue
+            # Check if already in list
+            local skip=0
+            for existing in "${aux_aliases[@]:-}"; do
+                [ "${existing}" = "${a}" ] && skip=1 && break
+            done
+            [ "$skip" -eq 0 ] && aux_aliases+=("${a}")
+        done
+    fi
+
     # Heuristic ladder (simplified — full ladder in serve auto):
     if [ "${free_gb}" != "?" ] && awk "BEGIN{exit !(${free_gb} < 4)}"; then
         echo "⚠ Critical VRAM (<4GB). Consider API-only mode."
@@ -1211,11 +1261,9 @@ print(cfg.get('model', {}).get('default', '') or '')
     fi
     if [ "${free_gb}" != "?" ] && awk "BEGIN{exit !(${free_gb} < 8)}"; then
         echo "⚠ Tight VRAM (<8GB). Stop aux, shrink main ctx to 64K."
-        # stop aux
-        for pid_file in "${TURBOFIT_ROOT}/pid"/aux*; do
-            [ -f "${pid_file}" ] || continue
-            local a; a=$(basename "${pid_file}")
-            [ "${a}" != "${current_main}" ] && stop_server "${a}"
+        # stop all aux models
+        for a in "${aux_aliases[@]:-}"; do
+            [ -n "${a}" ] && stop_server "${a}"
         done
         # rewrite catalog ctx to 65536 and restart main
         python3 - "${current_main}" <<'PYEOF'
@@ -1233,10 +1281,8 @@ PYEOF
     fi
     if [ "${free_gb}" != "?" ] && awk "BEGIN{exit !(${free_gb} < 14)}"; then
         echo "⚠ Marginal VRAM (<14GB). Stop aux."
-        for pid_file in "${TURBOFIT_ROOT}/pid"/aux*; do
-            [ -f "${pid_file}" ] || continue
-            local a; a=$(basename "${pid_file}")
-            [ "${a}" != "${current_main}" ] && stop_server "${a}"
+        for a in "${aux_aliases[@]:-}"; do
+            [ -n "${a}" ] && stop_server "${a}"
         done
         return 0
     fi
@@ -2411,7 +2457,37 @@ case "${cmd}" in
     catalog)        list_catalog ;;
     register|name)  register_alias "$@" ;;
     fetch)          fetch_model "${1:-}" ;;
-    bench)          bench_model "${1:-}" ;;
+    bench)
+        case "${1:-run}" in
+            run)      bench_model "${2:-}" ;;
+            pipeline) shift; python3 "${TURBOFIT_SKILL_DIR}/scripts/benchmark-pipeline.py" "$@" ;;
+            pull)
+                echo "Pulling latest benchmark results from GitHub..."
+                curl -sL "https://raw.githubusercontent.com/SouthpawIN/turbofit/main/skills/turbofit/references/benchmark-results.json" \
+                    -o "${TURBOFIT_SKILL_DIR}/references/benchmark-results.json" 2>/dev/null
+                if [ $? -eq 0 ]; then
+                    echo "Done. Results:"
+                    python3 -c "
+import json
+with open('${TURBOFIT_SKILL_DIR}/references/benchmark-results.json') as f:
+    data = json.load(f)
+print(f\"  Date: {data.get('date','?')}\")
+print(f\"  GPU:  {data.get('gpu_name','?')}\")
+print(f\"  CTX:  {data.get('ctx','?')}\")
+print()
+print(f\"{'Model':<30} {'tok/s':>8} {'Size':>8} {'MTP':>5} {'Vis':>5}\")
+print('-'*60)
+for r in sorted(data.get('results',[]), key=lambda x: x.get('tok_s',0), reverse=True):
+    if r.get('status') == 'ok':
+        print(f\"{r['name']:<30} {r['tok_s']:>8.1f} {r.get('size_gb',0):>7.1f}G {'Y' if r.get('has_mtp') else 'N':>5} {'Y' if r.get('has_vision') else 'N':>5}\")
+"
+                else
+                    echo "Failed to download results"
+                fi
+                ;;
+            *)  echo "Usage: serve bench {run <alias>|pipeline [--push]|pull}"; exit 1 ;;
+        esac
+        ;;
     recommend)      recommend_fit ;;
     mmproj)         manage_mmproj "$@" ;;
     auto)
