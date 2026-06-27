@@ -106,6 +106,408 @@ YAML
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
+# OS detection — Linux vs Windows (native, not WSL)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Detects the host OS so daemon management can route through platform-specific
+# backends: systemd user units on Linux, PID files + tasklist/taskkill on Windows.
+# $TURBOFIT_OS is exported so embedded Python heredocs can read it too.
+
+detect_os() {
+    # Allow explicit override via env var
+    if [ -n "${TURBOFIT_OS:-}" ]; then
+        return
+    fi
+    local uname_out=""
+    if command -v uname >/dev/null 2>&1; then
+        uname_out="$(uname -s 2>/dev/null || echo "")"
+    fi
+    case "${uname_out}" in
+        Linux*)         TURBOFIT_OS="linux" ;;
+        MINGW*|MSYS*|CYGWIN*)
+                        TURBOFIT_OS="windows" ;;
+        Darwin*)        TURBOFIT_OS="linux" ;;  # treat macOS as linux-like (no native daemon support either)
+        *)              # Fallback: check $OS env var (Windows sets OS=Windows_NT)
+                        if [ "${OS:-}" = "Windows_NT" ]; then
+                            TURBOFIT_OS="windows"
+                        else
+                            TURBOFIT_OS="linux"
+                        fi
+                        ;;
+    esac
+}
+
+detect_os
+export TURBOFIT_OS
+
+# CPU count — nproc on Linux, fallback for Windows/Git Bash
+if command -v nproc >/dev/null 2>&1; then
+    TF_NPROC="$(nproc)"
+else
+    # Git Bash on Windows doesn't have nproc; use NUMBER_OF_PROCESSORS env var
+    TF_NPROC="${NUMBER_OF_PROCESSORS:-4}"
+fi
+export TF_NPROC
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Platform-specific paths
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# On Linux:   DAEMON_UNIT_DIR = ~/.config/systemd/user  (systemd user units)
+# On Windows: DAEMON_DIR      = ~/.config/turbofit/daemons (PID files + metadata)
+
+if [ "${TURBOFIT_OS}" = "windows" ]; then
+    DAEMON_UNIT_DIR="${HOME}/.config/turbofit/daemons"
+else
+    DAEMON_UNIT_DIR="${HOME}/.config/systemd/user"
+fi
+mkdir -p "${DAEMON_UNIT_DIR}" 2>/dev/null || true
+
+LLAMA_PROXY_BIN="${HOME}/bin/llama-proxy"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Daemon management — platform abstraction layer
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# All systemctl calls in this script route through these wrappers so the same
+# `serve daemon *` commands work on both Linux (systemd) and Windows (PID files).
+#
+# Linux backend:
+#   systemctl --user {is-active|start|stop|status|enable|daemon-reload} turbofit-<alias>.service
+#
+# Windows backend:
+#   PID file at $DAEMON_UNIT_DIR/turbofit-<alias>.pid
+#   Process liveness via tasklist /FI "PID eq <pid>"
+#   Stop via taskkill /PID <pid> /T /F
+#   Start via the generated launch string + nohup equivalent (background &)
+
+# Returns the PID for a daemon alias (from PID file on Windows, from systemd on Linux).
+# Prints PID to stdout, or empty if not running.
+tf_daemon_pid() {
+    local alias="$1"
+    if [ "${TURBOFIT_OS}" = "windows" ]; then
+        local pid_file="${DAEMON_UNIT_DIR}/turbofit-${alias}.pid"
+        if [ -f "${pid_file}" ]; then
+            local pid
+            pid=$(cat "${pid_file}" 2>/dev/null || echo "")
+            if [ -n "${pid}" ]; then
+                # Check if process is alive via tasklist
+                if tasklist /FI "PID eq ${pid}" 2>/dev/null | grep -q "${pid}"; then
+                    echo "${pid}"
+                    return 0
+                else
+                    # Stale PID file — clean it up
+                    rm -f "${pid_file}" 2>/dev/null || true
+                fi
+            fi
+        fi
+        echo ""
+        return 1
+    else
+        # Linux: get MainPID from systemd
+        systemctl --user show -p MainPID "turbofit-${alias}.service" 2>/dev/null | cut -d= -f2
+    fi
+}
+
+# Check if a daemon is active (running). Returns 0 if active, 1 otherwise.
+tf_daemon_is_active() {
+    local alias="$1"
+    if [ "${TURBOFIT_OS}" = "windows" ]; then
+        local pid
+        pid=$(tf_daemon_pid "${alias}" 2>/dev/null || echo "")
+        [ -n "${pid}" ] && return 0
+        return 1
+    else
+        systemctl --user is-active "turbofit-${alias}.service" >/dev/null 2>&1
+    fi
+}
+
+# Start a daemon. On Linux: systemctl start. On Windows: the daemon_install
+# function writes a launch script; this runs it in the background.
+tf_daemon_start() {
+    local alias="$1"
+    if [ "${TURBOFIT_OS}" = "windows" ]; then
+        local launcher_script="${DAEMON_UNIT_DIR}/turbofit-${alias}.launch.sh"
+        local log_file="${TURBOFIT_ROOT}/logs/daemon-${alias}.log"
+        if [ ! -f "${launcher_script}" ]; then
+            echo "✗ No daemon for ${alias}. Run: serve daemon install ${alias}"
+            return 1
+        fi
+        # Check if already running
+        if tf_daemon_is_active "${alias}"; then
+            echo "✓ Daemon already running: ${alias}"
+            return 0
+        fi
+        # Launch in background, write PID
+        mkdir -p "${TURBOFIT_ROOT}/logs" "${TURBOFIT_ROOT}/pid"
+        bash "${launcher_script}" > "${log_file}" 2>&1 &
+        local pid=$!
+        echo "${pid}" > "${DAEMON_UNIT_DIR}/turbofit-${alias}.pid"
+        echo "${pid}" > "${TURBOFIT_ROOT}/pid/${alias}"
+        echo "✓ Daemon started: ${alias}"
+    else
+        local unit_name="turbofit-${alias}.service"
+        if [ ! -f "${DAEMON_UNIT_DIR}/${unit_name}" ]; then
+            echo "✗ No daemon for ${alias}. Run: serve daemon install ${alias}"
+            return 1
+        fi
+        systemctl --user start "${unit_name}"
+        echo "✓ Daemon started: ${alias}"
+    fi
+}
+
+# Stop a daemon. On Linux: systemctl stop. On Windows: taskkill.
+tf_daemon_stop() {
+    local alias="$1"
+    if [ "${TURBOFIT_OS}" = "windows" ]; then
+        local pid
+        pid=$(tf_daemon_pid "${alias}" 2>/dev/null || echo "")
+        if [ -n "${pid}" ]; then
+            taskkill /PID "${pid}" /T /F 2>/dev/null || kill "${pid}" 2>/dev/null || true
+            sleep 1
+            kill -9 "${pid}" 2>/dev/null || true
+        fi
+        rm -f "${DAEMON_UNIT_DIR}/turbofit-${alias}.pid" 2>/dev/null || true
+        rm -f "${TURBOFIT_ROOT}/pid/${alias}" 2>/dev/null || true
+        echo "✓ Daemon stopped: ${alias} (backend killed, VRAM freed)"
+    else
+        local unit_name="turbofit-${alias}.service"
+        if [ ! -f "${DAEMON_UNIT_DIR}/${unit_name}" ]; then
+            echo "✗ No daemon for ${alias}"
+            return 1
+        fi
+        systemctl --user stop "${unit_name}"
+        echo "✓ Daemon stopped: ${alias} (backend killed, VRAM freed)"
+    fi
+}
+
+# Restart a daemon.
+tf_daemon_restart() {
+    local alias="$1"
+    if [ "${TURBOFIT_OS}" = "windows" ]; then
+        tf_daemon_stop "${alias}" 2>/dev/null || true
+        sleep 1
+        tf_daemon_start "${alias}"
+    else
+        local unit_name="turbofit-${alias}.service"
+        if [ ! -f "${DAEMON_UNIT_DIR}/${unit_name}" ]; then
+            echo "✗ No daemon for ${alias}"
+            return 1
+        fi
+        systemctl --user restart "${unit_name}"
+        echo "✓ Daemon restarted: ${alias}"
+    fi
+}
+
+# Show daemon status.
+tf_daemon_status() {
+    local alias="$1"
+    if [ "${TURBOFIT_OS}" = "windows" ]; then
+        local pid_file="${DAEMON_UNIT_DIR}/turbofit-${alias}.pid"
+        local launcher_script="${DAEMON_UNIT_DIR}/turbofit-${alias}.launch.sh"
+        if [ ! -f "${launcher_script}" ]; then
+            echo "✗ No daemon for ${alias}"
+            return 1
+        fi
+        local pid state
+        pid=$(tf_daemon_pid "${alias}" 2>/dev/null || echo "")
+        if [ -n "${pid}" ]; then
+            state="running"
+        else
+            state="stopped"
+        fi
+        echo "turbofit-${alias}.daemon"
+        echo "    State: ${state}"
+        echo "    PID:   ${pid:-none}"
+        echo "    Logs:  ${TURBOFIT_ROOT}/logs/daemon-${alias}.log"
+        echo "    Stop:  serve daemon stop ${alias}"
+    else
+        local unit_name="turbofit-${alias}.service"
+        if [ ! -f "${DAEMON_UNIT_DIR}/${unit_name}" ]; then
+            echo "✗ No daemon for ${alias}"
+            return 1
+        fi
+        systemctl --user status "${unit_name}" 2>/dev/null || true
+    fi
+}
+
+# List all turbofit daemons.
+tf_daemon_list() {
+    if [ "${TURBOFIT_OS}" = "windows" ]; then
+        echo "turbofit-managed daemons:"
+        echo ""
+        local found=0
+        for launcher_script in "${DAEMON_UNIT_DIR}"/turbofit-*.launch.sh; do
+            [ -f "${launcher_script}" ] || continue
+            local dalias
+            dalias=$(basename "${launcher_script}")
+            dalias="${dalias#turbofit-}"
+            dalias="${dalias%.launch.sh}"
+            local pid state
+            pid=$(tf_daemon_pid "${dalias}" 2>/dev/null || echo "")
+            if [ -n "${pid}" ]; then
+                state="running"
+            else
+                state="stopped"
+            fi
+            printf "  %-35s  %-10s  PID: %s\n" "${dalias}" "${state}" "${pid:-none}"
+            found=1
+        done
+        if [ "${found}" -eq 0 ]; then
+            echo "  (none installed)"
+        fi
+    else
+        echo "turbofit-managed daemons:"
+        echo ""
+        for unit_path in "${DAEMON_UNIT_DIR}"/turbofit-*.service; do
+            [ -f "${unit_path}" ] || continue
+            local unit_name dalias active enabled proxy_port
+            unit_name=$(basename "${unit_path}")
+            dalias="${unit_name#turbofit-}"
+            dalias="${dalias%.service}"
+            active=$(systemctl --user is-active "${unit_name}" 2>/dev/null || echo "unknown")
+            enabled=$(systemctl --user is-enabled "${unit_name}" 2>/dev/null || echo "unknown")
+            proxy_port=$(grep -oP 'ExecStart=.*?\s+\K\d+' "${unit_path}" | head -1 || echo "?")
+            printf "  %-35s  %-10s  %-8s  :%s\n" "${dalias}" "${active}" "${enabled}" "${proxy_port}"
+        done
+        if [ -z "$(ls "${DAEMON_UNIT_DIR}"/turbofit-*.service 2>/dev/null)" ]; then
+            echo "  (none installed)"
+        fi
+    fi
+}
+
+# Get the port for a daemon alias (from unit file on Linux, launch script on Windows).
+# Prints port number to stdout, or empty if not found.
+tf_daemon_port() {
+    local alias="$1"
+    if [ "${TURBOFIT_OS}" = "windows" ]; then
+        local launcher_script="${DAEMON_UNIT_DIR}/turbofit-${alias}.launch.sh"
+        if [ -f "${launcher_script}" ]; then
+            grep -oE '\-\-port [0-9]+' "${launcher_script}" 2>/dev/null | grep -oE '[0-9]+' | head -1
+        fi
+    else
+        systemctl --user cat "turbofit-${alias}.service" 2>/dev/null \
+            | grep '^ExecStart=' | grep -oE '[0-9]+' | head -1
+    fi
+}
+
+# List all turbofit daemon aliases (one per line, bare alias without turbofit- prefix).
+# Used by stop_all, list_running, and the downscale aux scanner.
+tf_daemon_list_aliases() {
+    if [ "${TURBOFIT_OS}" = "windows" ]; then
+        local launcher_script
+        for launcher_script in "${DAEMON_UNIT_DIR}"/turbofit-*.launch.sh; do
+            [ -f "${launcher_script}" ] || continue
+            local dalias
+            dalias=$(basename "${launcher_script}")
+            dalias="${dalias#turbofit-}"
+            dalias="${dalias%.launch.sh}"
+            echo "${dalias}"
+        done
+    else
+        systemctl --user list-units --all --no-legend 2>/dev/null \
+            | grep -o 'turbofit-[^ ]*\.service' \
+            | sed 's/turbofit-//; s/\.service//' \
+            | sort -u
+    fi
+}
+
+# Remove a daemon (stop + delete unit/launcher).
+tf_daemon_remove() {
+    local alias="$1"
+    if [ "${TURBOFIT_OS}" = "windows" ]; then
+        local launcher_script="${DAEMON_UNIT_DIR}/turbofit-${alias}.launch.sh"
+        if [ ! -f "${launcher_script}" ]; then
+            echo "✗ No turbofit daemon for: ${alias}"
+            echo "  Looking for: ${launcher_script}"
+            return 1
+        fi
+        tf_daemon_stop "${alias}" 2>/dev/null || true
+        rm -f "${launcher_script}" 2>/dev/null || true
+        rm -f "${DAEMON_UNIT_DIR}/turbofit-${alias}.pid" 2>/dev/null || true
+        echo "✓ Daemon removed: ${alias}"
+    else
+        local unit_name="turbofit-${alias}.service"
+        local unit_path="${DAEMON_UNIT_DIR}/${unit_name}"
+        if [ ! -f "${unit_path}" ]; then
+            echo "✗ No turbofit daemon for: ${alias}"
+            echo "  Looking for: ${unit_path}"
+            # Check if there's a legacy service to clean up
+            echo ""
+            echo "  Legacy services to consider removing:"
+            for svc in omni-va llama-darwin llama-proxy-main model-rotation; do
+                if systemctl --user list-unit-files "${svc}.service" 2>/dev/null | grep -q "enabled\|disabled"; then
+                    echo "    ${svc}.service ($(systemctl --user is-active "${svc}.service" 2>/dev/null || echo "unknown"))"
+                fi
+            done
+            return 1
+        fi
+        # Stop + disable
+        systemctl --user stop "${unit_name}" 2>/dev/null || true
+        systemctl --user disable "${unit_name}" 2>/dev/null || true
+        # Remove the unit file
+        rm -f "${unit_path}"
+        systemctl --user daemon-reload
+        echo "✓ Daemon removed: ${alias}"
+    fi
+}
+
+# Migrate a legacy service to a turbofit daemon (Linux-only concept).
+tf_daemon_migrate() {
+    local service_name="$1"
+    local alias="$2"
+    if [ "${TURBOFIT_OS}" = "windows" ]; then
+        echo "✗ Daemon migration is a Linux-only feature (legacy systemd services)."
+        echo "  On Windows, just run: serve daemon install ${alias}"
+        return 1
+    fi
+    if [ -z "${alias}" ]; then
+        # Try to infer alias from service name
+        case "${service_name}" in
+            omni-va)          alias="carnice-apex" ;;
+            llama-darwin)     alias="darwin-28b-reason" ;;
+            llama-proxy-main) alias="carnice-apex-compact" ;;
+            *)                echo "✗ Specify target alias: serve daemon migrate <legacy-service> <alias>"; return 1 ;;
+        esac
+    fi
+    echo "→ Migrating ${service_name}.service → turbofit-${alias}.service"
+    systemctl --user stop "${service_name}.service" 2>/dev/null || true
+    systemctl --user disable "${service_name}.service" 2>/dev/null || true
+    daemon_install "${alias}"
+    echo ""
+    echo "  Legacy service ${service_name}.service is stopped+disabled."
+    echo "  To fully remove it: rm ${DAEMON_UNIT_DIR}/${service_name}.service && systemctl --user daemon-reload"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Binary resolution — append .exe on Windows if needed
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Called with a binary path/name. On Windows, if it doesn't end in .exe and
+# isn't found as-is, try appending .exe. On Linux, pass through unchanged.
+
+tf_resolve_binary() {
+    local binary="$1"
+    [ -z "${binary}" ] && binary="llama-server"
+    if [ "${TURBOFIT_OS}" = "windows" ]; then
+        # If it already ends in .exe, leave it
+        case "${binary}" in
+            *.exe) : ;;
+            *)
+                # Try as-is first (might be in PATH as llama-server.cmd or similar)
+                if ! command -v "${binary}" >/dev/null 2>&1; then
+                    # Try appending .exe
+                    if command -v "${binary}.exe" >/dev/null 2>&1; then
+                        binary="${binary}.exe"
+                    fi
+                fi
+                ;;
+        esac
+    fi
+    echo "${binary}"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Launcher registry
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -545,6 +947,9 @@ generate_string() {
         binary="llama-server"
     fi
 
+    # Resolve binary (append .exe on Windows if needed)
+    binary=$(tf_resolve_binary "${binary}")
+
     case "${launcher}" in
         llama-cpp)
             echo "# turbofit launch string for ${alias}"
@@ -556,7 +961,7 @@ generate_string() {
             echo "  -ngl ${ngl} -fa on \\"
             echo "  -c ${ctx} \\"
             echo "  --jinja \\"
-            echo "  -t $(nproc) \\"
+            echo "  -t ${TF_NPROC} \\"
             # Inject resolved extras (presets + extra_args + mmproj + gpu)
             local extras
             extras=$(resolve_extra_args "${alias}" 2>/dev/null || true)
@@ -646,6 +1051,9 @@ launch_server() {
     if [ -z "${binary}" ]; then
         binary="llama-server"
     fi
+
+    # Resolve binary (append .exe on Windows if needed)
+    binary=$(tf_resolve_binary "${binary}")
 
     local cmd_file="${TURBOFIT_ROOT}/strings/${alias}.sh"
     generate_string "${alias}" > "${cmd_file}"
@@ -744,10 +1152,10 @@ launch_server() {
 stop_server() {
     local alias="$1"
     local stopped=0
-    # Try systemd daemon first (turbofit-<alias>.service)
-    if systemctl --user is-active "turbofit-${alias}.service" >/dev/null 2>&1; then
-        systemctl --user stop "turbofit-${alias}.service" 2>/dev/null
-        echo "✓ Stopped ${alias} (systemd daemon)"
+    # Try platform daemon first (systemd on Linux, PID file on Windows)
+    if tf_daemon_is_active "${alias}" 2>/dev/null; then
+        tf_daemon_stop "${alias}" 2>/dev/null || true
+        echo "✓ Stopped ${alias} (daemon)"
         stopped=1
     fi
     # Also check PID-file managed servers (direct serve launches)
@@ -767,12 +1175,11 @@ stop_server() {
 }
 
 stop_all() {
-    # Stop systemd-managed daemons
-    while IFS= read -r svc; do
-        local alias
-        alias=$(echo "$svc" | sed 's/turbofit-//; s/\.service//')
+    # Stop platform-managed daemons (systemd on Linux, PID-based on Windows)
+    while IFS= read -r alias; do
+        [ -z "${alias}" ] && continue
         stop_server "${alias}"
-    done < <(systemctl --user list-units --all --no-legend 2>/dev/null | grep -o 'turbofit-[^ ]*\.service' | sort -u)
+    done < <(tf_daemon_list_aliases 2>/dev/null)
     # Stop PID-file managed servers (direct serve launches)
     if [ -d "${TURBOFIT_ROOT}/pid" ]; then
         for pid_file in "${TURBOFIT_ROOT}/pid"/*; do
@@ -803,17 +1210,19 @@ list_running() {
             fi
         done
     fi
-    # systemd-managed daemons (turbofit-<alias>.service)
-    while IFS= read -r svc; do
-        local alias
-        alias=$(echo "$svc" | sed 's/turbofit-//; s/\.service//')
-        local port
-        port=$(systemctl --user cat "turbofit-${alias}.service" 2>/dev/null | grep '^ExecStart=' | grep -oE '[0-9]+' | head -1)
-        local state
-        state=$(systemctl --user is-active "turbofit-${alias}.service" 2>/dev/null)
-        echo "  ${alias}: systemd (${state}), :${port:-?}"
+    # Platform-managed daemons (systemd on Linux, PID-based on Windows)
+    while IFS= read -r alias; do
+        [ -z "${alias}" ] && continue
+        local port state
+        port=$(tf_daemon_port "${alias}" 2>/dev/null || echo "?")
+        if tf_daemon_is_active "${alias}" 2>/dev/null; then
+            state="active"
+        else
+            state="inactive"
+        fi
+        echo "  ${alias}: daemon (${state}), :${port:-?}"
         found=1
-    done < <(systemctl --user list-units --all --no-legend 2>/dev/null | grep -o 'turbofit-[^ ]*\.service' | sort -u)
+    done < <(tf_daemon_list_aliases 2>/dev/null)
     [ "$found" -eq 0 ] && echo "  (none)"
     # Also scan ports for rogue llama-servers (started manually outside turbofit)
     echo ""
@@ -1217,11 +1626,9 @@ print(cfg.get('model', {}).get('default', '') or '')
     echo "Free VRAM:    ${free_gb} GB"
     echo ""
 
-    # Find running aux daemons by scanning systemd services + catalog role
+    # Find running aux daemons by scanning platform daemons + catalog role
     local aux_aliases=()
-    while IFS= read -r svc; do
-        local alias
-        alias=$(echo "$svc" | sed 's/turbofit-//; s/\.service//')
+    while IFS= read -r alias; do
         [ -z "${alias}" ] && continue
         # Skip the main model
         [ "${alias}" = "${current_main}" ] && continue
@@ -1235,7 +1642,7 @@ print(cfg.get('models', {}).get('${alias}', {}).get('role', ''))
         if [ "${role}" = "aux" ]; then
             aux_aliases+=("${alias}")
         fi
-    done < <(systemctl --user list-units --all --no-legend 2>/dev/null | grep -o 'turbofit-[^ ]*\.service' | sort -u)
+    done < <(tf_daemon_list_aliases 2>/dev/null)
 
     # Also check PID-file managed aux servers
     if [ -d "${TURBOFIT_ROOT}/pid" ]; then
@@ -1498,11 +1905,11 @@ start_ui() {
 serve_main() {
     local alias="$1"
     local ui="${UI:-tui}"
-    # Check if a systemd daemon is already running for this alias
-    if systemctl --user is-active "turbofit-${alias}.service" >/dev/null 2>&1; then
+    # Check if a platform daemon is already running for this alias
+    if tf_daemon_is_active "${alias}" 2>/dev/null; then
         local port
-        port=$(systemctl --user cat "turbofit-${alias}.service" 2>/dev/null | grep '^ExecStart=' | grep -oE '[0-9]+' | head -1)
-        echo "✓ ${alias} already running as systemd daemon on :${port}"
+        port=$(tf_daemon_port "${alias}" 2>/dev/null || echo "?")
+        echo "✓ ${alias} already running as daemon on :${port}"
         set_hermes_main "${alias}" "http://127.0.0.1:${port}/v1"
         start_ui "${ui}"
         return 0
@@ -1526,11 +1933,11 @@ serve_main() {
 serve_aux() {
     local alias="$1"
     local ui="${UI:-tui}"
-    # Check if a systemd daemon is already running for this alias
-    if systemctl --user is-active "turbofit-${alias}.service" >/dev/null 2>&1; then
+    # Check if a platform daemon is already running for this alias
+    if tf_daemon_is_active "${alias}" 2>/dev/null; then
         local port
-        port=$(systemctl --user cat "turbofit-${alias}.service" 2>/dev/null | grep '^ExecStart=' | grep -oE '[0-9]+' | head -1)
-        echo "✓ ${alias} already running as systemd daemon on :${port}"
+        port=$(tf_daemon_port "${alias}" 2>/dev/null || echo "?")
+        echo "✓ ${alias} already running as daemon on :${port}"
         set_hermes_aux "${alias}" "http://127.0.0.1:${port}/v1"
         start_ui "${ui}"
         return 0
@@ -1609,8 +2016,9 @@ serve_herm() {
 #   serve daemon list               List all turbofit-managed daemon services
 #   serve daemon migrate <legacy>   Migrate a legacy service to turbofit daemon
 
-DAEMON_UNIT_DIR="${HOME}/.config/systemd/user"
-LLAMA_PROXY_BIN="${HOME}/bin/llama-proxy"
+# DAEMON_UNIT_DIR and LLAMA_PROXY_BIN are now set by the OS detection block
+# at the top of the script (platform-aware).
+
 
 # Resolve the full extra args string for a daemon from the catalog entry
 # This produces the value for LLAMA_SERVER_EXTRA_ARGS
@@ -1707,7 +2115,7 @@ print(" ".join(args))
 PYEOF
 }
 
-# Generate a systemd user service unit for a catalog alias
+# Generate a daemon for a catalog alias (systemd unit on Linux, launch script on Windows)
 daemon_install() {
     local alias="$1"
     shift || true
@@ -1753,6 +2161,9 @@ daemon_install() {
     fi
     [ -z "${binary}" ] && binary="llama-server"
 
+    # Resolve binary (append .exe on Windows if needed)
+    binary=$(tf_resolve_binary "${binary}")
+
     # Resolve extra args from catalog
     local extra_args
     extra_args=$(daemon_extra_args "${alias}" 2>/dev/null || echo "")
@@ -1761,22 +2172,82 @@ daemon_install() {
     local proxy_port="${port}"
     local backend_port=$((port + 1000))
 
-    # Generate the service unit
-    local unit_name="turbofit-${alias}.service"
-    local unit_path="${DAEMON_UNIT_DIR}/${unit_name}"
     mkdir -p "${DAEMON_UNIT_DIR}"
 
-    # Build LD_LIBRARY_PATH + LLAMA_LIB_DIR lines only if using custom binary
-    local ld_line=""
-    local lib_line=""
-    if [ -n "${binary}" ] && [ "${binary}" != "llama-server" ]; then
-        local lib_dir
-        lib_dir=$(dirname "${binary}")
-        ld_line="Environment=\"LD_LIBRARY_PATH=${lib_dir}\""
-        lib_line="Environment=\"LLAMA_LIB_DIR=${lib_dir}\""
-    fi
+    if [ "${TURBOFIT_OS}" = "windows" ]; then
+        # ── Windows: generate a launch script (PID-based daemon management) ──
+        # No systemd / wake-on-ping proxy on Windows. The launch script runs
+        # llama-server directly in the background. tf_daemon_start runs this
+        # script and tracks the PID.
+        local launcher_script="${DAEMON_UNIT_DIR}/turbofit-${alias}.launch.sh"
+        local log_file="${TURBOFIT_ROOT}/logs/daemon-${alias}.log"
 
-    cat > "${unit_path}" <<EOF
+        # Build library path env vars (Windows uses PATH, not LD_LIBRARY_PATH)
+        local env_lines=""
+        if [ -n "${binary}" ] && [ "${binary}" != "llama-server" ] && [ "${binary}" != "llama-server.exe" ]; then
+            local lib_dir
+            lib_dir=$(dirname "${binary}" 2>/dev/null || echo "")
+            if [ -n "${lib_dir}" ]; then
+                env_lines="export PATH=\"${lib_dir}:\${PATH}\""
+            fi
+        fi
+
+        cat > "${launcher_script}" <<EOF
+#!/usr/bin/env bash
+# turbofit daemon launch script — ${alias}${description:+ (${description})}
+# Generated by: serve daemon install ${alias}
+# Platform: Windows (PID-based daemon management)
+#
+# This script is executed by tf_daemon_start() in the background.
+# The PID is tracked in ${DAEMON_UNIT_DIR}/turbofit-${alias}.pid
+
+${env_lines}
+
+# Launch llama-server directly (no wake-on-ping proxy on Windows)
+exec "${binary}" \\
+    -m "${path}" \\
+    --host 127.0.0.1 --port ${proxy_port} \\
+    -ngl 99 -fa on \\
+    -c ${ctx} \\
+    --jinja \\
+    -t \$(nproc 2>/dev/null || echo 4) \\
+    ${extra_args}
+EOF
+        chmod +x "${launcher_script}" 2>/dev/null || true
+
+        echo "✓ Daemon installed: ${alias}"
+        echo ""
+        echo "  Script:   ${launcher_script}"
+        echo "  Port:     :${proxy_port}"
+        echo "  Model:    ${path}"
+        echo "  Binary:   ${binary}"
+        echo "  Extra:    ${extra_args}"
+        echo "  Logs:     ${log_file}"
+        echo ""
+        echo "  Commands:"
+        echo "    serve daemon start ${alias}"
+        echo "    serve daemon status ${alias}"
+        echo "    serve daemon stop ${alias}"
+        echo "    serve daemon remove ${alias}"
+        echo ""
+        echo "  Note: Windows daemons use PID files (no systemd). No wake-on-ping"
+        echo "  proxy or auto-restart on crash. Use 'serve daemon restart' to recover."
+    else
+        # ── Linux: generate a systemd user service unit ──
+        local unit_name="turbofit-${alias}.service"
+        local unit_path="${DAEMON_UNIT_DIR}/${unit_name}"
+
+        # Build LD_LIBRARY_PATH + LLAMA_LIB_DIR lines only if using custom binary
+        local ld_line=""
+        local lib_line=""
+        if [ -n "${binary}" ] && [ "${binary}" != "llama-server" ]; then
+            local lib_dir
+            lib_dir=$(dirname "${binary}")
+            ld_line="Environment=\"LD_LIBRARY_PATH=${lib_dir}\""
+            lib_line="Environment=\"LLAMA_LIB_DIR=${lib_dir}\""
+        fi
+
+        cat > "${unit_path}" <<EOF
 [Unit]
 Description=turbofit daemon — ${alias}${description:+ (${description})}
 Documentation=https://github.com/SouthpawIN/turbofit
@@ -1822,160 +2293,67 @@ StandardError=append:${TURBOFIT_ROOT}/logs/daemon-${alias}.log
 WantedBy=default.target
 EOF
 
-    # Reload systemd
-    systemctl --user daemon-reload
+        # Reload systemd
+        systemctl --user daemon-reload
 
-    # Enable + start
-    systemctl --user enable "${unit_name}"
-    systemctl --user start "${unit_name}"
+        # Enable + start
+        systemctl --user enable "${unit_name}"
+        systemctl --user start "${unit_name}"
 
-    echo "✓ Daemon installed: ${alias}"
-    echo ""
-    echo "  Service:  ${unit_name}"
-    echo "  Proxy:    :${proxy_port} (wake-on-ping)"
-    echo "  Backend:  :${backend_port} (GPU ${gpu})"
-    echo "  Model:    ${path}"
-    echo "  Binary:   ${binary}"
-    echo "  Extra:    ${extra_args}"
-    echo "  Idle:     ${idle_secs}s"
-    echo "  Logs:     ${TURBOFIT_ROOT}/logs/daemon-${alias}.log"
-    echo ""
-    echo "  Commands:"
-    echo "    serve daemon status ${alias}"
-    echo "    serve daemon stop ${alias}"
-    echo "    serve daemon remove ${alias}"
+        echo "✓ Daemon installed: ${alias}"
+        echo ""
+        echo "  Service:  ${unit_name}"
+        echo "  Proxy:    :${proxy_port} (wake-on-ping)"
+        echo "  Backend:  :${backend_port} (GPU ${gpu})"
+        echo "  Model:    ${path}"
+        echo "  Binary:   ${binary}"
+        echo "  Extra:    ${extra_args}"
+        echo "  Idle:     ${idle_secs}s"
+        echo "  Logs:     ${TURBOFIT_ROOT}/logs/daemon-${alias}.log"
+        echo ""
+        echo "  Commands:"
+        echo "    serve daemon status ${alias}"
+        echo "    serve daemon stop ${alias}"
+        echo "    serve daemon remove ${alias}"
+    fi
 }
 
 # Remove a turbofit-managed daemon
 daemon_remove() {
-    local alias="$1"
-    local unit_name="turbofit-${alias}.service"
-    local unit_path="${DAEMON_UNIT_DIR}/${unit_name}"
-
-    if [ ! -f "${unit_path}" ]; then
-        echo "✗ No turbofit daemon for: ${alias}"
-        echo "  Looking for: ${unit_path}"
-        # Check if there's a legacy service to clean up
-        echo ""
-        echo "  Legacy services to consider removing:"
-        for svc in omni-va llama-darwin llama-proxy-main model-rotation; do
-            if systemctl --user list-unit-files "${svc}.service" 2>/dev/null | grep -q "enabled\|disabled"; then
-                echo "    ${svc}.service ($(systemctl --user is-active "${svc}.service" 2>/dev/null || echo "unknown"))"
-            fi
-        done
-        return 1
-    fi
-
-    # Stop + disable
-    systemctl --user stop "${unit_name}" 2>/dev/null || true
-    systemctl --user disable "${unit_name}" 2>/dev/null || true
-
-    # Remove the unit file
-    rm -f "${unit_path}"
-    systemctl --user daemon-reload
-
-    echo "✓ Daemon removed: ${alias}"
+    tf_daemon_remove "$@"
 }
 
 # Start/stop/restart a daemon
 daemon_start() {
-    local alias="$1"
-    local unit_name="turbofit-${alias}.service"
-    if [ ! -f "${DAEMON_UNIT_DIR}/${unit_name}" ]; then
-        echo "✗ No daemon for ${alias}. Run: serve daemon install ${alias}"
-        return 1
-    fi
-    systemctl --user start "${unit_name}"
-    echo "✓ Daemon started: ${alias}"
+    tf_daemon_start "$@"
 }
 
 daemon_stop() {
-    local alias="$1"
-    local unit_name="turbofit-${alias}.service"
-    if [ ! -f "${DAEMON_UNIT_DIR}/${unit_name}" ]; then
-        echo "✗ No daemon for ${alias}"
-        return 1
-    fi
-    systemctl --user stop "${unit_name}"
-    echo "✓ Daemon stopped: ${alias} (backend killed, VRAM freed)"
+    tf_daemon_stop "$@"
 }
 
 daemon_restart() {
-    local alias="$1"
-    local unit_name="turbofit-${alias}.service"
-    if [ ! -f "${DAEMON_UNIT_DIR}/${unit_name}" ]; then
-        echo "✗ No daemon for ${alias}"
-        return 1
-    fi
-    systemctl --user restart "${unit_name}"
-    echo "✓ Daemon restarted: ${alias}"
+    tf_daemon_restart "$@"
 }
 
 # Show daemon status
 daemon_status() {
     local alias="${1:-}"
     if [ -n "${alias}" ]; then
-        local unit_name="turbofit-${alias}.service"
-        if [ ! -f "${DAEMON_UNIT_DIR}/${unit_name}" ]; then
-            echo "✗ No daemon for ${alias}"
-            return 1
-        fi
-        systemctl --user status "${unit_name}" 2>/dev/null || true
+        tf_daemon_status "${alias}"
     else
-        # Show all turbofit daemons
-        echo "turbofit-managed daemons:"
-        echo ""
-        for unit_path in "${DAEMON_UNIT_DIR}"/turbofit-*.service; do
-            [ -f "${unit_path}" ] || continue
-            local unit_name
-            unit_name=$(basename "${unit_path}")
-            local dalias="${unit_name#turbofit-}"
-            dalias="${dalias%.service}"
-            local active
-            active=$(systemctl --user is-active "${unit_name}" 2>/dev/null || echo "unknown")
-            local enabled
-            enabled=$(systemctl --user is-enabled "${unit_name}" 2>/dev/null || echo "unknown")
-            local proxy_port
-            proxy_port=$(grep -oP 'ExecStart=.*?\s+\K\d+' "${unit_path}" | head -1 || echo "?")
-            printf "  %-35s  %-10s  %-8s  :%s\n" "${dalias}" "${active}" "${enabled}" "${proxy_port}"
-        done
-        if [ -z "$(ls "${DAEMON_UNIT_DIR}"/turbofit-*.service 2>/dev/null)" ]; then
-            echo "  (none installed)"
-        fi
+        tf_daemon_list
     fi
 }
 
 # List all turbofit daemons
 daemon_list() {
-    daemon_status
+    tf_daemon_list
 }
 
 # Migrate a legacy service to a turbofit daemon
 daemon_migrate() {
-    local service_name="$1"
-    local alias="$2"
-
-    if [ -z "${alias}" ]; then
-        # Try to infer alias from service name
-        case "${service_name}" in
-            omni-va)          alias="carnice-apex" ;;
-            llama-darwin)     alias="darwin-28b-reason" ;;
-            llama-proxy-main) alias="carnice-apex-compact" ;;
-            *)                echo "✗ Specify target alias: serve daemon migrate <legacy-service> <alias>"; return 1 ;;
-        esac
-    fi
-
-    # Stop + disable the legacy service
-    echo "→ Migrating ${service_name}.service → turbofit-${alias}.service"
-    systemctl --user stop "${service_name}.service" 2>/dev/null || true
-    systemctl --user disable "${service_name}.service" 2>/dev/null || true
-
-    # Install the turbofit daemon
-    daemon_install "${alias}"
-
-    echo ""
-    echo "  Legacy service ${service_name}.service is stopped+disabled."
-    echo "  To fully remove it: rm ${DAEMON_UNIT_DIR}/${service_name}.service && systemctl --user daemon-reload"
+    tf_daemon_migrate "$@"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2415,6 +2793,210 @@ CATALOG SCHEMA (extended in v5):
 EOF
 }
 
+# ─── MoA (Mixture of Agents) ─────────────────────────────────────────────────
+# Hermes MoA runs reference models (analysis, no tools) before the aggregator
+# (final response + tools). Turbofit manages which models participate.
+#
+# Presets are stored in Hermes config.yaml under the `moa:` key.
+# Turbofit reads them, recommends based on hardware state, and prints the
+# slash command to activate.
+#
+# See: https://hermes-agent.nousresearch.com/docs/user-guide/features/mixture-of-agents
+
+serve_moa() {
+    local subcmd="${1:-list}"
+    shift || true
+    case "${subcmd}" in
+        list)
+            echo "╔══ MoA Presets ═══════════════════════════════════════════════════════╗"
+            python3 - <<'PYEOF'
+import os, yaml, sys
+cfg_path = os.environ.get("TURBOFIT_HERMES_CONFIG", os.path.expanduser("~/.hermes/config.yaml"))
+try:
+    with open(cfg_path) as f:
+        cfg = yaml.safe_load(f) or {}
+except Exception as e:
+    print(f"  Error reading config: {e}"); sys.exit(1)
+moa = cfg.get("moa", {})
+if not moa:
+    print("  No MoA configuration found."); sys.exit(0)
+default = moa.get("default_preset", "?")
+presets = moa.get("presets", {})
+if not presets:
+    print("  No presets configured."); sys.exit(0)
+for name, p in presets.items():
+    marker = " ← default" if name == default else ""
+    enabled = "✓" if p.get("enabled", False) else "✗"
+    refs = p.get("reference_models", [])
+    agg = p.get("aggregator", {})
+    agg_prov = agg.get("provider", "?")
+    agg_model = agg.get("model", "?")
+    print(f"  {enabled} {name:<12} {len(refs)} ref → {agg_prov}/{agg_model}{marker}")
+PYEOF
+            echo "╚════════════════════════════════════════════════════════════════════════╝"
+            ;;
+        use)
+            local preset="${1:-}"
+            if [ -z "${preset}" ]; then
+                echo "Usage: serve moa use <preset>"
+                echo "Available presets:"
+                serve_moa list
+                exit 1
+            fi
+            echo "To activate MoA preset '${preset}', run this in Hermes:"
+            echo ""
+            echo "  /model ${preset} --provider moa"
+            echo ""
+            echo "This switches your active model to the '${preset}' MoA preset."
+            echo "Reference models will run before the aggregator on each turn."
+            ;;
+        shot)
+            if [ $# -eq 0 ]; then
+                echo "Usage: serve moa shot <prompt>"
+                echo "Runs a one-shot MoA query through the default preset."
+                exit 1
+            fi
+            local prompt="$*"
+            echo "To run a one-shot MoA query, run this in Hermes:"
+            echo ""
+            echo "  /moa ${prompt}"
+            echo ""
+            echo "This runs the prompt through the default MoA preset"
+            echo "(reference models → aggregator) as a single query."
+            ;;
+        status)
+            echo "╔══ MoA Status ════════════════════════════════════════════════════════╗"
+            python3 - <<'PYEOF'
+import os, yaml, sys
+cfg_path = os.environ.get("TURBOFIT_HERMES_CONFIG", os.path.expanduser("~/.hermes/config.yaml"))
+try:
+    with open(cfg_path) as f:
+        cfg = yaml.safe_load(f) or {}
+except Exception as e:
+    print(f"  Error reading config: {e}"); sys.exit(1)
+moa = cfg.get("moa", {})
+if not moa:
+    print("  No MoA configuration found."); sys.exit(0)
+default = moa.get("default_preset", "?")
+presets = moa.get("presets", {})
+p = presets.get(default, {})
+if p:
+    refs = p.get("reference_models", [])
+    agg = p.get("aggregator", {})
+    print(f"  Active preset:  {default}")
+    print(f"  Reference models ({len(refs)}):")
+    for r in refs:
+        print(f"    • {r.get('provider','?')}/{r.get('model','?')}")
+    print(f"  Aggregator:     {agg.get('provider','?')}/{agg.get('model','?')}")
+    print(f"  Ref temp:       {p.get('reference_temperature','?')}")
+    print(f"  Agg temp:       {p.get('aggregator_temperature','?')}")
+    print(f"  Max tokens:     {p.get('max_tokens','?')}")
+    print(f"  Enabled:        {p.get('enabled', False)}")
+else:
+    print(f"  Active preset: {default} (not found in presets)")
+PYEOF
+            echo "╚════════════════════════════════════════════════════════════════════════╝"
+            ;;
+        presets)
+            echo "╔══ MoA Preset Details ═════════════════════════════════════════════════╗"
+            python3 - <<'PYEOF'
+import os, yaml, sys, json
+cfg_path = os.environ.get("TURBOFIT_HERMES_CONFIG", os.path.expanduser("~/.hermes/config.yaml"))
+try:
+    with open(cfg_path) as f:
+        cfg = yaml.safe_load(f) or {}
+except Exception as e:
+    print(f"  Error reading config: {e}"); sys.exit(1)
+moa = cfg.get("moa", {})
+if not moa:
+    print("  No MoA configuration found."); sys.exit(0)
+default = moa.get("default_preset", "?")
+presets = moa.get("presets", {})
+for name, p in presets.items():
+    marker = " (DEFAULT)" if name == default else ""
+    enabled = "enabled" if p.get("enabled", False) else "disabled"
+    refs = p.get("reference_models", [])
+    agg = p.get("aggregator", {})
+    print(f"\n  ── {name}{marker} [{enabled}] ──")
+    print(f"    Reference models ({len(refs)}):")
+    for r in refs:
+        print(f"      provider: {r.get('provider','?')}")
+        print(f"      model:    {r.get('model','?')}")
+    print(f"    Aggregator:")
+    print(f"      provider: {agg.get('provider','?')}")
+    print(f"      model:    {agg.get('model','?')}")
+    print(f"    reference_temperature:   {p.get('reference_temperature','?')}")
+    print(f"    aggregator_temperature:  {p.get('aggregator_temperature','?')}")
+    print(f"    max_tokens:              {p.get('max_tokens','?')}")
+PYEOF
+            echo ""
+            echo "╚════════════════════════════════════════════════════════════════════════╝"
+            ;;
+        recommend)
+            echo "╔══ MoA Recommendation ═════════════════════════════════════════════════╗"
+            echo "  Probing hardware state..."
+            echo ""
+            # 1. Probe VRAM
+            local vram_json free_gb
+            vram_json=$(probe_vram 2>/dev/null || echo '{"free_GB":0}')
+            free_gb=$(echo "${vram_json}" | python3 -c "import sys,json; print(json.load(sys.stdin).get('free_GB',0))" 2>/dev/null || echo "0")
+            # 2. Check which local model ports are alive
+            local darwin_alive="no" carnice_alive="no"
+            if curl -s --max-time 2 http://127.0.0.1:11500/v1/models >/dev/null 2>&1; then
+                darwin_alive="yes"
+            fi
+            if curl -s --max-time 2 http://127.0.0.1:8082/v1/models >/dev/null 2>&1; then
+                carnice_alive="yes"
+            fi
+            echo "  VRAM free:        ${free_gb} GB"
+            echo "  Darwin (11500):   ${darwin_alive}"
+            echo "  Carnice (8082):   ${carnice_alive}"
+            echo ""
+            # 3. Recommend based on state
+            local recommendation reason
+            if [ "${darwin_alive}" = "yes" ] && [ "${carnice_alive}" = "yes" ]; then
+                if python3 -c "exit(0 if float('${free_gb}') >= 8.0 else 1)" 2>/dev/null; then
+                    recommendation="local"
+                    reason="Both local models running and VRAM healthy (≥8GB free). Zero API cost."
+                else
+                    recommendation="fast"
+                    reason="Both local models running but VRAM pressured (<8GB free). Fast preset offloads aggregator to API."
+                fi
+            elif [ "${darwin_alive}" = "yes" ]; then
+                recommendation="default"
+                reason="Only Darwin running. Default preset pairs Darwin (local ref) with DeepSeek V4 Pro (API ref) and GLM 5.2 aggregator."
+            elif [ "${carnice_alive}" = "yes" ]; then
+                recommendation="fast"
+                reason="Only Carnice running. Fast preset uses Carnice as reference with DeepSeek V4 Flash aggregator (speed-optimized)."
+            else
+                recommendation="reasoning"
+                reason="No local models running. Reasoning preset uses all-API models for maximum perspective diversity."
+            fi
+            echo "  ═══════════════════════════════════════════════════"
+            echo "  Recommended preset: ${recommendation}"
+            echo "  Reason: ${reason}"
+            echo ""
+            echo "  To activate, run in Hermes:"
+            echo "    /model ${recommendation} --provider moa"
+            echo "  Or one-shot:"
+            echo "    /moa <your prompt>"
+            echo "╚════════════════════════════════════════════════════════════════════════╝"
+            ;;
+        *)
+            echo "Usage: serve moa {list|use <preset>|shot <prompt>|status|presets|recommend}"
+            echo ""
+            echo "Commands:"
+            echo "  list        List configured MoA presets"
+            echo "  use <p>     Show command to switch to preset <p>"
+            echo "  shot <p>    Show command for one-shot MoA query"
+            echo "  status      Show active preset details"
+            echo "  presets     Show full details of all presets"
+            echo "  recommend   Recommend best preset based on current hardware state"
+            exit 1
+            ;;
+    esac
+}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Parse top-level flags
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2522,6 +3104,9 @@ for r in sorted(data.get('results',[]), key=lambda x: x.get('tok_s',0), reverse=
             migrate)  daemon_migrate "$@" ;;
             *)        echo "Usage: serve daemon {install|remove|start|stop|restart|status|list|migrate}"; exit 1 ;;
         esac
+        ;;
+    moa)
+        serve_moa "$@"
         ;;
     help|*)
         if alias_exists "${cmd}" 2>/dev/null; then

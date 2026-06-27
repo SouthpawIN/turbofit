@@ -501,6 +501,89 @@ Edit `scale_pick()` and `list_catalog()` in the same script.
 
 Extend the four `declare -A LAUNCHER_*` arrays at the top, add cases in `install_launcher()`, `update_all_launchers()`, `generate_string()`, and `launch_server()`.
 
+## Mixture of Agents (MoA) Integration
+
+### What is MoA?
+
+Hermes MoA (Mixture of Agents) runs **reference models** (analysis layer, no tool schemas) before the **aggregator** (final response + tool schemas). This produces higher-quality responses than any single model alone. Reference models provide diverse perspectives; the aggregator synthesizes them into the final answer.
+
+- **Reference models**: Run first, no tool schemas. Can fail without aborting the turn.
+- **Aggregator**: Runs second, with tool schemas. Produces the final response. Cannot be another MoA preset (no recursion).
+- **Config location**: `~/.hermes/config.yaml` under the `moa:` key.
+
+Docs: https://hermes-agent.nousresearch.com/docs/user-guide/features/mixture-of-agents
+
+### Available presets
+
+| Preset | References | Aggregator | Use Case |
+|--------|-----------|------------|----------|
+| `default` | Darwin + DeepSeek V4 Pro | GLM 5.2 | Best quality, balanced cost |
+| `local` | Carnice | Darwin | Zero API cost, both local |
+| `reasoning` | Darwin + DeepSeek V4 Pro + Qwen 3.7 MAX | GLM 5.2 | Maximum reasoning power |
+| `fast` | Carnice | DeepSeek V4 Flash | Speed-optimized |
+| `review` | Darwin + DeepSeek V4 Pro | GLM 5.2 | Code review (low temp) |
+
+### `serve moa` commands
+
+```bash
+serve moa list                    # List configured MoA presets
+serve moa use <preset>            # Print command to switch to a preset
+serve moa shot <prompt>           # Print command for one-shot MoA query
+serve moa status                  # Show active preset details
+serve moa presets                 # Show full preset details (models, temps, max_tokens)
+serve moa recommend               # Hardware-aware preset recommendation
+```
+
+The serve script can't invoke Hermes slash commands directly, so `use` and `shot` print the command for the user to run:
+
+- Activate: `/model <preset> --provider moa`
+- One-shot: `/moa <prompt>`
+
+### `serve moa recommend` logic
+
+Probes current hardware state and recommends the best preset:
+
+1. Runs `probe_vram` (nvidia-smi) for free VRAM
+2. Curls `:11500` (Darwin) and `:8082` (Carnice) to check which local models are alive
+3. Recommends:
+   - Both local running + VRAM healthy (≥8GB free) → `local` (zero cost)
+   - Both local running + VRAM pressured (<8GB) → `fast` (API aggregator)
+   - Only Darwin running → `default` (Darwin ref + API ref + API aggregator)
+   - Only Carnice running → `fast` (Carnice ref + API aggregator)
+   - Nothing local running → `reasoning` (all API, max diversity)
+
+### Creating custom presets
+
+Edit `~/.hermes/config.yaml` and add a new entry under `moa.presets`:
+
+```yaml
+moa:
+  presets:
+    my-custom:
+      reference_models:
+        - provider: custom:llama-main
+          model: Darwin-28B-REASON.Q4_K_M.gguf
+        - provider: nous
+          model: deepseek/deepseek-v4-pro
+      aggregator:
+        provider: nous
+        model: z-ai/glm-5.2
+      reference_temperature: 0.6
+      aggregator_temperature: 0.4
+      max_tokens: 8192
+      enabled: true
+```
+
+Providers: `custom:llama-main`, `custom:llama-aux`, `nous` (Nous API). The aggregator cannot be another MoA preset.
+
+### VRAM considerations
+
+- MoA with local models = **2x+ compute per iteration** (reference + aggregator both use GPU)
+- When VRAM pressure hits and a local model is the MoA aggregator, swap to an API aggregator
+- The `local` preset uses both GPUs (Carnice ref on GPU 1, Darwin aggregator on GPU 0) — monitor VRAM
+- The `fast` preset offloads the aggregator to API, keeping only one local model active
+- Use `serve moa recommend` for hardware-aware suggestions before activating a preset
+
 ## See also
 
 - `references/model-database.yaml` — **dynamic source of truth** for all model specs, pricing, benchmarks. Auto-updated daily via research cron, synced to GitHub.

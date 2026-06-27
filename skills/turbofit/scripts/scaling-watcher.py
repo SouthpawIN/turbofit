@@ -195,30 +195,77 @@ def get_running_daemons():
 
 
 def daemon_action(action, alias):
-    # Support both turbofit-{alias} and bare {alias} service names
-    for svc in (f"turbofit-{alias}.service", f"{alias}.service"):
+    # Try service name variants. For is-active and stop, we must verify the
+    # service was actually running before claiming success — otherwise stopping
+    # a dead turbofit-{alias}.service returns 0 and we never try {alias}.service.
+    #
+    # Service name variants (in priority order):
+    #   1. {alias}.service             (e.g. darwin.service, carnice.service)
+    #   2. turbofit-{alias}.service    (legacy turbofit-managed daemons)
+    # Also try common short-form aliases (darwin-28b-reason → darwin).
+    candidates = [f"{alias}.service", f"turbofit-{alias}.service"]
+    # Add short-form for known long aliases
+    short_map = {
+        "darwin-28b-reason": "darwin.service",
+        "darwin-28b-coder": "darwin-coder.service",
+    }
+    if alias in short_map:
+        candidates.insert(0, short_map[alias])
+
+    for svc in candidates:
         try:
-            if action == "stop":
-                result = subprocess.run(["systemctl", "--user", "stop", svc],
-                    capture_output=True, text=True, timeout=30)
-                if result.returncode == 0:
-                    return True
-            elif action == "start":
-                result = subprocess.run(["systemctl", "--user", "start", svc],
-                    capture_output=True, text=True, timeout=30)
-                if result.returncode == 0:
-                    return True
-            elif action == "is-active":
+            if action == "is-active":
                 result = subprocess.run(["systemctl", "--user", "is-active", svc],
                     capture_output=True, text=True, timeout=5)
-                return result.stdout.strip() == "active"
+                if result.stdout.strip() == "active":
+                    return True
+                # Try next variant
+                continue
+
+            elif action == "stop":
+                # Only stop if actually running
+                check = subprocess.run(["systemctl", "--user", "is-active", svc],
+                    capture_output=True, text=True, timeout=5)
+                if check.stdout.strip() != "active":
+                    continue  # Not running on this service name, try next
+                # Use --kill-mode=control-group to force kill child processes
+                result = subprocess.run(["systemctl", "--user", "stop", svc],
+                    capture_output=True, text=True, timeout=15)
+                if result.returncode == 0:
+                    log.info(f"    (stopped {svc})")
+                    return True
+
+            elif action == "start":
+                # Non-blocking: systemctl start returns once the service is
+                # launched, not once the model is loaded. But we MUST verify
+                # the service actually has a process — legacy dead services
+                # (turbofit-{alias}.service) return 0 on start but do nothing.
+                result = subprocess.run(["systemctl", "--user", "start", svc],
+                    capture_output=True, text=True, timeout=10)
+                if result.returncode != 0:
+                    continue  # Service doesn't exist or failed, try next
+                # Verify it actually has a MainPID (not a dead legacy service)
+                pid_result = subprocess.run(
+                    ["systemctl", "--user", "show", svc, "--property=MainPID", "--value"],
+                    capture_output=True, text=True, timeout=5)
+                main_pid = pid_result.stdout.strip()
+                if main_pid and main_pid != "0":
+                    log.info(f"    (starting {svc}, pid={main_pid})")
+                    return True
+                # No PID — dead legacy service, try next variant
+                continue  # Try next variant
+
             elif action == "restart":
+                # Non-blocking: stop, brief pause, start. Don't wait for load.
                 subprocess.run(["systemctl", "--user", "stop", svc],
-                    capture_output=True, text=True, timeout=30)
+                    capture_output=True, text=True, timeout=15)
                 time.sleep(2)
-                subprocess.run(["systemctl", "--user", "start", svc],
-                    capture_output=True, text=True, timeout=30)
-                return True
+                result = subprocess.run(["systemctl", "--user", "start", svc],
+                    capture_output=True, text=True, timeout=10)
+                if result.returncode == 0:
+                    log.info(f"    (restarting {svc})")
+                    return True
+                continue
         except Exception as e:
             log.error(f"daemon_action {action} {svc}: {e}")
     return False
@@ -555,34 +602,45 @@ def main():
                       f"contraction={contraction_level}")
 
             # ─── CONTRACTION (scale down) ───────────────────────────────────
-            # Contract based on EXTERNAL VRAM usage (non-turbofit processes).
-            # When external processes use too much VRAM, we contract turbofit
-            # to make room. This prevents the "I keep having to stop models
-            # manually" problem — turbofit backs off automatically.
+            # Contract based on ABSOLUTE free VRAM per GPU.
+            # When any GPU gets tight, turbofit sheds models to make room.
+            # This handles BOTH external pressure (ComfyUI, games) AND
+            # turbofit-internal pressure (ACE-Step, another daemon loading).
+            #
+            # The original external-only logic missed the case where a
+            # turbofit daemon itself causes VRAM pressure (e.g. ACE-Step
+            # loading alongside Darwin + Carnice). We now use per-GPU
+            # free VRAM as the primary contraction signal.
             target_level = 0
-            # Contract based on how much VRAM external (non-turbofit) processes are using.
-            # When external usage exceeds these thresholds, turbofit contracts to make room.
-            # Thresholds are cumulative: at each level, turbofit sheds more VRAM.
-            EXTERNAL_PRESSURE_LOW = 8.0     # Shrink ctx when external usage > 8GB
-            EXTERNAL_PRESSURE_MED = 12.0   # Expert offload when > 12GB external
-            EXTERNAL_PRESSURE_HIGH = 16.0  # Swap to smaller model when > 16GB external
-            EXTERNAL_PRESSURE_CRITICAL = 20.0  # Stop aux when > 20GB external
-            EXTERNAL_PRESSURE_MAX = 24.0   # Stop main, go API when > 24GB external
 
-            if non_turbofit_used > EXTERNAL_PRESSURE_MAX:
+            # Use the minimum free VRAM across all GPUs as the contraction signal.
+            # Thresholds from the design doc:
+            #   <6GB free → shrink ctx
+            #   <4GB free → expert offload (MoE models)
+            #   <3GB free → swap to smaller model
+            #   <2GB free → stop aux daemons
+            #   <1GB free → stop main, go API
+            FREE_VRAM_SHRINK = 6.0
+            FREE_VRAM_EXPERT = 4.0
+            FREE_VRAM_SWAP = 3.0
+            FREE_VRAM_STOP_AUX = 2.0
+            FREE_VRAM_STOP_MAIN = 1.0
+
+            if min_free_gb < FREE_VRAM_STOP_MAIN:
                 target_level = 5
-            elif non_turbofit_used > EXTERNAL_PRESSURE_CRITICAL:
+            elif min_free_gb < FREE_VRAM_STOP_AUX:
                 target_level = 4
-            elif non_turbofit_used > EXTERNAL_PRESSURE_HIGH:
+            elif min_free_gb < FREE_VRAM_SWAP:
                 target_level = 3
-            elif non_turbofit_used > EXTERNAL_PRESSURE_MED:
+            elif min_free_gb < FREE_VRAM_EXPERT:
                 target_level = 2
-            elif non_turbofit_used > EXTERNAL_PRESSURE_LOW:
+            elif min_free_gb < FREE_VRAM_SHRINK:
                 target_level = 1
 
             if target_level > contraction_level:
                 log.warning(f"⚠ CONTRACT: level {contraction_level} → {target_level} "
-                           f"(external: {non_turbofit_used:.1f}GB, free: {total_free:.1f}GB)")
+                           f"(min_free: {min_free_gb:.1f}GB on GPU {min_free_gpu}, "
+                           f"external: {non_turbofit_used:.1f}GB, total_free: {total_free:.1f}GB)")
 
                 if not args.dry_run:
                     active_main = next((d for d in active_daemons if d["role"] == "main"), None)
@@ -622,28 +680,30 @@ def main():
 
             # ─── EXPANSION ──────────────────────────────────────────────
             elif target_level < contraction_level:
-                # Expand when external pressure drops (with hysteresis)
-                EXPRESSION_LOW = 6.0      # Expand ctx when external < 6GB
-                EXPRESSION_MED = 10.0    # Restore experts when external < 10GB
-                EXPRESSION_HIGH = 14.0   # Swap back when external < 14GB
-                EXPRESSION_CRITICAL = 18.0  # Restart aux when external < 18GB
-                EXPRESSION_MAX = 22.0    # Restart main when external < 22GB
+                # Expand when per-GPU free VRAM recovers (with hysteresis).
+                # Uses absolute free VRAM thresholds (+4GB above contraction).
+                RESTORE_CTX = 10.0       # Restore full ctx when > 10GB free
+                RESTORE_EXPERTS = 8.0    # Restore experts when > 8GB free
+                RESTORE_SWAP = 7.0       # Swap back to big model when > 7GB free
+                RESTORE_AUX = 6.0        # Restart aux when > 6GB free
+                RESTORE_MAIN = 5.0       # Restart main when > 5GB free
 
                 restore_level = contraction_level
-                if contraction_level >= 5 and non_turbofit_used < EXPRESSION_MAX:
+                if contraction_level >= 5 and min_free_gb >= RESTORE_MAIN:
                     restore_level = 4
-                elif contraction_level >= 4 and non_turbofit_used < EXPRESSION_CRITICAL:
+                elif contraction_level >= 4 and min_free_gb >= RESTORE_AUX:
                     restore_level = 3
-                elif contraction_level >= 3 and non_turbofit_used < EXPRESSION_HIGH:
+                elif contraction_level >= 3 and min_free_gb >= RESTORE_SWAP:
                     restore_level = 2
-                elif contraction_level >= 2 and non_turbofit_used < EXPRESSION_MED:
+                elif contraction_level >= 2 and min_free_gb >= RESTORE_EXPERTS:
                     restore_level = 1
-                elif contraction_level >= 1 and non_turbofit_used < EXPRESSION_LOW:
+                elif contraction_level >= 1 and min_free_gb >= RESTORE_CTX:
                     restore_level = 0
 
                 if restore_level < contraction_level:
                     log.info(f"✓ EXPAND: level {contraction_level} → {restore_level} "
-                            f"(external: {non_turbofit_used:.1f}GB, total free: {total_free:.1f}GB)")
+                            f"(min_free: {min_free_gb:.1f}GB on GPU {min_free_gpu}, "
+                            f"total free: {total_free:.1f}GB)")
 
                     if not args.dry_run:
                         if contraction_level >= 5 and restore_level < 5:
