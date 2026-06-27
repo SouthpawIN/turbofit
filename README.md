@@ -1,8 +1,14 @@
 # turbofit — opinionated unified LLM backend for Hermes Agent
 
-Turbofit manages the entire lifecycle of LLMs with Hermes Agent: detecting your GPU, picking the best model, launching local servers, wiring API providers, managing systemd daemons, scaling under VRAM pressure, tracking real-time pricing, and auto-updating a model database every day.
+Turbofit manages the entire lifecycle of LLMs with Hermes Agent: detecting your GPU, picking the best model, launching local servers, wiring API providers, managing daemons (systemd on Linux, PID files on Windows), scaling under VRAM pressure, tracking real-time pricing, integrating Mixture of Agents, and auto-updating a model database every day.
 
-**End-user UX:** `serve auto main` → done.
+**End-user UX:** `serve auto main` → done. Works on Linux and Windows.
+
+## What's New (v5.1)
+
+- **🪟 Native Windows support** — no Docker, no WSL, no systemd. Auto-detects OS, manages daemons via PID files on Windows. Same `serve` command, both platforms.
+- **🧠 Mixture of Agents (MoA) integration** — 5 presets that pair local + API models for multi-model reasoning. `serve moa recommend` picks the best preset based on live VRAM.
+- **🔧 Scaling watcher fix** — auto-scaling now triggers on absolute per-GPU free VRAM (not just external pressure). Turbofit properly backs off when any process — including its own daemons — causes VRAM pressure. No more OOM crashes.
 
 ---
 
@@ -154,10 +160,13 @@ Free models (via `NVIDIA_API_KEY` from build.nvidia.com, ~1000 RPM, no credit ca
 
 ### Systemd Daemon Management
 
-Turbofit can install models as systemd user services with a **wake-on-ping proxy**. The proxy stays running (minimal memory), and the full model backend only loads when the first request arrives — freeing VRAM when idle.
+Turbofit can install models as systemd user services (Linux) or PID-managed daemons (Windows) with a **wake-on-ping proxy**. The proxy stays running (minimal memory), and the full model backend only loads when the first request arrives — freeing VRAM when idle.
+
+**Linux:** systemd user services (`turbofit-<alias>.service`)
+**Windows:** PID files in `~/.config/turbofit/daemons/` + `taskkill`/`tasklist` for process management
 
 ```bash
-serve daemon install <alias> [--idle N]   # Generate + enable systemd service
+serve daemon install <alias> [--idle N]   # Generate + enable service (Linux) / PID daemon (Windows)
 serve daemon remove <alias>              # Stop + disable + remove
 serve daemon start <alias>               # Start proxy (backend wakes on ping)
 serve daemon stop <alias>                # Stop daemon + kill backend (frees VRAM)
@@ -166,6 +175,32 @@ serve daemon status [alias]              # Show status of one or all
 serve daemon list                        # List all turbofit-managed daemons
 serve daemon migrate <legacy> [alias]    # Migrate old omni-va/llama-* services to turbofit
 ```
+
+### Mixture of Agents (MoA)
+
+Turbofit integrates with [Hermes MoA](https://hermes-agent.nousresearch.com/docs/user-guide/features/mixture-of-agents) — reference models analyze first (no tools), then the aggregator synthesizes the final response with full tool access. MoA beats any single model on quality.
+
+**5 presets out of the box:**
+
+| Preset | References | Aggregator | Cost | Use Case |
+|--------|-----------|------------|------|----------|
+| `default` | Darwin + DeepSeek V4 Pro | GLM 5.2 | Low | Best quality, balanced cost |
+| `local` | Carnice | Darwin | **$0** | Zero API cost, fully local |
+| `reasoning` | Darwin + DeepSeek + Qwen 3.7 MAX | GLM 5.2 | Medium | Maximum reasoning power |
+| `fast` | Carnice | DeepSeek V4 Flash | Minimal | Speed-optimized |
+| `review` | Darwin + DeepSeek V4 Pro | GLM 5.2 | Low | Code review (low temp) |
+
+```bash
+serve moa list                    # List configured presets
+serve moa recommend               # Hardware-aware preset recommendation (checks VRAM + running models)
+serve moa status                  # Show active preset
+serve moa presets                 # Full preset details
+serve moa use <preset>            # Print activation command
+serve moa shot <prompt>           # Print one-shot command
+```
+
+Activate in Hermes: `/model <preset> --provider moa`
+One-shot: `/moa <prompt>`
 
 ### Fetch / Benchmark
 
@@ -198,9 +233,49 @@ The research script:
 
 ---
 
+## Platform Support
+
+### Linux (primary)
+- Full systemd integration for daemon management
+- Scaling watcher with auto-contraction/expansion
+- Gateway proxy and status server
+- All features supported
+
+### Windows 11
+- Native support — no Docker, no WSL required
+- Requirements: [Git Bash](https://git-scm.com/downloads), `llama-server.exe` in PATH, NVIDIA drivers (for `nvidia-smi`)
+- Daemon management via PID files (`~/.config/turbofit/daemons/`) + `taskkill`/`tasklist`
+- Same `serve` command works identically
+- Auto-appends `.exe` to model binaries
+- Limitations: no scaling watcher, no gateway proxy (Linux-specific extras)
+
+---
+
 ## Scaling Ladder
 
-When VRAM is pressured, `serve downscale` walks a conservative ladder:
+When VRAM is pressured, turbofit automatically backs off. The scaling watcher monitors per-GPU free VRAM every 30 seconds and walks a conservative contraction ladder:
+
+**Contraction** (when VRAM is tight):
+| Free VRAM | Action |
+|-----------|--------|
+| <6GB | Shrink context (262K → 131K → 65K) |
+| <4GB | Expert offload (MoE → CPU) |
+| <3GB | Swap to smaller model |
+| <2GB | Stop aux daemons |
+| <1GB | Stop main → API fallback |
+
+**Expansion** (when VRAM recovers, with +4GB hysteresis):
+| Free VRAM | Action |
+|-----------|--------|
+| >5GB | Restart main |
+| >6GB | Restart aux |
+| >7GB | Swap back to big model |
+| >8GB | Restore experts to GPU |
+| >10GB | Restore full context |
+
+The watcher contracts on **absolute per-GPU free VRAM** — it doesn't matter whether the pressure comes from external apps (ComfyUI, games) or turbofit's own daemons (ACE-Step, another model loading). Turbofit always backs off to make room.
+
+Manually trigger with `serve downscale`.
 
 ### Beefy (≥24GB, 7 steps)
 
