@@ -1,6 +1,6 @@
 ---
 name: turbofit
-description: "Opinionated unified LLM backend (turbofit v5.1). Picks the best main + aux model for your hardware — local or API — launches them detached, wires Hermes-Agent config, and adapts to live VRAM pressure via a scaling ladder. Three hardware tiers: Beefy (local+local), Modest (API+local), Thin (API+API). `serve auto main` auto-detects GPU and suggests the right setup. API fallback is always available (free: DeepSeek V4 Pro + Kimi K2.6). Replaces llama-launch, omni-va, and ad-hoc llama-server scripts. Catalog schema supports per-model binary pinning (atomic fork vs stock), named flag presets (nextn, draft-mtp, turbo4-kv, vision-mmproj), tier ladder (s/sf/sd/f/c), and the 64K Hermes context floor is enforced everywhere. End-user UX is `serve auto main` and the user is done."
+description: "Opinionated unified LLM backend (turbofit v1.1). Picks the best main + aux model for your hardware — local or API — launches them detached, wires Hermes-Agent config, and adapts to live VRAM pressure via a scaling ladder. Three hardware tiers: Beefy (local+local), Modest (API+local), Thin (API+API). `serve auto main` auto-detects GPU and suggests the right setup. API fallback is always available (free: DeepSeek V4 Pro + Kimi K2.6). Replaces llama-launch, omni-va, and ad-hoc llama-server scripts. Catalog schema supports per-model binary pinning (atomic fork vs stock), named flag presets (nextn, draft-mtp, turbo4-kv, vision-mmproj), tier ladder (s/sf/sd/f/c), and the 64K Hermes context floor is enforced everywhere. End-user UX is `serve auto main` and the user is done."
 version: 1.1.0
 author: SouthpawIN + Nous Girl
 license: MIT
@@ -218,7 +218,7 @@ serve list                               # list running + detect rogue llama-ser
 serve fetch <alias>                      # download missing model from HF (uses hf_repo)
 serve bench <alias>                      # lm-eval-harness benchmark (launches if needed)
 
-# Opinionated auto (turbofit v5.1 — hardware-aware, API-aware)
+# Opinionated auto (turbofit v1.1 — hardware-aware, API-aware)
 serve auto main [--vision] [--api] [--free] [--ui ...]    # pick best main (auto-detects hardware, picks local or API)
 serve auto aux [--vision] [--api] [--free] [--ui ...]     # pick best aux
 serve downscale                          # adapt to current VRAM pressure
@@ -255,7 +255,7 @@ serve api use <rank|api_id> [main|aux]
 
 The auto-picker does NOT yet weight by current VRAM headroom. Use `serve downscale` to adapt after the fact, or run `serve vram` first to know.
 
-## How the scaling ladder works (v5.1 — 3 hardware tiers, universal)
+## How the scaling ladder works (v1.1 — 3 hardware tiers, universal)
 
 The ladder covers three hardware profiles and is **hardware-neutral** — any user can plug in their GPU and get the right setup. See [`references/scaling-ladder.md`](references/scaling-ladder.md) for full step-by-step details.
 

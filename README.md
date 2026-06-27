@@ -4,7 +4,7 @@ Turbofit manages the entire lifecycle of LLMs with Hermes Agent: detecting your 
 
 **End-user UX:** `serve auto main` → done. Works on Linux and Windows.
 
-## What's New (v5.1)
+## What's New (v1.1)
 
 - **🪟 Native Windows support** — no Docker, no WSL, no systemd. Auto-detects OS, manages daemons via PID files on Windows. Same `serve` command, both platforms.
 - **🧠 Mixture of Agents (MoA) integration** — 5 presets that pair local + API models for multi-model reasoning. `serve moa recommend` picks the best preset based on live VRAM.
