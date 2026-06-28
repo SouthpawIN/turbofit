@@ -38,8 +38,8 @@ Trigger phrases: "set up my local LLM", "launch a model", "what model should I r
 ## Quick start
 
 ```bash
-# Source the shim (one-time, already in ~/.bashrc)
-source ~/.hermes/skills/turbofit/scripts/turbofit.sharco
+# Source the shim (one-time setup)
+source <hermes-skills-dir>/turbofit/scripts/turbofit.sharco
 
 # One-shot: pick best main for your box, launch, wire Hermes
 serve auto main                    # opinionated: auto-detects hardware, picks local or API
@@ -341,7 +341,10 @@ See [`references/api-pairing-matrix.md`](references/api-pairing-matrix.md) for o
 
 ## Pitfalls
 
-- **`serve list` hangs on wake-on-ping proxy ports.** The rogue-port scanner iterates ALL listening ports and curls each one. When it hits a turbofit daemon's proxy port, the proxy tries to wake the backend (which takes 30+ seconds to load), causing a hang. Fixed by adding `--max-time 2` to all curl calls in the port scanner.
+- **`Restart=on-failure` means clean stops stay dead.** If the scaling watcher runs `systemctl stop` on a daemon (exit 0), systemd won't restart it even though the unit is enabled. Combined with the watcher itself stopping (manual, crash, systemctl), all models stay dead until manual intervention. Fix: use `Restart=always` on all turbofit daemon units AND the watcher itself. But note: `systemctl stop` still blocks `Restart=always` — the watcher must not use `systemctl stop` to pause daemons; use signal-based mechanisms or let idle timeout handle it.
+- **Per-GPU absolute free VRAM causes false contraction.** When Darwin is loaded healthy, GPU 0 has ~1.5GB free. The old contraction logic used `min_free_gb < 2.0` as the STOP_AUX trigger — meaning Darwin being loaded looked identical to external VRAM pressure. Fix: contract on `non_turbofit_used` (external VRAM only). Turbofit's own models consuming VRAM is expected — only contract when something ELSE hogs VRAM.
+- **Watcher cascades all levels in one poll tick.** If target_level jumps 0→4, the old code executed shrink ctx, expert offload, swap model, AND stop aux in a single iteration. Combined with the false-positive above, this killed both models within seconds of Darwin loading. Fix: cap contraction to one level per poll and add startup grace period (60s) + stability check (2 polls).
+- **Service name mapping points to old disabled units.** The watcher's `short_map` hardcoded `"darwin-28b-reason": "darwin.service"` (disabled, legacy) instead of `turbofit-darwin-28b-reason.service`. Fix: update short_map to point to turbofit-managed daemon services. See `references/scaling-watcher-architecture.md` for full details.
 - **`serve auto main` double-launches on occupied ports.** If a systemd daemon is already running for the picked model, `serve_main` still calls `launch_server`, which tries to bind the same port and hangs in the health-check loop. Fixed by checking `systemctl --user is-active turbofit-${alias}.service` and PID files before launching — if already running, skip launch and just wire Hermes config.
 - **`serve herm` crashes with `set -euo pipefail` + shift.** The case statement had `shift; serve_herm "$@"` but after the command parser already shifted past the command name, the extra shift fails on empty args and `set -e` causes silent exit. Fixed by removing the redundant shift.
 - **`start_ui` doesn't recognize `herm_main`/`herm_aux` UI values.** `serve_herm` sets `UI="herm_main"` or `UI="herm_aux"` but `start_ui` only matched the case `herm)`. The unrecognized case falls through to "Unknown UI" error. Fixed by matching `herm|herm_main|herm_aux)`.
@@ -418,8 +421,8 @@ OmniStep-SFT-8B was removed from the fleet catalog in v1.1.0 — it's no longer 
 The Hermes Desktop app (`apps/desktop/`) is an Electron + React + Vite + Tailwind app. It can be wrapped for Android using Capacitor:
 
 ```bash
-# 1. Install deps + Capacitor
-cd ~/.hermes/hermes-agent && npm install --workspace apps/desktop
+# 1. Install deps + Capacitor (from the Hermes Agent repo)
+npm install --workspace apps/desktop
 npm install --workspace apps/desktop @capacitor/core @capacitor/cli @capacitor/android
 
 # 2. Init Capacitor (in apps/desktop/)
@@ -509,7 +512,7 @@ Hermes MoA (Mixture of Agents) runs **reference models** (analysis layer, no too
 
 - **Reference models**: Run first, no tool schemas. Can fail without aborting the turn.
 - **Aggregator**: Runs second, with tool schemas. Produces the final response. Cannot be another MoA preset (no recursion).
-- **Config location**: `~/.hermes/config.yaml` under the `moa:` key.
+- **Config location**: Hermes configuration file under the `moa:` key.
 
 Docs: https://hermes-agent.nousresearch.com/docs/user-guide/features/mixture-of-agents
 
@@ -554,7 +557,7 @@ Probes current hardware state and recommends the best preset:
 
 ### Creating custom presets
 
-Edit `~/.hermes/config.yaml` and add a new entry under `moa.presets`:
+Edit your Hermes configuration and add a new entry under `moa.presets`:
 
 ```yaml
 moa:
@@ -589,6 +592,7 @@ Providers: `custom:llama-main`, `custom:llama-aux`, `nous` (Nous API). The aggre
 - `references/model-database.yaml` — **dynamic source of truth** for all model specs, pricing, benchmarks. Auto-updated daily via research cron, synced to GitHub.
 - `references/api-pairing-matrix.md` — complete main+aux pairing matrix by price tier × context level, with gateway indicators
 - `references/binary-selection.md` — atomic fork vs stock decision tree (which binary for which model, VRAM considerations for spec decoding)
+- `references/scaling-watcher-architecture.md` — scaling watcher v3 fixes, external-VRAM contraction, grace period, stability check, debugging checklist
 - `references/scaling-ladder.md` — full scaling ladders for all three hardware tiers (Beefy 7-step, Modest 5-step, Thin 4-step)
 - `references/curated-lineup.md` — the curated picks (local archetypes + API models, pairing rules)
 - `references/api-model-rankings.md` — API main + aux rankings by volume performance, hardware tier mapping
