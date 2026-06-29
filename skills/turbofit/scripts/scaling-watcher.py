@@ -68,6 +68,9 @@ SWAP_MODEL_RESTORE = 7.0
 STOP_AUX_RESTORE = 6.0
 STOP_MAIN_RESTORE = 5.0
 
+STARTUP_GRACE = 60
+STABILITY_CHECKS = 2
+
 # Context tiers
 CTX_FULL = 262144
 CTX_MID = 131072
@@ -210,7 +213,7 @@ def daemon_action(action, alias):
     candidates = [f"{alias}.service", f"turbofit-{alias}.service"]
     # Add short-form for known long aliases
     short_map = {
-        "darwin-28b-reason": "darwin.service",
+        "darwin-28b-reason": "turbofit-darwin-28b-reason.service",
         "darwin-28b-coder": "darwin-coder.service",
     }
     if alias in short_map:
@@ -509,6 +512,9 @@ def main():
     swapped_to_alias = None
     api_switched_profiles = []
     consecutive_failures = 0
+    last_action_time = 0
+    stability_counter = 0
+    last_target_level = 0
 
     # Startup: auto-start main daemon if VRAM is healthy
     gpus = get_per_gpu_vram()
@@ -523,6 +529,7 @@ def main():
             log.info(f"  Startup: No main daemon running — starting {local_model}")
             daemon_action("start", local_model)
             time.sleep(10)
+        last_action_time = time.time()
 
     log.info("─" * 60)
 
@@ -617,61 +624,76 @@ def main():
             # free VRAM as the primary contraction signal.
             target_level = 0
 
-            # Use the minimum free VRAM across all GPUs as the contraction signal.
-            # Thresholds from the design doc:
-            #   <6GB free → shrink ctx
-            #   <4GB free → expert offload (MoE models)
-            #   <3GB free → swap to smaller model
-            #   <2GB free → stop aux daemons
-            #   <1GB free → stop main, go API
-            FREE_VRAM_SHRINK = 6.0
-            FREE_VRAM_EXPERT = 4.0
-            FREE_VRAM_SWAP = 3.0
-            FREE_VRAM_STOP_AUX = 2.0
-            FREE_VRAM_STOP_MAIN = 1.0
-
-            if min_free_gb < FREE_VRAM_STOP_MAIN:
+            # Contract based on EXTERNAL (non-turbofit) VRAM usage.
+            # Turbofit's own models consuming VRAM is expected.
+            if non_turbofit_used > 14:
                 target_level = 5
-            elif min_free_gb < FREE_VRAM_STOP_AUX:
+            elif non_turbofit_used > 10:
                 target_level = 4
-            elif min_free_gb < FREE_VRAM_SWAP:
+            elif non_turbofit_used > 6:
                 target_level = 3
-            elif min_free_gb < FREE_VRAM_EXPERT:
+            elif non_turbofit_used > 4:
                 target_level = 2
-            elif min_free_gb < FREE_VRAM_SHRINK:
+            elif non_turbofit_used > 3:
                 target_level = 1
 
             if target_level > contraction_level:
-                log.warning(f"⚠ CONTRACT: level {contraction_level} → {target_level} "
+                # Stability check
+                if target_level > last_target_level:
+                    stability_counter = 1
+                elif target_level == last_target_level:
+                    stability_counter += 1
+                else:
+                    stability_counter = 0
+                last_target_level = target_level
+
+                # Startup grace
+                grace_elapsed = time.time() - last_action_time
+                if grace_elapsed < STARTUP_GRACE or stability_counter < STABILITY_CHECKS:
+                    time.sleep(args.interval)
+                    continue
+
+                # One level per poll
+                capped_target = min(target_level, contraction_level + 1)
+
+                log.warning(f"⚠ CONTRACT: level {contraction_level} → {capped_target} "
                            f"(min_free: {min_free_gb:.1f}GB on GPU {min_free_gpu}, "
                            f"external: {non_turbofit_used:.1f}GB, total_free: {total_free:.1f}GB)")
 
                 if not args.dry_run:
                     active_main = next((d for d in active_daemons if d["role"] == "main"), None)
 
-                    if target_level >= 1 and contraction_level < 1 and active_main:
+                    if capped_target >= 1 and contraction_level < 1 and active_main:
                         new_ctx = shrink_context(active_main["alias"], active_main["ctx"])
                         contraction_level = 1
+                        last_action_time = time.time()
+                        stability_counter = 0
 
-                    if target_level >= 2 and contraction_level < 2 and active_main:
+                    if capped_target >= 2 and contraction_level < 2 and active_main:
                         if active_main.get("is_moe"):
                             add_expert_offload(active_main["alias"])
                         contraction_level = 2
+                        last_action_time = time.time()
+                        stability_counter = 0
 
-                    if target_level >= 3 and contraction_level < 3 and active_main:
+                    if capped_target >= 3 and contraction_level < 3 and active_main:
                         new_alias = swap_to_smaller_model(active_main["alias"], active_daemons)
                         if new_alias:
                             swapped_to_alias = new_alias
                         contraction_level = 3
+                        last_action_time = time.time()
+                        stability_counter = 0
 
-                    if target_level >= 4 and contraction_level < 4:
+                    if capped_target >= 4 and contraction_level < 4:
                         for d in active_daemons:
                             if d["role"] == "aux":
                                 log.info(f"  ▼ STOP AUX: {d['alias']}")
                                 daemon_action("stop", d["alias"])
                         contraction_level = 4
+                        last_action_time = time.time()
+                        stability_counter = 0
 
-                    if target_level >= 5 and contraction_level < 5:
+                    if capped_target >= 5 and contraction_level < 5:
                         for d in active_daemons:
                             if d["role"] == "main":
                                 log.info(f"  ▼ STOP MAIN: {d['alias']} → API mode")
@@ -681,6 +703,8 @@ def main():
                         )
                         log.info(f"  Switched {len(api_switched_profiles)} profiles to API")
                         contraction_level = 5
+                        last_action_time = time.time()
+                        stability_counter = 0
 
             # ─── EXPANSION ──────────────────────────────────────────────
             elif target_level < contraction_level:
@@ -693,15 +717,15 @@ def main():
                 RESTORE_MAIN = 5.0       # Restart main when > 5GB free
 
                 restore_level = contraction_level
-                if contraction_level >= 5 and min_free_gb >= RESTORE_MAIN:
+                if contraction_level >= 5 and non_turbofit_used < 10:
                     restore_level = 4
-                elif contraction_level >= 4 and min_free_gb >= RESTORE_AUX:
+                elif contraction_level >= 4 and non_turbofit_used < 8:
                     restore_level = 3
-                elif contraction_level >= 3 and min_free_gb >= RESTORE_SWAP:
+                elif contraction_level >= 3 and non_turbofit_used < 5:
                     restore_level = 2
-                elif contraction_level >= 2 and min_free_gb >= RESTORE_EXPERTS:
+                elif contraction_level >= 2 and non_turbofit_used < 3:
                     restore_level = 1
-                elif contraction_level >= 1 and min_free_gb >= RESTORE_CTX:
+                elif contraction_level >= 1 and non_turbofit_used < 2:
                     restore_level = 0
 
                 if restore_level < contraction_level:
@@ -714,6 +738,7 @@ def main():
                             start_alias = swapped_to_alias or local_model
                             log.info(f"  ▲ START MAIN: {start_alias}")
                             daemon_action("start", start_alias)
+                            last_action_time = time.time()
                             time.sleep(10)
                             restore_all_profiles_to_local(local_model, local_url, local_provider)
                             api_switched_profiles = []
@@ -738,6 +763,7 @@ def main():
                                         log.info(f"  ▲ START AUX: {d['alias']} "
                                                  f"(GPU {target_gpu_id} free {gpu_free:.1f}GB >= {needed:.1f}GB)")
                                         daemon_action("start", d["alias"])
+                                        last_action_time = time.time()
                                         time.sleep(5)
                                     else:
                                         log.debug(f"  SKIP AUX {d['alias']}: GPU {target_gpu_id} "
@@ -748,6 +774,7 @@ def main():
                             daemon_action("stop", swapped_to_alias)
                             time.sleep(3)
                             daemon_action("start", local_model)
+                            last_action_time = time.time()
                             swapped_to_alias = None
 
                         if contraction_level >= 2 and restore_level < 2:
@@ -770,6 +797,26 @@ def main():
                 if not main_running and non_turbofit_used < 20:
                     log.warning(f"Main daemon dead but external usage only {non_turbofit_used:.1f}GB — auto-restart {local_model}")
                     daemon_action("start", local_model)
+                    last_action_time = time.time()
+                    time.sleep(10)
+
+
+            # ─── Endpoint health check ──────────────────────────────
+            # Actually curl the main endpoint. If systemctl says active
+            # but the endpoint returns 404 or times out, restart it.
+            if contraction_level < 5:
+                import urllib.request
+                try:
+                    req = urllib.request.Request(local_url + "models")
+                    urllib.request.urlopen(req, timeout=5)
+                    endpoint_ok = True
+                except Exception:
+                    endpoint_ok = False
+                
+                if not endpoint_ok and non_turbofit_used < 15:
+                    log.warning(f"Main endpoint {local_url} is DOWN but VRAM is free — restarting {local_model}")
+                    daemon_action("restart", local_model)
+                    last_action_time = time.time()
                     time.sleep(10)
 
             # ─── Status every ~2 min ────────────────────────────────────
