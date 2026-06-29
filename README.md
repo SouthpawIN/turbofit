@@ -15,10 +15,11 @@ Turbofit manages the entire lifecycle of LLMs with Hermes Agent: detecting your 
 ## Install
 
 ```bash
-# One-time: add the turbofit repo as a skill source
-hermes skills tap add SouthpawIN/turbofit
+# Direct install from GitHub (SKILL.md at repo root)
+hermes skills install https://github.com/SouthpawIN/turbofit
 
-# Install the skill (all 17 files — SKILL.md, references, scripts)
+# Or use the tap for easier updates
+hermes skills tap add SouthpawIN/turbofit
 hermes skills install turbofit
 ```
 
@@ -293,7 +294,7 @@ Main is protected until Step 5. The ladder never kills a model mid-response.
 
 ### Modest (8-24GB, 5 steps) and Thin (<8GB, 4 steps)
 
-See [`references/scaling-ladder.md`](skills/turbofit/references/scaling-ladder.md) for full details.
+See [`references/scaling-ladder.md`](references/scaling-ladder.md) for full details.
 
 ---
 
@@ -435,26 +436,25 @@ Use `serve daemon migrate` to convert legacy systemd services.
 ```
 turbofit/
 ├── README.md                        # This file
-└── skills/
-    └── turbofit/
-        ├── SKILL.md                 # Full skill documentation
-        ├── distribution.yaml        # Install manifest
-        ├── references/
-        │   ├── model-database.yaml         # Dynamic source of truth (auto-updated)
-        │   ├── model-pricing.json          # Machine-readable live pricing
-        │   ├── research-report.md          # Latest research report
-        │   ├── api-pairing-matrix.md        # Main+aux pairings by price × context
-        │   ├── scaling-ladder.md            # All-tier scaling ladders
-        │   ├── curated-lineup.md            # Model archetypes + pairing rules
-        │   ├── api-model-rankings.md        # Individual model pricing
-        │   ├── api-tier-rankings.md         # Quick-reference tiers
-        │   └── binary-selection.md          # Atomic fork vs stock decision tree
-        └── scripts/
-            ├── serve                        # Main command (2100+ lines)
-            ├── research-models.py           # Daily research (OpenRouter API + Hermes Insights)
-            ├── sync-github.sh               # GitHub sync (turbofit + sovth-config)
-            ├── install.sh                   # Shell function installer
-            └── turbofit.sharco              # Shell shim
+├── SKILL.md                         # Full skill documentation
+├── distribution.yaml                # Install manifest
+├── references/
+│   ├── model-database.yaml          # Dynamic source of truth (auto-updated)
+│   ├── model-pricing.json           # Machine-readable live pricing
+│   ├── research-report.md           # Latest research report
+│   ├── api-pairing-matrix.md        # Main+aux pairings by price × context
+│   ├── scaling-ladder.md            # All-tier scaling ladders
+│   ├── curated-lineup.md            # Model archetypes + pairing rules
+│   ├── api-model-rankings.md        # Individual model pricing
+│   ├── api-tier-rankings.md         # Quick-reference tiers
+│   └── binary-selection.md          # Atomic fork vs stock decision tree
+├── scripts/
+│   ├── serve                        # Main command (2100+ lines)
+│   ├── research-models.py           # Daily research (OpenRouter API + Hermes Insights)
+│   ├── sync-github.sh               # GitHub sync (turbofit + sovth-config)
+│   ├── install.sh                   # Shell function installer
+│   └── turbofit.sharco              # Shell shim
+└── tools/                           # Benchmark/research utilities (not installed)
 ```
 
 ---
