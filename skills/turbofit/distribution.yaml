@@ -36,11 +36,18 @@ env_requires:
 # Files owned by this distribution — overwritten on update
 distribution_owned:
   - SKILL.md
+  - README.md
+  - distribution.yaml
   - scripts/serve
   - scripts/turbofit.sharco
+  - scripts/turbofit-debug2.sharco
   - scripts/install.sh
-  - scripts/research-models.py
-  - scripts/sync-github.sh
+  - scripts/scaling-watcher.py
+  - scripts/status-server.py
+  - scripts/turbofit-gateway.py
+  - scripts/turbofit-resolver.py
+  - scripts/vram-watcher.py
+  - scripts/auto-update.sh
   - references/
 
 # Post-install hook: wire the serve/name shell functions into the user's shell
