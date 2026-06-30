@@ -492,7 +492,7 @@ def main():
 
     local = prefs.get("api_fallback", {}).get("local", {})
     local_model = local.get("main", "darwin-28b-reason")
-    local_url = local.get("base_url", "http://127.0.0.1:11500/v1")
+    local_url = local.get("base_url", "http://127.0.0.1:8091/main/v1")
     local_provider = local.get("provider", "localhost")
 
     log.info("╔══════════════════════════════════════════════════════════╗")
