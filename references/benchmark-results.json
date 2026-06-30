@@ -1,9 +1,83 @@
 {
-  "date": "2026-06-27",
-  "timestamp": "2026-06-27T07:49:40.773006+00:00",
-  "ctx": 65536,
-  "gpu": 0,
-  "gpu_name": "NVIDIA GeForce RTX 3090",
-  "prompt": "Write a Python function that implements merge sort with type hints and docstring...",
-  "results": []
+  "date": "2026-06-30",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "results": [
+    {
+      "name": "darwin-28b-reason",
+      "tier": "s",
+      "role": "main",
+      "ctx": 131072,
+      "tok_s": 32.2,
+      "tokens": 512,
+      "time_s": 15.97,
+      "has_mtp": false,
+      "has_vision": true
+    },
+    {
+      "name": "carnice",
+      "tier": "sf",
+      "role": "aux",
+      "ctx": 262144,
+      "tok_s": 112.9,
+      "tokens": 512,
+      "time_s": 4.53,
+      "has_mtp": false,
+      "has_vision": true
+    },
+    {
+      "name": "carwin-nano-35b",
+      "tier": "sf",
+      "role": "aux",
+      "ctx": 262144,
+      "tok_s": 110.4,
+      "tokens": 512,
+      "time_s": 3.98,
+      "has_mtp": false,
+      "has_vision": false
+    },
+    {
+      "name": "holo-3.1-35a3b",
+      "tier": "sf",
+      "role": "aux",
+      "ctx": 262144,
+      "tok_s": 128.7,
+      "tokens": 512,
+      "time_s": 3.98,
+      "has_mtp": false,
+      "has_vision": true
+    },
+    {
+      "name": "ornith-35b",
+      "tier": "f",
+      "role": "main",
+      "ctx": 262144,
+      "tok_s": 129.8,
+      "tokens": 512,
+      "time_s": 3.94,
+      "has_mtp": false,
+      "has_vision": false
+    },
+    {
+      "name": "darwin-apex-36b",
+      "tier": "s",
+      "role": "main",
+      "ctx": 262144,
+      "tok_s": 120.9,
+      "tokens": 512,
+      "time_s": 4.24,
+      "has_mtp": false,
+      "has_vision": true
+    },
+    {
+      "name": "ornith-9b",
+      "tier": "f",
+      "role": "main",
+      "ctx": 65536,
+      "tok_s": 98.3,
+      "tokens": 512,
+      "time_s": 5.21,
+      "has_mtp": false,
+      "has_vision": false
+    }
+  ]
 }
