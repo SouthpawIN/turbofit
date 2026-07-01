@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# turbofit.sharco — shell shim for serve/name functions
+# Source: <skill-dir>/scripts/turbofit.sharco
+#
+# Resolves the skill directory relative to where THIS file lives,
+# so it works on any Hermes install (standard, profile, Docker, custom HERMES_HOME).
+
+# Resolve at source time — BASH_SOURCE[0] is the path to this file
+# when it's sourced. This is the most reliable method.
+_turbofit_this_file="${BASH_SOURCE[0]:-$0}"
+_turbofit_this_dir=""
+if [ -n "${_turbofit_this_file}" ]; then
+    _turbofit_this_dir="$(cd "$(dirname "${_turbofit_this_file}")" 2>/dev/null && pwd)"
+fi
+
+# If we found serve next to this file, we know the skill dir
+if [ -n "${_turbofit_this_dir}" ] && [ -f "${_turbofit_this_dir}/serve" ]; then
+    TURBOFIT_SKILL_DIR="$(dirname "${_turbofit_this_dir}")"
+elif [ -n "${HERMES_HOME:-}" ] && [ -f "${HERMES_HOME}/skills/turbofit/scripts/serve" ]; then
+    TURBOFIT_SKILL_DIR="${HERMES_HOME}/skills/turbofit"
+elif [ -f "${HOME}/.hermes/skills/turbofit/scripts/serve" ]; then
+    TURBOFIT_SKILL_DIR="${HOME}/.hermes/skills/turbofit"
+else
+    # Walk profiles
+    TURBOFIT_SKILL_DIR=""
+    for _turbofit_profile in "${HOME}/.hermes/profiles/"*; do
+        if [ -f "${_turbofit_profile}/skills/turbofit/scripts/serve" ]; then
+            TURBOFIT_SKILL_DIR="${_turbofit_profile}/skills/turbofit"
+            break
+        fi
+    done
+fi
+
+if [ -z "${TURBOFIT_SKILL_DIR}" ]; then
+    echo "turbofit: could not locate skill directory. Set HERMES_HOME or install with 'hermes skills install turbofit'" >&2
+else
+    serve() {
+        "${TURBOFIT_SKILL_DIR}/scripts/serve" "$@"
+    }
+
+    name() {
+        "${TURBOFIT_SKILL_DIR}/scripts/serve" register "$@"
+    }
+fi
+
+unset _turbofit_this_file _turbofit_this_dir _turbofit_profile

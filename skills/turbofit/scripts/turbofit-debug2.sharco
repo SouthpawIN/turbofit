@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+_turbofit_this_file="${BASH_SOURCE[0]:-$0}"
+echo "DBG1: _turbofit_this_file=${_turbofit_this_file}" >&2
+_turbofit_this_dir=""
+if [ -n "${_turbofit_this_file}" ]; then
+    _turbofit_this_dir="$(cd "$(dirname "${_turbofit_this_file}")" 2>/dev/null && pwd)"
+fi
+echo "DBG2: _turbofit_this_dir=${_turbofit_this_dir}" >&2
+echo "DBG3: serve exists: $([ -f "${_turbofit_this_dir}/serve" ] && echo yes || echo no)" >&2
+
+if [ -n "${_turbofit_this_dir}" ] && [ -f "${_turbofit_this_dir}/serve" ]; then
+    TURBOFIT_SKILL_DIR="$(dirname "${_turbofit_this_dir}")"
+    echo "DBG4: matched BASH_SOURCE, TURBOFIT_SKILL_DIR=${TURBOFIT_SKILL_DIR}" >&2
+elif [ -n "${HERMES_HOME:-}" ] && [ -f "${HERMES_HOME}/skills/turbofit/scripts/serve" ]; then
+    TURBOFIT_SKILL_DIR="${HERMES_HOME}/skills/turbofit"
+    echo "DBG4: matched HERMES_HOME" >&2
+elif [ -f "${HOME}/.hermes/skills/turbofit/scripts/serve" ]; then
+    TURBOFIT_SKILL_DIR="${HOME}/.hermes/skills/turbofit"
+    echo "DBG4: matched ~/.hermes" >&2
+else
+    TURBOFIT_SKILL_DIR=""
+    for _turbofit_profile in "${HOME}/.hermes/profiles/"*; do
+        if [ -f "${_turbofit_profile}/skills/turbofit/scripts/serve" ]; then
+            TURBOFIT_SKILL_DIR="${_turbofit_profile}/skills/turbofit"
+            break
+        fi
+    done
+    echo "DBG4: matched profile walk: ${TURBOFIT_SKILL_DIR}" >&2
+fi
+
+serve() { "${TURBOFIT_SKILL_DIR}/scripts/serve" "$@"; }
+name() { "${TURBOFIT_SKILL_DIR}/scripts/serve" register "$@"; }
