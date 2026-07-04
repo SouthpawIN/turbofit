@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-30T11:08:02.535872+00:00",
+  "generated": "2026-07-04T11:09:30.797892+00:00",
   "source": "openrouter",
   "models": [
     {
@@ -38,7 +38,7 @@
       "slug": "deepseek/deepseek-v4-flash",
       "input_per_m": 0.09,
       "output_per_m": 0.18,
-      "cache_read_per_m": 0.02,
+      "cache_read_per_m": 0.018,
       "cache_write_per_m": 0.0,
       "has_cache_read": true,
       "has_cache_write": false,
@@ -48,7 +48,7 @@
         "text"
       ],
       "is_free": false,
-      "max_completion_tokens": 65536
+      "max_completion_tokens": 16384
     },
     {
       "slug": "deepseek/deepseek-v4-pro",
@@ -86,9 +86,9 @@
     },
     {
       "slug": "moonshotai/kimi-k2.6",
-      "input_per_m": 0.55,
-      "output_per_m": 3.2,
-      "cache_read_per_m": 0.11,
+      "input_per_m": 0.66,
+      "output_per_m": 3.41,
+      "cache_read_per_m": 0.14,
       "cache_write_per_m": 0.0,
       "has_cache_read": true,
       "has_cache_write": false,
@@ -187,8 +187,8 @@
     },
     {
       "slug": "nvidia/nemotron-3-super-120b-a12b",
-      "input_per_m": 0.085,
-      "output_per_m": 0.4,
+      "input_per_m": 0.08,
+      "output_per_m": 0.45,
       "cache_read_per_m": 0.0,
       "cache_write_per_m": 0.0,
       "has_cache_read": false,
@@ -199,7 +199,7 @@
         "text"
       ],
       "is_free": false,
-      "max_completion_tokens": 16384
+      "max_completion_tokens": null
     },
     {
       "slug": "nvidia/nemotron-3-super-120b-a12b:free",
@@ -424,11 +424,11 @@
     },
     {
       "slug": "z-ai/glm-5.1",
-      "input_per_m": 0.975,
-      "output_per_m": 4.3,
-      "cache_read_per_m": 0.0,
+      "input_per_m": 0.966,
+      "output_per_m": 3.036,
+      "cache_read_per_m": 0.1794,
       "cache_write_per_m": 0.0,
-      "has_cache_read": false,
+      "has_cache_read": true,
       "has_cache_write": false,
       "context_length": 202752,
       "has_vision": false,
@@ -436,13 +436,13 @@
         "text"
       ],
       "is_free": false,
-      "max_completion_tokens": null
+      "max_completion_tokens": 128000
     },
     {
       "slug": "z-ai/glm-5.2",
-      "input_per_m": 0.94,
-      "output_per_m": 3.0,
-      "cache_read_per_m": 0.18,
+      "input_per_m": 0.84,
+      "output_per_m": 2.64,
+      "cache_read_per_m": 0.156,
       "cache_write_per_m": 0.0,
       "has_cache_read": true,
       "has_cache_write": false,
@@ -452,18 +452,18 @@
         "text"
       ],
       "is_free": false,
-      "max_completion_tokens": 32768
+      "max_completion_tokens": 128000
     }
   ],
   "usage": {
-    "total_input": 60105269,
-    "total_output": 1867554,
-    "total_cache_read": 391759964,
-    "effective_cache_rate": 0.8669840815126398,
-    "active_days": 7,
-    "avg_sessions_per_day": 25.0,
-    "avg_input_per_session": 343458.68,
-    "avg_output_per_session": 10671.737142857142,
-    "total_est_cost": 148.20520570499997
+    "total_input": 98193591,
+    "total_output": 3819760,
+    "total_cache_read": 508111923,
+    "effective_cache_rate": 0.8380460201455466,
+    "active_days": 14,
+    "avg_sessions_per_day": 64.21428571428571,
+    "avg_input_per_session": 109225.35150166853,
+    "avg_output_per_session": 4248.898776418242,
+    "total_est_cost": 197.68244431929998
   }
 }
