@@ -14,9 +14,6 @@ Turbofit manages the entire lifecycle of LLMs with Hermes Agent: detecting your 
 - **📊 Live benchmark leaderboard** — `serve recommend` now pulls real lm-eval benchmarks (MMLU, GSM8K, GPQA, HumanEval) from GitHub. Rankings are never hardcoded.
 - **🔧 Scaling watcher v2** — gradual 5-level contraction based on absolute per-GPU free VRAM, +4GB expansion hysteresis, multi-profile management. Handles OOM from turbofit's own daemons, not just external apps.
 
-![Scaling ladder — 5-level gradual contraction](assets/scaling-ladder.png)
-
-![Provider integration — Hermes ↔ Turbofit gateway](assets/provider-integration.png)
 
 Previously (v1.0–v1.1): native Windows support, MoA integration with 5 presets, model database auto-updates, NVIDIA NIM free tier, daemon management.
 
