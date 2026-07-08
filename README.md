@@ -29,6 +29,47 @@ Update later with `hermes skills update turbofit`.
 
 ---
 
+## Use as a Hermes Agent Provider
+
+Turbofit is a **native Hermes Agent provider** — no separate API key needed. The gateway serves OpenAI-compatible endpoints at `http://127.0.0.1:8091/main/v1`:
+
+```bash
+# Add turbofit as a custom provider
+hermes config set custom_providers.0.name turbofit
+hermes config set custom_providers.0.base_url http://127.0.0.1:8091/main/v1
+hermes config set custom_providers.0.api_key not-needed
+
+# Set turbofit as the active provider
+hermes config set model.provider custom:turbofit
+
+# Add the aux endpoint for vision, compression, and web extraction
+hermes config set custom_providers.1.name turbofit-aux
+hermes config set custom_providers.1.base_url http://127.0.0.1:8091/aux/v1
+hermes config set custom_providers.1.api_key not-needed
+```
+
+The gateway dynamically routes to whatever model the scaling watcher has active — Darwin (local), Carnice (local aux), or API fallback (Nous Portal, OpenAI, DeepSeek). No manual switching required.
+
+**Endpoints:**
+
+| Path | Backend | Use |
+|------|---------|-----|
+| `/main/v1/chat/completions` | Active main model | Hermes chat |
+| `/aux/v1/chat/completions` | Active aux model | Vision, compression, web extraction |
+| `/status` | JSON | Active models, VRAM, endpoints |
+
+### Remote Access via Tailscale
+
+```bash
+# Check status from your phone
+curl -sk https://senter.tail6ff78b.ts.net/status
+
+# Use turbofit as a remote provider from another machine
+hermes config set custom_providers.0.base_url https://senter.tail6ff78b.ts.net/main/v1
+```
+
+---
+
 ## Quick Start
 
 ```bash
