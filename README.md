@@ -1,14 +1,24 @@
 # turbofit — opinionated unified LLM backend for Hermes Agent
 
+![Turbofit — unified backend, amber and mint aesthetic](assets/turbofit-hero.png)
+
 Turbofit manages the entire lifecycle of LLMs with Hermes Agent: detecting your GPU, picking the best model, launching local servers, wiring API providers, managing daemons (systemd on Linux, PID files on Windows), scaling under VRAM pressure, tracking real-time pricing, integrating Mixture of Agents, and auto-updating a model database every day.
 
 **End-user UX:** `serve auto main` → done. Works on Linux and Windows.
 
-## What's New (v1.1)
+## What's New (v1.5)
 
-- **🪟 Native Windows support** — no Docker, no WSL, no systemd. Auto-detects OS, manages daemons via PID files on Windows. Same `serve` command, both platforms.
-- **🧠 Mixture of Agents (MoA) integration** — 5 presets that pair local + API models for multi-model reasoning. `serve moa recommend` picks the best preset based on live VRAM.
-- **🔧 Scaling watcher fix** — auto-scaling now triggers on absolute per-GPU free VRAM (not just external pressure). Turbofit properly backs off when any process — including its own daemons — causes VRAM pressure. No more OOM crashes.
+- **🔌 First-class Hermes Agent provider** — no more `custom:llama-main` hacks. Turbofit is now a native provider: `hermes config set model.provider custom:turbofit`. The gateway at :8091 routes to Darwin, Carnice, or API fallback automatically.
+- **🌐 Remote access via Tailscale** — use turbofit from your phone or any device. `https://senter.tail6ff78b.ts.net/main/v1` serves the same models wirelessly.
+- **🖥️ Dynamic gateway routing** — `/main/v1` for chat, `/aux/v1` for vision/compression, `/status` for live model info. No manual model switching.
+- **📊 Live benchmark leaderboard** — `serve recommend` now pulls real lm-eval benchmarks (MMLU, GSM8K, GPQA, HumanEval) from GitHub. Rankings are never hardcoded.
+- **🔧 Scaling watcher v2** — gradual 5-level contraction based on absolute per-GPU free VRAM, +4GB expansion hysteresis, multi-profile management. Handles OOM from turbofit's own daemons, not just external apps.
+
+![Scaling ladder — 5-level gradual contraction](assets/scaling-ladder.png)
+
+![Provider integration — Hermes ↔ Turbofit gateway](assets/provider-integration.png)
+
+Previously (v1.0–v1.1): native Windows support, MoA integration with 5 presets, model database auto-updates, NVIDIA NIM free tier, daemon management.
 
 ---
 

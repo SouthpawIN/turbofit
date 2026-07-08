@@ -1,7 +1,7 @@
 ---
 name: turbofit
 description: "Opinionated unified LLM backend (turbofit v1.1). Picks the best main + aux model for your hardware — local or API — launches them detached, wires Hermes-Agent config, and adapts to live VRAM pressure via a scaling ladder. Three hardware tiers: Beefy (local+local), Modest (API+local), Thin (API+API). `serve auto main` auto-detects GPU and suggests the right setup. API fallback is always available (free: DeepSeek V4 Pro + Kimi K2.6). Replaces llama-launch, omni-va, and ad-hoc llama-server scripts. Catalog schema supports per-model binary pinning (atomic fork vs stock), named flag presets (nextn, draft-mtp, turbo4-kv, vision-mmproj), tier ladder (s/sf/sd/f/c), and the 64K Hermes context floor is enforced everywhere. End-user UX is `serve auto main` and the user is done."
-version: 1.1.0
+version: 1.5.0
 author: SouthpawIN + Nous Girl
 license: MIT
 tags: [llama.cpp, ollama, vllm, sglang, llmfit, gguf, hermes-agent, nvidia-nim, catalog, scaling-ladder, opinionated, unified-backend]
