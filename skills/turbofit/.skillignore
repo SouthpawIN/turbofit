@@ -1,0 +1,14 @@
+# turbofit skill — .skillignore
+# Exclude development/testing daemon scripts that aren't distributed.
+# These trigger scanner findings (subprocess, systemctl, network binds)
+# but are not part of the installed skill.
+
+scripts/scaling-watcher.py
+scripts/status-server.py
+scripts/turbofit-gateway.py
+scripts/turbofit-resolver.py
+scripts/vram-watcher.py
+scripts/turbofit-debug2.sharco
+scripts/auto-update.sh
+scripts/.gitignore
+scripts/sync-github.sh
