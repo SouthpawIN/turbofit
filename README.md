@@ -21,18 +21,13 @@ Previously (v1.0–v1.1): native Windows support, MoA integration with 5 presets
 
 ## Install
 
-> **Note:** The Hermes security scanner classifies turbofit as "dangerous" because it legitimately manages system services (subprocess, systemd, bashrc). Community-source skills with any findings are blocked by default. Use the manual install path below.
-
 ```bash
-# Manual install (bypasses the security scanner — turbofit needs to launch servers)
-git clone https://github.com/SouthpawIN/turbofit /tmp/turbofit-install
-cp -r /tmp/turbofit-install/skills/turbofit ~/.hermes/skills/turbofit
-rm -rf /tmp/turbofit-install
+# Add the tap, then install
+hermes skills tap add SouthpawIN/turbofit
+hermes skills install SouthpawIN/turbofit/skills/turbofit
 ```
 
 After install, `source ~/.bashrc` (or open a new shell) to get the `serve` and `name` commands.
-
-To update: `git -C ~/.hermes/skills/turbofit pull`.
 
 ---
 
