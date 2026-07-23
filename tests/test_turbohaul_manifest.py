@@ -6,10 +6,32 @@ from pathlib import Path
 import pytest
 
 from turbofit_runtime.turbohaul import (
+    ChecksumCache,
     ComponentSpec,
     TurbohaulCompiler,
     UnsupportedTurbohaulMethod,
 )
+
+
+def test_checksum_cache_reuses_unchanged_file_and_invalidates_on_change(tmp_path: Path) -> None:
+    target = tmp_path / "model.gguf"
+    target.write_bytes(b"first")
+    calls = []
+
+    def hash_fn(path: Path) -> str:
+        calls.append(path.read_bytes())
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    cache = ChecksumCache(tmp_path / "checksums.json", hash_fn=hash_fn)
+
+    first = cache(target)
+    second = cache(target)
+    target.write_bytes(b"second")
+    third = cache(target)
+
+    assert first == second
+    assert third != first
+    assert calls == [b"first", b"second"]
 
 
 def test_compile_mtp_component_to_content_addressed_manifest(tmp_path: Path) -> None:

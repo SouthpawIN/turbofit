@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+"""Run and inspect the resumable Turbofit Main:Aux campaign."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.backend import CampaignBackend
+from turbofit_runtime.campaign import CampaignRunner
+from turbofit_runtime.evidence import EvidencePublisher
+from turbofit_runtime.executor import LocalPairExecutor
+from turbofit_runtime.gpu import GPUClearGate
+from turbofit_runtime.recipes import RecipeBook
+from turbofit_runtime.registry import ProfileRegistry
+from turbofit_runtime.schema import load_matrix
+from turbofit_runtime.turbohaul import ChecksumCache, TurbohaulCompiler
+
+MATRIX = ROOT / "references/main-aux-matrix.json"
+RECIPES = ROOT / "references/model-recipes.json"
+STATE = ROOT / "references/campaign-state.json"
+RESULTS = ROOT / "references/results/campaign"
+PROFILES = ROOT / "references/successful-runtime-profiles.json"
+CHECKSUMS = ROOT / "references/model-checksums.json"
+TURBOHAUL = ROOT / "references/turbohaul"
+WIKI = Path(os.environ.get(
+    "TURBOFIT_MATRIX_WIKI",
+    "/home/sovthpaw/.hermes/wiki/topics/turbofit/main-aux-inference-checklist.md",
+))
+EVIDENCE = WIKI.parent / "evidence"
+
+
+def build_runner() -> CampaignRunner:
+    recipes = RecipeBook.load(RECIPES)
+    backend = CampaignBackend(
+        gateway_script=ROOT / "scripts/turbofit-gateway.py",
+        result_dir=RESULTS,
+        runtime_state=Path.home() / ".config/turbofit/campaign-runtime-state.json",
+    )
+    executor = LocalPairExecutor(recipes=recipes, backend=backend, result_dir=RESULTS)
+    publisher = EvidencePublisher(matrix_path=MATRIX, checklist_path=WIKI, evidence_dir=EVIDENCE)
+    compiler = TurbohaulCompiler(hash_fn=ChecksumCache(CHECKSUMS))
+    registry = ProfileRegistry(
+        recipes=recipes, profiles_path=PROFILES,
+        turbohaul_dir=TURBOHAUL, compiler=compiler,
+    )
+    return CampaignRunner(
+        matrix_path=MATRIX, state_path=STATE,
+        executor=executor, clear_gate=GPUClearGate(),
+        publisher=publisher, registry=registry,
+    )
+
+
+def status() -> int:
+    matrix = load_matrix(MATRIX)
+    try:
+        campaign = json.loads(STATE.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        campaign = {"rows": {}}
+    counts = {name: sum(row.status == name for row in matrix.rows) for name in ("success", "pending", "blocked")}
+    attempts = campaign.get("rows") or {}
+    payload = {
+        "matrix": {"total": len(matrix.rows), **counts},
+        "campaign": {
+            "attempted": len(attempts),
+            "successful": sum(item.get("status") == "success" for item in attempts.values()),
+            "failed": sum(item.get("status") == "failed" for item in attempts.values()),
+        },
+        "profiles": len((json.loads(PROFILES.read_text()).get("profiles") or {})) if PROFILES.exists() else 0,
+    }
+    print(json.dumps(payload, indent=2))
+    return 0
+
+
+def dry_run(limit: int | None) -> int:
+    pending = build_runner().pending_rows()
+    if limit is not None:
+        pending = pending[:limit]
+    print(json.dumps([row.to_dict() for row in pending], indent=2))
+    return 0
+
+
+def run_campaign(limit: int) -> int:
+    runner = build_runner()
+    outcomes = []
+    for _ in range(limit):
+        outcome = runner.run_one()
+        outcomes.append({"row_id": outcome.row_id, "status": outcome.status, "error": outcome.error})
+        print(json.dumps(outcomes[-1]), flush=True)
+        if outcome.status == "complete":
+            break
+    failed = sum(item["status"] == "failed" for item in outcomes)
+    print(json.dumps({"runs": len(outcomes), "failed": failed, "state": str(STATE)}, indent=2))
+    return 1 if failed else 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status")
+    dry = sub.add_parser("dry-run")
+    dry.add_argument("--limit", type=int)
+    one = sub.add_parser("run-one")
+    run = sub.add_parser("run")
+    run.add_argument("--limit", type=int, default=100)
+    args = parser.parse_args()
+    if args.command == "status": return status()
+    if args.command == "dry-run": return dry_run(args.limit)
+    if args.command == "run-one": return run_campaign(1)
+    return run_campaign(args.limit)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

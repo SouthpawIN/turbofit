@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -43,8 +44,40 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+class ChecksumCache:
+    """Cache expensive model hashes by resolved path, size, and mtime."""
+
+    def __init__(self, path: Path, *, hash_fn=sha256_file) -> None:
+        self.path = path
+        self.hash_fn = hash_fn
+
+    def __call__(self, target: Path) -> str:
+        target = target.resolve()
+        stat = target.stat()
+        try:
+            payload = json.loads(self.path.read_text())
+        except (FileNotFoundError, json.JSONDecodeError):
+            payload = {"schema_version": 1, "files": {}}
+        key = str(target)
+        cached = (payload.get("files") or {}).get(key) or {}
+        if cached.get("size") == stat.st_size and cached.get("mtime_ns") == stat.st_mtime_ns:
+            return str(cached["sha256"])
+        digest = self.hash_fn(target)
+        payload.setdefault("files", {})[key] = {
+            "size": stat.st_size,
+            "mtime_ns": stat.st_mtime_ns,
+            "sha256": digest,
+        }
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(json.dumps(payload, indent=2) + "\n")
+        return digest
+
+
 class TurbohaulCompiler:
     SUPPORTED_METHODS = frozenset({"baseline", "mtp"})
+
+    def __init__(self, hash_fn=sha256_file) -> None:
+        self.hash_fn = hash_fn
 
     def compile_component(self, component: ComponentSpec) -> CompiledComponent:
         if component.method not in self.SUPPORTED_METHODS:
@@ -85,8 +118,8 @@ class TurbohaulCompiler:
                 f"Turbofit measured {component.role} runtime; "
                 f"context={component.context}; method={component.method}"
             ),
-            "gguf_blob_sha256": sha256_file(component.model_path),
-            "mmproj_blob_sha256": sha256_file(component.projector_path) if component.projector_path else "",
+            "gguf_blob_sha256": self.hash_fn(component.model_path),
+            "mmproj_blob_sha256": self.hash_fn(component.projector_path) if component.projector_path else "",
             "gguf_size_bytes": component.model_path.stat().st_size,
             "context_size": component.context,
             "expected_vram_bytes": component.expected_vram_mb * 1024 * 1024,
