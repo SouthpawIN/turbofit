@@ -1,0 +1,905 @@
+{
+  "schema_version": 1,
+  "rows": [
+    {
+      "id": "glm-5-2-carwin-nano-1m",
+      "main": "GLM 5.2",
+      "aux": "Carwin Nano",
+      "context": 1048576,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "glm-5-2-carwin-nano-262k",
+      "main": "GLM 5.2",
+      "aux": "Carwin Nano",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "glm-5-2-carwin-nano-128k",
+      "main": "GLM 5.2",
+      "aux": "Carwin Nano",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "glm-5-2-carwin-nano-64k",
+      "main": "GLM 5.2",
+      "aux": "Carwin Nano",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "glm-5-2-ternary-bonsai-262k",
+      "main": "GLM 5.2",
+      "aux": "Ternary Bonsai",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "glm-5-2-ternary-bonsai-128k",
+      "main": "GLM 5.2",
+      "aux": "Ternary Bonsai",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "glm-5-2-ternary-bonsai-64k",
+      "main": "GLM 5.2",
+      "aux": "Ternary Bonsai",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "glm-5-2-1-bit-bonsai-262k",
+      "main": "GLM 5.2",
+      "aux": "1 Bit Bonsai",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "glm-5-2-1-bit-bonsai-128k",
+      "main": "GLM 5.2",
+      "aux": "1 Bit Bonsai",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "glm-5-2-1-bit-bonsai-64k",
+      "main": "GLM 5.2",
+      "aux": "1 Bit Bonsai",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "glm-5-2-auto-1m",
+      "main": "GLM 5.2",
+      "aux": "auto",
+      "context": 1048576,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "glm-5-2-auto-262k",
+      "main": "GLM 5.2",
+      "aux": "auto",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "glm-5-2-auto-128k",
+      "main": "GLM 5.2",
+      "aux": "auto",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "glm-5-2-auto-64k",
+      "main": "GLM 5.2",
+      "aux": "auto",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-carwin-nano-1m",
+      "main": "MiniMax M3",
+      "aux": "Carwin Nano",
+      "context": 1048576,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-carwin-nano-262k",
+      "main": "MiniMax M3",
+      "aux": "Carwin Nano",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-carwin-nano-128k",
+      "main": "MiniMax M3",
+      "aux": "Carwin Nano",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-carwin-nano-64k",
+      "main": "MiniMax M3",
+      "aux": "Carwin Nano",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-ternary-bonsai-262k",
+      "main": "MiniMax M3",
+      "aux": "Ternary Bonsai",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-ternary-bonsai-128k",
+      "main": "MiniMax M3",
+      "aux": "Ternary Bonsai",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-ternary-bonsai-64k",
+      "main": "MiniMax M3",
+      "aux": "Ternary Bonsai",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-1-bit-bonsai-262k",
+      "main": "MiniMax M3",
+      "aux": "1 Bit Bonsai",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-1-bit-bonsai-128k",
+      "main": "MiniMax M3",
+      "aux": "1 Bit Bonsai",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-1-bit-bonsai-64k",
+      "main": "MiniMax M3",
+      "aux": "1 Bit Bonsai",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-auto-1m",
+      "main": "MiniMax M3",
+      "aux": "auto",
+      "context": 1048576,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-auto-262k",
+      "main": "MiniMax M3",
+      "aux": "auto",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-auto-128k",
+      "main": "MiniMax M3",
+      "aux": "auto",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "minimax-m3-auto-64k",
+      "main": "MiniMax M3",
+      "aux": "auto",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-carwin-nano-1m",
+      "main": "Laguna S2.1",
+      "aux": "Carwin Nano",
+      "context": 1048576,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-carwin-nano-262k",
+      "main": "Laguna S2.1",
+      "aux": "Carwin Nano",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-carwin-nano-128k",
+      "main": "Laguna S2.1",
+      "aux": "Carwin Nano",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-carwin-nano-64k",
+      "main": "Laguna S2.1",
+      "aux": "Carwin Nano",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-ternary-bonsai-262k",
+      "main": "Laguna S2.1",
+      "aux": "Ternary Bonsai",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-ternary-bonsai-128k",
+      "main": "Laguna S2.1",
+      "aux": "Ternary Bonsai",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-ternary-bonsai-64k",
+      "main": "Laguna S2.1",
+      "aux": "Ternary Bonsai",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-1-bit-bonsai-262k",
+      "main": "Laguna S2.1",
+      "aux": "1 Bit Bonsai",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-1-bit-bonsai-128k",
+      "main": "Laguna S2.1",
+      "aux": "1 Bit Bonsai",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-1-bit-bonsai-64k",
+      "main": "Laguna S2.1",
+      "aux": "1 Bit Bonsai",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-auto-1m",
+      "main": "Laguna S2.1",
+      "aux": "auto",
+      "context": 1048576,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-auto-262k",
+      "main": "Laguna S2.1",
+      "aux": "auto",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-auto-128k",
+      "main": "Laguna S2.1",
+      "aux": "auto",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "laguna-s2-1-auto-64k",
+      "main": "Laguna S2.1",
+      "aux": "auto",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-carwin-nano-1m",
+      "main": "GRM 2.6 Plus",
+      "aux": "Carwin Nano",
+      "context": 1048576,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-carwin-nano-262k",
+      "main": "GRM 2.6 Plus",
+      "aux": "Carwin Nano",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-carwin-nano-128k",
+      "main": "GRM 2.6 Plus",
+      "aux": "Carwin Nano",
+      "context": 131072,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-carwin-nano-64k",
+      "main": "GRM 2.6 Plus",
+      "aux": "Carwin Nano",
+      "context": 65536,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-ternary-bonsai-262k",
+      "main": "GRM 2.6 Plus",
+      "aux": "Ternary Bonsai",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-ternary-bonsai-128k",
+      "main": "GRM 2.6 Plus",
+      "aux": "Ternary Bonsai",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-ternary-bonsai-64k",
+      "main": "GRM 2.6 Plus",
+      "aux": "Ternary Bonsai",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-1-bit-bonsai-262k",
+      "main": "GRM 2.6 Plus",
+      "aux": "1 Bit Bonsai",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-1-bit-bonsai-128k",
+      "main": "GRM 2.6 Plus",
+      "aux": "1 Bit Bonsai",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-1-bit-bonsai-64k",
+      "main": "GRM 2.6 Plus",
+      "aux": "1 Bit Bonsai",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-auto-1m",
+      "main": "GRM 2.6 Plus",
+      "aux": "auto",
+      "context": 1048576,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-auto-262k",
+      "main": "GRM 2.6 Plus",
+      "aux": "auto",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-auto-128k",
+      "main": "GRM 2.6 Plus",
+      "aux": "auto",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "grm-2-6-plus-auto-64k",
+      "main": "GRM 2.6 Plus",
+      "aux": "auto",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "carwin-nano-ternary-bonsai-262k",
+      "main": "Carwin Nano",
+      "aux": "Ternary Bonsai",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "carwin-nano-ternary-bonsai-128k",
+      "main": "Carwin Nano",
+      "aux": "Ternary Bonsai",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "carwin-nano-ternary-bonsai-64k",
+      "main": "Carwin Nano",
+      "aux": "Ternary Bonsai",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "carwin-nano-1-bit-bonsai-262k",
+      "main": "Carwin Nano",
+      "aux": "1 Bit Bonsai",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "carwin-nano-1-bit-bonsai-128k",
+      "main": "Carwin Nano",
+      "aux": "1 Bit Bonsai",
+      "context": 131072,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "carwin-nano-1-bit-bonsai-64k",
+      "main": "Carwin Nano",
+      "aux": "1 Bit Bonsai",
+      "context": 65536,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "carwin-nano-auto-1m",
+      "main": "Carwin Nano",
+      "aux": "auto",
+      "context": 1048576,
+      "status": "pending",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "carwin-nano-auto-262k",
+      "main": "Carwin Nano",
+      "aux": "auto",
+      "context": 262144,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "carwin-nano-auto-128k",
+      "main": "Carwin Nano",
+      "aux": "auto",
+      "context": 131072,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "carwin-nano-auto-64k",
+      "main": "Carwin Nano",
+      "aux": "auto",
+      "context": 65536,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "ternary-bonsai-1-bit-bonsai-262k",
+      "main": "Ternary Bonsai",
+      "aux": "1 Bit Bonsai",
+      "context": 262144,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "ternary-bonsai-1-bit-bonsai-128k",
+      "main": "Ternary Bonsai",
+      "aux": "1 Bit Bonsai",
+      "context": 131072,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "ternary-bonsai-1-bit-bonsai-64k",
+      "main": "Ternary Bonsai",
+      "aux": "1 Bit Bonsai",
+      "context": 65536,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "ternary-bonsai-auto-262k",
+      "main": "Ternary Bonsai",
+      "aux": "auto",
+      "context": 262144,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "ternary-bonsai-auto-128k",
+      "main": "Ternary Bonsai",
+      "aux": "auto",
+      "context": 131072,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "ternary-bonsai-auto-64k",
+      "main": "Ternary Bonsai",
+      "aux": "auto",
+      "context": 65536,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "1-bit-bonsai-auto-262k",
+      "main": "1 Bit Bonsai",
+      "aux": "auto",
+      "context": 262144,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "1-bit-bonsai-auto-128k",
+      "main": "1 Bit Bonsai",
+      "aux": "auto",
+      "context": 131072,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "1-bit-bonsai-auto-64k",
+      "main": "1 Bit Bonsai",
+      "aux": "auto",
+      "context": 65536,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    }
+  ]
+}

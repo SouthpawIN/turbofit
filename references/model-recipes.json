@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "atomic_binary": "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+  "models": {
+    "1 Bit Bonsai": {
+      "alias": "1-bit-bonsai",
+      "kind": "docker",
+      "image": "turbofit-prism-bonsai:local",
+      "model_root": "/home/sovthpaw/Models/storage/gguf/Bonsai-27B",
+      "model": "Bonsai-27B-Q1_0.gguf",
+      "draft": "Bonsai-27B-dspark-Q4_1.gguf",
+      "projector": "Bonsai-27B-mmproj-Q8_0.gguf",
+      "port": 11610,
+      "large": false,
+      "methods": {"65536": "dspark", "131072": "dspark", "262144": "baseline"}
+    },
+    "Ternary Bonsai": {
+      "alias": "ternary-bonsai",
+      "kind": "docker",
+      "image": "turbofit-prism-bonsai:local",
+      "model_root": "/home/sovthpaw/Models/storage/gguf/Ternary-Bonsai-27B",
+      "model": "Ternary-Bonsai-27B-Q2_0.gguf",
+      "draft": "Ternary-Bonsai-27B-dspark-Q4_1.gguf",
+      "projector": "Ternary-Bonsai-27B-mmproj-BF16.gguf",
+      "port": 11606,
+      "large": false,
+      "methods": {"65536": "dspark", "131072": "dspark", "262144": "baseline"}
+    },
+    "Carwin Nano": {
+      "alias": "carwin-nano",
+      "kind": "process",
+      "model": "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+      "port": 11607,
+      "large": false,
+      "methods": {"65536": "mtp", "131072": "mtp", "262144": "mtp", "1048576": "mtp"}
+    },
+    "GRM 2.6 Plus": {
+      "alias": "grm-2-6-plus",
+      "kind": "process",
+      "model": "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf",
+      "projector": "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf",
+      "port": 11605,
+      "large": false,
+      "methods": {"65536": "mtp", "131072": "mtp", "262144": "mtp", "1048576": "mtp"}
+    },
+    "Laguna S2.1": {
+      "alias": "laguna-s2-1",
+      "kind": "process",
+      "model": "/home/sovthpaw/Models/storage/gguf/Laguna-S-2.1/laguna-s-2.1-Q4_K_M.gguf",
+      "port": 11603,
+      "large": true,
+      "methods": {"65536": "baseline", "131072": "baseline", "262144": "baseline", "1048576": "baseline"}
+    },
+    "MiniMax M3": {
+      "alias": "minimax-m3",
+      "kind": "process",
+      "model": "/home/sovthpaw/Models/storage/gguf/MiniMax-M3/MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00001-of-00007.gguf",
+      "port": 11601,
+      "large": true,
+      "methods": {"65536": "baseline", "131072": "baseline", "262144": "baseline", "1048576": "baseline"}
+    },
+    "GLM 5.2": {
+      "alias": "glm-5-2",
+      "kind": "process",
+      "model": "/home/sovthpaw/Models/storage/gguf/GLM-5.2-2.788bpw/GLM-5.2-GGUF-2.788bpw-muzzy-imatrix.gguf",
+      "port": 11600,
+      "large": true,
+      "methods": {"65536": "baseline", "131072": "baseline", "262144": "baseline", "1048576": "baseline"}
+    }
+  }
+}
