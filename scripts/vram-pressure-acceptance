@@ -8,6 +8,8 @@ import os
 import time
 from pathlib import Path
 
+MAX_PRESSURE_MB = 4096
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -15,8 +17,8 @@ def main() -> int:
     parser.add_argument("--mb", type=int, default=512)
     parser.add_argument("--ready", type=Path, required=True)
     args = parser.parse_args()
-    if args.device < 0 or not 1 <= args.mb <= 2048:
-        raise SystemExit("device must be non-negative and mb must be in [1, 2048]")
+    if args.device < 0 or not 1 <= args.mb <= MAX_PRESSURE_MB:
+        raise SystemExit(f"device must be non-negative and mb must be in [1, {MAX_PRESSURE_MB}]")
 
     import torch
 

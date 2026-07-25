@@ -214,14 +214,17 @@ The latest local real preflight record is stored at:
 references/results/adaptive-runtime-acceptance.json
 ```
 
-## Current host blocker
+## Latest real acceptance and host state
 
-At the latest controlled attempt, simulated contraction/recovery, Turbohaul Manager v0.7 `/status`, and all three live stable gateway routes passed. The real pressure gate correctly stopped before GPU allocation because:
+The latest controlled real gate passed using a non-disruptive compatibility userspace matching the loaded NVIDIA module:
 
-- NVIDIA userspace library `580.173` did not match loaded kernel module `580.159.03`.
-- The controller unit is installed but intentionally remains inactive until NVML is healthy.
+- **3,072 MiB** of acceptance-owned pressure was allocated on GPU 1.
+- Turbofit contracted from the selected local 48 GB ceiling to the terminal API rung.
+- The external pressure process survived contraction and no external process was signaled.
+- Turbofit healed back to the selected local ceiling after pressure was released.
+- Turbohaul Manager v0.7, the controller, and all three stable gateway routes passed.
 
-No external process was signaled or modified, and no GPU allocation was attempted. Once NVML is healthy, the controlled gate allocates only its own bounded CUDA buffer, verifies that buffer survives contraction, terminates only that acceptance-owned process, and then verifies healing to the selected ceiling.
+The host still has a system-wide NVIDIA userspace/module mismatch (`580.173` userspace versus loaded `580.159.03` module), so plain `nvidia-smi` remains unavailable until the driver state is reconciled. The real acceptance record is valid because it explicitly used matching `580.159.03` NVML userspace without replacing the loaded module or interrupting external workloads.
 
 ## Repository map
 

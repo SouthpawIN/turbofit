@@ -17,6 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 STATE_HOME = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state"))
 DEFAULT_ROUTE_STATE = STATE_HOME / "turbofit" / "runtime-state.json"
 DEFAULT_RESULT = ROOT / "references/results/controlled-pressure-acceptance.json"
+MAX_PRESSURE_MB = 4096
+DEFAULT_PRESSURE_MB = 3072
 
 
 def read_state(path: Path) -> dict:
@@ -57,16 +59,20 @@ def write_report(path: Path, report: dict) -> None:
     os.replace(temporary, path)
 
 
-def main() -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--route-state", type=Path, default=DEFAULT_ROUTE_STATE)
     parser.add_argument("--output", type=Path, default=DEFAULT_RESULT)
-    parser.add_argument("--pressure-mb", type=int, default=3072)
+    parser.add_argument("--pressure-mb", type=int, default=DEFAULT_PRESSURE_MB)
     parser.add_argument("--pressure-device", type=int, default=1)
     parser.add_argument("--heal-timeout", type=float, default=900)
-    args = parser.parse_args()
-    if not 128 <= args.pressure_mb <= 4096:
-        raise SystemExit("pressure-mb must be in [128, 4096]")
+    return parser
+
+
+def main() -> int:
+    args = build_parser().parse_args()
+    if not 128 <= args.pressure_mb <= MAX_PRESSURE_MB:
+        raise SystemExit(f"pressure-mb must be in [128, {MAX_PRESSURE_MB}]")
     if args.pressure_device not in {0, 1}:
         raise SystemExit("pressure-device must be 0 or 1")
 
