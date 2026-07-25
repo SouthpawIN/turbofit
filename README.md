@@ -54,7 +54,12 @@ The gateway is one OpenAI-compatible provider. `auto` selects the tested hardwar
 custom_providers:
   - name: turbofit
     base_url: http://127.0.0.1:8091/v1
+    api_key: not-needed
     api_mode: chat_completions
+    models:
+      auto: {}
+      active:main: {}
+      active:aux: {}
 
 model:
   provider: custom:turbofit
