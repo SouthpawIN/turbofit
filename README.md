@@ -31,7 +31,7 @@ Legacy `serve`, direct launcher, PID-file, and scaling-watcher paths are compati
 ```bash
 # Add the tap, then install
 hermes skills tap add SouthpawIN/turbofit
-hermes skills install SouthpawIN/turbofit/skills/turbofit
+hermes skills install turbofit
 ```
 
 For development, work from the Git repository rather than the installed skill directory.
