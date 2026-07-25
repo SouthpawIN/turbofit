@@ -1,0 +1,8 @@
+{
+  "aux_mode": "dedicated",
+  "context": 131072,
+  "method": "dspark+mtp",
+  "model_alias": "ternary-bonsai",
+  "role": "auxiliary",
+  "schema": "turbofit.manifest-ref/v1"
+}

@@ -60,6 +60,7 @@ class RecipeBook:
         except KeyError as exc:
             raise ValueError(f"unknown model family: {family}") from exc
         method = self._context_method(spec, context)
+        context_override = (spec.get("context_overrides") or {}).get(str(context)) or {}
         kind = str(spec["kind"])
         alias = str(spec["alias"])
         port = int(spec["port"])
@@ -82,9 +83,22 @@ class RecipeBook:
                     "DRAFT_NGL": "99",
                     "SPEC_DRAFT_N_MAX": "4",
                 })
+            command: list[str] = []
+            if context_override.get("split_mode"):
+                command.extend(["--split-mode", str(context_override["split_mode"])])
+            if context_override.get("tensor_split"):
+                command.extend(["--tensor-split", str(context_override["tensor_split"])])
+            scaling = spec.get("context_scaling") or {}
+            native_context = int(spec.get("native_context", context))
+            if context > native_context and scaling:
+                command.extend([
+                    "--rope-scaling", str(scaling["method"]),
+                    "--rope-scale", str(scaling["scale"]),
+                    "--yarn-orig-ctx", str(scaling["original_context"]),
+                ])
             return ResolvedComponent(
                 role=role, family=family, alias=alias, kind=kind, method=method,
-                gpu=gpu, port=port, command=(), image=str(spec["image"]),
+                gpu=gpu, port=port, command=tuple(command), image=str(spec["image"]),
                 environment=environment, mounts=(f"{root}:/models:ro",),
                 model_path=str(root / model),
                 projector_path=str(root / projector) if projector else "",
@@ -93,12 +107,31 @@ class RecipeBook:
             raise ValueError(f"unsupported recipe kind: {kind}")
         model = str(spec["model"])
         projector = str(spec.get("projector", ""))
+        fit = str(context_override.get("fit", "on"))
         command = [
             self.atomic_binary, "-m", model,
             "--host", "127.0.0.1", "--port", str(port),
-            "-c", str(context), "-ngl", "99", "--fit", "on", "-fa", "on",
+            "-c", str(context), "-ngl", str(context_override.get("gpu_layers", 99)), "--fit", fit, "-fa", "on",
             "--cache-type-k", "q4_0", "--cache-type-v", "q4_0", "--parallel", "1",
         ]
+        if context_override.get("split_mode"):
+            command.extend(["--split-mode", str(context_override["split_mode"])])
+        if context_override.get("tensor_split"):
+            command.extend(["--tensor-split", str(context_override["tensor_split"])])
+        if context_override.get("main_gpu") is not None:
+            command.extend(["--main-gpu", str(context_override["main_gpu"])])
+        if context_override.get("kv_offload") is False:
+            command.append("--no-kv-offload")
+        if context_override.get("n_cpu_moe") is not None:
+            command.extend(["--n-cpu-moe", str(context_override["n_cpu_moe"])])
+        scaling = spec.get("context_scaling") or {}
+        native_context = int(spec.get("native_context", context))
+        if context > native_context and scaling:
+            command.extend([
+                "--rope-scaling", str(scaling["method"]),
+                "--rope-scale", str(scaling["scale"]),
+                "--yarn-orig-ctx", str(scaling["original_context"]),
+            ])
         if method == "mtp":
             command.extend(["--spec-type", "draft-mtp"])
         if projector:
@@ -114,8 +147,10 @@ class RecipeBook:
         if not main_spec:
             raise ValueError(f"no recipe for main family: {row.main}")
         main_large = bool(main_spec.get("large", False))
+        main_override = (main_spec.get("context_overrides") or {}).get(str(row.context)) or {}
+        override_gpu = str(main_override.get("gpu", ""))
         if row.aux == "auto":
-            main_gpu = "0,1" if main_large else "0"
+            main_gpu = override_gpu or ("0,1" if main_large else "0")
             main = self._component(row.main, "main", row.context, main_gpu)
             return ResolvedRecipe(
                 row_id=row.id,
@@ -126,7 +161,7 @@ class RecipeBook:
                 components=(main,),
             )
         aux = self._component(row.aux, "aux", row.context, "0")
-        main = self._component(row.main, "main", row.context, "0,1" if main_large else "1")
+        main = self._component(row.main, "main", row.context, override_gpu or ("0,1" if main_large else "1"))
         return ResolvedRecipe(
             row_id=row.id,
             profile_name=row.id,

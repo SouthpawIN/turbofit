@@ -1,60 +1,46 @@
-# distribution.yaml — turbofit skill distribution manifest
-# Install with: hermes skills tap add SouthpawIN/turbofit && hermes skills install turbofit
+# Turbofit Hermes skill distribution
 name: turbofit
-version: "1.5.0"
+version: "2.0.0"
 description: >-
-  Opinionated unified LLM backend (turbofit v5.2). Picks the best main + aux
-  model for your hardware — local or API — launches them detached, wires
-  Hermes-Agent config, and adapts to live VRAM pressure via a scaling ladder.
-  Three hardware tiers: Beefy (local+local), Modest (API+local), Thin (API+API).
-  `serve auto main` auto-detects GPU and suggests the right setup. API fallback
-  is always available (free: DeepSeek V4 Pro + MiniMax M3 via NVIDIA NIM).
-  Dynamic model database auto-updates daily with real pricing from OpenRouter API.
-  Replaces llama-launch, omni-va, and ad-hoc llama-server scripts.
+  Hardware-aware adaptive Hermes runtime using portable Turbofiles,
+  Turbohaul Manager v0.7 local residency, stable auto/active role routes,
+  evidence-backed promotion, and external-GPU-first pressure handling.
 author: SouthpawIN
 license: MIT
 homepage: https://github.com/SouthpawIN/turbofit
 repo: https://github.com/SouthpawIN/turbofit
-
-# Hermes-Agent version requirement
 hermes_requires: ">=0.12.0"
 
-# Optional environment variables the user may set for API fallback mode
-env_requires:
-  - name: NVIDIA_API_KEY
-    description: >-
-      NVIDIA NIM API key for free-tier API fallback models
-      (DeepSeek V4 Pro, DS V4 Flash, MiniMax M3, Nemotron Ultra).
-      Sign up free at https://build.nvidia.com — ~1000 RPM, no credit card.
-    required: false
-  - name: OPENROUTER_API_KEY
-    description: >-
-      OpenRouter API key for API models. Only needed if using
-      API aux models not on NVIDIA NIM.
-    required: false
+# Provider credentials are configured through Hermes/provider setup and are never
+# embedded in Turbofiles or distribution artifacts.
+env_requires: []
 
-# Files owned by this distribution — overwritten on update
 distribution_owned:
   - SKILL.md
   - README.md
   - distribution.yaml
   - assets/
-  - scripts/serve
-  - scripts/turbofit.sharco
-  - scripts/turbofit-debug2.sharco
-  - scripts/install.sh
-  - scripts/scaling-watcher.py
-  - scripts/status-server.py
+  - benchmarks/
+  - docs/
+  - research/
+  - runtime-profiles/
+  - src/turbofit_runtime/
+  - scripts/turbofit-runtime
+  - scripts/turbofit-controller
+  - scripts/install-controller-service
+  - scripts/turbofit-runtime-recommend
   - scripts/turbofit-gateway.py
-  - scripts/turbofit-resolver.py
-  - scripts/vram-watcher.py
-  - scripts/auto-update.sh
-  - references/
+  - scripts/migrate-runtime-profiles
+  - scripts/matrix-benchmark.py
+  - scripts/generate-configuration-matrix
+  - scripts/adaptive-acceptance
+  - scripts/controlled-pressure-acceptance
+  - scripts/vram-pressure-acceptance
+  - scripts/release-check
+  - references/results/
+  - references/model-catalog.json
+  - references/configuration-matrix.json
 
-# Post-install hook: wire the serve/name shell functions into the user's shell
-post_install:
-  - command: bash scripts/install.sh
-    description: Wire serve/name shell functions into ~/.bashrc
-
-# Note: No env_template section to avoid scanner false positives.
-# Users set API keys via `hermes setup` or `hermes auth add <provider>`.
+# Installation does not start launchers, watchers, or modify provider credentials.
+# Runtime activation remains an explicit Turbofile selection.
+post_install: []

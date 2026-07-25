@@ -74,3 +74,42 @@ def test_register_dspark_profile_as_hybrid_launcher(tmp_path: Path) -> None:
     assert profile["turbohaul_manifests"] == []
     assert profile["runtime_string"] == f"turbofit-runtime use {item.id}"
     assert profile["components"][0]["method"] == "dspark"
+
+
+def test_register_multigpu_layer_split_as_hybrid_launcher(tmp_path: Path) -> None:
+    item = row("GRM 2.6 Plus", "Carwin Nano", 262_144)
+    profiles = tmp_path / "profiles.json"
+    registry = ProfileRegistry(
+        recipes=RecipeBook.load(ROOT / "references/model-recipes.json"),
+        profiles_path=profiles,
+        turbohaul_dir=tmp_path / "turbohaul",
+        compiler=TurbohaulCompiler(hash_fn=lambda path: "c" * 64),
+    )
+
+    registry.register(item, result(item.id, "mtp", f"turbofit-runtime use {item.id}"), tmp_path / "evidence.md")
+
+    profile = json.loads(profiles.read_text())["profiles"][item.id]
+    assert profile["backend"] == "turbohaul-hybrid"
+    assert profile["turbohaul_manifests"] == []
+    assert profile["runtime_string"] == f"turbofit-runtime use {item.id}"
+    main = next(component for component in profile["components"] if component["role"] == "main")
+    assert main["gpu"] == "0,1"
+    assert main["command"][main["command"].index("--tensor-split") + 1] == "7,58"
+
+
+def test_register_docker_profile_preserves_entrypoint_arguments(tmp_path: Path) -> None:
+    item = row("1 Bit Bonsai", "auto", 1_048_576)
+    profiles = tmp_path / "profiles.json"
+    registry = ProfileRegistry(
+        recipes=RecipeBook.load(ROOT / "references/model-recipes.json"),
+        profiles_path=profiles,
+        turbohaul_dir=tmp_path / "turbohaul",
+        compiler=TurbohaulCompiler(hash_fn=lambda path: "d" * 64),
+    )
+
+    registry.register(item, result(item.id, "baseline", f"turbofit-runtime use {item.id}"), tmp_path / "evidence.md")
+
+    profile = json.loads(profiles.read_text())["profiles"][item.id]
+    component = profile["components"][0]
+    assert component["gpu"] == '"device=0,1"'
+    assert component["args"][component["args"].index("--rope-scale") + 1] == "4"

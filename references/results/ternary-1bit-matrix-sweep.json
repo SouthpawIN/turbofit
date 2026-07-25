@@ -1,0 +1,430 @@
+{
+  "pair": "Ternary Bonsai:1 Bit Bonsai",
+  "contexts": {
+    "65536": {
+      "context": 65536,
+      "mode": "dspark",
+      "timestamp": "2026-07-23T18:32:29.806171+00:00",
+      "passed": true,
+      "checks": {
+        "main": {
+          "model": "Ternary-Bonsai-27B-Q2_0.gguf",
+          "context": 65536
+        },
+        "aux": {
+          "model": "Bonsai-27B-Q1_0.gguf",
+          "context": 65536
+        }
+      },
+      "gateway_status": {
+        "main": {
+          "alias": "ternary-bonsai-27b-dspark",
+          "base_url": "http://127.0.0.1:11606",
+          "port": 11606,
+          "state": "ready",
+          "runtime_profile": "test:ternary-1bit-64k"
+        },
+        "aux": {
+          "alias": "bonsai-27b-1bit",
+          "base_url": "http://127.0.0.1:11610",
+          "port": 11610,
+          "state": "ready",
+          "runtime_profile": "test:ternary-1bit-64k",
+          "mode": "dedicated"
+        },
+        "stall_timeout_s": 90.0,
+        "backend_timeout_s": 300.0,
+        "gateway": "turbofit-gateway/2.0"
+      },
+      "results": {
+        "main": {
+          "elapsed_s": 3.406,
+          "backend": "ternary-bonsai-27b-dspark",
+          "content": "```python\nfrom typing import TypeVar, List, Optional\n\nT = TypeVar('T')\n\n\ndef binary_search(arr: List[T], target: T) -> Optional[int]:\n    \"\"\"\n    Perform binary search on a sorted list.\n\n    Args:\n        arr: A sorted list of comparable elements.\n        target: The element to search for.\n\n    Returns:\n        The index of the target if found, otherwise None.\n    \"\"\"\n    left: int = 0\n    right: int = len(arr) - 1\n\n    while left <= right:\n        mid: int =",
+          "usage": {
+            "completion_tokens": 128,
+            "prompt_tokens": 26,
+            "total_tokens": 154,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 1120.166,
+            "prompt_per_token_ms": 43.08330769230769,
+            "prompt_per_second": 23.210845535393865,
+            "predicted_n": 128,
+            "predicted_ms": 2154.55,
+            "predicted_per_token_ms": 16.832421875,
+            "predicted_per_second": 59.4091573646469,
+            "draft_n": 123,
+            "draft_n_accepted": 94
+          }
+        },
+        "aux": {
+          "elapsed_s": 3.429,
+          "backend": "bonsai-27b-1bit",
+          "content": "Here is a robust implementation of binary search in Python with comprehensive type hints, followed by an explanation of six key design decisions.\n\n### Implementation\n\n```python\nfrom typing import TypeVar, Generic, List, Optional\n\n# Define a type variable for the comparable element\nT = TypeVar('T')\n\ndef binary_search(\n    arr: List[T], \n    target: T, \n    low: int = 0, \n    high: Optional[int] = None\n) -> int:\n    \"\"\"\n    Performs binary search on a sorted list.\n    \n    Args:\n        arr: A sorted list of",
+          "usage": {
+            "completion_tokens": 128,
+            "prompt_tokens": 26,
+            "total_tokens": 154,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 1124.126,
+            "prompt_per_token_ms": 43.235615384615386,
+            "prompt_per_second": 23.129079836246113,
+            "predicted_n": 128,
+            "predicted_ms": 2176.211,
+            "predicted_per_token_ms": 17.0016484375,
+            "predicted_per_second": 58.81782602881798,
+            "draft_n": 154,
+            "draft_n_accepted": 88
+          }
+        }
+      },
+      "peak_gpu": {
+        "0": {
+          "max_used_mb": 11213,
+          "max_util_pct": 88,
+          "max_power_w": 338.0,
+          "max_fan_pct": 44
+        },
+        "1": {
+          "max_used_mb": 13792,
+          "max_util_pct": 32,
+          "max_power_w": 324.22,
+          "max_fan_pct": 77
+        }
+      },
+      "logs": {
+        "main": "",
+        "aux": ""
+      },
+      "gpu_clear_after": {
+        "timestamp": "2026-07-23T18:34:00.653010+00:00",
+        "label": "ternary-1bit-after-65536",
+        "passed": true,
+        "ceilings_mb": {
+          "0": 1024,
+          "1": 1024
+        },
+        "snapshot": [
+          {
+            "gpu": 0,
+            "used_mb": 532,
+            "free_mb": 23584,
+            "util_pct": 17,
+            "power_w": 126.1,
+            "fan_pct": 66
+          },
+          {
+            "gpu": 1,
+            "used_mb": 57,
+            "free_mb": 24068,
+            "util_pct": 9,
+            "power_w": 77.07,
+            "fan_pct": 100
+          }
+        ],
+        "compute_processes": [
+          {
+            "gpu_uuid": "GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1",
+            "pid": 3605,
+            "used_mb": 260,
+            "process": "/usr/libexec/gnome-remote-desktop-daemon"
+          }
+        ]
+      }
+    },
+    "131072": {
+      "context": 131072,
+      "mode": "dspark",
+      "timestamp": "2026-07-23T18:34:03.062148+00:00",
+      "passed": true,
+      "checks": {
+        "main": {
+          "model": "Ternary-Bonsai-27B-Q2_0.gguf",
+          "context": 131072
+        },
+        "aux": {
+          "model": "Bonsai-27B-Q1_0.gguf",
+          "context": 131072
+        }
+      },
+      "gateway_status": {
+        "main": {
+          "alias": "ternary-bonsai-27b-dspark",
+          "base_url": "http://127.0.0.1:11606",
+          "port": 11606,
+          "state": "ready",
+          "runtime_profile": "test:ternary-1bit-128k"
+        },
+        "aux": {
+          "alias": "bonsai-27b-1bit",
+          "base_url": "http://127.0.0.1:11610",
+          "port": 11610,
+          "state": "ready",
+          "runtime_profile": "test:ternary-1bit-128k",
+          "mode": "dedicated"
+        },
+        "stall_timeout_s": 90.0,
+        "backend_timeout_s": 300.0,
+        "gateway": "turbofit-gateway/2.0"
+      },
+      "results": {
+        "main": {
+          "elapsed_s": 3.205,
+          "backend": "ternary-bonsai-27b-dspark",
+          "content": "```python\nfrom typing import TypeVar, List, Optional\n\nT = TypeVar('T')\n\n\ndef binary_search(arr: List[T], target: T) -> Optional[int]:\n    \"\"\"\n    Perform binary search on a sorted list.\n\n    Args:\n        arr: A sorted list of comparable elements.\n        target: The element to search for.\n\n    Returns:\n        The index of the target if found, otherwise None.\n    \"\"\"\n    left: int = 0\n    right: int = len(arr) - 1\n\n    while left <= right:\n        mid: int =",
+          "usage": {
+            "completion_tokens": 128,
+            "prompt_tokens": 26,
+            "total_tokens": 154,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 1052.534,
+            "prompt_per_token_ms": 40.482076923076924,
+            "prompt_per_second": 24.70228990227394,
+            "predicted_n": 128,
+            "predicted_ms": 1996.415,
+            "predicted_per_token_ms": 15.5969921875,
+            "predicted_per_second": 64.11492600486372,
+            "draft_n": 123,
+            "draft_n_accepted": 94
+          }
+        },
+        "aux": {
+          "elapsed_s": 3.23,
+          "backend": "bonsai-27b-1bit",
+          "content": "Here is a robust implementation of binary search in Python with comprehensive type hints, followed by an explanation of six key design decisions.\n\n### Implementation\n\n```python\nfrom typing import TypeVar, Generic, List, Optional\n\n# Define a type variable for the comparable element\nT = TypeVar('T')\n\ndef binary_search(\n    arr: List[T], \n    target: T, \n    low: int = 0, \n    high: Optional[int] = None\n) -> int:\n    \"\"\"\n    Performs binary search on a sorted list.\n    \n    Args:\n        arr: A sorted list of",
+          "usage": {
+            "completion_tokens": 128,
+            "prompt_tokens": 26,
+            "total_tokens": 154,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 1046.801,
+            "prompt_per_token_ms": 40.26157692307692,
+            "prompt_per_second": 24.837576578547402,
+            "predicted_n": 128,
+            "predicted_ms": 2039.067,
+            "predicted_per_token_ms": 15.9302109375,
+            "predicted_per_second": 62.77380782485323,
+            "draft_n": 154,
+            "draft_n_accepted": 88
+          }
+        }
+      },
+      "peak_gpu": {
+        "0": {
+          "max_used_mb": 13945,
+          "max_util_pct": 87,
+          "max_power_w": 339.06,
+          "max_fan_pct": 57
+        },
+        "1": {
+          "max_used_mb": 16524,
+          "max_util_pct": 89,
+          "max_power_w": 327.68,
+          "max_fan_pct": 77
+        }
+      },
+      "logs": {
+        "main": "",
+        "aux": ""
+      },
+      "gpu_clear_after": {
+        "timestamp": "2026-07-23T18:34:21.609028+00:00",
+        "label": "ternary-1bit-after-131072",
+        "passed": true,
+        "ceilings_mb": {
+          "0": 1024,
+          "1": 1024
+        },
+        "snapshot": [
+          {
+            "gpu": 0,
+            "used_mb": 532,
+            "free_mb": 23584,
+            "util_pct": 10,
+            "power_w": 133.44,
+            "fan_pct": 71
+          },
+          {
+            "gpu": 1,
+            "used_mb": 57,
+            "free_mb": 24068,
+            "util_pct": 8,
+            "power_w": 75.34,
+            "fan_pct": 100
+          }
+        ],
+        "compute_processes": [
+          {
+            "gpu_uuid": "GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1",
+            "pid": 3605,
+            "used_mb": 260,
+            "process": "/usr/libexec/gnome-remote-desktop-daemon"
+          }
+        ]
+      }
+    },
+    "262144": {
+      "context": 262144,
+      "mode": "baseline",
+      "timestamp": "2026-07-23T18:34:24.006029+00:00",
+      "passed": true,
+      "checks": {
+        "main": {
+          "model": "Ternary-Bonsai-27B-Q2_0.gguf",
+          "context": 262144
+        },
+        "aux": {
+          "model": "Bonsai-27B-Q1_0.gguf",
+          "context": 262144
+        }
+      },
+      "gateway_status": {
+        "main": {
+          "alias": "ternary-bonsai-27b-dspark",
+          "base_url": "http://127.0.0.1:11606",
+          "port": 11606,
+          "state": "ready",
+          "runtime_profile": "test:ternary-1bit-262k"
+        },
+        "aux": {
+          "alias": "bonsai-27b-1bit",
+          "base_url": "http://127.0.0.1:11610",
+          "port": 11610,
+          "state": "ready",
+          "runtime_profile": "test:ternary-1bit-262k",
+          "mode": "dedicated"
+        },
+        "stall_timeout_s": 90.0,
+        "backend_timeout_s": 300.0,
+        "gateway": "turbofit-gateway/2.0"
+      },
+      "results": {
+        "aux": {
+          "elapsed_s": 2.599,
+          "backend": "bonsai-27b-1bit",
+          "content": "Here is a robust implementation of binary search in Python with comprehensive type hints, followed by an explanation of six key design decisions.\n\n### Implementation\n\n```python\nfrom typing import TypeVar, Generic, List, Optional\n\n# Define a type variable for the comparable element\nT = TypeVar('T')\n\ndef binary_search(arr: List[T], target: T) -> Optional[int]:\n    \"\"\"\n    Performs binary search on a sorted list to find the index of the target.\n    \n    Args:\n        arr: A sorted list of comparable elements.\n        target: The element to search for.\n        \n    Returns",
+          "usage": {
+            "completion_tokens": 128,
+            "prompt_tokens": 26,
+            "total_tokens": 154,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 406.411,
+            "prompt_per_token_ms": 15.631192307692308,
+            "prompt_per_second": 63.974646355536635,
+            "predicted_n": 128,
+            "predicted_ms": 2079.404,
+            "predicted_per_token_ms": 16.24534375,
+            "predicted_per_second": 61.55609972857607
+          }
+        },
+        "main": {
+          "elapsed_s": 2.934,
+          "backend": "ternary-bonsai-27b-dspark",
+          "content": "```python\nfrom typing import TypeVar, List, Optional\n\nT = TypeVar('T')\n\n\ndef binary_search(arr: List[T], target: T) -> Optional[int]:\n    \"\"\"\n    Perform binary search on a sorted list.\n\n    Args:\n        arr: A sorted list of comparable elements.\n        target: The element to search for.\n\n    Returns:\n        The index of the target if found, otherwise None.\n    \"\"\"\n    left: int = 0\n    right: int = len(arr) - 1\n\n    while left <= right:\n        mid: int =",
+          "usage": {
+            "completion_tokens": 128,
+            "prompt_tokens": 26,
+            "total_tokens": 154,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 429.82,
+            "prompt_per_token_ms": 16.53153846153846,
+            "prompt_per_second": 60.490437857707875,
+            "predicted_n": 128,
+            "predicted_ms": 2378.576,
+            "predicted_per_token_ms": 18.582625,
+            "predicted_per_second": 53.813710388064116
+          }
+        }
+      },
+      "peak_gpu": {
+        "0": {
+          "max_used_mb": 10415,
+          "max_util_pct": 92,
+          "max_power_w": 348.93,
+          "max_fan_pct": 61
+        },
+        "1": {
+          "max_used_mb": 12994,
+          "max_util_pct": 95,
+          "max_power_w": 335.67,
+          "max_fan_pct": 98
+        }
+      },
+      "logs": {
+        "main": "",
+        "aux": ""
+      },
+      "gpu_clear_after": {
+        "timestamp": "2026-07-23T18:34:38.644775+00:00",
+        "label": "ternary-1bit-after-262144",
+        "passed": true,
+        "ceilings_mb": {
+          "0": 1024,
+          "1": 1024
+        },
+        "snapshot": [
+          {
+            "gpu": 0,
+            "used_mb": 532,
+            "free_mb": 23584,
+            "util_pct": 11,
+            "power_w": 125.81,
+            "fan_pct": 83
+          },
+          {
+            "gpu": 1,
+            "used_mb": 57,
+            "free_mb": 24068,
+            "util_pct": 0,
+            "power_w": 89.43,
+            "fan_pct": 100
+          }
+        ],
+        "compute_processes": [
+          {
+            "gpu_uuid": "GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1",
+            "pid": 3605,
+            "used_mb": 260,
+            "process": "/usr/libexec/gnome-remote-desktop-daemon"
+          }
+        ]
+      }
+    }
+  }
+}

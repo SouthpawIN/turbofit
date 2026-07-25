@@ -1,0 +1,340 @@
+{
+  "blockers": [
+    "NVML is unavailable; controlled pressure cannot be measured safely",
+    "live adaptive controller service is not active"
+  ],
+  "checks": {
+    "controller_service": {
+      "exit_code": 3,
+      "output": "inactive\n",
+      "passed": false
+    },
+    "gateway_models": {
+      "passed": true,
+      "payload": {
+        "data": [
+          {
+            "description": "Hardware-matched tested main + auxiliary configuration",
+            "id": "auto",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "description": "Stable route to the currently reconciled main role",
+            "id": "active:main",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "description": "Stable route to the currently reconciled auxiliary role",
+            "id": "active:aux",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 1048576,
+            "description": "1 Bit Bonsai main with auto auxiliary at 1048576",
+            "id": "1-bit-bonsai-auto-1m",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 131072,
+            "description": "1 Bit Bonsai main with shared-main auto auxiliary at 128K",
+            "id": "bonsai-1bit-auto-128k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 262144,
+            "description": "1 Bit Bonsai main with shared-main auto auxiliary at 262K",
+            "id": "bonsai-1bit-auto-262k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 65536,
+            "description": "1 Bit Bonsai main with shared-main auto auxiliary at 64K",
+            "id": "bonsai-1bit-auto-64k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 131072,
+            "description": "Carwin Nano MTP main with shared-main auto auxiliary at 128K",
+            "id": "carwin-auto-128k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 262144,
+            "description": "Carwin Nano MTP main with shared-main auto auxiliary at 262K",
+            "id": "carwin-auto-262k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 65536,
+            "description": "Carwin Nano MTP main with shared-main auto auxiliary at 64K",
+            "id": "carwin-auto-64k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 131072,
+            "description": "Carwin Nano main with 1 Bit Bonsai auxiliary at 131072",
+            "id": "carwin-nano-1-bit-bonsai-128k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 262144,
+            "description": "Carwin Nano main with 1 Bit Bonsai auxiliary at 262144",
+            "id": "carwin-nano-1-bit-bonsai-262k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 65536,
+            "description": "Carwin Nano main with 1 Bit Bonsai auxiliary at 65536",
+            "id": "carwin-nano-1-bit-bonsai-64k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 131072,
+            "description": "Carwin Nano main with Ternary Bonsai auxiliary at 131072",
+            "id": "carwin-nano-ternary-bonsai-128k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 262144,
+            "description": "Carwin Nano main with Ternary Bonsai auxiliary at 262144",
+            "id": "carwin-nano-ternary-bonsai-262k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 65536,
+            "description": "Carwin Nano main with Ternary Bonsai auxiliary at 65536",
+            "id": "carwin-nano-ternary-bonsai-64k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 131072,
+            "description": "GRM 2.6 Plus main with 1 Bit Bonsai auxiliary at 131072",
+            "id": "grm-2-6-plus-1-bit-bonsai-128k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 65536,
+            "description": "GRM 2.6 Plus main with 1 Bit Bonsai auxiliary at 65536",
+            "id": "grm-2-6-plus-1-bit-bonsai-64k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 131072,
+            "description": "GRM 2.6 Plus main with auto auxiliary at 131072",
+            "id": "grm-2-6-plus-auto-128k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 65536,
+            "description": "GRM 2.6 Plus main with auto auxiliary at 65536",
+            "id": "grm-2-6-plus-auto-64k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 1048576,
+            "description": "GRM 2.6 Plus main with Carwin Nano auxiliary at 1048576",
+            "id": "grm-2-6-plus-carwin-nano-1m",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 262144,
+            "description": "GRM 2.6 Plus main with Carwin Nano auxiliary at 262144",
+            "id": "grm-2-6-plus-carwin-nano-262k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 131072,
+            "description": "GRM 2.6 Plus main with Ternary Bonsai auxiliary at 131072",
+            "id": "grm-2-6-plus-ternary-bonsai-128k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 65536,
+            "description": "GRM 2.6 Plus main with Ternary Bonsai auxiliary at 65536",
+            "id": "grm-2-6-plus-ternary-bonsai-64k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 131072,
+            "description": "GRM 2.6 Plus MTP main with Carwin Nano MTP auxiliary at 128K",
+            "id": "grm-carwin-128k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 65536,
+            "description": "GRM 2.6 Plus MTP main with Carwin Nano MTP auxiliary at 64K",
+            "id": "grm-carwin-64k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 131072,
+            "description": "Ternary Bonsai main with 1 Bit Bonsai auxiliary at 128K",
+            "id": "ternary-1bit-128k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 262144,
+            "description": "Ternary Bonsai main with 1 Bit Bonsai auxiliary at 262K",
+            "id": "ternary-1bit-262k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 65536,
+            "description": "Ternary Bonsai main with 1 Bit Bonsai auxiliary at 64K",
+            "id": "ternary-1bit-64k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 131072,
+            "description": "Ternary Bonsai main with shared-main auto auxiliary at 128K",
+            "id": "ternary-auto-128k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 262144,
+            "description": "Ternary Bonsai main with shared-main auto auxiliary at 262K",
+            "id": "ternary-auto-262k",
+            "object": "model",
+            "owned_by": "turbofit"
+          },
+          {
+            "context_length": 65536,
+            "description": "Ternary Bonsai main with shared-main auto auxiliary at 64K",
+            "id": "ternary-auto-64k",
+            "object": "model",
+            "owned_by": "turbofit"
+          }
+        ],
+        "object": "list"
+      },
+      "status": 200
+    },
+    "nvml": {
+      "exit_code": 18,
+      "output": "Failed to initialize NVML: Driver/library version mismatch\nNVML library version: 580.173\n",
+      "passed": false
+    },
+    "simulated_transitions": {
+      "exit_code": 0,
+      "output": ".................                                                        [100%]\n17 passed in 0.85s\n",
+      "passed": true
+    },
+    "turbohaul_status": {
+      "passed": true,
+      "payload": {
+        "active": null,
+        "background_sweeper": {
+          "last_sweep_iso": "2026-07-24T22:48:20+00:00",
+          "slots_finalized_lifetime": 0
+        },
+        "engine_stall": null,
+        "evictions": {
+          "last_evicted_at": null,
+          "total_lifetime": 0
+        },
+        "generation": {
+          "eta_s": null,
+          "generation_id": null,
+          "max_tokens": null,
+          "measured_at_iso": "2026-07-24T22:48:41+00:00",
+          "n_ctx": null,
+          "n_decoded": 0,
+          "n_prompt_cache": null,
+          "n_prompt_proc": null,
+          "n_prompt_tokens": 0,
+          "n_remain": null,
+          "pct": null,
+          "prefill_pct": null,
+          "prompt_progress": null,
+          "riders": 0,
+          "stalled": false,
+          "state": "idle",
+          "streaming": false,
+          "tok_s": 0.0,
+          "tok_s_instant": 0.0
+        },
+        "grace": null,
+        "idle_hot": null,
+        "kv_classifier": {
+          "events": {},
+          "forced_clean_restores": 0,
+          "last": null,
+          "wave_return_restores": 0
+        },
+        "load_verify": [],
+        "loading": null,
+        "parallel_slots": {
+          "max": 2,
+          "used": 0
+        },
+        "persist_kvcache": {
+          "cap_bytes": 85899345920,
+          "file_count": 0,
+          "headroom_bytes": 85899345920,
+          "over_cap": false,
+          "total_bytes": 0
+        },
+        "queue": {
+          "acceptance_buffer_depth": 0,
+          "staging_queue_depth": 0,
+          "staging_queue_max": 100
+        },
+        "request_identity": null,
+        "residents": [],
+        "shadow_bytematch": {},
+        "shadow_diag": {
+          "byteparity": {},
+          "evictions": {},
+          "kvgc": {},
+          "restores": {},
+          "saves": {}
+        },
+        "shadow_reprefill": {},
+        "shadow_restore_prefer": {},
+        "tooltail_restore_skip": {},
+        "vram": null,
+        "vram_total_mib": null
+      },
+      "status": 200
+    }
+  },
+  "real_requested": true,
+  "recorded_at": "2026-07-24T22:48:41.506700+00:00",
+  "safety": {
+    "direct_process_signals_sent": 0,
+    "external_processes_modified": 0,
+    "gpu_allocation_attempted": false
+  },
+  "schema": "turbofit.adaptive-acceptance/v1",
+  "status": "blocked"
+}

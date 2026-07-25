@@ -510,7 +510,7 @@
       "main": "GRM 2.6 Plus",
       "aux": "Carwin Nano",
       "context": 1048576,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -522,7 +522,7 @@
       "main": "GRM 2.6 Plus",
       "aux": "Carwin Nano",
       "context": 262144,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -570,7 +570,7 @@
       "main": "GRM 2.6 Plus",
       "aux": "Ternary Bonsai",
       "context": 131072,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -582,7 +582,7 @@
       "main": "GRM 2.6 Plus",
       "aux": "Ternary Bonsai",
       "context": 65536,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -606,7 +606,7 @@
       "main": "GRM 2.6 Plus",
       "aux": "1 Bit Bonsai",
       "context": 131072,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -618,7 +618,7 @@
       "main": "GRM 2.6 Plus",
       "aux": "1 Bit Bonsai",
       "context": 65536,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -654,7 +654,7 @@
       "main": "GRM 2.6 Plus",
       "aux": "auto",
       "context": 131072,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -666,7 +666,7 @@
       "main": "GRM 2.6 Plus",
       "aux": "auto",
       "context": 65536,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -678,7 +678,7 @@
       "main": "Carwin Nano",
       "aux": "Ternary Bonsai",
       "context": 262144,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -690,7 +690,7 @@
       "main": "Carwin Nano",
       "aux": "Ternary Bonsai",
       "context": 131072,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -702,7 +702,7 @@
       "main": "Carwin Nano",
       "aux": "Ternary Bonsai",
       "context": 65536,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -714,7 +714,7 @@
       "main": "Carwin Nano",
       "aux": "1 Bit Bonsai",
       "context": 262144,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -726,7 +726,7 @@
       "main": "Carwin Nano",
       "aux": "1 Bit Bonsai",
       "context": 131072,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -738,7 +738,7 @@
       "main": "Carwin Nano",
       "aux": "1 Bit Bonsai",
       "context": 65536,
-      "status": "pending",
+      "status": "success",
       "method_priority": [
         "dspark",
         "mtp",
@@ -858,6 +858,18 @@
       "main": "Ternary Bonsai",
       "aux": "auto",
       "context": 65536,
+      "status": "success",
+      "method_priority": [
+        "dspark",
+        "mtp",
+        "nextn"
+      ]
+    },
+    {
+      "id": "1-bit-bonsai-auto-1m",
+      "main": "1 Bit Bonsai",
+      "aux": "auto",
+      "context": 1048576,
       "status": "success",
       "method_priority": [
         "dspark",

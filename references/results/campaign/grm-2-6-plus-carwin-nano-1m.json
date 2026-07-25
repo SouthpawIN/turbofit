@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "row": {
+    "id": "grm-2-6-plus-carwin-nano-1m",
+    "main": "GRM 2.6 Plus",
+    "aux": "Carwin Nano",
+    "context": 1048576,
+    "status": "pending",
+    "method_priority": [
+      "dspark",
+      "mtp",
+      "nextn"
+    ]
+  },
+  "profile_name": "grm-2-6-plus-carwin-nano-1m",
+  "components": [
+    {
+      "role": "aux",
+      "family": "Carwin Nano",
+      "alias": "carwin-nano",
+      "kind": "process",
+      "method": "mtp",
+      "gpu": "0",
+      "port": 11607,
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11607",
+        "-c",
+        "1048576",
+        "-ngl",
+        "99",
+        "--fit",
+        "on",
+        "-fa",
+        "on",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--parallel",
+        "1",
+        "--n-cpu-moe",
+        "5",
+        "--rope-scaling",
+        "yarn",
+        "--rope-scale",
+        "4",
+        "--yarn-orig-ctx",
+        "262144",
+        "--spec-type",
+        "draft-mtp"
+      ],
+      "image": "",
+      "environment": {},
+      "mounts": []
+    },
+    {
+      "role": "main",
+      "family": "GRM 2.6 Plus",
+      "alias": "grm-2-6-plus",
+      "kind": "process",
+      "method": "baseline",
+      "gpu": "1",
+      "port": 11605,
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11605",
+        "-c",
+        "1048576",
+        "-ngl",
+        "64",
+        "--fit",
+        "off",
+        "-fa",
+        "on",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--parallel",
+        "1",
+        "--no-kv-offload",
+        "--rope-scaling",
+        "yarn",
+        "--rope-scale",
+        "4",
+        "--yarn-orig-ctx",
+        "262144",
+        "--mmproj",
+        "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf"
+      ],
+      "image": "",
+      "environment": {},
+      "mounts": []
+    }
+  ],
+  "checks": {
+    "aux": {
+      "context": 1048576,
+      "model": "carwin-moe-Nano.gguf",
+      "health": {
+        "status": "ok"
+      }
+    },
+    "main": {
+      "context": 1048576,
+      "model": "grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf",
+      "health": {
+        "status": "ok"
+      }
+    }
+  },
+  "route": {
+    "main": "grm-2-6-plus",
+    "aux": "carwin-nano",
+    "status": {
+      "main": {
+        "alias": "grm-2-6-plus",
+        "base_url": "http://127.0.0.1:11605",
+        "port": 11605,
+        "state": "ready",
+        "runtime_profile": "campaign:grm-2-6-plus-carwin-nano-1m"
+      },
+      "aux": {
+        "alias": "carwin-nano",
+        "base_url": "http://127.0.0.1:11607",
+        "port": 11607,
+        "state": "ready",
+        "runtime_profile": "campaign:grm-2-6-plus-carwin-nano-1m",
+        "mode": "dedicated"
+      },
+      "stall_timeout_s": 90.0,
+      "backend_timeout_s": 300.0,
+      "gateway": "turbofit-gateway/2.0"
+    }
+  },
+  "results": {
+    "main": {
+      "backend": "grm-2-6-plus",
+      "content": "```python\nfrom typing import List, TypeVar, Callable\n\nT = TypeVar('T')\n\n\ndef merge_sort(\n    arr: List[T],\n    key: Callable[[T], object] = lambda x: x,\n    reverse: bool = False,\n) -> List[T]:\n    \"\"\"\n    Sort a list using the merge sort algorithm.\n\n    Args:\n        arr: The list to sort.\n        key: A function that extracts a comparison key from each element.\n        reverse: If True, sort in descending order.\n\n    Returns:\n        A new sorted list.\n    \"\"\"\n    n = len(arr)\n    if n <= 1:\n        return list(arr)\n\n    mid = n // 2\n    left = merge_sort(arr[:mid], key, reverse)\n    right = merge_sort(arr[mid:], key, reverse)\n\n    return _merge(left, right, key, reverse)\n\n\ndef _merge(\n    left: List[T],\n    right: List[T],\n    key: Callable[[T], object],\n    reverse: bool,\n) -> List[T]:\n    \"\"\"Merge two sorted lists into one sorted list.\"\"\"\n    result:",
+      "usage": {
+        "completion_tokens": 256,
+        "prompt_tokens": 26,
+        "total_tokens": 282,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 26,
+        "prompt_ms": 776.199,
+        "prompt_per_token_ms": 29.85380769230769,
+        "prompt_per_second": 33.496564669627254,
+        "predicted_n": 256,
+        "predicted_ms": 38837.27,
+        "predicted_per_token_ms": 151.7080859375,
+        "predicted_per_second": 6.5916064646150465
+      }
+    },
+    "aux": {
+      "backend": "carwin-nano",
+      "content": "# Merge Sort Implementation with Type Hints\n\nHere's a complete implementation of merge sort with type hints and explanations of the design choices:\n\n```python\nfrom typing import List, TypeVar, Generic\n\n# Define a type variable that can be any comparable type\nT = TypeVar('T', bound=Comparable)\n\n# Define a protocol for comparable types\nclass Comparable(Generic[T]):\n    def __lt__(self, other: T) -> bool:\n        raise NotImplementedError\n\ndef merge_sort(arr: List[T]) -> List[T]:\n    \"\"\"\n    Sorts a list using the merge sort algorithm.\n    \n    Args:\n        arr: A list of comparable elements\n        \n    Returns:\n        A new sorted list containing the same elements\n    \"\"\"\n    # Base case: empty list or single element\n    if len(arr) <= 1:\n        return arr.copy()\n    \n    # Split the list into two halves\n    mid = len(arr) // 2\n    left_half = arr[:mid]\n    right_half = arr[mid:]\n    \n    # Recursively sort both halves\n    sorted_left = merge_sort(left_half)\n    sorted_right = merge_sort(right_half)\n    \n    # Merge the",
+      "usage": {
+        "completion_tokens": 256,
+        "prompt_tokens": 26,
+        "total_tokens": 282,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 26,
+        "prompt_ms": 534.444,
+        "prompt_per_token_ms": 20.55553846153846,
+        "prompt_per_second": 48.648689104938974,
+        "predicted_n": 256,
+        "predicted_ms": 8762.901,
+        "predicted_per_token_ms": 34.23008203125,
+        "predicted_per_second": 29.214069632876146,
+        "draft_n": 239,
+        "draft_n_accepted": 175
+      }
+    }
+  },
+  "gpu_peak_mb": {
+    "0": 23028,
+    "1": 22768
+  },
+  "runtime_string": "turbofit-runtime use grm-2-6-plus-carwin-nano-1m"
+}

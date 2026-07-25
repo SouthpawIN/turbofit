@@ -1,0 +1,23 @@
+{
+  "elapsed_s": 2.6615140438079834,
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 37,
+    "prompt_ms": 369.879,
+    "prompt_per_token_ms": 9.996729729729731,
+    "prompt_per_second": 100.03271340086893,
+    "predicted_n": 256,
+    "predicted_ms": 2241.642,
+    "predicted_per_token_ms": 8.7564140625,
+    "predicted_per_second": 114.2020001409681
+  },
+  "usage": {
+    "completion_tokens": 256,
+    "prompt_tokens": 37,
+    "total_tokens": 293,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    }
+  },
+  "content": "```python\nfrom typing import List, TypeVar, Callable, Optional\n\nT = TypeVar('T')\n\ndef merge_sort(arr: List[T], key: Optional[Callable[[T], T]] = None, reverse: bool = False) -> List[T]:\n    \"\"\"\n    Sorts a list using the merge sort algorithm.\n    \n    Args:\n        arr: The list to be sorted\n        key: Optional function to extract comparison key from elements\n        reverse: If True, sorts in descending order\n        \n    Returns:\n        A new sorted list (original list is not modified)\n        \n    Time Complexity: O(n log n)\n    Space Complexity: O(n)\n    \"\"\"\n    if len(arr) <= 1:\n        return arr.copy()\n    \n    # Split the list into halves\n    mid = len(arr) // 2\n    left_half = arr[:mid]\n    right_half = arr[mid:]\n    \n    # Recursively sort both halves\n    left_sorted = merge_sort(left_half, key, reverse)\n    right_sorted = merge_sort(right_half, key, reverse)\n    \n    # Merge the sorted halves\n    return _merge(left_sorted, right_sorted, key, reverse"
+}

@@ -1,0 +1,43 @@
+{
+  "evidence": "~/.hermes/wiki/topics/turbofit/evidence/grm-2-6-plus-auto-128k.md",
+  "manifest": {
+    "arch": "",
+    "auto_place": false,
+    "context_size": 131072,
+    "description": "Turbofit measured main runtime; context=131072; method=mtp",
+    "display_name": "grm-2-6-plus-auto-128k-main",
+    "expected_vram_bytes": 22601007104,
+    "gguf_blob_sha256": "268cfdb6df2c73a8a3d8591c86e52d72f4386d1dcd4ef7d2d259638df02c6c25",
+    "gguf_size_bytes": 16810713984,
+    "hybrid_kv_ratio": 1.0,
+    "kv_bytes_per_token": 44184.0,
+    "llama_server_flags": {
+      "cache_reuse": 256,
+      "cache_type_k": "q4_0",
+      "cache_type_v": "q4_0",
+      "ctx_size": 131072,
+      "flash_attn": true,
+      "jinja": true,
+      "main_gpu": 0,
+      "n_gpu_layers": 999,
+      "no_context_shift": true,
+      "no_perf": true,
+      "parallel": 1,
+      "slot_prompt_similarity": 0.5,
+      "spec_type": "draft-mtp",
+      "split_mode": "none"
+    },
+    "mmproj_blob_sha256": "3e8d1437ad5a37e35665f0819bc36ab82d0eedf1c27360d9737efa5bcad13b1c",
+    "model_tag": "grm-2-6-plus-auto-128k-main",
+    "prompt_template": {
+      "stop_tokens": [],
+      "system_default": ""
+    },
+    "revision": 1
+  },
+  "matrix_row": "grm-2-6-plus-auto-128k",
+  "sources": {
+    "gguf": "~/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf",
+    "mmproj": "~/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf"
+  }
+}

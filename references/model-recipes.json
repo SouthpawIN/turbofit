@@ -3,16 +3,22 @@
   "atomic_binary": "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
   "models": {
     "1 Bit Bonsai": {
-      "alias": "1-bit-bonsai",
+      "alias": "bonsai-27b-1bit",
       "kind": "docker",
-      "image": "turbofit-prism-bonsai:local",
+      "image": "turbofit-bonsai-1bit:local",
       "model_root": "/home/sovthpaw/Models/storage/gguf/Bonsai-27B",
       "model": "Bonsai-27B-Q1_0.gguf",
       "draft": "Bonsai-27B-dspark-Q4_1.gguf",
       "projector": "Bonsai-27B-mmproj-Q8_0.gguf",
       "port": 11610,
       "large": false,
-      "methods": {"65536": "dspark", "131072": "dspark", "262144": "baseline"}
+      "native_context": 262144,
+      "max_context": 1048576,
+      "context_scaling": {"method": "yarn", "scale": 4, "original_context": 262144},
+      "context_overrides": {
+        "1048576": {"gpu": "0,1", "split_mode": "layer", "tensor_split": "1,1"}
+      },
+      "methods": {"65536": "dspark", "131072": "dspark", "262144": "baseline", "1048576": "baseline"}
     },
     "Ternary Bonsai": {
       "alias": "ternary-bonsai",
@@ -32,6 +38,12 @@
       "model": "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
       "port": 11607,
       "large": false,
+      "native_context": 262144,
+      "max_context": 1048576,
+      "context_scaling": {"method": "yarn", "scale": 4, "original_context": 262144},
+      "context_overrides": {
+        "1048576": {"gpu": "0", "n_cpu_moe": 5}
+      },
       "methods": {"65536": "mtp", "131072": "mtp", "262144": "mtp", "1048576": "mtp"}
     },
     "GRM 2.6 Plus": {
@@ -41,7 +53,27 @@
       "projector": "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf",
       "port": 11605,
       "large": false,
-      "methods": {"65536": "mtp", "131072": "mtp", "262144": "mtp", "1048576": "mtp"}
+      "native_context": 262144,
+      "max_context": 1048576,
+      "context_scaling": {"method": "yarn", "scale": 4, "original_context": 262144},
+      "methods": {"65536": "mtp", "131072": "mtp", "262144": "mtp", "1048576": "baseline"},
+      "context_overrides": {
+        "262144": {
+          "gpu": "0,1",
+          "fit": "off",
+          "split_mode": "layer",
+          "tensor_split": "7,58",
+          "main_gpu": "1",
+          "offload_layers": 7,
+          "total_layers": 65
+        },
+        "1048576": {
+          "gpu": "1",
+          "gpu_layers": 64,
+          "kv_offload": false,
+          "fit": "off"
+        }
+      }
     },
     "Laguna S2.1": {
       "alias": "laguna-s2-1",

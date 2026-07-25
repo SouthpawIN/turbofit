@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+"""Regenerate the complete candidate configuration matrix from the model catalog."""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.model_catalog import ModelCatalog, build_configuration_matrix
+
+
+def main() -> int:
+    catalog = ModelCatalog.load(ROOT / "references" / "model-catalog.json")
+    matrix = build_configuration_matrix(catalog)
+    target = ROOT / "references" / "configuration-matrix.json"
+    target.write_text(json.dumps(matrix, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"models": len(catalog.main_models), "rows": len(matrix["rows"]), "path": str(target)}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

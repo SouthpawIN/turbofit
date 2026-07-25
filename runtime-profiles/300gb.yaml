@@ -1,0 +1,30 @@
+schema: turbofit.runtime/v1
+id: hardware-300gb
+revision: 1
+hardware:
+  class_vram_gb: 300
+  min_devices: 3
+  total_vram_gb: 300
+  per_device_min_gb: 100
+  accelerator: nvidia-cuda
+  topology: 3x100
+policy:
+  recommendation: api-only-unproven-local
+  external_gpu_priority: absolute
+  contraction_dwell_s: 5
+  expansion_dwell_s: 120
+  expansion_margin_gb_per_card: 2
+  cooldown_s: 30
+  flap_failure_limit: 3
+  flap_window_s: 300
+roles:
+  main: active:main
+  auxiliary: active:aux
+  fallback: api:auto
+rungs:
+- id: api
+  context: 1048576
+  aux_mode: api
+  evidence: sha256:ee78b9da9b3a984c62232ec08a928cd294948f4471e665be9a04d3a1e17e685f
+  main_api_policy: api:auto
+  aux_api_policy: api:auto

@@ -12,20 +12,21 @@ ROOT = Path(__file__).resolve().parents[1]
 MATRIX_PATH = ROOT / "references/main-aux-matrix.json"
 
 
-def test_canonical_matrix_contains_exactly_75_unique_rows() -> None:
+def test_canonical_matrix_contains_exactly_76_unique_rows() -> None:
     matrix = load_matrix(MATRIX_PATH)
 
-    assert len(matrix.rows) == 75
-    assert len({row.id for row in matrix.rows}) == 75
-    assert len({(row.main, row.aux, row.context) for row in matrix.rows}) == 75
+    assert len(matrix.rows) == 76
+    assert len({row.id for row in matrix.rows}) == 76
+    assert len({(row.main, row.aux, row.context) for row in matrix.rows}) == 76
 
 
-def test_bonsai_never_appears_in_a_1m_row() -> None:
+def test_only_validated_one_bit_bonsai_auto_appears_at_1m() -> None:
     matrix = load_matrix(MATRIX_PATH)
 
     one_million = [row for row in matrix.rows if row.context == 1_048_576]
     assert one_million
-    assert all("Bonsai" not in row.main and "Bonsai" not in row.aux for row in one_million)
+    bonsai_rows = [row for row in one_million if "Bonsai" in row.main or "Bonsai" in row.aux]
+    assert [(row.id, row.status) for row in bonsai_rows] == [("1-bit-bonsai-auto-1m", "success")]
 
 
 def test_contexts_are_normalized_integers() -> None:

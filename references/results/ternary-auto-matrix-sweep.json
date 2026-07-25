@@ -1,0 +1,301 @@
+{
+  "pair": "Ternary Bonsai:auto",
+  "contexts": {
+    "65536": {
+      "context": 65536,
+      "mode": "dspark",
+      "timestamp": "2026-07-23T17:49:03.696888+00:00",
+      "passed": true,
+      "model_check": {
+        "model": "Ternary-Bonsai-27B-Q2_0.gguf",
+        "context": 65536
+      },
+      "gateway_status": {
+        "main": {
+          "alias": "ternary-bonsai-27b-dspark",
+          "base_url": "http://127.0.0.1:11606",
+          "port": 11606,
+          "state": "ready",
+          "runtime_profile": "test:ternary-auto-64k"
+        },
+        "aux": {
+          "alias": "auto:ternary-bonsai-27b-dspark",
+          "base_url": "http://127.0.0.1:11606",
+          "port": 11606,
+          "state": "ready",
+          "runtime_profile": "test:ternary-auto-64k",
+          "mode": "shared-main",
+          "shared_main_alias": "ternary-bonsai-27b-dspark"
+        },
+        "stall_timeout_s": 90.0,
+        "backend_timeout_s": 300.0,
+        "gateway": "turbofit-gateway/2.0"
+      },
+      "results": {
+        "main": {
+          "elapsed_s": 3.68,
+          "backend": "ternary-bonsai-27b-dspark",
+          "content": "```python\ndef fibonacci(n: int) -> int:\n    \"\"\"\n    Compute the nth Fibonacci number using an iterative approach.\n    \n    Args:\n        n: A non-negative integer representing the position in the Fibonacci sequence.\n        \n    Returns:\n        The nth Fibonacci number.\n        \n    Raises:\n        ValueError: If n is negative.\n    \"\"\"\n    if n < 0:\n        raise ValueError(\"n must be a non-negative integer\")\n    if n == 0:\n        return 0\n    if n == 1:\n        return 1\n    \n    a,",
+          "usage": {
+            "completion_tokens": 128,
+            "prompt_tokens": 26,
+            "total_tokens": 154,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 986.479,
+            "prompt_per_token_ms": 37.941500000000005,
+            "prompt_per_second": 26.35636440309424,
+            "predicted_n": 128,
+            "predicted_ms": 2582.633,
+            "predicted_per_token_ms": 20.1768203125,
+            "predicted_per_second": 49.561823147152545,
+            "draft_n": 113,
+            "draft_n_accepted": 98
+          }
+        },
+        "aux": {
+          "elapsed_s": 3.248,
+          "backend": "auto:ternary-bonsai-27b-dspark",
+          "content": "```python\ndef fibonacci(n: int) -> int:\n    \"\"\"\n    Compute the nth Fibonacci number using an iterative approach.\n    \n    Args:\n        n: A non-negative integer representing the position in the Fibonacci sequence.\n        \n    Returns:\n        The nth Fibonacci number.\n        \n    Raises:\n        ValueError: If n is negative.\n    \"\"\"\n    if n < 0:\n        raise ValueError(\"n must be a non-negative integer\")\n    if n == 0:\n        return 0\n    if n == 1:\n        return 1\n    \n    a,",
+          "usage": {
+            "completion_tokens": 128,
+            "prompt_tokens": 26,
+            "total_tokens": 154,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 438.614,
+            "prompt_per_token_ms": 16.86976923076923,
+            "prompt_per_second": 59.27763363686522,
+            "predicted_n": 128,
+            "predicted_ms": 2312.505,
+            "predicted_per_token_ms": 18.0664453125,
+            "predicted_per_second": 55.3512316730126,
+            "draft_n": 113,
+            "draft_n_accepted": 98
+          }
+        }
+      },
+      "peak_gpu": {
+        "0": {
+          "max_used_mb": 414,
+          "max_util_pct": 21,
+          "max_power_w": 44.77,
+          "max_fan_pct": 30
+        },
+        "1": {
+          "max_used_mb": 13771,
+          "max_util_pct": 91,
+          "max_power_w": 224.2,
+          "max_fan_pct": 100
+        }
+      },
+      "logs": ""
+    },
+    "131072": {
+      "context": 131072,
+      "mode": "dspark",
+      "timestamp": "2026-07-23T17:49:24.844999+00:00",
+      "passed": true,
+      "model_check": {
+        "model": "Ternary-Bonsai-27B-Q2_0.gguf",
+        "context": 131072
+      },
+      "gateway_status": {
+        "main": {
+          "alias": "ternary-bonsai-27b-dspark",
+          "base_url": "http://127.0.0.1:11606",
+          "port": 11606,
+          "state": "ready",
+          "runtime_profile": "test:ternary-auto-128k"
+        },
+        "aux": {
+          "alias": "auto:ternary-bonsai-27b-dspark",
+          "base_url": "http://127.0.0.1:11606",
+          "port": 11606,
+          "state": "ready",
+          "runtime_profile": "test:ternary-auto-128k",
+          "mode": "shared-main",
+          "shared_main_alias": "ternary-bonsai-27b-dspark"
+        },
+        "stall_timeout_s": 90.0,
+        "backend_timeout_s": 300.0,
+        "gateway": "turbofit-gateway/2.0"
+      },
+      "results": {
+        "main": {
+          "elapsed_s": 3.211,
+          "backend": "ternary-bonsai-27b-dspark",
+          "content": "```python\ndef fibonacci(n: int) -> int:\n    \"\"\"\n    Compute the nth Fibonacci number using an iterative approach.\n    \n    Args:\n        n: A non-negative integer representing the position in the Fibonacci sequence.\n        \n    Returns:\n        The nth Fibonacci number.\n        \n    Raises:\n        ValueError: If n is negative.\n    \"\"\"\n    if n < 0:\n        raise ValueError(\"n must be a non-negative integer\")\n    if n == 0:\n        return 0\n    if n == 1:\n        return 1\n    \n    a,",
+          "usage": {
+            "completion_tokens": 128,
+            "prompt_tokens": 26,
+            "total_tokens": 154,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 1029.643,
+            "prompt_per_token_ms": 39.601653846153845,
+            "prompt_per_second": 25.25147065536307,
+            "predicted_n": 128,
+            "predicted_ms": 2066.18,
+            "predicted_per_token_ms": 16.14203125,
+            "predicted_per_second": 61.95007211375582,
+            "draft_n": 113,
+            "draft_n_accepted": 98
+          }
+        },
+        "aux": {
+          "elapsed_s": 2.713,
+          "backend": "auto:ternary-bonsai-27b-dspark",
+          "content": "```python\ndef fibonacci(n: int) -> int:\n    \"\"\"\n    Compute the nth Fibonacci number using an iterative approach.\n    \n    Args:\n        n: A non-negative integer representing the position in the Fibonacci sequence.\n        \n    Returns:\n        The nth Fibonacci number.\n        \n    Raises:\n        ValueError: If n is negative.\n    \"\"\"\n    if n < 0:\n        raise ValueError(\"n must be a non-negative integer\")\n    if n == 0:\n        return 0\n    if n == 1:\n        return 1\n    \n    a,",
+          "usage": {
+            "completion_tokens": 128,
+            "prompt_tokens": 26,
+            "total_tokens": 154,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 449.945,
+            "prompt_per_token_ms": 17.305576923076924,
+            "prompt_per_second": 57.78484036937848,
+            "predicted_n": 128,
+            "predicted_ms": 1790.325,
+            "predicted_per_token_ms": 13.9869140625,
+            "predicted_per_second": 71.4953988800916,
+            "draft_n": 113,
+            "draft_n_accepted": 98
+          }
+        }
+      },
+      "peak_gpu": {
+        "0": {
+          "max_used_mb": 414,
+          "max_util_pct": 22,
+          "max_power_w": 44.87,
+          "max_fan_pct": 30
+        },
+        "1": {
+          "max_used_mb": 16485,
+          "max_util_pct": 89,
+          "max_power_w": 267.4,
+          "max_fan_pct": 100
+        }
+      },
+      "logs": ""
+    },
+    "262144": {
+      "context": 262144,
+      "mode": "baseline",
+      "timestamp": "2026-07-23T17:49:46.090651+00:00",
+      "passed": true,
+      "model_check": {
+        "model": "Ternary-Bonsai-27B-Q2_0.gguf",
+        "context": 262144
+      },
+      "gateway_status": {
+        "main": {
+          "alias": "ternary-bonsai-27b-dspark",
+          "base_url": "http://127.0.0.1:11606",
+          "port": 11606,
+          "state": "ready",
+          "runtime_profile": "test:ternary-auto-262k"
+        },
+        "aux": {
+          "alias": "auto:ternary-bonsai-27b-dspark",
+          "base_url": "http://127.0.0.1:11606",
+          "port": 11606,
+          "state": "ready",
+          "runtime_profile": "test:ternary-auto-262k",
+          "mode": "shared-main",
+          "shared_main_alias": "ternary-bonsai-27b-dspark"
+        },
+        "stall_timeout_s": 90.0,
+        "backend_timeout_s": 300.0,
+        "gateway": "turbofit-gateway/2.0"
+      },
+      "results": {
+        "main": {
+          "elapsed_s": 3.198,
+          "backend": "ternary-bonsai-27b-dspark",
+          "content": "```python\ndef fibonacci(n: int) -> int:\n    \"\"\"\n    Compute the nth Fibonacci number using an iterative approach.\n    \n    Args:\n        n: A non-negative integer representing the position in the Fibonacci sequence.\n        \n    Returns:\n        The nth Fibonacci number.\n        \n    Raises:\n        ValueError: If n is negative.\n    \"\"\"\n    if n < 0:\n        raise ValueError(\"n must be a non-negative integer\")\n    if n == 0:\n        return 0\n    if n == 1:\n        return 1\n    \n    a,",
+          "usage": {
+            "completion_tokens": 128,
+            "prompt_tokens": 26,
+            "total_tokens": 154,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 423.224,
+            "prompt_per_token_ms": 16.277846153846152,
+            "prompt_per_second": 61.433189044099585,
+            "predicted_n": 128,
+            "predicted_ms": 2663.364,
+            "predicted_per_token_ms": 20.80753125,
+            "predicted_per_second": 48.05952171764731
+          }
+        },
+        "aux": {
+          "elapsed_s": 3.352,
+          "backend": "auto:ternary-bonsai-27b-dspark",
+          "content": "```python\ndef fibonacci(n: int) -> int:\n    \"\"\"\n    Compute the nth Fibonacci number using an iterative approach.\n    \n    Args:\n        n: A non-negative integer representing the position in the Fibonacci sequence.\n        \n    Returns:\n        The nth Fibonacci number.\n        \n    Raises:\n        ValueError: If n is negative.\n    \"\"\"\n    if n < 0:\n        raise ValueError(\"n must be a non-negative integer\")\n    if n == 0:\n        return 0\n    if n == 1:\n        return 1\n    \n    a,",
+          "usage": {
+            "completion_tokens": 128,
+            "prompt_tokens": 26,
+            "total_tokens": 154,
+            "prompt_tokens_details": {
+              "cached_tokens": 22
+            }
+          },
+          "timings": {
+            "cache_n": 22,
+            "prompt_n": 4,
+            "prompt_ms": 135.85,
+            "prompt_per_token_ms": 33.9625,
+            "prompt_per_second": 29.44423997055576,
+            "predicted_n": 128,
+            "predicted_ms": 2744.083,
+            "predicted_per_token_ms": 21.4381484375,
+            "predicted_per_second": 46.645819386658495
+          }
+        }
+      },
+      "peak_gpu": {
+        "0": {
+          "max_used_mb": 555,
+          "max_util_pct": 41,
+          "max_power_w": 47.15,
+          "max_fan_pct": 30
+        },
+        "1": {
+          "max_used_mb": 12988,
+          "max_util_pct": 93,
+          "max_power_w": 293.51,
+          "max_fan_pct": 100
+        }
+      },
+      "logs": ""
+    }
+  }
+}

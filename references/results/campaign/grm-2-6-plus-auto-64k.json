@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "row": {
+    "id": "grm-2-6-plus-auto-64k",
+    "main": "GRM 2.6 Plus",
+    "aux": "auto",
+    "context": 65536,
+    "status": "pending",
+    "method_priority": [
+      "dspark",
+      "mtp",
+      "nextn"
+    ]
+  },
+  "profile_name": "grm-2-6-plus-auto-64k",
+  "components": [
+    {
+      "role": "main",
+      "family": "GRM 2.6 Plus",
+      "alias": "grm-2-6-plus",
+      "kind": "process",
+      "method": "mtp",
+      "gpu": "0",
+      "port": 11605,
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11605",
+        "-c",
+        "65536",
+        "-ngl",
+        "99",
+        "--fit",
+        "on",
+        "-fa",
+        "on",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--parallel",
+        "1",
+        "--spec-type",
+        "draft-mtp",
+        "--mmproj",
+        "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf"
+      ],
+      "image": "",
+      "environment": {},
+      "mounts": []
+    }
+  ],
+  "checks": {
+    "main": {
+      "context": 65536,
+      "model": "grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf",
+      "health": {
+        "status": "ok"
+      }
+    }
+  },
+  "route": {
+    "main": "grm-2-6-plus",
+    "aux": "auto:grm-2-6-plus",
+    "status": {
+      "main": {
+        "alias": "grm-2-6-plus",
+        "base_url": "http://127.0.0.1:11605",
+        "port": 11605,
+        "state": "ready",
+        "runtime_profile": "campaign:grm-2-6-plus-auto-64k"
+      },
+      "aux": {
+        "alias": "auto:grm-2-6-plus",
+        "base_url": "http://127.0.0.1:11605",
+        "port": 11605,
+        "state": "ready",
+        "runtime_profile": "campaign:grm-2-6-plus-auto-64k",
+        "mode": "shared-main",
+        "shared_main_alias": "grm-2-6-plus"
+      },
+      "stall_timeout_s": 90.0,
+      "backend_timeout_s": 300.0,
+      "gateway": "turbofit-gateway/2.0"
+    }
+  },
+  "results": {
+    "main": {
+      "backend": "grm-2-6-plus",
+      "content": "```python\nfrom typing import List, TypeVar, Callable, Optional\n\nT = TypeVar('T')\n\n\ndef merge_sort(\n    arr: List[T],\n    key: Optional[Callable[[T], object]] = None,\n    reverse: bool = False\n) -> List[T]:\n    \"\"\"\n    Sort a list using the merge sort algorithm.\n\n    Args:\n        arr: The list to sort.\n        key: An optional function to extract a comparison key from each element.\n        reverse: If True, sort in descending order.\n\n    Returns:\n        A new sorted list.\n    \"\"\"\n    if len(arr) <= 1:\n        return list(arr)\n\n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid], key, reverse)\n    right = merge_sort(arr[mid:], key, reverse)\n\n    return merge(left, right, key, reverse)\n\n\ndef merge(\n    left: List[T],\n    right: List[T],\n    key: Optional[Callable[[T], object]] = None,\n    reverse: bool = False\n) -> List[T]:\n    \"\"\"\n    Merge two sorted lists into one sorted list.",
+      "usage": {
+        "completion_tokens": 256,
+        "prompt_tokens": 26,
+        "total_tokens": 282,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 26,
+        "prompt_ms": 286.803,
+        "prompt_per_token_ms": 11.030884615384615,
+        "prompt_per_second": 90.65456079608651,
+        "predicted_n": 256,
+        "predicted_ms": 4440.432,
+        "predicted_per_token_ms": 17.3454375,
+        "predicted_per_second": 57.65204826917741,
+        "draft_n": 221,
+        "draft_n_accepted": 181
+      }
+    },
+    "aux": {
+      "backend": "auto:grm-2-6-plus",
+      "content": "```python\nfrom typing import List, TypeVar, Callable, Optional\n\nT = TypeVar('T')\n\n\ndef merge_sort(\n    arr: List[T],\n    key: Optional[Callable[[T], object]] = None,\n    reverse: bool = False\n) -> List[T]:\n    \"\"\"\n    Sort a list using the merge sort algorithm.\n\n    Args:\n        arr: The list to sort.\n        key: An optional function to extract a comparison key from each element.\n        reverse: If True, sort in descending order.\n\n    Returns:\n        A new sorted list.\n    \"\"\"\n    if len(arr) <= 1:\n        return list(arr)\n\n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid], key, reverse)\n    right = merge_sort(arr[mid:], key, reverse)\n\n    return merge(left, right, key, reverse)\n\n\ndef merge(\n    left: List[T],\n    right: List[T],\n    key: Optional[Callable[[T], object]] = None,\n    reverse: bool = False\n) -> List[T]:\n    \"\"\"\n    Merge two sorted lists into one sorted list.",
+      "usage": {
+        "completion_tokens": 256,
+        "prompt_tokens": 26,
+        "total_tokens": 282,
+        "prompt_tokens_details": {
+          "cached_tokens": 22
+        }
+      },
+      "timings": {
+        "cache_n": 22,
+        "prompt_n": 4,
+        "prompt_ms": 88.537,
+        "prompt_per_token_ms": 22.13425,
+        "prompt_per_second": 45.178851779482024,
+        "predicted_n": 256,
+        "predicted_ms": 4351.199,
+        "predicted_per_token_ms": 16.99687109375,
+        "predicted_per_second": 58.83435807004001,
+        "draft_n": 221,
+        "draft_n_accepted": 181
+      }
+    }
+  },
+  "gpu_peak_mb": {
+    "0": 19762,
+    "1": 57
+  },
+  "runtime_string": "turbofit-runtime use grm-2-6-plus-auto-64k"
+}

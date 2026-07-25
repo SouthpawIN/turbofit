@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -99,6 +100,11 @@ def test_compile_measured_kv_override_in_bytes_per_token(tmp_path: Path) -> None
     assert manifest["hybrid_kv_ratio"] == 0.25
     assert manifest["kv_bytes_per_token"] == 13_824.0
     assert manifest["auto_place"] is True
+
+    one_m = TurbohaulCompiler().compile_component(
+        replace(component, model_tag="hybrid-1m", context=1_048_576)
+    ).manifest
+    assert one_m["llama_server_flags"]["no_kv_offload"] is True
 
 
 def test_dspark_is_rejected_until_turbohaul_allowlist_supports_it(tmp_path: Path) -> None:

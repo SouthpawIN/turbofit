@@ -110,6 +110,11 @@ class TurbohaulCompiler:
         }
         if component.method == "mtp":
             flags["spec_type"] = "draft-mtp"
+        if component.context >= 1_048_576:
+            # 1M q4 KV is ~18 GiB by itself on these promoted GRM/Carwin
+            # profiles. Keep model weights on GPU and place KV in abundant host
+            # RAM; Turbohaul independently gates both VRAM and host-RAM fit.
+            flags["no_kv_offload"] = True
 
         manifest = {
             "model_tag": component.model_tag,

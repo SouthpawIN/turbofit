@@ -1,0 +1,33 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 45f668d..7729be0 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -1039,16 +1039,19 @@ private:
+                     }
+                 }
+
+-                // dspark stages all context rows since its cache position PLUS a
+-                // full block in ONE batch -- worst case ctx_len == n_ctx right
+-                // after begin() (e.g. a follow-up request with a long history).
+-                // If the drafter's batch cannot fit ctx_len + block_size, the
+-                // round is skipped ("round needs N tokens > n_batch") and
+-                // speculation silently degrades to plain AR.
+-                const uint32_t n_batch_dspark = cparams.n_ctx + (block_size > 0 ? block_size : 64);
++                // Current Bonsai DSpark checkpoints are trained for 4096 tokens.
++                // Reserving target_ctx + block for a 64K-262K server allocates a
++                // 16-64 GB draft compute buffer and can silently disable DSpark on
++                // commodity GPUs. Cap staging at the checkpoint's trained window:
++                // DSpark remains active for prompts within 4K, and the existing
++                // "round needs N tokens > n_batch" guard losslessly falls back to
++                // target-only autoregressive decoding beyond that window.
++                constexpr uint32_t dspark_stage_cap = 4096;
++                const uint32_t n_batch_dspark = std::min(cparams.n_ctx, dspark_stage_cap)
++                                                + (block_size > 0 ? block_size : 64);
+                 if (cparams.n_batch < n_batch_dspark) {
+-                    SRV_INF("draft-dspark: raising draft ctx n_batch %u -> %u (full-context staging + block)\n",
+-                            cparams.n_batch, n_batch_dspark);
++                    SRV_INF("draft-dspark: raising draft ctx n_batch %u -> %u (trained-window staging + block, server ctx=%u)\n",
++                            cparams.n_batch, n_batch_dspark, cparams.n_ctx);
+                     cparams.n_batch = n_batch_dspark;
+                 }
+                 if (cparams.n_ubatch < cparams.n_batch) {

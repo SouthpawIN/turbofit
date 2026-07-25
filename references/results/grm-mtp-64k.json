@@ -1,0 +1,39 @@
+{
+  "elapsed_s": 5.73249363899231,
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 37,
+    "prompt_ms": 358.621,
+    "prompt_per_token_ms": 9.692459459459458,
+    "prompt_per_second": 103.17298763876072,
+    "predicted_n": 256,
+    "predicted_ms": 5325.284,
+    "predicted_per_token_ms": 20.801890625,
+    "predicted_per_second": 48.07255350137195,
+    "draft_n": 266,
+    "draft_n_accepted": 166
+  },
+  "usage": {
+    "completion_tokens": 256,
+    "prompt_tokens": 37,
+    "total_tokens": 293,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    }
+  },
+  "peak_gpu": {
+    "0": {
+      "max_used_mb": 11097,
+      "max_util_pct": 0,
+      "max_power_w": 39.88,
+      "max_fan_pct": 34
+    },
+    "1": {
+      "max_used_mb": 19361,
+      "max_util_pct": 95,
+      "max_power_w": 336.13,
+      "max_fan_pct": 100
+    }
+  },
+  "content": "```python\n\"\"\"\nMerge Sort Implementation\n\nThis module provides a detailed implementation of the merge sort algorithm,\na divide-and-conquer sorting algorithm that guarantees O(n log n) time\ncomplexity in all cases.\n\nComplexity Analysis:\n- Time Complexity:\n  - Best Case:    O(n log n) - The algorithm always divides the array and\n    merges, regardless of initial order.\n  - Average Case: O(n log n) - Consistent performance due to balanced\n    division.\n  - Worst Case:   O(n log n) - Even with reverse-sorted input, the divide\n    and merge steps remain the same.\n- Space Complexity: O(n) - Requires auxiliary space for the temporary arrays\n  used during merging. This is the primary trade-off of merge sort compared\n  to in-place algorithms like quicksort.\n- Stability: Stable - Equal elements maintain their relative order from the\n  input, which is guaranteed by the merge step's tie-breaking rule.\n- Comparison Count: Approximately n log2(n) comparisons in the average case.\n\nDesign Notes:\n1. The algorithm follows the classic divide-and-conquer paradigm: recursively\n   split the list into halves until single-element sublists"
+}

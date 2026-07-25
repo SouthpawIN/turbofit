@@ -1,0 +1,77 @@
+{
+  "profiles": {
+    "carwin-nano-1-bit-bonsai-262k": {
+      "local-262144": {
+        "aux": {
+          "expected_vram_mb": 11163,
+          "model_tag": "carwin-nano-1-bit-bonsai-262k-aux"
+        },
+        "main": {
+          "expected_vram_mb": 15284,
+          "model_tag": "carwin-nano-1-bit-bonsai-262k-main"
+        }
+      }
+    },
+    "carwin-nano-ternary-bonsai-262k": {
+      "local-262144": {
+        "aux": {
+          "expected_vram_mb": 14503,
+          "model_tag": "carwin-nano-ternary-bonsai-262k-aux"
+        },
+        "main": {
+          "expected_vram_mb": 15284,
+          "model_tag": "carwin-nano-ternary-bonsai-262k-main"
+        }
+      }
+    },
+    "grm-2-6-plus-auto-128k": {
+      "local-131072": {
+        "main": {
+          "expected_vram_mb": 21554,
+          "model_tag": "grm-2-6-plus-auto-128k-main"
+        }
+      }
+    },
+    "grm-2-6-plus-auto-64k": {
+      "local-65536": {
+        "main": {
+          "expected_vram_mb": 19762,
+          "model_tag": "grm-2-6-plus-auto-64k-main"
+        }
+      }
+    },
+    "grm-2-6-plus-carwin-nano-1m": {
+      "local-1048576": {
+        "aux": {
+          "expected_vram_mb": 23028,
+          "model_tag": "grm-2-6-plus-carwin-nano-1m-aux"
+        },
+        "main": {
+          "expected_vram_mb": 22768,
+          "model_tag": "grm-2-6-plus-carwin-nano-1m-main"
+        }
+      }
+    },
+    "hardware-24gb": {
+      "local-131072": {
+        "main": {
+          "expected_vram_mb": 21554,
+          "model_tag": "grm-2-6-plus-auto-128k-main"
+        }
+      }
+    },
+    "hardware-48gb": {
+      "local-131072": {
+        "aux": {
+          "expected_vram_mb": 11163,
+          "model_tag": "carwin-nano-1-bit-bonsai-262k-aux"
+        },
+        "main": {
+          "expected_vram_mb": 21554,
+          "model_tag": "hardware-48gb-grm-128k-main"
+        }
+      }
+    }
+  },
+  "schema": "turbofit.runtime-resolutions/v1"
+}

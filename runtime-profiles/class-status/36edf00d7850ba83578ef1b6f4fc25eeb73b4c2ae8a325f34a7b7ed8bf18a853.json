@@ -1,0 +1,22 @@
+{
+  "components": [
+    {
+      "evidence": "sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba",
+      "gpu": 1,
+      "profile": "grm-2-6-plus-auto-128k",
+      "required_mb": 21554,
+      "role": "main"
+    },
+    {
+      "evidence": "sha256:2bc9604933cd0d43fe44b243523e776ee497f8924c2e762055e767384f2d86b3",
+      "gpu": 0,
+      "profile": "carwin-nano-1-bit-bonsai-262k",
+      "required_mb": 11163,
+      "role": "aux"
+    }
+  ],
+  "composition_invariant": "Turbohaul split_mode=none isolates each resident to a distinct 24 GiB card; per-component measured peaks plus 512 MiB/card expansion margin fit.",
+  "profile_id": "hardware-48gb",
+  "schema": "turbofit.class-evidence/v1",
+  "status": "composed-measured-isolated-components"
+}

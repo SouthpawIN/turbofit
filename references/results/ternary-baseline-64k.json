@@ -1,0 +1,37 @@
+{
+  "elapsed_s": 5.575,
+  "content": "```python\n\"\"\"\nMerge Sort Implementation in Python\n\nThis module provides a detailed implementation of the merge sort algorithm\nwith type hints, comprehensive docstrings, complexity analysis, and design notes.\n\nMerge sort is a divide-and-conquer algorithm that works by recursively\nsplitting the input list into halves until each sublist contains a single\nelement, then merging those sublists back together in sorted order.\n\nTime Complexity:\n    - Best case:  O(n log n)\n    - Average case: O(n log n)\n    - Worst case:  O(n log n)\n\nSpace Complexity:\n    - O(n) auxiliary space for the temporary arrays used during merging.\n\nStability:\n    - Merge sort is a stable sort, meaning that equal elements maintain their\n      relative order from the original input.\n\"\"\"\n\nfrom __future__ import annotations\nfrom typing import TypeVar, Generic, List, Callable, Optional\n\nT = TypeVar(\"T\")\n\n\ndef merge_sort(\n    arr: List[T],\n    key: Optional[Callable[[T], object]] = None,\n    reverse: bool = False,\n) -> List[T]:\n    \"\"\"\n    Sort a list using the merge sort algorithm.\n\n   ",
+  "usage": {
+    "completion_tokens": 256,
+    "prompt_tokens": 37,
+    "total_tokens": 293,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    }
+  },
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 37,
+    "prompt_ms": 402.604,
+    "prompt_per_token_ms": 10.88118918918919,
+    "prompt_per_second": 91.90171980407547,
+    "predicted_n": 256,
+    "predicted_ms": 5053.524,
+    "predicted_per_token_ms": 19.740328125,
+    "predicted_per_second": 50.657719247004664
+  },
+  "peak_gpu": {
+    "0": {
+      "max_util_pct": 0,
+      "max_power_w": 38.6,
+      "max_fan_pct": 30,
+      "max_used_mb": 11093
+    },
+    "1": {
+      "max_util_pct": 93,
+      "max_power_w": 315.77,
+      "max_fan_pct": 100,
+      "max_used_mb": 8543
+    }
+  }
+}

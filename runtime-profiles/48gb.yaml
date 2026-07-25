@@ -1,0 +1,36 @@
+schema: turbofit.runtime/v1
+id: hardware-48gb
+revision: 1
+hardware:
+  class_vram_gb: 48
+  min_devices: 2
+  total_vram_gb: 48
+  per_device_min_gb: 24
+  accelerator: nvidia-cuda
+  topology: 2x24
+policy:
+  recommendation: measured-winner
+  external_gpu_priority: absolute
+  contraction_dwell_s: 5
+  expansion_dwell_s: 120
+  expansion_margin_gb_per_card: 0.5
+  cooldown_s: 30
+  flap_failure_limit: 3
+  flap_window_s: 300
+roles:
+  main: active:main
+  auxiliary: active:aux
+  fallback: api:auto
+rungs:
+- aux_manifest: sha256:e0dc513811917fd3f32b2e630b19ca50c2ff6f849a9d7e7b752cd28583633545
+  aux_mode: dedicated
+  context: 131072
+  evidence: sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853
+  id: local-131072
+  main_manifest: sha256:6444231d3d4b27f3e656dd865eacf5911aa0251bc0bce2b61b8f08a2827f5fa5
+- aux_api_policy: api:auto
+  aux_mode: api
+  context: 131072
+  evidence: sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853
+  id: api
+  main_api_policy: api:auto

@@ -85,6 +85,17 @@ class CampaignBackend:
         self._monitor_thread = threading.Thread(target=monitor, daemon=True)
         self._monitor_thread.start()
 
+    @staticmethod
+    def process_environment(command: tuple[str, ...], *, gpu: str, base: dict[str, str] | None = None) -> dict[str, str]:
+        env = dict(os.environ if base is None else base)
+        env["CUDA_VISIBLE_DEVICES"] = gpu
+        if command:
+            binary_dir = Path(command[0]).resolve().parent
+            if (binary_dir / "libllama.so.0").exists():
+                existing = env.get("LD_LIBRARY_PATH", "")
+                env["LD_LIBRARY_PATH"] = str(binary_dir) + (f":{existing}" if existing else "")
+        return env
+
     def start(self, component: ResolvedComponent) -> dict[str, Any]:
         if self._port_open(component.port):
             raise RuntimeError(f"port {component.port} is occupied before {component.role} launch")
@@ -93,7 +104,8 @@ class CampaignBackend:
         if component.kind == "docker":
             name = f"turbofit-campaign-{component.role}"
             subprocess.run(["docker", "rm", "-f", name], capture_output=True, text=True)
-            command = ["docker", "run", "-d", "--name", name, "--gpus", f"device={component.gpu}", "--network", "host"]
+            gpu_request = f'"device={component.gpu}"' if "," in component.gpu else f"device={component.gpu}"
+            command = ["docker", "run", "-d", "--name", name, "--gpus", gpu_request, "--network", "host"]
             for key, value in (component.environment or {}).items():
                 command.extend(["-e", f"{key}={value}"])
             for mount in component.mounts:
@@ -102,6 +114,7 @@ class CampaignBackend:
                     raise FileNotFoundError(source)
                 command.extend(["-v", mount])
             command.append(component.image)
+            command.extend(component.command)
             result = subprocess.run(command, capture_output=True, text=True)
             if result.returncode:
                 raise RuntimeError(f"docker launch failed for {component.role}: {result.stderr.strip()}")
@@ -112,7 +125,7 @@ class CampaignBackend:
                 raise FileNotFoundError(model)
             log_path = self.result_dir / f"campaign-{component.role}-{component.port}.log"
             log = log_path.open("w")
-            env = os.environ.copy(); env["CUDA_VISIBLE_DEVICES"] = component.gpu
+            env = self.process_environment(component.command, gpu=component.gpu)
             process = subprocess.Popen(component.command, env=env, stdout=log, stderr=subprocess.STDOUT, text=True, start_new_session=True)
             log.close()
             handle = {"kind": "process", "pid": process.pid, "process": process, "port": component.port, "log": str(log_path)}

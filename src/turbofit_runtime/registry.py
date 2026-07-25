@@ -46,7 +46,10 @@ class ProfileRegistry:
             "role": component.role,
             "kind": component.kind,
             "name": f"turbofit-runtime-{component.role}",
-            "gpu": f"device={component.gpu}" if component.kind == "docker" else component.gpu,
+            "gpu": (
+                (f'"device={component.gpu}"' if "," in component.gpu else f"device={component.gpu}")
+                if component.kind == "docker" else component.gpu
+            ),
             "port": component.port,
             "method": component.method,
         }
@@ -56,6 +59,7 @@ class ProfileRegistry:
                 "image": component.image,
                 "mounts": list(component.mounts),
                 "environment": component.environment or {},
+                "args": list(component.command),
             }
         return {**common, "command": list(component.command)}
 
@@ -68,10 +72,19 @@ class ProfileRegistry:
         expected = result.gpu_peak_mb.get(gpu)
         if expected is None:
             expected = max(result.gpu_peak_mb.values())
+        model_path = Path(component.model_path)
+        measured_budget_bytes = expected * 1024 * 1024
+        kv_budget_bytes = max(0, measured_budget_bytes - model_path.stat().st_size)
+        # Turbohaul's generic GGUF attention parser can conservatively overstate
+        # long-context KV by tens of GiB for architectures with bounded/SWA KV.
+        # A promoted profile already carries measured peak evidence, so compile
+        # the implied bytes/token override rather than defeating the manager's
+        # cross-resident safety gate with a fictional CPU-offload flag.
+        kv_bytes_per_token = max(1024.0, kv_budget_bytes / row.context)
         return ComponentSpec(
             role=component.role,
             model_tag=f"{row.id}-{component.role}"[:64],
-            model_path=Path(component.model_path),
+            model_path=model_path,
             projector_path=Path(component.projector_path) if component.projector_path else None,
             context=row.context,
             expected_vram_mb=expected,
@@ -81,6 +94,7 @@ class ProfileRegistry:
             cache_type_v="q4_0",
             auto_place_eligible=False,
             vision=bool(component.projector_path),
+            kv_bytes_per_token=kv_bytes_per_token,
         )
 
     def register(self, item: MatrixRow, result: BenchmarkResult, evidence_path: Path) -> None:
@@ -98,6 +112,8 @@ class ProfileRegistry:
         backend = "turbohaul"
         compiled_payloads: list[tuple[Path, dict]] = []
         try:
+            if any("," in component.gpu or "--tensor-split" in component.command for component in recipe.components):
+                raise UnsupportedTurbohaulMethod("multi-GPU layer-split profiles require the hybrid launcher")
             for component in recipe.components:
                 compiled = self.compiler.compile_component(self._component_spec(item, result, component))
                 manifest_path = self.turbohaul_dir / f"{compiled.manifest['model_tag']}.json"

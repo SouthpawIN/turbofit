@@ -1,0 +1,176 @@
+{
+  "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87": {
+    "profiles": [
+      "bonsai-1bit-auto-262k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/1-bit-bonsai-auto-262k.md"
+  },
+  "sha256:16174ad7d42df6ef6d9c51c4cafed2c47a7ab3b3ebc313b82b3b874b278afe46": {
+    "profiles": [
+      "ternary-auto-64k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/ternary-bonsai-auto-64k.md"
+  },
+  "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5": {
+    "profiles": [
+      "bonsai-1bit-auto-128k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/1-bit-bonsai-auto-128k.md"
+  },
+  "sha256:195ae48d8f0a1c688f318f62c4942684ee49844d58d2739b25949a90c3cef1fe": {
+    "profiles": [
+      "carwin-nano-ternary-bonsai-262k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/carwin-nano-ternary-bonsai-262k.md"
+  },
+  "sha256:1b8d9b79e98464f8c35fa8d677bf108984671ead78d4a87a736a6d6832973b94": {
+    "profiles": [
+      "carwin-nano-1-bit-bonsai-128k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/carwin-nano-1-bit-bonsai-128k.md"
+  },
+  "sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba": {
+    "profiles": [
+      "grm-2-6-plus-auto-128k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/grm-2-6-plus-auto-128k.md"
+  },
+  "sha256:2670a79c088c1d52ad61ed594143dbda5039fee01b627c30666644d592fdcea2": {
+    "profiles": [
+      "grm-carwin-64k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/grm-26-plus-carwin-nano-64k.md"
+  },
+  "sha256:27725b7a9af7e6fbbe343492beaad69b8494499e2a1638827eeab832e73e52fd": {
+    "profiles": [
+      "grm-2-6-plus-ternary-bonsai-128k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/grm-2-6-plus-ternary-bonsai-128k.md"
+  },
+  "sha256:2bc9604933cd0d43fe44b243523e776ee497f8924c2e762055e767384f2d86b3": {
+    "profiles": [
+      "carwin-nano-1-bit-bonsai-262k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/carwin-nano-1-bit-bonsai-262k.md"
+  },
+  "sha256:2ea4d2db10144adacfa78852d3cf042c1fe9bc7d57fdc72cc7216190829a4c8a": {
+    "profiles": [
+      "grm-2-6-plus-auto-64k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/grm-2-6-plus-auto-64k.md"
+  },
+  "sha256:3405a635637ed280f3d808aef4dcd92811b6e74020bf5422676c92f54d41f967": {
+    "profiles": [
+      "grm-carwin-128k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/grm-26-plus-carwin-nano-128k.md"
+  },
+  "sha256:42cf2ca2ce3fef57961af3460a822e80d3efa34d112b764e4acfabc5088b49ba": {
+    "profiles": [
+      "grm-2-6-plus-1-bit-bonsai-64k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/grm-2-6-plus-1-bit-bonsai-64k.md"
+  },
+  "sha256:5243248ada212ac5d2ebb8d9fe8f1487ad4febcbd412529114d2309ee1069871": {
+    "profiles": [
+      "carwin-auto-128k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/carwin-nano-auto-128k.md"
+  },
+  "sha256:556e0110cdb917c3d99569370eca63b8d5c46e70ca323a66a2628cd4b9d87d84": {
+    "profiles": [
+      "carwin-nano-ternary-bonsai-128k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/carwin-nano-ternary-bonsai-128k.md"
+  },
+  "sha256:5f19da9a1fcb233cbf1b53165503627f435c6828af5960efc06022c8d5a25261": {
+    "profiles": [
+      "ternary-auto-262k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/ternary-bonsai-auto-262k.md"
+  },
+  "sha256:6269b618d301aa616dbb81fcb67e71ae7684d4ced5dd8d0117fe146128ade10b": {
+    "profiles": [
+      "carwin-nano-1-bit-bonsai-64k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/carwin-nano-1-bit-bonsai-64k.md"
+  },
+  "sha256:68beb95721ec4587cd0c495aa819b3ecbbfd21743102a817bd28d5033d1dc6e4": {
+    "profiles": [
+      "carwin-nano-ternary-bonsai-64k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/carwin-nano-ternary-bonsai-64k.md"
+  },
+  "sha256:703a81ad749406f3f2aa071163de33cd0179d3c8e07a4b98bac029a9b4a17c7b": {
+    "profiles": [
+      "grm-2-6-plus-1-bit-bonsai-128k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/grm-2-6-plus-1-bit-bonsai-128k.md"
+  },
+  "sha256:72aec03e1b2335ea48648722c0b40126add72a2964c5f43909fe6b252a0cbac6": {
+    "profiles": [
+      "ternary-1bit-262k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/ternary-bonsai-1-bit-bonsai-262k.md"
+  },
+  "sha256:82136ebb1d304cf9d8510e7e5456e55c9dc6f437f436bd22e380a8e781580de1": {
+    "profiles": [
+      "grm-2-6-plus-carwin-nano-1m"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/grm-2-6-plus-carwin-nano-1m.md"
+  },
+  "sha256:a9185f6d1f290992200b9575508909457013ee72068aa0b82feb5192c54b75da": {
+    "profiles": [
+      "grm-2-6-plus-ternary-bonsai-64k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/grm-2-6-plus-ternary-bonsai-64k.md"
+  },
+  "sha256:ca2b85b211dabbee98ecbcd9dd1a086a89b68165ec87697e3e4b612e332898b4": {
+    "profiles": [
+      "ternary-1bit-128k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/ternary-bonsai-1-bit-bonsai-128k.md"
+  },
+  "sha256:cc20364704f533b836e0a90e49728d19a2addab7702e39fcbe957507097920d5": {
+    "profiles": [
+      "ternary-auto-128k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/ternary-bonsai-auto-128k.md"
+  },
+  "sha256:d3974ebea50a56e2f2dfc9858bc8ad9168fe4070b6ce6ca9aebd772751bf8956": {
+    "profiles": [
+      "carwin-auto-64k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/carwin-nano-auto-64k.md"
+  },
+  "sha256:d520bd38865b6bd4834f9746ea9a813c797cee96f257a85dacd038a02e7b31b6": {
+    "profiles": [
+      "grm-2-6-plus-carwin-nano-262k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/grm-2-6-plus-carwin-nano-262k.md"
+  },
+  "sha256:d87462ddd9fae50e078f8245c7c3d15f8851296b0ce4b9ad7f12762ffb6f521d": {
+    "profiles": [
+      "ternary-1bit-64k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/ternary-bonsai-1-bit-bonsai-64k.md"
+  },
+  "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591": {
+    "profiles": [
+      "bonsai-1bit-auto-64k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/1-bit-bonsai-auto-64k.md"
+  },
+  "sha256:e4ad9cac67707da51d60d8d10d1348c58660976f11081308ad132054b82ebe3b": {
+    "profiles": [
+      "1-bit-bonsai-auto-1m"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/1-bit-bonsai-auto-1m.md"
+  },
+  "sha256:f892742b4ce2c00838a7fbf0d7da2598008f8069886c4613e37a0b12b4b019c0": {
+    "profiles": [
+      "carwin-auto-262k"
+    ],
+    "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/carwin-nano-auto-262k.md"
+  }
+}

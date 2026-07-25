@@ -1,0 +1,664 @@
+{
+  "schema_version": 1,
+  "timestamp": "2026-07-24T00:17:27.509255+00:00",
+  "pair": "GRM 2.6 Plus:Carwin Nano",
+  "context": 262144,
+  "total_main_layers": 65,
+  "runs": [
+    {
+      "offload_layers": 7,
+      "total_layers": 65,
+      "tensor_split": "7,58",
+      "passed": true,
+      "commands": {
+        "main": [
+          "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+          "-m",
+          "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf",
+          "--port",
+          "11605",
+          "--host",
+          "127.0.0.1",
+          "-c",
+          "262144",
+          "-ngl",
+          "99",
+          "--fit",
+          "off",
+          "-fa",
+          "on",
+          "--cache-type-k",
+          "q4_0",
+          "--cache-type-v",
+          "q4_0",
+          "--parallel",
+          "1",
+          "--spec-type",
+          "draft-mtp",
+          "--split-mode",
+          "layer",
+          "--tensor-split",
+          "7,58",
+          "--main-gpu",
+          "1",
+          "--mmproj",
+          "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf"
+        ],
+        "aux": [
+          "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+          "-m",
+          "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+          "--port",
+          "11607",
+          "--host",
+          "127.0.0.1",
+          "-c",
+          "262144",
+          "-ngl",
+          "99",
+          "--fit",
+          "off",
+          "-fa",
+          "on",
+          "--cache-type-k",
+          "q4_0",
+          "--cache-type-v",
+          "q4_0",
+          "--parallel",
+          "1",
+          "--spec-type",
+          "draft-mtp"
+        ]
+      },
+      "aux_context": 262144,
+      "main_context": 262144,
+      "results": {
+        "aux": {
+          "code": 200,
+          "elapsed_s": 2.082,
+          "content": "```python\nfrom typing import List, Optional\n\ndef merge_sort(arr: List[int]) -> List[int]:\n    \"\"\"Sort a list using merge sort algorithm.\n    \n    Args:\n        arr: List of integers to sort\n        \n    Returns:\n        New sorted list (original list is not modified)\n    \"\"\"\n    if len(arr) <= 1:\n        return arr.copy()\n    \n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    \n    return merge(left, right)\n\ndef merge(left: List[int], right: List[int]) -> List[int]:\n    \"\"\"Merge two sorted lists into one sorted list.\n    \n    Args:\n        left: First sorted list\n        right: Second sorted list\n        \n    Returns:\n        Merged sorted list\n    \"\"\"\n    result = []\n    i = j = 0\n    \n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            result.append(left[i])\n            i += 1\n        else:\n            result.append(right[j])\n            j += 1\n    \n    result.extend(left[i:])",
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 291.391,
+            "prompt_per_token_ms": 11.207346153846155,
+            "prompt_per_second": 89.22718958375516,
+            "predicted_n": 256,
+            "predicted_ms": 1718.299,
+            "predicted_per_token_ms": 6.71210546875,
+            "predicted_per_second": 148.9845480908736,
+            "draft_n": 219,
+            "draft_n_accepted": 181
+          },
+          "error": null
+        },
+        "main": {
+          "code": 200,
+          "elapsed_s": 4.714,
+          "content": "```python\nfrom typing import List, TypeVar, Callable\n\nT = TypeVar('T')\n\n\ndef merge_sort(\n    arr: List[T],\n    key: Callable[[T], object] = lambda x: x,\n    reverse: bool = False,\n) -> List[T]:\n    \"\"\"\n    Sort a list using the merge sort algorithm.\n\n    Args:\n        arr: The list to sort.\n        key: A function that extracts a comparison key from each element.\n        reverse: If True, sort in descending order.\n\n    Returns:\n        A new sorted list.\n    \"\"\"\n    n = len(arr)\n    if n <= 1:\n        return list(arr)\n\n    mid = n // 2\n    left = merge_sort(arr[:mid], key, reverse)\n    right = merge_sort(arr[mid:], key, reverse)\n\n    return _merge(left, right, key, reverse)\n\n\ndef _merge(\n    left: List[T],\n    right: List[T],\n    key: Callable[[T], object],\n    reverse: bool,\n) -> List[T]:\n    \"\"\"Merge two sorted lists into one sorted list.\"\"\"\n    result:",
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 296.922,
+            "prompt_per_token_ms": 11.420076923076923,
+            "prompt_per_second": 87.56508443294871,
+            "predicted_n": 256,
+            "predicted_ms": 4356.547,
+            "predicted_per_token_ms": 17.01776171875,
+            "predicted_per_second": 58.76213432335288,
+            "draft_n": 224,
+            "draft_n_accepted": 180
+          },
+          "error": null
+        }
+      },
+      "peak_gpu": {
+        "0": {
+          "max_used_mb": 21817,
+          "min_free_mb": 2300,
+          "max_util_pct": 83,
+          "max_power_w": 331.98
+        },
+        "1": {
+          "max_used_mb": 22814,
+          "min_free_mb": 1311,
+          "max_util_pct": 88,
+          "max_power_w": 318.23
+        }
+      },
+      "min_free_mb": 1311,
+      "main_tps": 58.76213432335288,
+      "aux_tps": 148.9845480908736,
+      "gpu_clear_after": {
+        "0": 418,
+        "1": 57
+      },
+      "main_log_tail": "0.00.093.208 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)\n0.00.562.069 I srv    load_model: loading model '/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf'\n0.06.545.184 W load_hparams: Qwen-VL models require at minimum 1024 image tokens to function correctly on grounding tasks\n0.06.545.188 W load_hparams: if you encounter problems with accuracy, try adding --image-min-tokens 1024\n0.06.545.189 W load_hparams: more info: https://github.com/ggml-org/llama.cpp/issues/16842\n\n0.07.039.999 I srv    load_model: loaded multimodal model, '/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf'\n0.07.094.921 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 262144, kv_unified = 'false'\n0.08.119.151 I srv          init: chat template supports preserving reasoning, consider enabling it via --reasoning-preserve\n0.08.119.202 I srv  llama_server: model loaded\n0.08.119.209 I srv  llama_server: listening on http://127.0.0.1:11605\n0.08.928.841 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1\n0.08.929.087 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0\n0.12.230.472 I slot print_timing: id  0 | task 0 | n_decoded =    165, tg =  54.93 t/s, tg_3s =  54.92 t/s\n0.13.583.089 I slot print_timing: id  0 | task 0 | prompt eval time =     296.92 ms /    26 tokens (   11.42 ms per token,    87.57 tokens per second)\n0.13.583.098 I slot print_timing: id  0 | task 0 |        eval time =    4356.55 ms /   256 tokens (   17.02 ms per token,    58.76 tokens per second)\n0.13.583.099 I slot print_timing: id  0 | task 0 |       total time =    4653.47 ms /   282 tokens\n0.13.583.111 I slot print_timing: id  0 | task 0 |    graphs reused =         73\n0.13.583.118 I slot print_timing: id  0 | task 0 | draft acceptance = 0.80357 (  180 accepted /   224 generated), mean len =  3.40\n0.13.583.246 I slot      release: id  0 | task 0 | stop processing: n_tokens = 281, truncated = 0\n0.13.675.881 I srv    operator(): operator(): cleaning up before exit...",
+      "aux_log_tail": "0.00.112.023 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)\n0.00.354.481 I srv    load_model: loading model '/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf'\n0.04.198.062 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 262144, kv_unified = 'false'\n0.04.479.882 I srv          init: chat template supports preserving reasoning, consider enabling it via --reasoning-preserve\n0.04.479.952 I srv  llama_server: model loaded\n0.04.479.974 I srv  llama_server: listening on http://127.0.0.1:11607\n0.14.005.386 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1\n0.14.005.554 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0\n0.16.015.293 I slot print_timing: id  0 | task 0 | prompt eval time =     291.39 ms /    26 tokens (   11.21 ms per token,    89.23 tokens per second)\n0.16.015.300 I slot print_timing: id  0 | task 0 |        eval time =    1718.30 ms /   256 tokens (    6.71 ms per token,   148.98 tokens per second)\n0.16.015.301 I slot print_timing: id  0 | task 0 |       total time =    2009.69 ms /   282 tokens\n0.16.015.321 I slot print_timing: id  0 | task 0 |    graphs reused =         72\n0.16.015.326 I slot print_timing: id  0 | task 0 | draft acceptance = 0.82648 (  181 accepted /   219 generated), mean len =  3.48\n0.16.015.407 I slot      release: id  0 | task 0 | stop processing: n_tokens = 281, truncated = 0\n0.19.606.140 I srv    operator(): operator(): cleaning up before exit..."
+    },
+    {
+      "offload_layers": 8,
+      "total_layers": 65,
+      "tensor_split": "8,57",
+      "passed": true,
+      "commands": {
+        "main": [
+          "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+          "-m",
+          "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf",
+          "--port",
+          "11605",
+          "--host",
+          "127.0.0.1",
+          "-c",
+          "262144",
+          "-ngl",
+          "99",
+          "--fit",
+          "off",
+          "-fa",
+          "on",
+          "--cache-type-k",
+          "q4_0",
+          "--cache-type-v",
+          "q4_0",
+          "--parallel",
+          "1",
+          "--spec-type",
+          "draft-mtp",
+          "--split-mode",
+          "layer",
+          "--tensor-split",
+          "8,57",
+          "--main-gpu",
+          "1",
+          "--mmproj",
+          "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf"
+        ],
+        "aux": [
+          "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+          "-m",
+          "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+          "--port",
+          "11607",
+          "--host",
+          "127.0.0.1",
+          "-c",
+          "262144",
+          "-ngl",
+          "99",
+          "--fit",
+          "off",
+          "-fa",
+          "on",
+          "--cache-type-k",
+          "q4_0",
+          "--cache-type-v",
+          "q4_0",
+          "--parallel",
+          "1",
+          "--spec-type",
+          "draft-mtp"
+        ]
+      },
+      "aux_context": 262144,
+      "main_context": 262144,
+      "results": {
+        "aux": {
+          "code": 200,
+          "elapsed_s": 2.092,
+          "content": "```python\nfrom typing import List, Optional\n\ndef merge_sort(arr: List[int]) -> List[int]:\n    \"\"\"Sort a list using merge sort algorithm.\n    \n    Args:\n        arr: List of integers to sort\n        \n    Returns:\n        New sorted list (original list is not modified)\n    \"\"\"\n    if len(arr) <= 1:\n        return arr.copy()\n    \n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    \n    return merge(left, right)\n\ndef merge(left: List[int], right: List[int]) -> List[int]:\n    \"\"\"Merge two sorted lists into one sorted list.\n    \n    Args:\n        left: First sorted list\n        right: Second sorted list\n        \n    Returns:\n        Merged sorted list\n    \"\"\"\n    result = []\n    i = j = 0\n    \n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            result.append(left[i])\n            i += 1\n        else:\n            result.append(right[j])\n            j += 1\n    \n    result.extend(left[i:])",
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 290.425,
+            "prompt_per_token_ms": 11.170192307692307,
+            "prompt_per_second": 89.52397348713092,
+            "predicted_n": 256,
+            "predicted_ms": 1748.102,
+            "predicted_per_token_ms": 6.8285234375,
+            "predicted_per_second": 146.44454385384833,
+            "draft_n": 219,
+            "draft_n_accepted": 181
+          },
+          "error": null
+        },
+        "main": {
+          "code": 200,
+          "elapsed_s": 4.863,
+          "content": "```python\nfrom typing import List, TypeVar, Callable\n\nT = TypeVar('T')\n\n\ndef merge_sort(\n    arr: List[T],\n    key: Callable[[T], object] = lambda x: x,\n    reverse: bool = False,\n) -> List[T]:\n    \"\"\"\n    Sort a list using the merge sort algorithm.\n\n    Args:\n        arr: The list to sort.\n        key: A function that extracts a comparison key from each element.\n        reverse: If True, sort in descending order.\n\n    Returns:\n        A new sorted list.\n    \"\"\"\n    n = len(arr)\n    if n <= 1:\n        return list(arr)\n\n    mid = n // 2\n    left = merge_sort(arr[:mid], key, reverse)\n    right = merge_sort(arr[mid:], key, reverse)\n\n    return _merge(left, right, key, reverse)\n\n\ndef _merge(\n    left: List[T],\n    right: List[T],\n    key: Callable[[T], object],\n    reverse: bool,\n) -> List[T]:\n    \"\"\"Merge two sorted lists into one sorted list.\"\"\"\n    result:",
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 302.442,
+            "prompt_per_token_ms": 11.632384615384616,
+            "prompt_per_second": 85.96689613215096,
+            "predicted_n": 256,
+            "predicted_ms": 4506.423,
+            "predicted_per_token_ms": 17.60321484375,
+            "predicted_per_second": 56.80780521491214,
+            "draft_n": 224,
+            "draft_n_accepted": 180
+          },
+          "error": null
+        }
+      },
+      "peak_gpu": {
+        "0": {
+          "max_used_mb": 22035,
+          "min_free_mb": 2082,
+          "max_util_pct": 39,
+          "max_power_w": 329.86
+        },
+        "1": {
+          "max_used_mb": 22596,
+          "min_free_mb": 1529,
+          "max_util_pct": 90,
+          "max_power_w": 312.23
+        }
+      },
+      "min_free_mb": 1529,
+      "main_tps": 56.80780521491214,
+      "aux_tps": 146.44454385384833,
+      "gpu_clear_after": {
+        "0": 418,
+        "1": 57
+      },
+      "main_log_tail": "0.00.090.742 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)\n0.00.575.648 I srv    load_model: loading model '/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf'\n0.06.543.843 W load_hparams: Qwen-VL models require at minimum 1024 image tokens to function correctly on grounding tasks\n0.06.543.849 W load_hparams: if you encounter problems with accuracy, try adding --image-min-tokens 1024\n0.06.543.849 W load_hparams: more info: https://github.com/ggml-org/llama.cpp/issues/16842\n\n0.07.034.205 I srv    load_model: loaded multimodal model, '/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf'\n0.07.088.532 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 262144, kv_unified = 'false'\n0.08.105.731 I srv          init: chat template supports preserving reasoning, consider enabling it via --reasoning-preserve\n0.08.105.786 I srv  llama_server: model loaded\n0.08.105.793 I srv  llama_server: listening on http://127.0.0.1:11605\n0.08.912.705 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1\n0.08.912.955 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0\n0.12.219.062 I slot print_timing: id  0 | task 0 | n_decoded =    169, tg =  56.27 t/s, tg_3s =  56.27 t/s\n0.13.722.328 I slot print_timing: id  0 | task 0 | prompt eval time =     302.44 ms /    26 tokens (   11.63 ms per token,    85.97 tokens per second)\n0.13.722.336 I slot print_timing: id  0 | task 0 |        eval time =    4506.42 ms /   256 tokens (   17.60 ms per token,    56.81 tokens per second)\n0.13.722.337 I slot print_timing: id  0 | task 0 |       total time =    4808.86 ms /   282 tokens\n0.13.722.346 I slot print_timing: id  0 | task 0 |    graphs reused =         73\n0.13.722.351 I slot print_timing: id  0 | task 0 | draft acceptance = 0.80357 (  180 accepted /   224 generated), mean len =  3.40\n0.13.722.448 I slot      release: id  0 | task 0 | stop processing: n_tokens = 281, truncated = 0\n0.13.867.001 I srv    operator(): operator(): cleaning up before exit...",
+      "aux_log_tail": "0.00.084.508 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)\n0.00.326.906 I srv    load_model: loading model '/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf'\n0.04.124.281 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 262144, kv_unified = 'false'\n0.04.397.157 I srv          init: chat template supports preserving reasoning, consider enabling it via --reasoning-preserve\n0.04.397.203 I srv  llama_server: model loaded\n0.04.397.210 I srv  llama_server: listening on http://127.0.0.1:11607\n0.13.924.212 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1\n0.13.924.385 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0\n0.15.962.970 I slot print_timing: id  0 | task 0 | prompt eval time =     290.43 ms /    26 tokens (   11.17 ms per token,    89.52 tokens per second)\n0.15.962.977 I slot print_timing: id  0 | task 0 |        eval time =    1748.10 ms /   256 tokens (    6.83 ms per token,   146.44 tokens per second)\n0.15.962.978 I slot print_timing: id  0 | task 0 |       total time =    2038.53 ms /   282 tokens\n0.15.962.998 I slot print_timing: id  0 | task 0 |    graphs reused =         72\n0.15.963.003 I slot print_timing: id  0 | task 0 | draft acceptance = 0.82648 (  181 accepted /   219 generated), mean len =  3.48\n0.15.963.084 I slot      release: id  0 | task 0 | stop processing: n_tokens = 281, truncated = 0\n0.19.743.358 I srv    operator(): operator(): cleaning up before exit..."
+    },
+    {
+      "offload_layers": 7,
+      "total_layers": 65,
+      "tensor_split": "7,58",
+      "passed": true,
+      "commands": {
+        "main": [
+          "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+          "-m",
+          "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf",
+          "--port",
+          "11605",
+          "--host",
+          "127.0.0.1",
+          "-c",
+          "262144",
+          "-ngl",
+          "99",
+          "--fit",
+          "off",
+          "-fa",
+          "on",
+          "--cache-type-k",
+          "q4_0",
+          "--cache-type-v",
+          "q4_0",
+          "--parallel",
+          "1",
+          "--spec-type",
+          "draft-mtp",
+          "--split-mode",
+          "layer",
+          "--tensor-split",
+          "7,58",
+          "--main-gpu",
+          "1",
+          "--mmproj",
+          "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf"
+        ],
+        "aux": [
+          "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+          "-m",
+          "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+          "--port",
+          "11607",
+          "--host",
+          "127.0.0.1",
+          "-c",
+          "262144",
+          "-ngl",
+          "99",
+          "--fit",
+          "off",
+          "-fa",
+          "on",
+          "--cache-type-k",
+          "q4_0",
+          "--cache-type-v",
+          "q4_0",
+          "--parallel",
+          "1",
+          "--spec-type",
+          "draft-mtp"
+        ]
+      },
+      "aux_context": 262144,
+      "main_context": 262144,
+      "results": {
+        "aux": {
+          "code": 200,
+          "elapsed_s": 2.061,
+          "content": "```python\nfrom typing import List, Optional\n\ndef merge_sort(arr: List[int]) -> List[int]:\n    \"\"\"Sort a list using merge sort algorithm.\n    \n    Args:\n        arr: List of integers to sort\n        \n    Returns:\n        New sorted list (original list is not modified)\n    \"\"\"\n    if len(arr) <= 1:\n        return arr.copy()\n    \n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    \n    return merge(left, right)\n\ndef merge(left: List[int], right: List[int]) -> List[int]:\n    \"\"\"Merge two sorted lists into one sorted list.\n    \n    Args:\n        left: First sorted list\n        right: Second sorted list\n        \n    Returns:\n        Merged sorted list\n    \"\"\"\n    result = []\n    i = j = 0\n    \n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            result.append(left[i])\n            i += 1\n        else:\n            result.append(right[j])\n            j += 1\n    \n    result.extend(left[i:])",
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 288.567,
+            "prompt_per_token_ms": 11.09873076923077,
+            "prompt_per_second": 90.10039262978788,
+            "predicted_n": 256,
+            "predicted_ms": 1722.929,
+            "predicted_per_token_ms": 6.73019140625,
+            "predicted_per_second": 148.58418425831823,
+            "draft_n": 219,
+            "draft_n_accepted": 181
+          },
+          "error": null
+        },
+        "main": {
+          "code": 200,
+          "elapsed_s": 4.696,
+          "content": "```python\nfrom typing import List, TypeVar, Callable\n\nT = TypeVar('T')\n\n\ndef merge_sort(\n    arr: List[T],\n    key: Callable[[T], object] = lambda x: x,\n    reverse: bool = False,\n) -> List[T]:\n    \"\"\"\n    Sort a list using the merge sort algorithm.\n\n    Args:\n        arr: The list to sort.\n        key: A function that extracts a comparison key from each element.\n        reverse: If True, sort in descending order.\n\n    Returns:\n        A new sorted list.\n    \"\"\"\n    n = len(arr)\n    if n <= 1:\n        return list(arr)\n\n    mid = n // 2\n    left = merge_sort(arr[:mid], key, reverse)\n    right = merge_sort(arr[mid:], key, reverse)\n\n    return _merge(left, right, key, reverse)\n\n\ndef _merge(\n    left: List[T],\n    right: List[T],\n    key: Callable[[T], object],\n    reverse: bool,\n) -> List[T]:\n    \"\"\"Merge two sorted lists into one sorted list.\"\"\"\n    result:",
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 302.327,
+            "prompt_per_token_ms": 11.627961538461538,
+            "prompt_per_second": 85.99959646343197,
+            "predicted_n": 256,
+            "predicted_ms": 4349.501,
+            "predicted_per_token_ms": 16.99023828125,
+            "predicted_per_second": 58.85732639215395,
+            "draft_n": 224,
+            "draft_n_accepted": 180
+          },
+          "error": null
+        }
+      },
+      "peak_gpu": {
+        "0": {
+          "max_used_mb": 21817,
+          "min_free_mb": 2300,
+          "max_util_pct": 10,
+          "max_power_w": 333.96
+        },
+        "1": {
+          "max_used_mb": 22814,
+          "min_free_mb": 1311,
+          "max_util_pct": 81,
+          "max_power_w": 315.09
+        }
+      },
+      "min_free_mb": 1311,
+      "main_tps": 58.85732639215395,
+      "aux_tps": 148.58418425831823,
+      "gpu_clear_after": {
+        "0": 418,
+        "1": 57
+      },
+      "main_log_tail": "0.00.092.483 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)\n0.00.560.571 I srv    load_model: loading model '/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf'\n0.06.560.220 W load_hparams: Qwen-VL models require at minimum 1024 image tokens to function correctly on grounding tasks\n0.06.560.225 W load_hparams: if you encounter problems with accuracy, try adding --image-min-tokens 1024\n0.06.560.225 W load_hparams: more info: https://github.com/ggml-org/llama.cpp/issues/16842\n\n0.07.055.271 I srv    load_model: loaded multimodal model, '/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf'\n0.07.111.598 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 262144, kv_unified = 'false'\n0.08.126.045 I srv          init: chat template supports preserving reasoning, consider enabling it via --reasoning-preserve\n0.08.126.095 I srv  llama_server: model loaded\n0.08.126.101 I srv  llama_server: listening on http://127.0.0.1:11605\n0.08.920.057 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1\n0.08.920.238 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0\n0.12.232.417 I slot print_timing: id  0 | task 0 | n_decoded =    169, tg =  56.16 t/s, tg_3s =  56.15 t/s\n0.13.572.511 I slot print_timing: id  0 | task 0 | prompt eval time =     302.33 ms /    26 tokens (   11.63 ms per token,    86.00 tokens per second)\n0.13.572.519 I slot print_timing: id  0 | task 0 |        eval time =    4349.50 ms /   256 tokens (   16.99 ms per token,    58.86 tokens per second)\n0.13.572.520 I slot print_timing: id  0 | task 0 |       total time =    4651.83 ms /   282 tokens\n0.13.572.529 I slot print_timing: id  0 | task 0 |    graphs reused =         73\n0.13.572.534 I slot print_timing: id  0 | task 0 | draft acceptance = 0.80357 (  180 accepted /   224 generated), mean len =  3.40\n0.13.572.650 I slot      release: id  0 | task 0 | stop processing: n_tokens = 281, truncated = 0\n0.13.695.294 I srv    operator(): operator(): cleaning up before exit...",
+      "aux_log_tail": "0.00.090.115 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)\n0.00.339.187 I srv    load_model: loading model '/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf'\n0.04.184.246 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 262144, kv_unified = 'false'\n0.04.468.456 I srv          init: chat template supports preserving reasoning, consider enabling it via --reasoning-preserve\n0.04.468.529 I srv  llama_server: model loaded\n0.04.468.538 I srv  llama_server: listening on http://127.0.0.1:11607\n0.13.939.470 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1\n0.13.939.729 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0\n0.15.951.314 I slot print_timing: id  0 | task 0 | prompt eval time =     288.57 ms /    26 tokens (   11.10 ms per token,    90.10 tokens per second)\n0.15.951.323 I slot print_timing: id  0 | task 0 |        eval time =    1722.93 ms /   256 tokens (    6.73 ms per token,   148.58 tokens per second)\n0.15.951.324 I slot print_timing: id  0 | task 0 |       total time =    2011.50 ms /   282 tokens\n0.15.951.329 I slot print_timing: id  0 | task 0 |    graphs reused =         72\n0.15.951.335 I slot print_timing: id  0 | task 0 | draft acceptance = 0.82648 (  181 accepted /   219 generated), mean len =  3.48\n0.15.951.432 I slot      release: id  0 | task 0 | stop processing: n_tokens = 281, truncated = 0\n0.19.573.566 I srv    operator(): operator(): cleaning up before exit..."
+    },
+    {
+      "offload_layers": 8,
+      "total_layers": 65,
+      "tensor_split": "8,57",
+      "passed": true,
+      "commands": {
+        "main": [
+          "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+          "-m",
+          "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf",
+          "--port",
+          "11605",
+          "--host",
+          "127.0.0.1",
+          "-c",
+          "262144",
+          "-ngl",
+          "99",
+          "--fit",
+          "off",
+          "-fa",
+          "on",
+          "--cache-type-k",
+          "q4_0",
+          "--cache-type-v",
+          "q4_0",
+          "--parallel",
+          "1",
+          "--spec-type",
+          "draft-mtp",
+          "--split-mode",
+          "layer",
+          "--tensor-split",
+          "8,57",
+          "--main-gpu",
+          "1",
+          "--mmproj",
+          "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf"
+        ],
+        "aux": [
+          "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+          "-m",
+          "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+          "--port",
+          "11607",
+          "--host",
+          "127.0.0.1",
+          "-c",
+          "262144",
+          "-ngl",
+          "99",
+          "--fit",
+          "off",
+          "-fa",
+          "on",
+          "--cache-type-k",
+          "q4_0",
+          "--cache-type-v",
+          "q4_0",
+          "--parallel",
+          "1",
+          "--spec-type",
+          "draft-mtp"
+        ]
+      },
+      "aux_context": 262144,
+      "main_context": 262144,
+      "results": {
+        "aux": {
+          "code": 200,
+          "elapsed_s": 2.103,
+          "content": "```python\nfrom typing import List, Optional\n\ndef merge_sort(arr: List[int]) -> List[int]:\n    \"\"\"Sort a list using merge sort algorithm.\n    \n    Args:\n        arr: List of integers to sort\n        \n    Returns:\n        New sorted list (original list is not modified)\n    \"\"\"\n    if len(arr) <= 1:\n        return arr.copy()\n    \n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    \n    return merge(left, right)\n\ndef merge(left: List[int], right: List[int]) -> List[int]:\n    \"\"\"Merge two sorted lists into one sorted list.\n    \n    Args:\n        left: First sorted list\n        right: Second sorted list\n        \n    Returns:\n        Merged sorted list\n    \"\"\"\n    result = []\n    i = j = 0\n    \n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            result.append(left[i])\n            i += 1\n        else:\n            result.append(right[j])\n            j += 1\n    \n    result.extend(left[i:])",
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 311.37,
+            "prompt_per_token_ms": 11.975769230769231,
+            "prompt_per_second": 83.50194302598196,
+            "predicted_n": 256,
+            "predicted_ms": 1731.809,
+            "predicted_per_token_ms": 6.76487890625,
+            "predicted_per_second": 147.82230603952283,
+            "draft_n": 219,
+            "draft_n_accepted": 181
+          },
+          "error": null
+        },
+        "main": {
+          "code": 200,
+          "elapsed_s": 4.808,
+          "content": "```python\nfrom typing import List, TypeVar, Callable\n\nT = TypeVar('T')\n\n\ndef merge_sort(\n    arr: List[T],\n    key: Callable[[T], object] = lambda x: x,\n    reverse: bool = False,\n) -> List[T]:\n    \"\"\"\n    Sort a list using the merge sort algorithm.\n\n    Args:\n        arr: The list to sort.\n        key: A function that extracts a comparison key from each element.\n        reverse: If True, sort in descending order.\n\n    Returns:\n        A new sorted list.\n    \"\"\"\n    n = len(arr)\n    if n <= 1:\n        return list(arr)\n\n    mid = n // 2\n    left = merge_sort(arr[:mid], key, reverse)\n    right = merge_sort(arr[mid:], key, reverse)\n\n    return _merge(left, right, key, reverse)\n\n\ndef _merge(\n    left: List[T],\n    right: List[T],\n    key: Callable[[T], object],\n    reverse: bool,\n) -> List[T]:\n    \"\"\"Merge two sorted lists into one sorted list.\"\"\"\n    result:",
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 26,
+            "prompt_ms": 306.751,
+            "prompt_per_token_ms": 11.798115384615384,
+            "prompt_per_second": 84.75929988818294,
+            "predicted_n": 256,
+            "predicted_ms": 4458.501,
+            "predicted_per_token_ms": 17.41601953125,
+            "predicted_per_second": 57.41840138647496,
+            "draft_n": 224,
+            "draft_n_accepted": 180
+          },
+          "error": null
+        }
+      },
+      "peak_gpu": {
+        "0": {
+          "max_used_mb": 22035,
+          "min_free_mb": 2082,
+          "max_util_pct": 80,
+          "max_power_w": 332.93
+        },
+        "1": {
+          "max_used_mb": 22596,
+          "min_free_mb": 1529,
+          "max_util_pct": 84,
+          "max_power_w": 315.75
+        }
+      },
+      "min_free_mb": 1529,
+      "main_tps": 57.41840138647496,
+      "aux_tps": 147.82230603952283,
+      "gpu_clear_after": {
+        "0": 418,
+        "1": 57
+      },
+      "main_log_tail": "0.00.090.544 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)\n0.00.559.259 I srv    load_model: loading model '/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf'\n0.06.502.930 W load_hparams: Qwen-VL models require at minimum 1024 image tokens to function correctly on grounding tasks\n0.06.502.935 W load_hparams: if you encounter problems with accuracy, try adding --image-min-tokens 1024\n0.06.502.935 W load_hparams: more info: https://github.com/ggml-org/llama.cpp/issues/16842\n\n0.06.998.020 I srv    load_model: loaded multimodal model, '/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf'\n0.07.051.810 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 262144, kv_unified = 'false'\n0.08.062.914 I srv          init: chat template supports preserving reasoning, consider enabling it via --reasoning-preserve\n0.08.062.964 I srv  llama_server: model loaded\n0.08.062.970 I srv  llama_server: listening on http://127.0.0.1:11605\n0.08.848.161 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1\n0.08.848.356 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0\n0.12.158.592 I slot print_timing: id  0 | task 0 | n_decoded =    161, tg =  53.61 t/s, tg_3s =  53.61 t/s\n0.13.614.118 I slot print_timing: id  0 | task 0 | prompt eval time =     306.75 ms /    26 tokens (   11.80 ms per token,    84.76 tokens per second)\n0.13.614.124 I slot print_timing: id  0 | task 0 |        eval time =    4458.50 ms /   256 tokens (   17.42 ms per token,    57.42 tokens per second)\n0.13.614.125 I slot print_timing: id  0 | task 0 |       total time =    4765.25 ms /   282 tokens\n0.13.614.134 I slot print_timing: id  0 | task 0 |    graphs reused =         73\n0.13.614.139 I slot print_timing: id  0 | task 0 | draft acceptance = 0.80357 (  180 accepted /   224 generated), mean len =  3.40\n0.13.614.224 I slot      release: id  0 | task 0 | stop processing: n_tokens = 281, truncated = 0\n0.13.624.456 I srv    operator(): operator(): cleaning up before exit...",
+      "aux_log_tail": "0.00.078.079 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)\n0.00.322.015 I srv    load_model: loading model '/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf'\n0.04.125.838 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 262144, kv_unified = 'false'\n0.04.399.703 I srv          init: chat template supports preserving reasoning, consider enabling it via --reasoning-preserve\n0.04.399.750 I srv  llama_server: model loaded\n0.04.399.756 I srv  llama_server: listening on http://127.0.0.1:11607\n0.13.874.404 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1\n0.13.874.567 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0\n0.15.917.802 I slot print_timing: id  0 | task 0 | prompt eval time =     311.37 ms /    26 tokens (   11.98 ms per token,    83.50 tokens per second)\n0.15.917.809 I slot print_timing: id  0 | task 0 |        eval time =    1731.81 ms /   256 tokens (    6.76 ms per token,   147.82 tokens per second)\n0.15.917.810 I slot print_timing: id  0 | task 0 |       total time =    2043.18 ms /   282 tokens\n0.15.917.814 I slot print_timing: id  0 | task 0 |    graphs reused =         72\n0.15.917.829 I slot print_timing: id  0 | task 0 | draft acceptance = 0.82648 (  181 accepted /   219 generated), mean len =  3.48\n0.15.917.907 I slot      release: id  0 | task 0 | stop processing: n_tokens = 281, truncated = 0\n0.19.498.416 I srv    operator(): operator(): cleaning up before exit..."
+    }
+  ],
+  "optimal": {
+    "offload_layers": 7,
+    "total_layers": 65,
+    "tensor_split": "7,58",
+    "passed": true,
+    "commands": {
+      "main": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf",
+        "--port",
+        "11605",
+        "--host",
+        "127.0.0.1",
+        "-c",
+        "262144",
+        "-ngl",
+        "99",
+        "--fit",
+        "off",
+        "-fa",
+        "on",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--parallel",
+        "1",
+        "--spec-type",
+        "draft-mtp",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "7,58",
+        "--main-gpu",
+        "1",
+        "--mmproj",
+        "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf"
+      ],
+      "aux": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+        "--port",
+        "11607",
+        "--host",
+        "127.0.0.1",
+        "-c",
+        "262144",
+        "-ngl",
+        "99",
+        "--fit",
+        "off",
+        "-fa",
+        "on",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--parallel",
+        "1",
+        "--spec-type",
+        "draft-mtp"
+      ]
+    },
+    "aux_context": 262144,
+    "main_context": 262144,
+    "results": {
+      "aux": {
+        "code": 200,
+        "elapsed_s": 2.061,
+        "content": "```python\nfrom typing import List, Optional\n\ndef merge_sort(arr: List[int]) -> List[int]:\n    \"\"\"Sort a list using merge sort algorithm.\n    \n    Args:\n        arr: List of integers to sort\n        \n    Returns:\n        New sorted list (original list is not modified)\n    \"\"\"\n    if len(arr) <= 1:\n        return arr.copy()\n    \n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    \n    return merge(left, right)\n\ndef merge(left: List[int], right: List[int]) -> List[int]:\n    \"\"\"Merge two sorted lists into one sorted list.\n    \n    Args:\n        left: First sorted list\n        right: Second sorted list\n        \n    Returns:\n        Merged sorted list\n    \"\"\"\n    result = []\n    i = j = 0\n    \n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            result.append(left[i])\n            i += 1\n        else:\n            result.append(right[j])\n            j += 1\n    \n    result.extend(left[i:])",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 26,
+          "prompt_ms": 288.567,
+          "prompt_per_token_ms": 11.09873076923077,
+          "prompt_per_second": 90.10039262978788,
+          "predicted_n": 256,
+          "predicted_ms": 1722.929,
+          "predicted_per_token_ms": 6.73019140625,
+          "predicted_per_second": 148.58418425831823,
+          "draft_n": 219,
+          "draft_n_accepted": 181
+        },
+        "error": null
+      },
+      "main": {
+        "code": 200,
+        "elapsed_s": 4.696,
+        "content": "```python\nfrom typing import List, TypeVar, Callable\n\nT = TypeVar('T')\n\n\ndef merge_sort(\n    arr: List[T],\n    key: Callable[[T], object] = lambda x: x,\n    reverse: bool = False,\n) -> List[T]:\n    \"\"\"\n    Sort a list using the merge sort algorithm.\n\n    Args:\n        arr: The list to sort.\n        key: A function that extracts a comparison key from each element.\n        reverse: If True, sort in descending order.\n\n    Returns:\n        A new sorted list.\n    \"\"\"\n    n = len(arr)\n    if n <= 1:\n        return list(arr)\n\n    mid = n // 2\n    left = merge_sort(arr[:mid], key, reverse)\n    right = merge_sort(arr[mid:], key, reverse)\n\n    return _merge(left, right, key, reverse)\n\n\ndef _merge(\n    left: List[T],\n    right: List[T],\n    key: Callable[[T], object],\n    reverse: bool,\n) -> List[T]:\n    \"\"\"Merge two sorted lists into one sorted list.\"\"\"\n    result:",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 26,
+          "prompt_ms": 302.327,
+          "prompt_per_token_ms": 11.627961538461538,
+          "prompt_per_second": 85.99959646343197,
+          "predicted_n": 256,
+          "predicted_ms": 4349.501,
+          "predicted_per_token_ms": 16.99023828125,
+          "predicted_per_second": 58.85732639215395,
+          "draft_n": 224,
+          "draft_n_accepted": 180
+        },
+        "error": null
+      }
+    },
+    "peak_gpu": {
+      "0": {
+        "max_used_mb": 21817,
+        "min_free_mb": 2300,
+        "max_util_pct": 10,
+        "max_power_w": 333.96
+      },
+      "1": {
+        "max_used_mb": 22814,
+        "min_free_mb": 1311,
+        "max_util_pct": 81,
+        "max_power_w": 315.09
+      }
+    },
+    "min_free_mb": 1311,
+    "main_tps": 58.85732639215395,
+    "aux_tps": 148.58418425831823,
+    "gpu_clear_after": {
+      "0": 418,
+      "1": 57
+    },
+    "main_log_tail": "0.00.092.483 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)\n0.00.560.571 I srv    load_model: loading model '/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf'\n0.06.560.220 W load_hparams: Qwen-VL models require at minimum 1024 image tokens to function correctly on grounding tasks\n0.06.560.225 W load_hparams: if you encounter problems with accuracy, try adding --image-min-tokens 1024\n0.06.560.225 W load_hparams: more info: https://github.com/ggml-org/llama.cpp/issues/16842\n\n0.07.055.271 I srv    load_model: loaded multimodal model, '/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf'\n0.07.111.598 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 262144, kv_unified = 'false'\n0.08.126.045 I srv          init: chat template supports preserving reasoning, consider enabling it via --reasoning-preserve\n0.08.126.095 I srv  llama_server: model loaded\n0.08.126.101 I srv  llama_server: listening on http://127.0.0.1:11605\n0.08.920.057 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1\n0.08.920.238 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0\n0.12.232.417 I slot print_timing: id  0 | task 0 | n_decoded =    169, tg =  56.16 t/s, tg_3s =  56.15 t/s\n0.13.572.511 I slot print_timing: id  0 | task 0 | prompt eval time =     302.33 ms /    26 tokens (   11.63 ms per token,    86.00 tokens per second)\n0.13.572.519 I slot print_timing: id  0 | task 0 |        eval time =    4349.50 ms /   256 tokens (   16.99 ms per token,    58.86 tokens per second)\n0.13.572.520 I slot print_timing: id  0 | task 0 |       total time =    4651.83 ms /   282 tokens\n0.13.572.529 I slot print_timing: id  0 | task 0 |    graphs reused =         73\n0.13.572.534 I slot print_timing: id  0 | task 0 | draft acceptance = 0.80357 (  180 accepted /   224 generated), mean len =  3.40\n0.13.572.650 I slot      release: id  0 | task 0 | stop processing: n_tokens = 281, truncated = 0\n0.13.695.294 I srv    operator(): operator(): cleaning up before exit...",
+    "aux_log_tail": "0.00.090.115 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)\n0.00.339.187 I srv    load_model: loading model '/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf'\n0.04.184.246 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 262144, kv_unified = 'false'\n0.04.468.456 I srv          init: chat template supports preserving reasoning, consider enabling it via --reasoning-preserve\n0.04.468.529 I srv  llama_server: model loaded\n0.04.468.538 I srv  llama_server: listening on http://127.0.0.1:11607\n0.13.939.470 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1\n0.13.939.729 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0\n0.15.951.314 I slot print_timing: id  0 | task 0 | prompt eval time =     288.57 ms /    26 tokens (   11.10 ms per token,    90.10 tokens per second)\n0.15.951.323 I slot print_timing: id  0 | task 0 |        eval time =    1722.93 ms /   256 tokens (    6.73 ms per token,   148.58 tokens per second)\n0.15.951.324 I slot print_timing: id  0 | task 0 |       total time =    2011.50 ms /   282 tokens\n0.15.951.329 I slot print_timing: id  0 | task 0 |    graphs reused =         72\n0.15.951.335 I slot print_timing: id  0 | task 0 | draft acceptance = 0.82648 (  181 accepted /   219 generated), mean len =  3.48\n0.15.951.432 I slot      release: id  0 | task 0 | stop processing: n_tokens = 281, truncated = 0\n0.19.573.566 I srv    operator(): operator(): cleaning up before exit..."
+  }
+}

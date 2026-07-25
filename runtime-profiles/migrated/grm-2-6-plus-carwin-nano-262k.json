@@ -1,0 +1,46 @@
+{
+  "hardware": {
+    "accelerator": "nvidia-cuda",
+    "class_vram_gb": 24,
+    "min_devices": 2,
+    "per_device_min_gb": 24,
+    "topology": "2x24",
+    "total_vram_gb": 48
+  },
+  "id": "grm-2-6-plus-carwin-nano-262k",
+  "policy": {
+    "contraction_dwell_s": 5,
+    "cooldown_s": 30,
+    "expansion_dwell_s": 120,
+    "expansion_margin_gb_per_card": 0.5,
+    "external_gpu_priority": "absolute",
+    "flap_failure_limit": 3,
+    "flap_window_s": 300,
+    "recommendation": "quality-first"
+  },
+  "revision": 1,
+  "roles": {
+    "auxiliary": "active:aux",
+    "fallback": "api:auto",
+    "main": "active:main"
+  },
+  "rungs": [
+    {
+      "aux_manifest": "sha256:6c5c03ff339cb78c14bd6d57aca2a26700840dcb76e12554eae62c9b63b3e9d1",
+      "aux_mode": "dedicated",
+      "context": 262144,
+      "evidence": "sha256:d520bd38865b6bd4834f9746ea9a813c797cee96f257a85dacd038a02e7b31b6",
+      "id": "local-262144",
+      "main_manifest": "sha256:5122db6cb7ba19d8e86a725349769b97e294656e389a798ff6ddac65fd549225"
+    },
+    {
+      "aux_api_policy": "api:auto",
+      "aux_mode": "api",
+      "context": 262144,
+      "evidence": "sha256:d520bd38865b6bd4834f9746ea9a813c797cee96f257a85dacd038a02e7b31b6",
+      "id": "api",
+      "main_api_policy": "api:auto"
+    }
+  ],
+  "schema": "turbofit.runtime/v1"
+}
