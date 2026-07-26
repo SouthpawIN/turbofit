@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -22,7 +24,16 @@ def test_catalog_defines_large_local_models_without_host_paths() -> None:
     assert all(model.source.revision for model in catalog.models.values())
     assert all(model.source.files for model in catalog.models.values())
     assert all(not item.filename.startswith("/") for model in catalog.models.values() for item in model.source.files)
-    assert all(config.status == "configured-unmeasured" for model in catalog.models.values() for config in model.configurations)
+    configurations = {
+        model.id: model.configurations[0]
+        for model in catalog.models.values()
+    }
+    assert configurations["laguna-s2-1-q4-k-m"].status == "validated"
+    assert configurations["minimax-m3-mxfp4-moe"].status == "validated"
+    assert configurations["glm-5-2-2-788bpw"].status == "validated"
+    assert configurations["laguna-s2-1-q4-k-m"].evidence
+    assert configurations["minimax-m3-mxfp4-moe"].evidence
+    assert configurations["glm-5-2-2-788bpw"].evidence
 
 
 def test_dual_24gb_configuration_uses_system_ram_and_both_gpus() -> None:
@@ -75,12 +86,35 @@ def test_glm_command_contains_required_dsa_cpu_moe_flags() -> None:
     assert "--cpu-moe" in command
     assert "-dsa" in command
     assert "-fidx" in command
-    assert command[command.index("--split-mode") + 1] == "graph"
+    assert command[command.index("--split-mode") + 1] == "layer"
     assert "--fit" not in command
 
 
-def test_catalog_rejects_promoting_unmeasured_configuration(tmp_path: Path) -> None:
-    text = CATALOG.read_text().replace('"configured-unmeasured"', '"validated"', 1)
+def test_hybrid_config_cli_runs_without_external_pythonpath() -> None:
+    env = dict(os.environ)
+    env.pop("PYTHONPATH", None)
+
+    result = subprocess.run(
+        [str(ROOT / "scripts" / "turbofit-hybrid-config"), "list"],
+        cwd=ROOT,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+
+    assert "laguna-s2-1-q4-k-m" in result.stdout
+    assert "minimax-m3-mxfp4-moe" in result.stdout
+    assert "glm-5-2-2-788bpw" in result.stdout
+
+
+def test_catalog_rejects_validated_configuration_without_evidence(tmp_path: Path) -> None:
+    text = CATALOG.read_text().replace(
+        '"sha256:a332e44a601c129b90262c877ad1f62e0d8fd54780dba5f566ee010d51225ec5"',
+        "null",
+        1,
+    )
     path = tmp_path / "catalog.json"
     path.write_text(text)
 

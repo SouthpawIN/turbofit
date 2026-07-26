@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import http.client
 import importlib.util
 import json
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 
@@ -81,6 +84,89 @@ def test_manual_selection_uses_exact_profile(tmp_path, monkeypatch):
 
     assert GATEWAY.resolve_requested_profile("grm-carwin-1m") == "grm-carwin-1m"
     assert calls == []
+
+
+def test_aux_stream_reaches_client_and_propagates_disconnect(monkeypatch):
+    release_upstream = threading.Event()
+    upstream_disconnected = threading.Event()
+    seen_payload = {}
+
+    class StreamingUpstream(BaseHTTPRequestHandler):
+        def do_POST(self):
+            length = int(self.headers.get("Content-Length", "0"))
+            seen_payload.update(json.loads(self.rfile.read(length)))
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.end_headers()
+            self.wfile.write(b'data: {"choices":[{"delta":{"content":"first"}}]}\n\n')
+            self.wfile.flush()
+            try:
+                while not release_upstream.wait(timeout=0.05):
+                    self.wfile.write(b": keep-alive\n\n")
+                    self.wfile.flush()
+                self.wfile.write(b"data: [DONE]\n\n")
+                self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError):
+                upstream_disconnected.set()
+
+        def log_message(self, format, *args):
+            pass
+
+    upstream = ThreadingHTTPServer(("127.0.0.1", 0), StreamingUpstream)
+    gateway = ThreadingHTTPServer(("127.0.0.1", 0), GATEWAY.GatewayHandler)
+    monkeypatch.setattr(GATEWAY, "resolve_requested_profile", lambda _model: "active")
+    monkeypatch.setattr(GATEWAY, "AUX_MAX_TOKENS", 64, raising=False)
+    monkeypatch.setattr(
+        GATEWAY,
+        "resolve_aux",
+        lambda: {
+            "base_url": f"http://127.0.0.1:{upstream.server_port}",
+            "alias": "test-aux",
+            "state": "ready",
+        },
+    )
+    upstream_thread = threading.Thread(target=upstream.serve_forever, daemon=True)
+    gateway_thread = threading.Thread(target=gateway.serve_forever, daemon=True)
+    upstream_thread.start()
+    gateway_thread.start()
+    client = http.client.HTTPConnection("127.0.0.1", gateway.server_port, timeout=0.5)
+    payload = json.dumps(
+        {
+            "model": "active:aux",
+            "messages": [{"role": "user", "content": "stream now"}],
+            "stream": True,
+            "max_tokens": 65_536,
+            "n_predict": 65_536,
+        }
+    )
+    try:
+        client.request(
+            "POST",
+            "/v1/chat/completions",
+            body=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        response = client.getresponse()
+        assert response.status == 200
+        assert response.readline().startswith(b"data:")
+        assert seen_payload["max_tokens"] == 64
+        assert seen_payload["n_predict"] == 64
+        assert seen_payload["chat_template_kwargs"] == {
+            "enable_thinking": False,
+            "thinking_mode": "disabled",
+        }
+        assert seen_payload["reasoning_format"] == "none"
+        assert not release_upstream.is_set()
+        response.close()
+        client.close()
+        assert upstream_disconnected.wait(timeout=2)
+    finally:
+        release_upstream.set()
+        client.close()
+        gateway.shutdown()
+        upstream.shutdown()
+        gateway.server_close()
+        upstream.server_close()
 
 
 def test_aux_auto_follows_active_pair_without_rerunning_recommendation(monkeypatch):

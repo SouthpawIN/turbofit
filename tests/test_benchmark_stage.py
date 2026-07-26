@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import json
 from pathlib import Path
 
@@ -8,6 +9,7 @@ import pytest
 from turbofit_runtime.benchmark_stage import (
     BenchmarkSuite,
     ResourceSample,
+    _chat_completion,
     build_prompt,
     compact_samples,
     evaluate,
@@ -78,6 +80,35 @@ def test_resource_compaction_preserves_peaks_and_endpoints() -> None:
     assert max(sample.gpu_memory_used_mib[0] for sample in compacted) == 9
     assert max(sample.gpu_memory_used_mib[1] for sample in compacted) == 10
     assert len(compacted) < len(samples)
+
+
+def test_chat_completion_forwards_recorded_request_options(monkeypatch) -> None:
+    seen = {}
+
+    class Response(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            self.close()
+
+    def fake_urlopen(request, timeout):
+        seen.update(json.loads(request.data))
+        return Response(b'{"choices":[{"message":{"content":"391"}}],"usage":{"prompt_tokens":1,"completion_tokens":1}}')
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    _chat_completion(
+        base_url="http://example/v1",
+        model="candidate",
+        prompt="question",
+        max_tokens=16,
+        api_key=None,
+        timeout_seconds=1,
+        request_options={"chat_template_kwargs": {"enable_thinking": False}},
+    )
+
+    assert seen["chat_template_kwargs"] == {"enable_thinking": False}
 
 
 def test_recorded_smoke_evidence_hash_is_reproducible() -> None:

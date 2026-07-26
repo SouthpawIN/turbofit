@@ -58,6 +58,8 @@ CACHE_TTL = 10
 STALL_TIMEOUT_S = float(os.environ.get("TURBOFIT_STALL_TIMEOUT", "90"))  # max wait while local loads
 STALL_POLL_S = float(os.environ.get("TURBOFIT_STALL_POLL", "2"))  # poll interval while waiting
 PROXY_BACKEND_TIMEOUT_S = float(os.environ.get("TURBOFIT_BACKEND_TIMEOUT", "300"))  # per-request upstream timeout
+AUX_MAX_TOKENS = int(os.environ.get("TURBOFIT_AUX_MAX_TOKENS", "4096"))  # bound aux work to lifecycle deadlines
+AUX_ENABLE_THINKING = os.environ.get("TURBOFIT_AUX_ENABLE_THINKING", "0").lower() in ("1", "true", "yes")
 PORT_PROBE_TIMEOUT_S = float(os.environ.get("TURBOFIT_PORT_PROBE", "1.5"))  # TCP connect check
 
 
@@ -785,7 +787,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                         return
 
         tried = [backend.get("alias") or backend.get("source") or "?"]
-        result = self._proxy_to(backend, upstream_path, body=body)
+        result = self._proxy_to(backend, upstream_path, body=body, role="main")
         status = result["status"]
 
         # API fallback is disabled by default; explicit opt-in preserves legacy behavior.
@@ -794,7 +796,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             if api and api.get("source") not in tried:
                 tried.append(api.get("source"))
                 log.warning(f"Local {backend.get('alias')} returned {status} — falling back to API ({api.get('source')})")
-                result = self._proxy_to({**api, "state": "ready"}, upstream_path, body=body)
+                result = self._proxy_to({**api, "state": "ready"}, upstream_path, body=body, role="main")
                 status = result["status"]
 
         if status >= 400:
@@ -811,15 +813,15 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self.send_header("X-Turbofit-Aux", "unavailable")
             self.end_headers()
             return
-        result = self._proxy_to(backend, upstream_path, body=body)
+        result = self._proxy_to(backend, upstream_path, body=body, role="aux")
         if result["status"] >= 400 and not backend.get("is_api") and ALLOW_API:
             api = _find_api_fallback_in_profiles()
             if api:
-                result = self._proxy_to({**api, "state": "ready"}, upstream_path, body=body)
+                result = self._proxy_to({**api, "state": "ready"}, upstream_path, body=body, role="aux")
         # If even the aux fallback failed, the main path still got its response
         # above (we proxied main first), so we just return 204 here
 
-    def _proxy_to(self, backend, upstream_path, body=None):
+    def _proxy_to(self, backend, upstream_path, body=None, role=None):
         target = f"{backend['base_url']}/{upstream_path.lstrip('/')}"
         if body is None:
             content_length = int(self.headers.get("Content-Length", 0))
@@ -828,11 +830,34 @@ class GatewayHandler(BaseHTTPRequestHandler):
                    if k.lower() not in ("host", "transfer-encoding", "content-length", "content-encoding",
                                         "authorization")}  # we re-inject auth below
 
+        stream_requested = False
         # Universal provider IDs are profile IDs, not backend model filenames.
         # Rewrite every request to the selected backend's actual model ID.
         if body:
             try:
                 payload = json.loads(body)
+                stream_requested = payload.get("stream") is True
+                if role == "aux" and AUX_MAX_TOKENS > 0:
+                    requested = payload.get("max_tokens")
+                    if isinstance(requested, bool) or not isinstance(requested, int) or requested <= 0:
+                        payload["max_tokens"] = AUX_MAX_TOKENS
+                    else:
+                        payload["max_tokens"] = min(requested, AUX_MAX_TOKENS)
+                    if "n_predict" in payload:
+                        requested_predict = payload["n_predict"]
+                        if isinstance(requested_predict, bool) or not isinstance(requested_predict, int) or requested_predict <= 0:
+                            payload["n_predict"] = AUX_MAX_TOKENS
+                        else:
+                            payload["n_predict"] = min(requested_predict, AUX_MAX_TOKENS)
+                    template_kwargs = payload.get("chat_template_kwargs")
+                    if not isinstance(template_kwargs, dict):
+                        template_kwargs = {}
+                    else:
+                        template_kwargs = dict(template_kwargs)
+                    template_kwargs.setdefault("enable_thinking", AUX_ENABLE_THINKING)
+                    template_kwargs.setdefault("thinking_mode", "enabled" if AUX_ENABLE_THINKING else "disabled")
+                    payload["chat_template_kwargs"] = template_kwargs
+                    payload.setdefault("reasoning_format", "none")
                 payload["model"] = (
                     backend.get("model_id") if backend.get("is_api")
                     else backend.get("alias")
@@ -851,7 +876,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
         start = time.time()
         try:
             with urlopen(req, timeout=PROXY_BACKEND_TIMEOUT_S) as resp:
-                resp_body = resp.read()
+                content_type = resp.headers.get("Content-Type", "")
+                streaming = stream_requested or content_type.lower().startswith("text/event-stream")
                 self.send_response(resp.status)
                 sent_headers = set()
                 for k, v in resp.headers.items():
@@ -862,9 +888,30 @@ class GatewayHandler(BaseHTTPRequestHandler):
                         continue
                     sent_headers.add(kl)
                     self.send_header(k, v)
-                self.send_header("Content-Length", str(len(resp_body)))
                 self.send_header("X-Turbofit-Backend", str(backend.get("alias") or backend.get("source") or "api"))
                 self.send_header("X-Turbofit-Latency-Ms", str(int((time.time() - start) * 1000)))
+                if streaming:
+                    self.send_header("Cache-Control", "no-cache")
+                    self.send_header("X-Accel-Buffering", "no")
+                    self.end_headers()
+                    try:
+                        while True:
+                            chunk = resp.read1(65536)
+                            if not chunk:
+                                break
+                            self.wfile.write(chunk)
+                            self.wfile.flush()
+                    except (BrokenPipeError, ConnectionResetError):
+                        log.info(f"Client disconnected from streaming proxy for {target}")
+                        return {
+                            "status": 200,
+                            "ms": int((time.time() - start) * 1000),
+                            "client_disconnected": True,
+                        }
+                    return {"status": resp.status, "ms": int((time.time() - start) * 1000)}
+
+                resp_body = resp.read()
+                self.send_header("Content-Length", str(len(resp_body)))
                 self.end_headers()
                 self.wfile.write(resp_body)
                 return {"status": resp.status, "ms": int((time.time() - start) * 1000)}

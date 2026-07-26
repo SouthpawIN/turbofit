@@ -22,8 +22,8 @@
       "configurations": [
         {
           "id": "dual-24gb-64k",
-          "status": "configured-unmeasured",
-          "evidence": null,
+          "status": "validated",
+          "evidence": "sha256:a332e44a601c129b90262c877ad1f62e0d8fd54780dba5f566ee010d51225ec5",
           "context": 65536,
           "min_system_ram_mib": 98304,
           "required_available_ram_mib": 65536,
@@ -106,8 +106,8 @@
       "configurations": [
         {
           "id": "dual-24gb-64k",
-          "status": "configured-unmeasured",
-          "evidence": null,
+          "status": "validated",
+          "evidence": "sha256:2edf1976c39a661de1b8aa49fcd726602d7763923ecb3760723f7990e33ecabc",
           "context": 65536,
           "min_system_ram_mib": 307200,
           "required_available_ram_mib": 262144,
@@ -129,7 +129,7 @@
             "cache_type_k": "q4_0",
             "cache_type_v": "q4_0",
             "mlock": false,
-            "gpu_layers": 99,
+            "gpu_layers": 40,
             "cpu_moe_layers": 56,
             "mmap": true,
             "extra_args": [
@@ -160,8 +160,8 @@
       "configurations": [
         {
           "id": "dual-24gb-64k",
-          "status": "configured-unmeasured",
-          "evidence": null,
+          "status": "validated",
+          "evidence": "sha256:02ab108a18e2a264c61472f7c98da0ee10bb70be4acf87436ec7066bed51c49e",
           "context": 65536,
           "min_system_ram_mib": 378880,
           "required_available_ram_mib": 262144,
@@ -171,7 +171,7 @@
           ],
           "engine": "ik_llama.cpp",
           "launch": {
-            "split_mode": "graph",
+            "split_mode": "layer",
             "tensor_split": [
               1,
               1

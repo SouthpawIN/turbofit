@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 from pathlib import Path
 
-from turbofit_runtime.benchmark_stage import BenchmarkSuite, run_benchmark
-
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from turbofit_runtime.benchmark_stage import BenchmarkSuite, run_benchmark
 
 
 def main() -> int:
@@ -23,6 +24,7 @@ def main() -> int:
     parser.add_argument("--timeout", type=float, default=900.0)
     parser.add_argument("--api-key-env")
     parser.add_argument("--artifact-sha256")
+    parser.add_argument("--disable-thinking", action="store_true")
     args = parser.parse_args()
 
     api_key = os.environ.get(args.api_key_env) if args.api_key_env else None
@@ -40,6 +42,10 @@ def main() -> int:
         process_id=args.server_pid,
         timeout_seconds=args.timeout,
         artifact_sha256=args.artifact_sha256,
+        request_options={
+            "chat_template_kwargs": {"enable_thinking": False, "thinking_mode": "disabled"},
+            "reasoning_format": "none",
+        } if args.disable_thinking else None,
     )
     summary = result["summary"]
     print(

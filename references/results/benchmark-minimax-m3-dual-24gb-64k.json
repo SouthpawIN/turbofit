@@ -1,0 +1,9069 @@
+{
+  "artifact_sha256": "sha256:3923e5ba6cb97d9415c1b78d8dc825068883aa11bd0e8ef6afbb3f75e194c22d",
+  "candidate": "minimax-m3-mxfp4-moe",
+  "cases": [
+    {
+      "category": "quality",
+      "elapsed_seconds": 2.76963,
+      "error": null,
+      "id": "quality-arithmetic",
+      "passed": true,
+      "response_content": "391",
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 180,
+        "total_tokens": 182
+      }
+    },
+    {
+      "category": "quality",
+      "elapsed_seconds": 15.770136,
+      "error": null,
+      "id": "quality-instruction",
+      "passed": true,
+      "response_content": "TURBOFIT_LOCAL_OK",
+      "usage": {
+        "completion_tokens": 6,
+        "prompt_tokens": 176,
+        "total_tokens": 182
+      }
+    },
+    {
+      "category": "context",
+      "elapsed_seconds": 941.923309,
+      "error": null,
+      "id": "context-passkey-8k",
+      "passed": true,
+      "response_content": "739184",
+      "usage": {
+        "completion_tokens": 3,
+        "prompt_tokens": 8968,
+        "total_tokens": 8971
+      }
+    },
+    {
+      "category": "throughput",
+      "elapsed_seconds": 205.933985,
+      "error": null,
+      "id": "throughput-128",
+      "passed": null,
+      "response_content": "# Local Adaptive Inference Runtime: Contraction & Healing Under GPU Pressure\n\nA local adaptive inference runtime is a system that runs AI models on-device (or on a local server) and dynamically adjusts its behavior based on available compute resources. When GPU pressure rises\u2014due to competing workloads, thermal throttling, memory contention, or concurrent requests\u2014the runtime must **contract** (reduce its footprint) and later **heal** (restore full capability) without dropping requests or corrupting state.\n\n---\n\n## 1. Pressure Detection (The Sensing Layer)\n\nBefore contraction can happen, the runtime must detect pressure through concrete signals:\n\n- **VRAM headroom",
+      "usage": {
+        "completion_tokens": 128,
+        "prompt_tokens": 185,
+        "total_tokens": 313
+      }
+    }
+  ],
+  "configuration": "dual-24gb-64k",
+  "endpoint": "http://127.0.0.1:11602/v1",
+  "evidence_sha256": "sha256:2edf1976c39a661de1b8aa49fcd726602d7763923ecb3760723f7990e33ecabc",
+  "hardware": {
+    "cpu_count": 32,
+    "gpu_memory_total_mib": [
+      24576,
+      24576
+    ],
+    "gpu_names": [
+      "NVIDIA GeForce RTX 3090",
+      "NVIDIA GeForce RTX 3090"
+    ],
+    "machine": "x86_64",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "system_ram_total_mib": 386861
+  },
+  "recorded_at": "2026-07-26T08:12:05.331688+00:00",
+  "request_failures": [],
+  "request_options": {
+    "chat_template_kwargs": {
+      "enable_thinking": false,
+      "thinking_mode": "disabled"
+    },
+    "reasoning_format": "none"
+  },
+  "requested_model": "minimax-m3",
+  "resource_failures": [],
+  "resource_samples": [
+    {
+      "gpu_memory_used_mib": [
+        7971,
+        23164
+      ],
+      "process_rss_mib": 226368,
+      "system_ram_used_mib": 15922,
+      "timestamp": 1785052358.7454927
+    },
+    {
+      "gpu_memory_used_mib": [
+        7971,
+        23164
+      ],
+      "process_rss_mib": 226369,
+      "system_ram_used_mib": 16023,
+      "timestamp": 1785052359.9776757
+    },
+    {
+      "gpu_memory_used_mib": [
+        7971,
+        23164
+      ],
+      "process_rss_mib": 226369,
+      "system_ram_used_mib": 16111,
+      "timestamp": 1785052361.1789098
+    },
+    {
+      "gpu_memory_used_mib": [
+        7971,
+        23164
+      ],
+      "process_rss_mib": 226371,
+      "system_ram_used_mib": 16287,
+      "timestamp": 1785052362.4457107
+    },
+    {
+      "gpu_memory_used_mib": [
+        7971,
+        23164
+      ],
+      "process_rss_mib": 226371,
+      "system_ram_used_mib": 16407,
+      "timestamp": 1785052363.6667495
+    },
+    {
+      "gpu_memory_used_mib": [
+        7971,
+        23164
+      ],
+      "process_rss_mib": 226371,
+      "system_ram_used_mib": 16513,
+      "timestamp": 1785052364.854689
+    },
+    {
+      "gpu_memory_used_mib": [
+        7971,
+        23164
+      ],
+      "process_rss_mib": 226371,
+      "system_ram_used_mib": 16500,
+      "timestamp": 1785052366.046922
+    },
+    {
+      "gpu_memory_used_mib": [
+        7971,
+        23164
+      ],
+      "process_rss_mib": 226371,
+      "system_ram_used_mib": 16581,
+      "timestamp": 1785052367.2356856
+    },
+    {
+      "gpu_memory_used_mib": [
+        7971,
+        23164
+      ],
+      "process_rss_mib": 226371,
+      "system_ram_used_mib": 16601,
+      "timestamp": 1785052368.4295812
+    },
+    {
+      "gpu_memory_used_mib": [
+        7971,
+        23164
+      ],
+      "process_rss_mib": 226371,
+      "system_ram_used_mib": 16146,
+      "timestamp": 1785052369.6259222
+    },
+    {
+      "gpu_memory_used_mib": [
+        7971,
+        23164
+      ],
+      "process_rss_mib": 226371,
+      "system_ram_used_mib": 16252,
+      "timestamp": 1785052370.8240697
+    },
+    {
+      "gpu_memory_used_mib": [
+        7971,
+        23164
+      ],
+      "process_rss_mib": 226369,
+      "system_ram_used_mib": 16335,
+      "timestamp": 1785052372.0163534
+    },
+    {
+      "gpu_memory_used_mib": [
+        7971,
+        23164
+      ],
+      "process_rss_mib": 226369,
+      "system_ram_used_mib": 16333,
+      "timestamp": 1785052373.2056968
+    },
+    {
+      "gpu_memory_used_mib": [
+        7979,
+        23164
+      ],
+      "process_rss_mib": 226369,
+      "system_ram_used_mib": 16380,
+      "timestamp": 1785052374.3863006
+    },
+    {
+      "gpu_memory_used_mib": [
+        7979,
+        23164
+      ],
+      "process_rss_mib": 226369,
+      "system_ram_used_mib": 16309,
+      "timestamp": 1785052375.567438
+    },
+    {
+      "gpu_memory_used_mib": [
+        7979,
+        23164
+      ],
+      "process_rss_mib": 226369,
+      "system_ram_used_mib": 16362,
+      "timestamp": 1785052376.7427113
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16507,
+      "timestamp": 1785052377.9547093
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16587,
+      "timestamp": 1785052379.1264107
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15902,
+      "timestamp": 1785052380.2988756
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16070,
+      "timestamp": 1785052381.483494
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16041,
+      "timestamp": 1785052382.653854
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16187,
+      "timestamp": 1785052383.8244288
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16204,
+      "timestamp": 1785052385.0013077
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16338,
+      "timestamp": 1785052386.1688116
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16546,
+      "timestamp": 1785052387.3434367
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16688,
+      "timestamp": 1785052388.5234141
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16215,
+      "timestamp": 1785052389.6971571
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16239,
+      "timestamp": 1785052390.869536
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16350,
+      "timestamp": 1785052392.0470817
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16480,
+      "timestamp": 1785052393.215971
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16556,
+      "timestamp": 1785052394.3943334
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23164
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16635,
+      "timestamp": 1785052395.5741117
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23166
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16633,
+      "timestamp": 1785052396.7732816
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23166
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16810,
+      "timestamp": 1785052397.9464998
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23166
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16072,
+      "timestamp": 1785052399.1249056
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23166
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16141,
+      "timestamp": 1785052400.298617
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23166
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16250,
+      "timestamp": 1785052401.4694576
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23166
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16361,
+      "timestamp": 1785052402.646624
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23166
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16255,
+      "timestamp": 1785052403.8243723
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23166
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16380,
+      "timestamp": 1785052404.9980817
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16507,
+      "timestamp": 1785052406.1704807
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16649,
+      "timestamp": 1785052407.3386261
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16746,
+      "timestamp": 1785052408.5079198
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16009,
+      "timestamp": 1785052409.685981
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15951,
+      "timestamp": 1785052410.860367
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16079,
+      "timestamp": 1785052412.0304575
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16211,
+      "timestamp": 1785052413.2046914
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16348,
+      "timestamp": 1785052414.377054
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16381,
+      "timestamp": 1785052415.549491
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16589,
+      "timestamp": 1785052416.722765
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16598,
+      "timestamp": 1785052417.898208
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16082,
+      "timestamp": 1785052419.0638998
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16175,
+      "timestamp": 1785052420.2361505
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16182,
+      "timestamp": 1785052421.4073832
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16380,
+      "timestamp": 1785052422.5864987
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16436,
+      "timestamp": 1785052423.7680142
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16416,
+      "timestamp": 1785052424.9571233
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16556,
+      "timestamp": 1785052426.1302361
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16678,
+      "timestamp": 1785052427.305496
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16155,
+      "timestamp": 1785052428.4778664
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16173,
+      "timestamp": 1785052429.6557167
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16240,
+      "timestamp": 1785052430.832065
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16217,
+      "timestamp": 1785052432.0044248
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16345,
+      "timestamp": 1785052433.1733966
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16472,
+      "timestamp": 1785052434.3468575
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16607,
+      "timestamp": 1785052435.5164044
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16749,
+      "timestamp": 1785052436.6875196
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16282,
+      "timestamp": 1785052437.8602717
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16099,
+      "timestamp": 1785052439.0273893
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16125,
+      "timestamp": 1785052440.1930206
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16236,
+      "timestamp": 1785052441.3664138
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16370,
+      "timestamp": 1785052442.5333173
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16525,
+      "timestamp": 1785052443.706638
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16672,
+      "timestamp": 1785052444.87628
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16729,
+      "timestamp": 1785052446.0486846
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16830,
+      "timestamp": 1785052447.2167718
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16800,
+      "timestamp": 1785052448.3868647
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16160,
+      "timestamp": 1785052449.5666742
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16182,
+      "timestamp": 1785052450.7380314
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16336,
+      "timestamp": 1785052451.9224708
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16385,
+      "timestamp": 1785052453.1157458
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16507,
+      "timestamp": 1785052454.2897246
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16570,
+      "timestamp": 1785052455.4626913
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16687,
+      "timestamp": 1785052456.6344378
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16859,
+      "timestamp": 1785052457.8070395
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16196,
+      "timestamp": 1785052458.9798663
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16151,
+      "timestamp": 1785052460.1574905
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16204,
+      "timestamp": 1785052461.332295
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16257,
+      "timestamp": 1785052462.5074325
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16357,
+      "timestamp": 1785052463.6877136
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16477,
+      "timestamp": 1785052464.86157
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16606,
+      "timestamp": 1785052466.0359442
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16668,
+      "timestamp": 1785052467.2065494
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16129,
+      "timestamp": 1785052468.3851457
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16148,
+      "timestamp": 1785052469.564581
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16314,
+      "timestamp": 1785052470.7339728
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16448,
+      "timestamp": 1785052471.9046812
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16548,
+      "timestamp": 1785052473.0814433
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16555,
+      "timestamp": 1785052474.2539244
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16646,
+      "timestamp": 1785052475.4225914
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16688,
+      "timestamp": 1785052476.5934665
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16167,
+      "timestamp": 1785052477.7693927
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16194,
+      "timestamp": 1785052478.948003
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16302,
+      "timestamp": 1785052480.121866
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16257,
+      "timestamp": 1785052481.3156803
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16338,
+      "timestamp": 1785052482.5098507
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16454,
+      "timestamp": 1785052483.6873074
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16540,
+      "timestamp": 1785052484.8661993
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16694,
+      "timestamp": 1785052486.0461664
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16788,
+      "timestamp": 1785052487.219546
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16271,
+      "timestamp": 1785052488.3944192
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16007,
+      "timestamp": 1785052489.5750792
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16095,
+      "timestamp": 1785052490.7447355
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16192,
+      "timestamp": 1785052491.916303
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16380,
+      "timestamp": 1785052493.093841
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16547,
+      "timestamp": 1785052494.2617779
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16481,
+      "timestamp": 1785052495.4330816
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16588,
+      "timestamp": 1785052496.6041408
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16427,
+      "timestamp": 1785052497.7800055
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16172,
+      "timestamp": 1785052498.9501183
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16253,
+      "timestamp": 1785052500.1230295
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16360,
+      "timestamp": 1785052501.2925854
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16296,
+      "timestamp": 1785052502.4674795
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16399,
+      "timestamp": 1785052503.6373327
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16537,
+      "timestamp": 1785052504.8086867
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16665,
+      "timestamp": 1785052505.9775157
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16654,
+      "timestamp": 1785052507.145113
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16135,
+      "timestamp": 1785052508.3183632
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16004,
+      "timestamp": 1785052509.497616
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16145,
+      "timestamp": 1785052510.6804311
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16269,
+      "timestamp": 1785052511.8521018
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16432,
+      "timestamp": 1785052513.0323367
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16593,
+      "timestamp": 1785052514.2085123
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16751,
+      "timestamp": 1785052515.3848667
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16303,
+      "timestamp": 1785052516.5531414
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16071,
+      "timestamp": 1785052517.72458
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16244,
+      "timestamp": 1785052518.9036758
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16272,
+      "timestamp": 1785052520.0753188
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16423,
+      "timestamp": 1785052521.254383
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16474,
+      "timestamp": 1785052522.4234827
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16436,
+      "timestamp": 1785052523.6033359
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16614,
+      "timestamp": 1785052524.777798
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16684,
+      "timestamp": 1785052525.9502432
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16143,
+      "timestamp": 1785052527.1199994
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15999,
+      "timestamp": 1785052528.291127
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16134,
+      "timestamp": 1785052529.4645777
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16178,
+      "timestamp": 1785052530.6341083
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16271,
+      "timestamp": 1785052531.8074582
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16350,
+      "timestamp": 1785052532.9859054
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16458,
+      "timestamp": 1785052534.1649344
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16579,
+      "timestamp": 1785052535.3333752
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16404,
+      "timestamp": 1785052536.5065315
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16155,
+      "timestamp": 1785052537.6888328
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16176,
+      "timestamp": 1785052538.8824553
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16251,
+      "timestamp": 1785052540.0766916
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16369,
+      "timestamp": 1785052541.2480867
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16472,
+      "timestamp": 1785052542.4237404
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16612,
+      "timestamp": 1785052543.598496
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16617,
+      "timestamp": 1785052544.7685883
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16073,
+      "timestamp": 1785052545.9408593
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16038,
+      "timestamp": 1785052547.117507
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16134,
+      "timestamp": 1785052548.2918901
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16288,
+      "timestamp": 1785052549.464027
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16430,
+      "timestamp": 1785052550.6341991
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16410,
+      "timestamp": 1785052551.8100622
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16525,
+      "timestamp": 1785052552.983287
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16623,
+      "timestamp": 1785052554.1563575
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16400,
+      "timestamp": 1785052555.3278806
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16165,
+      "timestamp": 1785052556.5010126
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16255,
+      "timestamp": 1785052557.6770384
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16333,
+      "timestamp": 1785052558.8482707
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16422,
+      "timestamp": 1785052560.0221581
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16558,
+      "timestamp": 1785052561.1964526
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16730,
+      "timestamp": 1785052562.3657777
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16727,
+      "timestamp": 1785052563.5407636
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16790,
+      "timestamp": 1785052564.7126956
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16760,
+      "timestamp": 1785052565.885548
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15979,
+      "timestamp": 1785052567.0761044
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16005,
+      "timestamp": 1785052568.2497268
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16082,
+      "timestamp": 1785052569.4172952
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16197,
+      "timestamp": 1785052570.58973
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16343,
+      "timestamp": 1785052571.7628114
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16437,
+      "timestamp": 1785052572.9435806
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16515,
+      "timestamp": 1785052574.1169343
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16707,
+      "timestamp": 1785052575.2880766
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16006,
+      "timestamp": 1785052576.4622853
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16148,
+      "timestamp": 1785052577.6360836
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16218,
+      "timestamp": 1785052578.8145041
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16308,
+      "timestamp": 1785052579.9867089
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16354,
+      "timestamp": 1785052581.1561284
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16502,
+      "timestamp": 1785052582.3307183
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16615,
+      "timestamp": 1785052583.4997787
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16797,
+      "timestamp": 1785052584.6713989
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16317,
+      "timestamp": 1785052585.8457818
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16339,
+      "timestamp": 1785052587.0172055
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16184,
+      "timestamp": 1785052588.1890445
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16276,
+      "timestamp": 1785052589.3664823
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16385,
+      "timestamp": 1785052590.5412142
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16492,
+      "timestamp": 1785052591.716979
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16604,
+      "timestamp": 1785052592.8901374
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16682,
+      "timestamp": 1785052594.0844336
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15952,
+      "timestamp": 1785052595.272075
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16016,
+      "timestamp": 1785052596.4446967
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16164,
+      "timestamp": 1785052597.6212118
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16390,
+      "timestamp": 1785052598.7931025
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16504,
+      "timestamp": 1785052599.9645026
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16595,
+      "timestamp": 1785052601.1361897
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16584,
+      "timestamp": 1785052602.3131893
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16729,
+      "timestamp": 1785052603.483306
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16689,
+      "timestamp": 1785052604.6537619
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16017,
+      "timestamp": 1785052605.827422
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16156,
+      "timestamp": 1785052606.9980867
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16261,
+      "timestamp": 1785052608.17597
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16276,
+      "timestamp": 1785052609.3425856
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16376,
+      "timestamp": 1785052610.5108292
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16470,
+      "timestamp": 1785052611.6800792
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16617,
+      "timestamp": 1785052612.8617125
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16782,
+      "timestamp": 1785052614.0323513
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16162,
+      "timestamp": 1785052615.2051833
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16066,
+      "timestamp": 1785052616.3796396
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16193,
+      "timestamp": 1785052617.5493462
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16275,
+      "timestamp": 1785052618.719064
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16418,
+      "timestamp": 1785052619.8885968
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16560,
+      "timestamp": 1785052621.067566
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16673,
+      "timestamp": 1785052622.2520754
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16577,
+      "timestamp": 1785052623.4287097
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15994,
+      "timestamp": 1785052624.6038275
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16135,
+      "timestamp": 1785052625.7797034
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16268,
+      "timestamp": 1785052626.9501798
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16346,
+      "timestamp": 1785052628.1212034
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16446,
+      "timestamp": 1785052629.299704
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16476,
+      "timestamp": 1785052630.4758162
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16582,
+      "timestamp": 1785052631.6513693
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16748,
+      "timestamp": 1785052632.822677
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16227,
+      "timestamp": 1785052633.9925117
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16222,
+      "timestamp": 1785052635.1734092
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16308,
+      "timestamp": 1785052636.349569
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16252,
+      "timestamp": 1785052637.522847
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16368,
+      "timestamp": 1785052638.6937099
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16465,
+      "timestamp": 1785052639.8660917
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16585,
+      "timestamp": 1785052641.0342855
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16716,
+      "timestamp": 1785052642.2102356
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16792,
+      "timestamp": 1785052643.3840842
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16736,
+      "timestamp": 1785052644.5622084
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16555,
+      "timestamp": 1785052645.7378821
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16152,
+      "timestamp": 1785052646.9172642
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16227,
+      "timestamp": 1785052648.0892644
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16338,
+      "timestamp": 1785052649.2664154
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16379,
+      "timestamp": 1785052650.4605653
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16355,
+      "timestamp": 1785052651.6448767
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16340,
+      "timestamp": 1785052652.8167148
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16457,
+      "timestamp": 1785052653.9904883
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16626,
+      "timestamp": 1785052655.1638038
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16779,
+      "timestamp": 1785052656.3393824
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16030,
+      "timestamp": 1785052657.5122056
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16041,
+      "timestamp": 1785052658.6863804
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16076,
+      "timestamp": 1785052659.8567991
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16229,
+      "timestamp": 1785052661.0283747
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16291,
+      "timestamp": 1785052662.2022738
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16419,
+      "timestamp": 1785052663.3735871
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16488,
+      "timestamp": 1785052664.5443966
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16484,
+      "timestamp": 1785052665.7140985
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16193,
+      "timestamp": 1785052666.8871808
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15897,
+      "timestamp": 1785052668.056812
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16022,
+      "timestamp": 1785052669.227382
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16146,
+      "timestamp": 1785052670.3943954
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16293,
+      "timestamp": 1785052671.5639818
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16235,
+      "timestamp": 1785052672.7348726
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16311,
+      "timestamp": 1785052673.9065752
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16450,
+      "timestamp": 1785052675.0766633
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16553,
+      "timestamp": 1785052676.2501557
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16325,
+      "timestamp": 1785052677.4212966
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16073,
+      "timestamp": 1785052678.609711
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16018,
+      "timestamp": 1785052679.7824435
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16141,
+      "timestamp": 1785052680.952931
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16189,
+      "timestamp": 1785052682.1246803
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16356,
+      "timestamp": 1785052683.2971046
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16529,
+      "timestamp": 1785052684.471052
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16669,
+      "timestamp": 1785052685.6417186
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16578,
+      "timestamp": 1785052686.815077
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15968,
+      "timestamp": 1785052687.987898
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16075,
+      "timestamp": 1785052689.159001
+    },
+    {
+      "gpu_memory_used_mib": [
+        7983,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16152,
+      "timestamp": 1785052690.3285463
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16205,
+      "timestamp": 1785052691.502329
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16411,
+      "timestamp": 1785052692.6687288
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16399,
+      "timestamp": 1785052693.837174
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16524,
+      "timestamp": 1785052695.0161488
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16649,
+      "timestamp": 1785052696.1910367
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16753,
+      "timestamp": 1785052697.3614318
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16771,
+      "timestamp": 1785052698.5350118
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16271,
+      "timestamp": 1785052699.702444
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16257,
+      "timestamp": 1785052700.8735712
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16222,
+      "timestamp": 1785052702.0431843
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16184,
+      "timestamp": 1785052703.2235713
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16303,
+      "timestamp": 1785052704.3954744
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16461,
+      "timestamp": 1785052705.5740604
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16616,
+      "timestamp": 1785052706.7495031
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16706,
+      "timestamp": 1785052707.9228354
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16010,
+      "timestamp": 1785052709.093172
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16099,
+      "timestamp": 1785052710.2766814
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16199,
+      "timestamp": 1785052711.453856
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16326,
+      "timestamp": 1785052712.6275954
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16430,
+      "timestamp": 1785052713.8027022
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16511,
+      "timestamp": 1785052714.972859
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16566,
+      "timestamp": 1785052716.1453714
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16724,
+      "timestamp": 1785052717.3204954
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15974,
+      "timestamp": 1785052718.494342
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16132,
+      "timestamp": 1785052719.6692522
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16250,
+      "timestamp": 1785052720.8412688
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16313,
+      "timestamp": 1785052722.014803
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16324,
+      "timestamp": 1785052723.190071
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16430,
+      "timestamp": 1785052724.3649373
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16600,
+      "timestamp": 1785052725.5377178
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16681,
+      "timestamp": 1785052726.7078562
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16187,
+      "timestamp": 1785052727.8784845
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16089,
+      "timestamp": 1785052729.052086
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16017,
+      "timestamp": 1785052730.231438
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16137,
+      "timestamp": 1785052731.4027781
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16289,
+      "timestamp": 1785052732.5801315
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16370,
+      "timestamp": 1785052733.7530205
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16525,
+      "timestamp": 1785052734.9285626
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16715,
+      "timestamp": 1785052736.0978308
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16644,
+      "timestamp": 1785052737.2715821
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15947,
+      "timestamp": 1785052738.4470155
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16080,
+      "timestamp": 1785052739.6162608
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16158,
+      "timestamp": 1785052740.7882407
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16329,
+      "timestamp": 1785052741.9610121
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16359,
+      "timestamp": 1785052743.136502
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16308,
+      "timestamp": 1785052744.3095822
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16437,
+      "timestamp": 1785052745.4783604
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16486,
+      "timestamp": 1785052746.657929
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16623,
+      "timestamp": 1785052747.8309264
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16484,
+      "timestamp": 1785052749.0027874
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15897,
+      "timestamp": 1785052750.1728566
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16015,
+      "timestamp": 1785052751.3465607
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16101,
+      "timestamp": 1785052752.513536
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16211,
+      "timestamp": 1785052753.6849732
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16359,
+      "timestamp": 1785052754.865101
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16526,
+      "timestamp": 1785052756.0409603
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16601,
+      "timestamp": 1785052757.2236986
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16662,
+      "timestamp": 1785052758.4051354
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16148,
+      "timestamp": 1785052759.6221929
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16183,
+      "timestamp": 1785052760.8007934
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16268,
+      "timestamp": 1785052761.9768033
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16357,
+      "timestamp": 1785052763.1568916
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16417,
+      "timestamp": 1785052764.3271675
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16402,
+      "timestamp": 1785052765.5035326
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16548,
+      "timestamp": 1785052766.674718
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16601,
+      "timestamp": 1785052767.8480422
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16082,
+      "timestamp": 1785052769.0240326
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16254,
+      "timestamp": 1785052770.1984909
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16284,
+      "timestamp": 1785052771.368274
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16230,
+      "timestamp": 1785052772.5444179
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16307,
+      "timestamp": 1785052773.7138648
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16464,
+      "timestamp": 1785052774.8814375
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16600,
+      "timestamp": 1785052776.054295
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16749,
+      "timestamp": 1785052777.2226937
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16066,
+      "timestamp": 1785052778.3880591
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16053,
+      "timestamp": 1785052779.5546873
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16187,
+      "timestamp": 1785052780.7230906
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16305,
+      "timestamp": 1785052781.8914983
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16373,
+      "timestamp": 1785052783.070699
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16509,
+      "timestamp": 1785052784.247999
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16613,
+      "timestamp": 1785052785.4179285
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16705,
+      "timestamp": 1785052786.5971787
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16772,
+      "timestamp": 1785052787.7680478
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16013,
+      "timestamp": 1785052788.9420824
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16090,
+      "timestamp": 1785052790.1159956
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16264,
+      "timestamp": 1785052791.2857242
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16343,
+      "timestamp": 1785052792.4713585
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16342,
+      "timestamp": 1785052793.6450858
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16499,
+      "timestamp": 1785052794.8191335
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16538,
+      "timestamp": 1785052795.9911964
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16662,
+      "timestamp": 1785052797.1645684
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15955,
+      "timestamp": 1785052798.3353128
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16076,
+      "timestamp": 1785052799.5104804
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16007,
+      "timestamp": 1785052800.680852
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16067,
+      "timestamp": 1785052801.860313
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16222,
+      "timestamp": 1785052803.0347135
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16382,
+      "timestamp": 1785052804.2018359
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16586,
+      "timestamp": 1785052805.3740814
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16706,
+      "timestamp": 1785052806.5457215
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15965,
+      "timestamp": 1785052807.7173839
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16012,
+      "timestamp": 1785052808.8913372
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16143,
+      "timestamp": 1785052810.0631385
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16259,
+      "timestamp": 1785052811.2383237
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16366,
+      "timestamp": 1785052812.4048624
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16447,
+      "timestamp": 1785052813.5871158
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16579,
+      "timestamp": 1785052814.7613852
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16692,
+      "timestamp": 1785052815.9385567
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16100,
+      "timestamp": 1785052817.1101537
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16138,
+      "timestamp": 1785052818.279424
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16227,
+      "timestamp": 1785052819.4513671
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16299,
+      "timestamp": 1785052820.6201878
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16408,
+      "timestamp": 1785052821.7895176
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16349,
+      "timestamp": 1785052822.9611034
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16512,
+      "timestamp": 1785052824.1318913
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16628,
+      "timestamp": 1785052825.3014867
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16716,
+      "timestamp": 1785052826.472248
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16757,
+      "timestamp": 1785052827.6441383
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16129,
+      "timestamp": 1785052828.8140755
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16096,
+      "timestamp": 1785052829.991068
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16158,
+      "timestamp": 1785052831.160215
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16237,
+      "timestamp": 1785052832.3292189
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16347,
+      "timestamp": 1785052833.5046966
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16502,
+      "timestamp": 1785052834.6768677
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16662,
+      "timestamp": 1785052835.8489487
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16741,
+      "timestamp": 1785052837.0166888
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16397,
+      "timestamp": 1785052838.1892667
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16144,
+      "timestamp": 1785052839.3641806
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16205,
+      "timestamp": 1785052840.5551775
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16327,
+      "timestamp": 1785052841.7327197
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16403,
+      "timestamp": 1785052842.9025798
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16404,
+      "timestamp": 1785052844.0738955
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16515,
+      "timestamp": 1785052845.2428696
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16590,
+      "timestamp": 1785052846.4119287
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16732,
+      "timestamp": 1785052847.5835066
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16187,
+      "timestamp": 1785052848.7597234
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16270,
+      "timestamp": 1785052849.9271665
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16295,
+      "timestamp": 1785052851.0980518
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16379,
+      "timestamp": 1785052852.2703254
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16437,
+      "timestamp": 1785052853.4471025
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16560,
+      "timestamp": 1785052854.6186862
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16624,
+      "timestamp": 1785052855.7958257
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16749,
+      "timestamp": 1785052856.9624302
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16784,
+      "timestamp": 1785052858.1302173
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16258,
+      "timestamp": 1785052859.2984369
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16306,
+      "timestamp": 1785052860.4683204
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16421,
+      "timestamp": 1785052861.6442323
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16471,
+      "timestamp": 1785052862.8152208
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16562,
+      "timestamp": 1785052863.9828143
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16559,
+      "timestamp": 1785052865.1526496
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16597,
+      "timestamp": 1785052866.324308
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16675,
+      "timestamp": 1785052867.506087
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16811,
+      "timestamp": 1785052868.707767
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16179,
+      "timestamp": 1785052869.9070592
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16128,
+      "timestamp": 1785052871.1066003
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16005,
+      "timestamp": 1785052872.277029
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16141,
+      "timestamp": 1785052873.4516726
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16218,
+      "timestamp": 1785052874.626709
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16358,
+      "timestamp": 1785052875.8076706
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16496,
+      "timestamp": 1785052876.9741564
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16643,
+      "timestamp": 1785052878.1380298
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16545,
+      "timestamp": 1785052879.3048105
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16663,
+      "timestamp": 1785052880.4716637
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16674,
+      "timestamp": 1785052881.6430683
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16643,
+      "timestamp": 1785052882.8124957
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16479,
+      "timestamp": 1785052883.9831245
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16418,
+      "timestamp": 1785052885.1582713
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16233,
+      "timestamp": 1785052886.330862
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16303,
+      "timestamp": 1785052887.5037036
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16409,
+      "timestamp": 1785052888.6832616
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16476,
+      "timestamp": 1785052889.8511558
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16612,
+      "timestamp": 1785052891.0166123
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16698,
+      "timestamp": 1785052892.192955
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16168,
+      "timestamp": 1785052893.3619983
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16169,
+      "timestamp": 1785052894.5301547
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16285,
+      "timestamp": 1785052895.6997051
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16364,
+      "timestamp": 1785052896.868412
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16409,
+      "timestamp": 1785052898.0431113
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16393,
+      "timestamp": 1785052899.2262826
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16421,
+      "timestamp": 1785052900.400052
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16358,
+      "timestamp": 1785052901.5655906
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16501,
+      "timestamp": 1785052902.7319908
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16032,
+      "timestamp": 1785052903.9024293
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16167,
+      "timestamp": 1785052905.0719829
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16188,
+      "timestamp": 1785052906.2390864
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16217,
+      "timestamp": 1785052907.4072454
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16362,
+      "timestamp": 1785052908.5765889
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16447,
+      "timestamp": 1785052909.7485752
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16559,
+      "timestamp": 1785052910.9158475
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16643,
+      "timestamp": 1785052912.0851595
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16364,
+      "timestamp": 1785052913.253567
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16165,
+      "timestamp": 1785052914.4284613
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16222,
+      "timestamp": 1785052915.5939767
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16285,
+      "timestamp": 1785052916.7624996
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16417,
+      "timestamp": 1785052917.9260416
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16485,
+      "timestamp": 1785052919.0932772
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16448,
+      "timestamp": 1785052920.262207
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16456,
+      "timestamp": 1785052921.4323277
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16576,
+      "timestamp": 1785052922.6038187
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16685,
+      "timestamp": 1785052923.7732196
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16446,
+      "timestamp": 1785052924.9511018
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16353,
+      "timestamp": 1785052926.1314821
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16224,
+      "timestamp": 1785052927.3056903
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16276,
+      "timestamp": 1785052928.475303
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16389,
+      "timestamp": 1785052929.6421294
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16512,
+      "timestamp": 1785052930.8104124
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16377,
+      "timestamp": 1785052931.9794679
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16645,
+      "timestamp": 1785052933.1453629
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16506,
+      "timestamp": 1785052934.3114765
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15955,
+      "timestamp": 1785052935.4778137
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16139,
+      "timestamp": 1785052936.6451702
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16261,
+      "timestamp": 1785052937.8187716
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16330,
+      "timestamp": 1785052938.9872296
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16460,
+      "timestamp": 1785052940.1528618
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16414,
+      "timestamp": 1785052941.3218465
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16446,
+      "timestamp": 1785052942.487821
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16472,
+      "timestamp": 1785052943.6547983
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15965,
+      "timestamp": 1785052944.8255708
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16190,
+      "timestamp": 1785052945.991027
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16351,
+      "timestamp": 1785052947.1573775
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16200,
+      "timestamp": 1785052948.3257873
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16266,
+      "timestamp": 1785052949.4916961
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16360,
+      "timestamp": 1785052950.664708
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16352,
+      "timestamp": 1785052951.8332307
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16509,
+      "timestamp": 1785052953.01012
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16675,
+      "timestamp": 1785052954.1917787
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16083,
+      "timestamp": 1785052955.3598137
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16204,
+      "timestamp": 1785052956.537904
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16242,
+      "timestamp": 1785052957.705089
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16311,
+      "timestamp": 1785052958.8747
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16412,
+      "timestamp": 1785052960.0437002
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16608,
+      "timestamp": 1785052961.2124434
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16444,
+      "timestamp": 1785052962.381913
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16523,
+      "timestamp": 1785052963.547699
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16407,
+      "timestamp": 1785052964.7180977
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16233,
+      "timestamp": 1785052965.8883097
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16334,
+      "timestamp": 1785052967.0590277
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16440,
+      "timestamp": 1785052968.2330894
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16340,
+      "timestamp": 1785052969.3998637
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16433,
+      "timestamp": 1785052970.5671268
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16369,
+      "timestamp": 1785052971.736986
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16518,
+      "timestamp": 1785052972.9049459
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16630,
+      "timestamp": 1785052974.0696025
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16764,
+      "timestamp": 1785052975.239552
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16568,
+      "timestamp": 1785052976.4096892
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16305,
+      "timestamp": 1785052977.5830855
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16355,
+      "timestamp": 1785052978.7508752
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16432,
+      "timestamp": 1785052979.9198506
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16584,
+      "timestamp": 1785052981.0958734
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16225,
+      "timestamp": 1785052982.2635422
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16419,
+      "timestamp": 1785052983.4276133
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16495,
+      "timestamp": 1785052984.5944638
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16612,
+      "timestamp": 1785052985.764073
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16238,
+      "timestamp": 1785052986.9316237
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16339,
+      "timestamp": 1785052988.103659
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16317,
+      "timestamp": 1785052989.276994
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16249,
+      "timestamp": 1785052990.4437149
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16326,
+      "timestamp": 1785052991.609171
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16424,
+      "timestamp": 1785052992.7800155
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16399,
+      "timestamp": 1785052993.9479823
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16588,
+      "timestamp": 1785052995.1208615
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16203,
+      "timestamp": 1785052996.289676
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16050,
+      "timestamp": 1785052997.4667888
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16164,
+      "timestamp": 1785052998.636485
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16241,
+      "timestamp": 1785052999.804484
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16347,
+      "timestamp": 1785053000.97386
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16482,
+      "timestamp": 1785053002.1398153
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16352,
+      "timestamp": 1785053003.3078947
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16417,
+      "timestamp": 1785053004.4748142
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16486,
+      "timestamp": 1785053005.642271
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15976,
+      "timestamp": 1785053006.8274302
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16148,
+      "timestamp": 1785053008.003371
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16349,
+      "timestamp": 1785053009.1776612
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16306,
+      "timestamp": 1785053010.34529
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16279,
+      "timestamp": 1785053011.5111368
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16402,
+      "timestamp": 1785053012.6826987
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16439,
+      "timestamp": 1785053013.8516977
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16575,
+      "timestamp": 1785053015.027149
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16330,
+      "timestamp": 1785053016.2064583
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15975,
+      "timestamp": 1785053017.3762004
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16111,
+      "timestamp": 1785053018.5441124
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16222,
+      "timestamp": 1785053019.7165234
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16349,
+      "timestamp": 1785053020.8851771
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16498,
+      "timestamp": 1785053022.054555
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16552,
+      "timestamp": 1785053023.2228444
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16493,
+      "timestamp": 1785053024.3992832
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16571,
+      "timestamp": 1785053025.5697255
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16649,
+      "timestamp": 1785053026.740182
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16071,
+      "timestamp": 1785053027.9096925
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16135,
+      "timestamp": 1785053029.0851536
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16302,
+      "timestamp": 1785053030.2537947
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16110,
+      "timestamp": 1785053031.4186954
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16206,
+      "timestamp": 1785053032.5832047
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16346,
+      "timestamp": 1785053033.75628
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16401,
+      "timestamp": 1785053034.9327009
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16495,
+      "timestamp": 1785053036.1022441
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16527,
+      "timestamp": 1785053037.272148
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15992,
+      "timestamp": 1785053038.4406762
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16094,
+      "timestamp": 1785053039.6139023
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16152,
+      "timestamp": 1785053040.7811878
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16251,
+      "timestamp": 1785053041.9487789
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16433,
+      "timestamp": 1785053043.1202586
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16565,
+      "timestamp": 1785053044.290958
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16370,
+      "timestamp": 1785053045.4608045
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16468,
+      "timestamp": 1785053046.6364949
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15888,
+      "timestamp": 1785053047.8171153
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16067,
+      "timestamp": 1785053048.984685
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16221,
+      "timestamp": 1785053050.1494193
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16314,
+      "timestamp": 1785053051.314509
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16209,
+      "timestamp": 1785053052.4794822
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16154,
+      "timestamp": 1785053053.6448708
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16353,
+      "timestamp": 1785053054.8195884
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16490,
+      "timestamp": 1785053055.988101
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16595,
+      "timestamp": 1785053057.1562288
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16169,
+      "timestamp": 1785053058.32299
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16117,
+      "timestamp": 1785053059.4906769
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16145,
+      "timestamp": 1785053060.6675832
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16212,
+      "timestamp": 1785053061.8451838
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16327,
+      "timestamp": 1785053063.0144472
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16491,
+      "timestamp": 1785053064.1785786
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16484,
+      "timestamp": 1785053065.3456125
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16440,
+      "timestamp": 1785053066.513512
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16189,
+      "timestamp": 1785053067.6869283
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16240,
+      "timestamp": 1785053068.8595843
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16343,
+      "timestamp": 1785053070.027025
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16486,
+      "timestamp": 1785053071.1930506
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16564,
+      "timestamp": 1785053072.3583245
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16272,
+      "timestamp": 1785053073.529727
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16383,
+      "timestamp": 1785053074.702928
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16520,
+      "timestamp": 1785053075.8741674
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16653,
+      "timestamp": 1785053077.0414333
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16623,
+      "timestamp": 1785053078.2141585
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16073,
+      "timestamp": 1785053079.38015
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16131,
+      "timestamp": 1785053080.551296
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16185,
+      "timestamp": 1785053081.7151477
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16324,
+      "timestamp": 1785053082.887473
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16386,
+      "timestamp": 1785053084.0542006
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16452,
+      "timestamp": 1785053085.2225668
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16487,
+      "timestamp": 1785053086.3945293
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16486,
+      "timestamp": 1785053087.5757873
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15982,
+      "timestamp": 1785053088.7454023
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16200,
+      "timestamp": 1785053089.9196823
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16321,
+      "timestamp": 1785053091.0857015
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16423,
+      "timestamp": 1785053092.262841
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16374,
+      "timestamp": 1785053093.4359708
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16296,
+      "timestamp": 1785053094.6069775
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16429,
+      "timestamp": 1785053095.7773395
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16527,
+      "timestamp": 1785053096.9447336
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16384,
+      "timestamp": 1785053098.1143317
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16369,
+      "timestamp": 1785053099.2880228
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16269,
+      "timestamp": 1785053100.460111
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16265,
+      "timestamp": 1785053101.6269379
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16350,
+      "timestamp": 1785053102.7980688
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16430,
+      "timestamp": 1785053103.9620285
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16461,
+      "timestamp": 1785053105.1267984
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16553,
+      "timestamp": 1785053106.2997067
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16506,
+      "timestamp": 1785053107.4693646
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16049,
+      "timestamp": 1785053108.6375926
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16165,
+      "timestamp": 1785053109.8087437
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16234,
+      "timestamp": 1785053110.9768867
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16358,
+      "timestamp": 1785053112.1449804
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16432,
+      "timestamp": 1785053113.3183475
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16367,
+      "timestamp": 1785053114.4868596
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16397,
+      "timestamp": 1785053115.651253
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16448,
+      "timestamp": 1785053116.8293736
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16606,
+      "timestamp": 1785053118.0004706
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16691,
+      "timestamp": 1785053119.1689417
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16107,
+      "timestamp": 1785053120.3366914
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16002,
+      "timestamp": 1785053121.5032184
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16125,
+      "timestamp": 1785053122.672671
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16231,
+      "timestamp": 1785053123.8511126
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16369,
+      "timestamp": 1785053125.0173578
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16391,
+      "timestamp": 1785053126.1829097
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16535,
+      "timestamp": 1785053127.3470795
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16438,
+      "timestamp": 1785053128.5187998
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16238,
+      "timestamp": 1785053129.6873727
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16123,
+      "timestamp": 1785053130.8572578
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16241,
+      "timestamp": 1785053132.0232282
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16384,
+      "timestamp": 1785053133.1921887
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16415,
+      "timestamp": 1785053134.3579094
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16301,
+      "timestamp": 1785053135.5260086
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16336,
+      "timestamp": 1785053136.6953843
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16441,
+      "timestamp": 1785053137.8625515
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16589,
+      "timestamp": 1785053139.0327072
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16077,
+      "timestamp": 1785053140.2015395
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16279,
+      "timestamp": 1785053141.3707187
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16124,
+      "timestamp": 1785053142.538046
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16224,
+      "timestamp": 1785053143.7115564
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16328,
+      "timestamp": 1785053144.8789158
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16418,
+      "timestamp": 1785053146.053418
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16524,
+      "timestamp": 1785053147.223688
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16608,
+      "timestamp": 1785053148.3986998
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15779,
+      "timestamp": 1785053149.5724232
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16015,
+      "timestamp": 1785053150.7463248
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16131,
+      "timestamp": 1785053151.912802
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16207,
+      "timestamp": 1785053153.0789096
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16304,
+      "timestamp": 1785053154.2426214
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16440,
+      "timestamp": 1785053155.4093325
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16233,
+      "timestamp": 1785053156.5758066
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16399,
+      "timestamp": 1785053157.7442448
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16520,
+      "timestamp": 1785053158.9127047
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16642,
+      "timestamp": 1785053160.0816772
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16351,
+      "timestamp": 1785053161.2519133
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16091,
+      "timestamp": 1785053162.42258
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16091,
+      "timestamp": 1785053163.5918207
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16192,
+      "timestamp": 1785053164.757262
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16301,
+      "timestamp": 1785053165.9226925
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16448,
+      "timestamp": 1785053167.0956862
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16471,
+      "timestamp": 1785053168.2741659
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16486,
+      "timestamp": 1785053169.4486845
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16553,
+      "timestamp": 1785053170.618709
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16125,
+      "timestamp": 1785053171.7867837
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16187,
+      "timestamp": 1785053172.9617178
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16245,
+      "timestamp": 1785053174.1272302
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16386,
+      "timestamp": 1785053175.2934945
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16307,
+      "timestamp": 1785053176.46147
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16265,
+      "timestamp": 1785053177.6354437
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16364,
+      "timestamp": 1785053178.80906
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16486,
+      "timestamp": 1785053179.975251
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16605,
+      "timestamp": 1785053181.1474266
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16355,
+      "timestamp": 1785053182.317663
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16285,
+      "timestamp": 1785053183.4843488
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16294,
+      "timestamp": 1785053184.65088
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16363,
+      "timestamp": 1785053185.818414
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16421,
+      "timestamp": 1785053186.9940164
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16480,
+      "timestamp": 1785053188.1676152
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16558,
+      "timestamp": 1785053189.3352368
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16466,
+      "timestamp": 1785053190.5042422
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15948,
+      "timestamp": 1785053191.6728215
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16177,
+      "timestamp": 1785053192.8493924
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16272,
+      "timestamp": 1785053194.021225
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16382,
+      "timestamp": 1785053195.1929243
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16507,
+      "timestamp": 1785053196.3604088
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16207,
+      "timestamp": 1785053197.5273414
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16363,
+      "timestamp": 1785053198.700958
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16477,
+      "timestamp": 1785053199.8740509
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16618,
+      "timestamp": 1785053201.0450468
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16698,
+      "timestamp": 1785053202.2142272
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16094,
+      "timestamp": 1785053203.3832865
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16014,
+      "timestamp": 1785053204.5518754
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16126,
+      "timestamp": 1785053205.723705
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16259,
+      "timestamp": 1785053206.8933868
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16359,
+      "timestamp": 1785053208.0583026
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16409,
+      "timestamp": 1785053209.230766
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16468,
+      "timestamp": 1785053210.4064994
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16432,
+      "timestamp": 1785053211.5770164
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16296,
+      "timestamp": 1785053212.7521448
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16143,
+      "timestamp": 1785053213.923695
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16215,
+      "timestamp": 1785053215.095878
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16356,
+      "timestamp": 1785053216.2737875
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16416,
+      "timestamp": 1785053217.443485
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16322,
+      "timestamp": 1785053218.6136794
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16333,
+      "timestamp": 1785053219.7809372
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16435,
+      "timestamp": 1785053220.949009
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16622,
+      "timestamp": 1785053222.1190534
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16143,
+      "timestamp": 1785053223.2851038
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16271,
+      "timestamp": 1785053224.4550443
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16098,
+      "timestamp": 1785053225.6184154
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16261,
+      "timestamp": 1785053226.7861128
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16337,
+      "timestamp": 1785053227.9496913
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16390,
+      "timestamp": 1785053229.1161
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16496,
+      "timestamp": 1785053230.2826042
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16617,
+      "timestamp": 1785053231.4600458
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16187,
+      "timestamp": 1785053232.6307056
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15993,
+      "timestamp": 1785053233.7976935
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16131,
+      "timestamp": 1785053234.9641364
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16220,
+      "timestamp": 1785053236.136345
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16356,
+      "timestamp": 1785053237.3042688
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16494,
+      "timestamp": 1785053238.470832
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16229,
+      "timestamp": 1785053239.6421676
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16385,
+      "timestamp": 1785053240.811109
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16554,
+      "timestamp": 1785053241.9879892
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16700,
+      "timestamp": 1785053243.155805
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16093,
+      "timestamp": 1785053244.3259964
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16189,
+      "timestamp": 1785053245.4952495
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16055,
+      "timestamp": 1785053246.6628153
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16093,
+      "timestamp": 1785053247.8288934
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16231,
+      "timestamp": 1785053248.9965868
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16398,
+      "timestamp": 1785053250.166168
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16388,
+      "timestamp": 1785053251.335704
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16583,
+      "timestamp": 1785053252.5027974
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16473,
+      "timestamp": 1785053253.673689
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15979,
+      "timestamp": 1785053254.8405523
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16106,
+      "timestamp": 1785053256.0112493
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16243,
+      "timestamp": 1785053257.1763
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16393,
+      "timestamp": 1785053258.3520045
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16477,
+      "timestamp": 1785053259.5222852
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16217,
+      "timestamp": 1785053260.6977026
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16344,
+      "timestamp": 1785053261.8678467
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16516,
+      "timestamp": 1785053263.0376885
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16173,
+      "timestamp": 1785053264.2118309
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16177,
+      "timestamp": 1785053265.381947
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16165,
+      "timestamp": 1785053266.54979
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16194,
+      "timestamp": 1785053267.7202141
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16330,
+      "timestamp": 1785053268.8866994
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16408,
+      "timestamp": 1785053270.053886
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16362,
+      "timestamp": 1785053271.2215316
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16552,
+      "timestamp": 1785053272.386064
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16561,
+      "timestamp": 1785053273.5604198
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16047,
+      "timestamp": 1785053274.7300105
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16151,
+      "timestamp": 1785053275.8948278
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16238,
+      "timestamp": 1785053277.0596373
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16383,
+      "timestamp": 1785053278.2244782
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16501,
+      "timestamp": 1785053279.3961074
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16413,
+      "timestamp": 1785053280.5735407
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16376,
+      "timestamp": 1785053281.7448623
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16460,
+      "timestamp": 1785053282.9209335
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16607,
+      "timestamp": 1785053284.0908015
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16707,
+      "timestamp": 1785053285.2617702
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16128,
+      "timestamp": 1785053286.432032
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16061,
+      "timestamp": 1785053287.600915
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16175,
+      "timestamp": 1785053288.770861
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16244,
+      "timestamp": 1785053289.943106
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16337,
+      "timestamp": 1785053291.111825
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16399,
+      "timestamp": 1785053292.2839766
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16509,
+      "timestamp": 1785053293.4638667
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16458,
+      "timestamp": 1785053294.6313114
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 15831,
+      "timestamp": 1785053295.8004727
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16101,
+      "timestamp": 1785053296.9734817
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16245,
+      "timestamp": 1785053298.1420813
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16337,
+      "timestamp": 1785053299.3066623
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16464,
+      "timestamp": 1785053300.4697676
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16151,
+      "timestamp": 1785053301.6354074
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16346,
+      "timestamp": 1785053302.804249
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16471,
+      "timestamp": 1785053303.9698577
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16620,
+      "timestamp": 1785053305.1401541
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16209,
+      "timestamp": 1785053306.3198748
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16328,
+      "timestamp": 1785053307.4861748
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16193,
+      "timestamp": 1785053308.6600492
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16234,
+      "timestamp": 1785053309.8301792
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16323,
+      "timestamp": 1785053310.9981573
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16329,
+      "timestamp": 1785053312.1698878
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16479,
+      "timestamp": 1785053313.3438315
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16603,
+      "timestamp": 1785053314.5117238
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226377,
+      "system_ram_used_mib": 16246,
+      "timestamp": 1785053315.6840863
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226379,
+      "system_ram_used_mib": 16070,
+      "timestamp": 1785053316.880735
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226379,
+      "system_ram_used_mib": 16066,
+      "timestamp": 1785053318.067684
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226379,
+      "system_ram_used_mib": 16163,
+      "timestamp": 1785053319.2566807
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226677,
+      "system_ram_used_mib": 16574,
+      "timestamp": 1785053320.5386114
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226678,
+      "system_ram_used_mib": 16706,
+      "timestamp": 1785053321.4255342
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226678,
+      "system_ram_used_mib": 16732,
+      "timestamp": 1785053321.7247157
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226678,
+      "system_ram_used_mib": 16852,
+      "timestamp": 1785053322.9249632
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226678,
+      "system_ram_used_mib": 16844,
+      "timestamp": 1785053324.1123054
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226678,
+      "system_ram_used_mib": 16864,
+      "timestamp": 1785053325.3136814
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226678,
+      "system_ram_used_mib": 16936,
+      "timestamp": 1785053326.5119154
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226678,
+      "system_ram_used_mib": 16894,
+      "timestamp": 1785053327.7002683
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226678,
+      "system_ram_used_mib": 16548,
+      "timestamp": 1785053328.9102902
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226678,
+      "system_ram_used_mib": 16638,
+      "timestamp": 1785053330.1031494
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226678,
+      "system_ram_used_mib": 16707,
+      "timestamp": 1785053331.3310401
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16675,
+      "timestamp": 1785053332.5245917
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16533,
+      "timestamp": 1785053333.7404034
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16498,
+      "timestamp": 1785053334.9688456
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16587,
+      "timestamp": 1785053336.178905
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16704,
+      "timestamp": 1785053337.3798442
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16848,
+      "timestamp": 1785053338.5567784
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16942,
+      "timestamp": 1785053339.7335272
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 17111,
+      "timestamp": 1785053340.928559
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16982,
+      "timestamp": 1785053342.1257102
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16996,
+      "timestamp": 1785053343.3523216
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16699,
+      "timestamp": 1785053344.539736
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16476,
+      "timestamp": 1785053345.717613
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16511,
+      "timestamp": 1785053346.903816
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16608,
+      "timestamp": 1785053348.0894997
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16733,
+      "timestamp": 1785053349.2742515
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16612,
+      "timestamp": 1785053350.456035
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16576,
+      "timestamp": 1785053351.6484408
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16677,
+      "timestamp": 1785053352.8246953
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16750,
+      "timestamp": 1785053354.0251715
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16859,
+      "timestamp": 1785053355.2268488
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 17026,
+      "timestamp": 1785053356.4135685
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 17022,
+      "timestamp": 1785053357.6105275
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16343,
+      "timestamp": 1785053358.7902932
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16394,
+      "timestamp": 1785053359.978847
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16491,
+      "timestamp": 1785053361.1932623
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16561,
+      "timestamp": 1785053362.3643532
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16690,
+      "timestamp": 1785053363.5424654
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16830,
+      "timestamp": 1785053364.753369
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16807,
+      "timestamp": 1785053365.9221022
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16714,
+      "timestamp": 1785053367.098678
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16734,
+      "timestamp": 1785053368.2875803
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16847,
+      "timestamp": 1785053369.4967446
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16992,
+      "timestamp": 1785053370.6698701
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16999,
+      "timestamp": 1785053371.864675
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16584,
+      "timestamp": 1785053373.049616
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16473,
+      "timestamp": 1785053374.2306223
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16554,
+      "timestamp": 1785053375.4095552
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16639,
+      "timestamp": 1785053376.597812
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16704,
+      "timestamp": 1785053377.778934
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16558,
+      "timestamp": 1785053378.9759262
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16704,
+      "timestamp": 1785053380.18737
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16746,
+      "timestamp": 1785053381.3826594
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16745,
+      "timestamp": 1785053382.5602305
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16839,
+      "timestamp": 1785053383.7403934
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16964,
+      "timestamp": 1785053384.9214182
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16797,
+      "timestamp": 1785053386.1021814
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16585,
+      "timestamp": 1785053387.2780104
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16622,
+      "timestamp": 1785053388.4480228
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16554,
+      "timestamp": 1785053389.6233575
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16530,
+      "timestamp": 1785053390.8000505
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16611,
+      "timestamp": 1785053391.9867458
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16728,
+      "timestamp": 1785053393.1803792
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16728,
+      "timestamp": 1785053394.3767383
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16765,
+      "timestamp": 1785053395.5572972
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16907,
+      "timestamp": 1785053396.7278461
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16850,
+      "timestamp": 1785053397.9056807
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16990,
+      "timestamp": 1785053399.0811586
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16478,
+      "timestamp": 1785053400.2654076
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16531,
+      "timestamp": 1785053401.4348996
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16526,
+      "timestamp": 1785053402.615705
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16599,
+      "timestamp": 1785053403.8216786
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16693,
+      "timestamp": 1785053405.008988
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16630,
+      "timestamp": 1785053406.1979017
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16559,
+      "timestamp": 1785053407.3722775
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16666,
+      "timestamp": 1785053408.5657167
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16800,
+      "timestamp": 1785053409.7458456
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16853,
+      "timestamp": 1785053410.9312096
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16983,
+      "timestamp": 1785053412.1089275
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16977,
+      "timestamp": 1785053413.278829
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16978,
+      "timestamp": 1785053414.463392
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16416,
+      "timestamp": 1785053415.6506734
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16454,
+      "timestamp": 1785053416.8405998
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16556,
+      "timestamp": 1785053418.0305333
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16607,
+      "timestamp": 1785053419.2139893
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16685,
+      "timestamp": 1785053420.406684
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16568,
+      "timestamp": 1785053421.6044896
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16496,
+      "timestamp": 1785053422.7836444
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16605,
+      "timestamp": 1785053423.9816885
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16686,
+      "timestamp": 1785053425.160957
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16847,
+      "timestamp": 1785053426.3452427
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16992,
+      "timestamp": 1785053427.5198894
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 17106,
+      "timestamp": 1785053428.6938798
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16301,
+      "timestamp": 1785053429.8656135
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16389,
+      "timestamp": 1785053431.0467305
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16460,
+      "timestamp": 1785053432.218414
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16572,
+      "timestamp": 1785053433.4024363
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16618,
+      "timestamp": 1785053434.5841296
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16699,
+      "timestamp": 1785053435.7687247
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16506,
+      "timestamp": 1785053436.9598093
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16629,
+      "timestamp": 1785053438.1528108
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16782,
+      "timestamp": 1785053439.3417366
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16806,
+      "timestamp": 1785053440.5317235
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16985,
+      "timestamp": 1785053441.7099252
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 17097,
+      "timestamp": 1785053442.9051788
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16510,
+      "timestamp": 1785053444.0846827
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16399,
+      "timestamp": 1785053445.280262
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16454,
+      "timestamp": 1785053446.4724782
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16521,
+      "timestamp": 1785053447.6621027
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16632,
+      "timestamp": 1785053448.832954
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16712,
+      "timestamp": 1785053450.0117257
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16754,
+      "timestamp": 1785053451.1911056
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16855,
+      "timestamp": 1785053452.3693683
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16709,
+      "timestamp": 1785053453.5467746
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16823,
+      "timestamp": 1785053454.741676
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16960,
+      "timestamp": 1785053455.9262698
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16472,
+      "timestamp": 1785053457.1124506
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16537,
+      "timestamp": 1785053458.2961922
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16602,
+      "timestamp": 1785053459.4789855
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16455,
+      "timestamp": 1785053460.7016783
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16519,
+      "timestamp": 1785053461.8726804
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16658,
+      "timestamp": 1785053463.07041
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16637,
+      "timestamp": 1785053464.273562
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16757,
+      "timestamp": 1785053465.452961
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16946,
+      "timestamp": 1785053466.6357014
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 17034,
+      "timestamp": 1785053467.8384738
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16910,
+      "timestamp": 1785053469.0215058
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16898,
+      "timestamp": 1785053470.2167015
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16405,
+      "timestamp": 1785053471.4053574
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16511,
+      "timestamp": 1785053472.604841
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16575,
+      "timestamp": 1785053473.7993667
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16675,
+      "timestamp": 1785053474.986196
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16598,
+      "timestamp": 1785053476.1672523
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16500,
+      "timestamp": 1785053477.356386
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16655,
+      "timestamp": 1785053478.5395575
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16732,
+      "timestamp": 1785053479.7452416
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16795,
+      "timestamp": 1785053480.9386163
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16943,
+      "timestamp": 1785053482.1247017
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 17066,
+      "timestamp": 1785053483.325081
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16925,
+      "timestamp": 1785053484.5056753
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16966,
+      "timestamp": 1785053485.6993744
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16286,
+      "timestamp": 1785053486.8690236
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16352,
+      "timestamp": 1785053488.0658145
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16503,
+      "timestamp": 1785053489.2867265
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16637,
+      "timestamp": 1785053490.4720767
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16752,
+      "timestamp": 1785053491.647099
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16599,
+      "timestamp": 1785053492.8261702
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16561,
+      "timestamp": 1785053494.0042183
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16686,
+      "timestamp": 1785053495.1808236
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16797,
+      "timestamp": 1785053496.3721528
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16963,
+      "timestamp": 1785053497.5435765
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 17099,
+      "timestamp": 1785053498.7171474
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 17155,
+      "timestamp": 1785053499.3103092
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16720,
+      "timestamp": 1785053499.8983378
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16354,
+      "timestamp": 1785053501.0721023
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16466,
+      "timestamp": 1785053502.241675
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16526,
+      "timestamp": 1785053503.4316998
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16601,
+      "timestamp": 1785053504.6073375
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16755,
+      "timestamp": 1785053505.7922947
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16716,
+      "timestamp": 1785053506.9630384
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16641,
+      "timestamp": 1785053508.1519861
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16721,
+      "timestamp": 1785053509.3338196
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16836,
+      "timestamp": 1785053510.5091362
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16995,
+      "timestamp": 1785053511.6804628
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 17077,
+      "timestamp": 1785053512.8704126
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16512,
+      "timestamp": 1785053514.0479274
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16534,
+      "timestamp": 1785053515.2326221
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16396,
+      "timestamp": 1785053516.407329
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16497,
+      "timestamp": 1785053517.5889657
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16617,
+      "timestamp": 1785053518.7739787
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16699,
+      "timestamp": 1785053519.9403787
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16755,
+      "timestamp": 1785053521.124069
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16794,
+      "timestamp": 1785053522.310016
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16837,
+      "timestamp": 1785053523.483395
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16789,
+      "timestamp": 1785053524.6551814
+    },
+    {
+      "gpu_memory_used_mib": [
+        7975,
+        23168
+      ],
+      "process_rss_mib": 226675,
+      "system_ram_used_mib": 16871,
+      "timestamp": 1785053525.284751
+    }
+  ],
+  "schema": "turbofit.benchmark-evidence/v1",
+  "status": "pass",
+  "suite": "local-runtime-smoke-v1",
+  "summary": {
+    "context_pass_rate": 1.0,
+    "effective_output_tokens_per_second": 0.621558,
+    "measured_completion_tokens": 139,
+    "measured_prompt_tokens": 9509,
+    "peak_gpu_memory_used_mib": [
+      7983,
+      23168
+    ],
+    "peak_process_rss_mib": 226678,
+    "peak_system_ram_used_mib": 17155,
+    "quality_pass_rate": 1.0
+  },
+  "validator_failures": []
+}

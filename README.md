@@ -23,6 +23,7 @@ When another program needs VRAM, Turbofit contracts one step at a time: it can r
 - **Adaptive local scaling:** contraction dwell, expansion dwell, hysteresis, cooldown, rollback, and flap quarantine.
 - **External workload priority:** Turbofit never kills or signals games, editors, renderers, or other GPU consumers.
 - **Verified publication:** a new route is published only after its local model rung loads and passes verification.
+- **Bounded auxiliary lifecycle:** `active:aux` forwards SSE frames immediately, propagates client disconnect cancellation through Turbohaul to llama.cpp, disables hidden-thinking by default, and caps each generation at 4,096 tokens unless explicitly configured otherwise.
 - **Portable configuration:** Turbofiles contain no credentials, machine-local paths, mutable process state, or embedded model binaries.
 
 ## Hardware tiers
@@ -206,24 +207,33 @@ Measured claims remain attached to their exact artifact, runtime flags, context,
 
 ## Hybrid large-model bring-up
 
-`runtime-profiles/hybrid-models.json` now defines the first **configured-unmeasured** dual-24 GB GPU + system-RAM placements for Laguna S 2.1 Q4_K_M, MiniMax M3 MXFP4_MOE, and GLM 5.2 2.788 bpw. Every artifact is bound to an immutable Hugging Face revision, required SHA-256 identity, and exact file size. These configurations remain candidates until their own benchmark evidence passes; they are not production recommendations yet.
+`runtime-profiles/hybrid-models.json` defines dual-24 GB GPU + system-RAM placements for Laguna S 2.1 Q4_K_M, MiniMax M3 MXFP4_MOE, and GLM 5.2 2.788 bpw. Every artifact is bound to an immutable Hugging Face revision, required SHA-256 identity, and exact file size. A benchmark pass validates only that exact artifact, runtime, flags, context, and host class; it does not automatically add the candidate to the production adaptation ladder.
+
+| Candidate / exact placement | Stage-v1 quality | Context retrieval | Effective output | Peak GPU MiB | Peak server RSS | Evidence |
+|---|---:|---:|---:|---:|---:|---|
+| Laguna S 2.1 Q4_K_M · Poolside Laguna runtime · 24 GPU layers · 64K | 100% | 100% | 2.667 tok/s | 19,597 / 18,270 | 38,403 MiB | `sha256:a332e44a601c129b90262c877ad1f62e0d8fd54780dba5f566ee010d51225ec5` |
+| MiniMax M3 MXFP4_MOE · PR 24523 runtime · 40 GPU layers + 56 CPU-MoE layers · 64K | 100% | 100% | 0.622 tok/s | 7,983 / 23,168 | 226,678 MiB | `sha256:2edf1976c39a661de1b8aa49fcd726602d7763923ecb3760723f7990e33ecabc` |
+| GLM 5.2 2.788 bpw · ik_llama.cpp DSA + CPU-MoE · layer split · 64K | 100% | 100% | 0.973 tok/s | 11,734 / 11,468 | 234,926 MiB | `sha256:02ab108a18e2a264c61472f7c98da0ee10bb70be4acf87436ec7066bed51c49e` |
+
+The first MiniMax launch proved that 99 GPU layers left no room for the 64K KV cache; the measured configuration uses 40. GLM uses layer split because ik_llama.cpp explicitly disables the DSA indexer under graph/tensor-parallel attention split.
 
 The configuration checker reports both static `hardware_fits` and current `launch_ready`, so a machine is not called ready while another resident model still occupies required VRAM:
 
 ```bash
-PYTHONPATH=src scripts/turbofit-hybrid-config list
-PYTHONPATH=src scripts/turbofit-hybrid-config check glm-5-2-2-788bpw dual-24gb-64k
+scripts/turbofit-hybrid-config list
+scripts/turbofit-hybrid-config check glm-5-2-2-788bpw dual-24gb-64k
 ```
 
 The evidence-first benchmark stage records raw responses, measured token usage, exact-answer quality checks, passkey context retrieval, effective end-to-end output throughput, host RAM, per-GPU VRAM, and an evidence SHA-256:
 
 ```bash
-PYTHONPATH=src scripts/turbofit-benchmark-stage \
+scripts/turbofit-benchmark-stage \
   --candidate <model-id> \
   --configuration dual-24gb-64k \
   --base-url http://127.0.0.1:<port>/v1 \
   --model <served-model> \
-  --output references/results/<run>.json
+  --output references/results/<run>.json \
+  --disable-thinking
 ```
 
 ## Verification

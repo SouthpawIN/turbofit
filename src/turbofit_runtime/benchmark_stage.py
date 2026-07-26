@@ -157,6 +157,7 @@ def run_benchmark(
     configuration: str, output_path: str | Path, api_key: str | None = None,
     process_id: int | None = None, timeout_seconds: float = 900.0,
     artifact_sha256: str | None = None,
+    request_options: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     cases: list[dict[str, Any]] = []
     all_samples: list[ResourceSample] = []
@@ -168,6 +169,7 @@ def run_benchmark(
                 response = _chat_completion(
                     base_url=base_url, model=model, prompt=prompt,
                     max_tokens=case.max_tokens, api_key=api_key, timeout_seconds=timeout_seconds,
+                    request_options=request_options,
                 )
                 elapsed = time.monotonic() - started
                 content = _response_content(response)
@@ -202,6 +204,7 @@ def run_benchmark(
         "configuration": configuration,
         "endpoint": base_url.rstrip("/"),
         "requested_model": model,
+        "request_options": dict(request_options or {}),
         "artifact_sha256": artifact_sha256,
         "hardware": hardware_snapshot(),
         "status": "pass" if not request_failures and not validator_failures and not resource_failures else "fail",
@@ -319,14 +322,24 @@ def hardware_snapshot() -> dict[str, Any]:
     }
 
 
-def _chat_completion(*, base_url: str, model: str, prompt: str, max_tokens: int, api_key: str | None, timeout_seconds: float) -> Mapping[str, Any]:
-    payload = json.dumps({
+def _chat_completion(
+    *, base_url: str, model: str, prompt: str, max_tokens: int,
+    api_key: str | None, timeout_seconds: float,
+    request_options: Mapping[str, Any] | None = None,
+) -> Mapping[str, Any]:
+    options = dict(request_options or {})
+    reserved = {"model", "messages", "temperature", "max_tokens", "stream"}
+    if reserved.intersection(options):
+        raise ValueError("request options cannot override benchmark-controlled fields")
+    request_body = {
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0,
         "max_tokens": max_tokens,
         "stream": False,
-    }).encode()
+    }
+    request_body.update(options)
+    payload = json.dumps(request_body).encode()
     headers = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"

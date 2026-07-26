@@ -5,12 +5,15 @@ import argparse
 import json
 import shlex
 import subprocess
+import sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
 
 from turbofit_runtime.hybrid_runtime import HybridCatalog
 
 
-ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CATALOG = ROOT / "runtime-profiles" / "hybrid-models.json"
 
 
