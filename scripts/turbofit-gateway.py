@@ -1,26 +1,11 @@
 #!/usr/bin/env python3
 """
-turbofit-gateway — dynamic reverse proxy for nginx with graceful degradation.
+turbofit-gateway — dynamic local reverse proxy for Hermes Agent.
 
-Sits behind nginx on port 8091 and dynamically routes /main/ requests
-to whatever model the scaling watcher has decided should be running.
-
-Graceful degradation (the whole point of turbofit):
-  1. If the preferred local model is LOADING (port bound but model not yet
-     serving), STALL the request with backoff up to STALL_TIMEOUT_S — the
-     user's first request after a daemon restart just waits, instead of
-     failing.
-  2. If the local model is genuinely DEAD (port not bound, or daemon
-     crashed), fall through to the next model in the local ladder.
-  3. If the entire local ladder is dead, fall back to the API chain
-     configured in preferences.yaml (api_fallback).
-  4. If even the API is down, return 503 with a clear reason — never
-     silently proxy to a dead backend.
-
-When the scaling watcher contracts (Darwin -> Prism Eagle -> API fallback),
-this proxy automatically follows. No nginx reload needed.
-
-Also handles /aux/ routing the same way.
+Sits behind nginx on port 8091 and follows the atomically published local
+main/aux routes. The default provider is local-only: unavailable local models
+return a clear 503/204 rather than invoking an API model. Legacy API routing
+code is disabled unless TURBOFIT_ALLOW_API=true is explicitly set.
 
 Runs on :8091
 """
@@ -62,6 +47,7 @@ PROFILES = os.environ.get(
 RUNTIME_CLI = os.environ.get("TURBOFIT_RUNTIME_CLI", str(SCRIPT_DIR / "turbofit-runtime"))
 RECOMMENDER = os.environ.get("TURBOFIT_RECOMMENDER", str(SCRIPT_DIR / "turbofit-runtime-recommend"))
 SELF_PORT = int(os.environ.get("TURBOFIT_GATEWAY_PORT", "8091"))  # never pick a model on our own port
+ALLOW_API = os.environ.get("TURBOFIT_ALLOW_API", "").strip().lower() in {"1", "true", "yes"}
 
 _activation_lock = threading.Lock()
 
@@ -117,14 +103,6 @@ def provider_models():
             "description": "Stable route to the currently reconciled auxiliary role",
         },
     ]
-    for profile_id, profile in runtime_profiles().items():
-        models.append({
-            "id": profile_id,
-            "object": "model",
-            "owned_by": "turbofit",
-            "context_length": int(profile.get("context") or 0),
-            "description": profile.get("description") or profile_id,
-        })
     return models
 
 
@@ -377,7 +355,7 @@ def _runtime_policy_route(state, role):
             "shared_main_alias": main.get("alias"),
         }
     if kind == "api-policy":
-        if route.get("policy") != "api:auto":
+        if not ALLOW_API or route.get("policy") != "api:auto":
             return None
         fallback = _find_api_fallback_in_profiles()
         if not fallback:
@@ -414,6 +392,8 @@ def _runtime_policy_route(state, role):
             result["mode"] = str(route.get("mode") or "dedicated")
         return result
     if kind == "api":
+        if not ALLOW_API:
+            return None
         base_url = str(route.get("base_url") or "").rstrip("/")
         model_id = str(route.get("model_id") or "").strip()
         if not base_url.startswith(("https://", "http://")) or not model_id:
@@ -609,15 +589,16 @@ def resolve_main():
             _cache["ts"] = now
             return result
 
-    # 3. Nothing local is reachable — fall through to API
-    api = _find_api_fallback_in_profiles()
-    if api:
-        result = {**api, "state": "ready"}
-        _cache["main"] = result
-        _cache["ts"] = now
-        return result
+    # 3. API routing is explicit opt-in; the shipped provider is local-only.
+    if ALLOW_API:
+        api = _find_api_fallback_in_profiles()
+        if api:
+            result = {**api, "state": "ready"}
+            _cache["main"] = result
+            _cache["ts"] = now
+            return result
 
-    # 4. Nothing anywhere — caller should 503 with a clear reason
+    # 4. No local backend is available — caller returns a clear 503.
     _cache["main"] = None
     _cache["ts"] = now
     return None
@@ -773,7 +754,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
         backend = resolve_main()
         if not backend:
-            self._send_503("No backend available (no local model, no API fallback)", tried=None)
+            self._send_503("No local backend available", tried=None)
             return
 
         # Stall-while-loading: if local is loading, wait up to STALL_TIMEOUT_S
@@ -794,8 +775,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
                                    tried=f"local :{port} ({new_state})")
                     return
                 if backend.get("state") == "loading":
-                    # Still loading after stall timeout — last resort: API
-                    api = _find_api_fallback_in_profiles()
+                    # Still loading after the stall timeout. API use remains opt-in.
+                    api = _find_api_fallback_in_profiles() if ALLOW_API else None
                     if api:
                         backend = {**api, "state": "ready"}
                     else:
@@ -807,8 +788,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
         result = self._proxy_to(backend, upstream_path, body=body)
         status = result["status"]
 
-        # Graceful fallback: 4xx/5xx from a LOCAL backend → try API before giving up
-        if status >= 400 and not backend.get("is_api"):
+        # API fallback is disabled by default; explicit opt-in preserves legacy behavior.
+        if status >= 400 and not backend.get("is_api") and ALLOW_API:
             api = _find_api_fallback_in_profiles()
             if api and api.get("source") not in tried:
                 tried.append(api.get("source"))
@@ -831,7 +812,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
         result = self._proxy_to(backend, upstream_path, body=body)
-        if result["status"] >= 400 and not backend.get("is_api"):
+        if result["status"] >= 400 and not backend.get("is_api") and ALLOW_API:
             api = _find_api_fallback_in_profiles()
             if api:
                 result = self._proxy_to({**api, "state": "ready"}, upstream_path, body=body)

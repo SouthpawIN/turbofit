@@ -18,7 +18,12 @@ class Client:
     def __init__(self) -> None:
         self.chats: list[dict] = []
         self.unloads: list[str] = []
+        self.acquired: list[tuple[str, ...]] = []
         self.snapshot: dict = {"active": None, "idle_hot": None, "residents": []}
+
+    def ensure_tags(self, tags) -> None:
+        assert self.chats == []
+        self.acquired.append(tuple(tags))
 
     def chat_completion(self, payload):
         self.chats.append(payload)
@@ -57,11 +62,55 @@ def fixture(tmp_path: Path, class_gb: int, rung_index: int):
         route_state_path=routes,
         manager_port=11401,
         client=client,
+        acquirer=client,
         current_state=state,
         sleep=lambda _: None,
-        clock=lambda: 100.0,
+        clock=lambda: 0.0,
+        verification_timeout_s=0,
     )
     return profile, resolutions, routes, state, client, backend
+
+
+def test_revision_reset_unloads_stale_turbofit_alias_without_touching_external_models(
+    tmp_path: Path,
+) -> None:
+    _, _, routes, _, client, backend = fixture(tmp_path, 48, 0)
+    published = json.loads(routes.read_text())
+    published["routes"]["main"]["alias"] = "hardware-48gb-grm-128k-main"
+    routes.write_text(json.dumps(published))
+    client.snapshot["residents"] = [
+        {"model_tag": "hardware-48gb-grm-128k-main", "pid": 1001},
+        {"model_tag": "unrelated-external-model", "pid": 2001},
+    ]
+
+    backend.reset_managed()
+
+    assert client.unloads == ["hardware-48gb-grm-128k-main"]
+    assert client.snapshot["residents"] == [
+        {"model_tag": "unrelated-external-model", "pid": 2001}
+    ]
+
+
+def test_verify_rung_waits_for_turbohaul_residency_to_settle(tmp_path: Path) -> None:
+    profile, resolutions, routes, state, client, backend = fixture(tmp_path, 48, 0)
+    tags = [item["model_tag"] for item in resolutions[profile.id][profile.rungs[0].id].values()]
+    now = [0.0]
+    client.snapshot = {"active": None, "queue": [], "residents": []}
+    backend.verification_timeout_s = 1.0
+    backend.clock = lambda: now[0]
+
+    def settle(_: float) -> None:
+        now[0] += 0.25
+        client.snapshot = {
+            "active": None,
+            "queue": [],
+            "residents": [{"model_tag": tag} for tag in tags],
+        }
+
+    backend.sleep = settle
+
+    assert backend.verify_rung(profile.rungs[0].id) is True
+    assert now[0] == 0.25
 
 
 def test_block_aux_admission_redirects_new_work_before_drain(tmp_path: Path) -> None:
@@ -79,6 +128,19 @@ def test_block_aux_admission_redirects_new_work_before_drain(tmp_path: Path) -> 
     assert backend.drain_aux(0) is True
 
 
+def test_local_activation_acquires_every_resolved_tag_before_inference(tmp_path: Path) -> None:
+    profile, _, _, _, client, backend = fixture(tmp_path, 48, 1)
+
+    backend.activate_local(profile.rungs[0].id)
+
+    assert client.acquired == [
+        (
+            "grm-2-6-plus-128k-gpu1-main",
+            "bonsai-27b-1bit-262k-main",
+        )
+    ]
+
+
 def test_activate_verify_and_publish_dedicated_local_rung(tmp_path: Path) -> None:
     profile, _, routes, _, client, backend = fixture(tmp_path, 48, 1)
 
@@ -91,30 +153,28 @@ def test_activate_verify_and_publish_dedicated_local_rung(tmp_path: Path) -> Non
 
     tags = [payload["model"] for payload in client.chats]
     assert tags == [
-        "hardware-48gb-grm-128k-main",
-        "carwin-nano-1-bit-bonsai-262k-aux",
+        "grm-2-6-plus-128k-gpu1-main",
+        "bonsai-27b-1bit-262k-main",
     ]
     state = json.loads(routes.read_text())
     assert state["rung_index"] == 0
     assert state["routes"]["aux"]["mode"] == "dedicated"
 
 
-def test_api_activation_publishes_policy_not_credentials(tmp_path: Path) -> None:
-    profile, resolutions, routes, _, client, backend = fixture(tmp_path, 24, 0)
-    main_tag = resolutions[profile.id]["local-131072"]["main"]["model_tag"]
-    client.snapshot["residents"] = [{"model_tag": main_tag, "pid": 1234}]
+def test_local_floor_publication_contains_no_api_policy_or_credentials(tmp_path: Path) -> None:
+    profile, _, routes, _, _, backend = fixture(tmp_path, 24, 0)
+    floor = len(profile.rungs) - 1
+    rung = profile.rungs[floor]
 
-    backend.activate_api("api:auto", "api:auto")
-    guarded = json.loads(routes.read_text())["routes"]
-    assert guarded["main"]["kind"] == "api-policy"
-    assert guarded["aux"]["kind"] == "api-policy"
-    assert client.unloads == [main_tag]
-    assert backend.verify_rung("api") is True
-    backend.publish_routes(ReconcilerState(profile.id, 1, "api:auto", "api:auto"))
+    backend.activate_local(rung.id)
+    backend.route_aux_to_main()
+    assert backend.verify_rung(rung.id) is True
+    backend.publish_routes(ReconcilerState(profile.id, floor, "local:main", "local:main"))
 
     text = routes.read_text()
-    assert "api-policy" in text
+    assert "api-policy" not in text
     assert "api_key" not in text
+    assert "bonsai-27b-1bit-64k-main" in text
 
 
 def test_unload_is_delegated_to_turbohaul_and_escalation_never_signals(tmp_path: Path) -> None:

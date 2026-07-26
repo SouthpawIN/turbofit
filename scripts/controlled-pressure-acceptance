@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run one controlled real 48GB contraction and self-heal acceptance cycle."""
+"""Run one controlled real local contraction and self-heal acceptance cycle."""
 from __future__ import annotations
 
 import argparse
@@ -17,8 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 STATE_HOME = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state"))
 DEFAULT_ROUTE_STATE = STATE_HOME / "turbofit" / "runtime-state.json"
 DEFAULT_RESULT = ROOT / "references/results/controlled-pressure-acceptance.json"
-MAX_PRESSURE_MB = 4096
-DEFAULT_PRESSURE_MB = 3072
+MAX_PRESSURE_MB = 14336
+DEFAULT_PRESSURE_MB = 12544
 
 
 def read_state(path: Path) -> dict:
@@ -47,9 +47,13 @@ def is_local(state: dict) -> bool:
     return state.get("routes", {}).get("main", {}).get("kind") == "local"
 
 
-def is_api(state: dict) -> bool:
-    routes = state.get("routes", {})
-    return all(routes.get(role, {}).get("kind") == "api-policy" for role in ("main", "aux"))
+def is_contracted_local(state: dict, *, profile_id: str, ceiling_rung: int) -> bool:
+    return (
+        is_local(state)
+        and state.get("active") == profile_id
+        and isinstance(state.get("rung_index"), int)
+        and state["rung_index"] > ceiling_rung
+    )
 
 
 def write_report(path: Path, report: dict) -> None:
@@ -64,7 +68,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--route-state", type=Path, default=DEFAULT_ROUTE_STATE)
     parser.add_argument("--output", type=Path, default=DEFAULT_RESULT)
     parser.add_argument("--pressure-mb", type=int, default=DEFAULT_PRESSURE_MB)
-    parser.add_argument("--pressure-device", type=int, default=1)
+    parser.add_argument("--pressure-device", type=int, default=0)
     parser.add_argument("--heal-timeout", type=float, default=900)
     return parser
 
@@ -92,7 +96,11 @@ def main() -> int:
     log_path = Path(log_name)
     ready_path = log_path.with_suffix(".ready.json")
     try:
-        initial = wait_for(args.route_state, is_local, args.heal_timeout)
+        initial = wait_for(
+            args.route_state,
+            lambda state: is_local(state) and state.get("rung_index") == 0,
+            args.heal_timeout,
+        )
         profile_id = initial.get("active")
         initial_rung = initial.get("rung_index")
         report["checks"]["initial_local"] = True
@@ -121,12 +129,18 @@ def main() -> int:
             raise TimeoutError("pressure allocation was not confirmed")
         report["checks"]["pressure_allocated"] = json.loads(ready_path.read_text())
 
-        contracted = wait_for(args.route_state, is_api, 120)
+        contracted = wait_for(
+            args.route_state,
+            lambda state: is_contracted_local(
+                state,
+                profile_id=profile_id,
+                ceiling_rung=initial_rung,
+            ),
+            120,
+        )
         if pressure.poll() is not None:
             raise RuntimeError("acceptance pressure process did not survive contraction")
-        if contracted.get("active") != profile_id:
-            raise RuntimeError("profile identity changed during contraction")
-        report["checks"]["contracted_to_api"] = True
+        report["checks"]["contracted_to_local_rung"] = contracted.get("rung_id")
         report["checks"]["external_process_survived"] = True
 
         pressure.terminate()
@@ -134,9 +148,15 @@ def main() -> int:
         report["safety"]["acceptance_owned_processes_terminated"] = 1
         pressure = None
 
-        healed = wait_for(args.route_state, is_local, args.heal_timeout)
-        if healed.get("active") != profile_id or healed.get("rung_index") != initial_rung:
-            raise RuntimeError("controller did not heal to the selected profile ceiling")
+        healed = wait_for(
+            args.route_state,
+            lambda state: (
+                is_local(state)
+                and state.get("active") == profile_id
+                and state.get("rung_index") == initial_rung
+            ),
+            args.heal_timeout,
+        )
         report["checks"]["healed_to_selected_ceiling"] = True
         report["status"] = "pass"
     except Exception as exc:

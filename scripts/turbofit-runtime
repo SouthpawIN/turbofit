@@ -18,29 +18,8 @@ from turbofit_runtime.selection import ProfileCatalog  # noqa: E402
 
 
 def profile_paths() -> tuple[Path, ...]:
-    requirements = json.loads(
-        (ROOT / "runtime-profiles" / "rung-requirements.json").read_text()
-    )
-    resolutions = json.loads(
-        (ROOT / "runtime-profiles" / "runtime-resolutions.json").read_text()
-    )
-    api_only = {
-        profile_id
-        for profile_id, rows in requirements["profiles"].items()
-        if all(not row["required_mb_per_card"] for row in rows)
-    }
-    supported = set(resolutions["profiles"]) | api_only
-    class_profiles = tuple(
-        path
-        for path in sorted((ROOT / "runtime-profiles").glob("*gb.yaml"))
-        if f"hardware-{path.stem}" in supported
-    )
-    migrated = tuple(
-        path
-        for path in sorted((ROOT / "runtime-profiles" / "migrated").glob("*.json"))
-        if path.stem in supported
-    )
-    return class_profiles + migrated
+    """Production exposes only local-only hardware profiles."""
+    return tuple(sorted((ROOT / "runtime-profiles").glob("*gb.yaml")))
 
 
 def main(argv: list[str]) -> int:

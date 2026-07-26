@@ -34,11 +34,24 @@ class TurbohaulResponse:
 class TurbohaulClient:
     """Bounded-timeout client for Turbofit's supported Turbohaul operations."""
 
-    def __init__(self, base_url: str, *, timeout_s: float = 10.0) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        *,
+        timeout_s: float = 10.0,
+        activation_timeout_s: float = 600.0,
+        acquisition_timeout_s: float = 3600.0,
+    ) -> None:
         if timeout_s <= 0:
             raise ValueError("timeout_s must be positive")
+        if activation_timeout_s <= 0:
+            raise ValueError("activation_timeout_s must be positive")
+        if acquisition_timeout_s <= 0:
+            raise ValueError("acquisition_timeout_s must be positive")
         self.base_url = base_url.rstrip("/")
         self.timeout_s = timeout_s
+        self.activation_timeout_s = activation_timeout_s
+        self.acquisition_timeout_s = acquisition_timeout_s
 
     def status(self) -> dict[str, Any]:
         return self._request_json("GET", "/status")
@@ -72,12 +85,45 @@ class TurbohaulClient:
             headers=headers,
         )
 
+    def pull_hf(
+        self,
+        *,
+        repo_id: str,
+        filename: str,
+        revision: str,
+        expected_sha256: str,
+    ) -> dict[str, Any]:
+        for name, value in (
+            ("repo_id", repo_id),
+            ("filename", filename),
+            ("revision", revision),
+            ("expected_sha256", expected_sha256),
+        ):
+            if not isinstance(value, str) or not value:
+                raise ValueError(f"{name} must be a non-empty string")
+        return self._request_json(
+            "POST",
+            "/api/pull-hf",
+            payload={
+                "repo_id": repo_id,
+                "filename": filename,
+                "revision": revision,
+                "expected_sha256": expected_sha256,
+            },
+            timeout_s=self.acquisition_timeout_s,
+        )
+
     def chat_completion(self, payload: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(payload.get("model"), str) or not payload["model"]:
             raise ValueError("chat payload requires a non-empty model")
         if not isinstance(payload.get("messages"), list) or not payload["messages"]:
             raise ValueError("chat payload requires non-empty messages")
-        return self._request_json("POST", "/v1/chat/completions", payload=payload)
+        return self._request_json(
+            "POST",
+            "/v1/chat/completions",
+            payload=payload,
+            timeout_s=self.activation_timeout_s,
+        )
 
     def unload_model(
         self,
@@ -121,8 +167,15 @@ class TurbohaulClient:
         *,
         payload: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
+        timeout_s: float | None = None,
     ) -> dict[str, Any]:
-        return self._request(method, path, payload=payload, headers=headers).payload
+        return self._request(
+            method,
+            path,
+            payload=payload,
+            headers=headers,
+            timeout_s=timeout_s,
+        ).payload
 
     def _request(
         self,
@@ -131,6 +184,7 @@ class TurbohaulClient:
         *,
         payload: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
+        timeout_s: float | None = None,
     ) -> TurbohaulResponse:
         body = None if payload is None else json.dumps(payload).encode("utf-8")
         request_headers = {"Accept": "application/json", **(headers or {})}
@@ -143,7 +197,7 @@ class TurbohaulClient:
             method=method,
         )
         try:
-            with urlopen(request, timeout=self.timeout_s) as response:
+            with urlopen(request, timeout=self.timeout_s if timeout_s is None else timeout_s) as response:
                 raw = response.read()
                 etag = response.headers.get("ETag")
         except HTTPError as exc:

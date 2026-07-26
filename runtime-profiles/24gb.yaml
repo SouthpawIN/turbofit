@@ -1,6 +1,6 @@
 schema: turbofit.runtime/v1
 id: hardware-24gb
-revision: 1
+revision: 2
 hardware:
   class_vram_gb: 24
   min_devices: 1
@@ -13,23 +13,32 @@ policy:
   external_gpu_priority: absolute
   contraction_dwell_s: 5
   expansion_dwell_s: 120
-  expansion_margin_gb_per_card: 2
+  expansion_margin_gb_per_card: 0.5
   cooldown_s: 30
   flap_failure_limit: 3
   flap_window_s: 300
 roles:
   main: active:main
   auxiliary: active:aux
-  fallback: api:auto
+  fallback: active:main
 rungs:
-- aux_mode: shared-main
+- id: local-grm-131072
   context: 131072
+  aux_mode: shared-main
   evidence: sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba
-  id: local-131072
   main_manifest: sha256:05d85116405e37360ba6057a2746e4769d9ee08f239df8fdc973e3e75041437d
-- aux_api_policy: api:auto
-  aux_mode: api
+- id: local-bonsai-262144
+  context: 262144
+  aux_mode: shared-main
+  evidence: sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87
+  main_manifest: sha256:6456085521bfd9d8846c0f7e581611d56b2fe108e31c02af2dfdf56dea474e1c
+- id: local-bonsai-131072
   context: 131072
-  evidence: sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba
-  id: api
-  main_api_policy: api:auto
+  aux_mode: shared-main
+  evidence: sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5
+  main_manifest: sha256:2a98f797ac991a686c4749ef6a02298fa1993eea1c9e5e4320eafee426e6e383
+- id: local-bonsai-65536
+  context: 65536
+  aux_mode: shared-main
+  evidence: sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591
+  main_manifest: sha256:da9ed9fb1b17f6423f759a783a150051b51d5555c7dea09f87c6effb3dac35a2

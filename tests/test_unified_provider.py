@@ -33,11 +33,8 @@ def test_unified_catalog_uses_stable_profile_ids(tmp_path, monkeypatch):
         "auto",
         "active:main",
         "active:aux",
-        "grm-carwin-262k",
-        "grm-carwin-1m",
     ]
     assert all(item["owned_by"] == "turbofit" for item in models)
-    assert models[3]["context_length"] == 262144
 
 
 def test_universal_model_strings_encode_role_without_a_second_provider():

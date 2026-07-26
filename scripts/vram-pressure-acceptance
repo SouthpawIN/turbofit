@@ -8,7 +8,8 @@ import os
 import time
 from pathlib import Path
 
-MAX_PRESSURE_MB = 4096
+MAX_PRESSURE_MB = 14336
+MIN_FREE_RESERVE_MB = 512
 
 
 def main() -> int:
@@ -24,6 +25,13 @@ def main() -> int:
 
     if not torch.cuda.is_available():
         raise SystemExit("CUDA is unavailable")
+    free_bytes, _ = torch.cuda.mem_get_info(args.device)
+    free_mb = free_bytes // (1024 * 1024)
+    if args.mb > free_mb - MIN_FREE_RESERVE_MB:
+        raise SystemExit(
+            f"requested {args.mb} MiB leaves less than {MIN_FREE_RESERVE_MB} MiB free "
+            f"on device {args.device} (currently {free_mb} MiB free)"
+        )
     buffer = torch.empty(args.mb * 1024 * 1024, dtype=torch.uint8, device=f"cuda:{args.device}")
     buffer.zero_()
     torch.cuda.synchronize(args.device)

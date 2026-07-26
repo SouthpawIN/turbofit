@@ -1,54 +1,91 @@
 # Turbofit
 
-Hardware-aware runtime selection and adaptive main/auxiliary routing for Hermes Agent.
+![Turbofit — unified backend, amber and mint aesthetic](assets/turbofit-hero.png)
 
-Turbofit uses immutable, portable **Turbofiles** to describe an evidence-backed rung ladder. Local model lifecycle operations go through **Turbohaul Manager v0.7**. The OpenAI-compatible gateway exposes stable model IDs while backing routes change:
+<p align="center">
+  <a href="assets/turbofit-promo-1080p.mp4"><strong>▶ Watch the 53-second Turbofit overview</strong></a>
+</p>
 
-- `auto`
-- `active:main`
-- `active:aux`
+**A local-model provider for Hermes Agent that fits itself around the way you use your computer.**
 
-External GPU consumers have absolute priority. Turbofit may reclaim only residency explicitly owned by Turbohaul; it never signals unrelated processes.
+Turbofit detects the machine's physical accelerator topology, selects a local main/auxiliary model ladder, downloads the required artifacts through [Turbohaul Manager](https://github.com/MrTrenchTrucker/turbohaul-manager), and exposes stable OpenAI-compatible model IDs to Hermes Agent.
 
-## Authority model
+When another program needs VRAM, Turbofit contracts one step at a time: it can remove a dedicated auxiliary residency, route auxiliary work through the main model, reduce context, or move to a smaller local model. After memory remains available long enough, it heals back toward the selected ceiling.
 
-| Concern | Authority |
-|---|---|
-| Portable recommendation policy | Turbofile under `runtime-profiles/` |
-| Physical hardware identity | `turbofit_runtime.hardware` |
-| Current pressure classification | `turbofit_runtime.pressure` |
-| Contraction/expansion decision | `turbofit_runtime.policy` |
-| Local model residency | Turbohaul Manager v0.7 HTTP API |
-| Verified rung transition | `turbofit_runtime.reconciler` |
-| Stable provider routes | `scripts/turbofit-gateway.py` route-state reader |
-| Research intake | `research/candidates.json` only |
-| Human-readable views | Generated wiki sections; never runtime authority |
+> **Current scope is local-only.** Turbofit does not select, configure, or fall back to API models. API orchestration is recorded under [Later development](#later-development), not presented as a current feature.
 
-Legacy `serve`, direct launcher, PID-file, and scaling-watcher paths are compatibility tools only. They are not allowed to reconcile an adaptive Turbofile runtime.
+## What works now
 
-## Install
+- **Hermes provider:** one local OpenAI-compatible endpoint with stable `auto`, `active:main`, and `active:aux` IDs.
+- **Hardware-aware auto selection:** canonical profiles from 8 GB through 300+ GB; no 48 GB runtime special case.
+- **Manual profile selection:** pin the adaptive ceiling to a compatible hardware profile.
+- **Managed model acquisition:** first activation pulls missing GGUF artifacts from pinned Hugging Face commits, verifies SHA-256, deduplicates shared blobs, installs Turbohaul manifests, and verifies the final tags before inference.
+- **Adaptive local scaling:** contraction dwell, expansion dwell, hysteresis, cooldown, rollback, and flap quarantine.
+- **External workload priority:** Turbofit never kills or signals games, editors, renderers, or other GPU consumers.
+- **Verified publication:** a new route is published only after its local model rung loads and passes verification.
+- **Portable configuration:** Turbofiles contain no credentials, machine-local paths, mutable process state, or embedded model binaries.
+
+## Hardware tiers
+
+![Turbofit auto-fit hardware ladder: one setting for every tier](assets/turbofit-tier-list.png)
+
+The graphic shows the full product ladder: hardware tiers, context targets, auxiliary choices, pressure response, and the model families moving through promotion. The table below distinguishes the local ladders available now from higher-context and broader-model combinations still awaiting evidence.
+
+Turbofit ships local-only profiles for these physical classes:
+
+| Class | Canonical topology | Current local ladder |
+|---:|---|---|
+| 8 GB | `1x8` | Bonsai 27B 1-bit, 64K shared main/aux floor |
+| 16 GB | `1x16` | Bonsai 27B 1-bit: 262K → 128K → 64K |
+| 24 GB | `1x24` | GRM 2.6 Plus 128K → Bonsai 262K → 128K → 64K |
+| 48 GB | `2x24` | GRM 128K + dedicated Bonsai 262K aux → shared GRM → Bonsai floors |
+| 64 GB | `2x32` | same verified dual-model ladder with additional headroom |
+| 96 GB | `4x24` | same verified dual-model ladder; unused cards remain available to other work |
+| 200 GB | `2x100` | same verified dual-model ladder while larger candidates are promoted |
+| 300+ GB | `3x100` | same verified dual-model ladder; unused cards remain available to other work |
+
+Profiles are selected from physical capacity, not transient free VRAM. Larger cards can satisfy a smaller per-card envelope when card count and topology shape remain compatible; `1x48` is still not treated as `2x24`.
+
+The Bonsai floor was measured on the current benchmark host. The 8/16/64/96/200/300 class mappings are portable recommendations, not claims of completed benchmarking on every accelerator family. Activation remains fail-closed if Turbohaul cannot load or verify a selected rung.
+
+## Selection and model downloads
 
 ```bash
-# Add the tap, then install
-hermes skills tap add SouthpawIN/turbofit
-hermes skills install SouthpawIN/turbofit/skills/turbofit
+# Show local profiles, rungs, and compatibility with this machine
+scripts/turbofit-runtime list
+
+# Let Turbofit choose from physical hardware
+scripts/turbofit-runtime set auto
+
+# Or select a compatible local profile explicitly
+scripts/turbofit-runtime set hardware-16gb
+
+# Inspect the persisted selection
+scripts/turbofit-runtime status
+
+# Run one controller reconciliation
+scripts/turbofit-controller --once
+
+# Optional persistent user service
+scripts/install-controller-service --start
 ```
 
-For development, work from the Git repository rather than the installed skill directory.
+A new selection starts at its smallest local floor—not at an API fallback. Before that floor is published, the controller:
 
-Requirements:
+1. Resolves every model tag required by the rung.
+2. Checks Turbohaul's installed tags and content digests.
+3. Pulls each missing Hugging Face artifact from an exact commit.
+4. Requires the downloaded SHA-256 to match the acquisition catalog.
+5. Reuses a verified blob when several model tags share it.
+6. Installs the context/runtime manifest for each tag.
+7. Loads and verifies the selected local rung.
+8. Atomically publishes the stable routes.
 
-- Python 3.11+
-- PyYAML for YAML profiles; canonical JSON remains standard-library-only
-- Turbohaul Manager v0.7 for local serving
-- Hermes Agent for provider integration
-- NVIDIA tooling only when using NVIDIA hardware
+Acquisition recipes live in `runtime-profiles/acquisitions.json`. Model lifecycle authority remains in Turbohaul Manager; Turbofit does not create a second model store.
 
-API credentials belong in Hermes/provider configuration. Turbofiles, research candidates, benchmark records, and route-state files reject or omit credentials.
+## Hermes Agent provider
 
-### Use Turbofit as the Hermes provider
-
-The gateway is one OpenAI-compatible provider. `auto` selects the tested hardware profile; `active:main` and `active:aux` remain stable while the controller changes backing models:
+Run the Turbofit gateway at `http://127.0.0.1:8091`, then configure one provider:
 
 ```yaml
 custom_providers:
@@ -66,187 +103,167 @@ model:
   default: auto
 ```
 
-Auxiliary tasks can use the same provider with model `active:aux`; vision should use `active:main` when the selected main model is multimodal. No second provider or route-specific base URL is required.
+Stable model IDs:
 
-## Auto and manual runtime selection
+| ID | Meaning |
+|---|---|
+| `auto` | current selected main route |
+| `active:main` | current main residency |
+| `active:aux` | dedicated auxiliary when present, otherwise shared main |
 
-```bash
-# Inspect only combinations with measured VRAM requirements and resolvable
-# Turbohaul manifests for this machine
-scripts/turbofit-runtime list
+The IDs stay constant while the controller changes the backing local model and context.
 
-# Hardware-auto mode: select the canonical class from physical topology
-scripts/turbofit-runtime set auto
-
-# Manual mode: pin the healing ceiling to one compatible combination
-scripts/turbofit-runtime set <profile-id>
-
-# Inspect the persisted request, then run one bounded controller tick
-scripts/turbofit-runtime status
-scripts/turbofit-controller --once
-
-# Optional: install the persistent user service; starting remains explicit
-scripts/install-controller-service
-scripts/install-controller-service --start
-
-# 4. Use stable gateway IDs
-curl http://127.0.0.1:8091/v1/models
-```
-
-Both modes start from the terminal API rung. Auto chooses a canonical physical-hardware profile; manual validates the requested combination against the same physical topology. Current availability is evaluated later by one shared pressure policy, so neither mode bypasses contraction, hysteresis, rollback, or healing controls.
-
-## Turbofile contract
-
-Schema: `turbofit.runtime/v1`
-
-A profile contains exactly:
-
-```text
-schema, id, revision, hardware, policy, roles, rungs
-```
-
-Core guarantees:
-
-- Frozen dataclasses and immutable ordered rungs
-- Strict unknown-field rejection
-- Topology-aware hardware classes (`1x48` is not `2x24`)
-- Content-addressed manifest/evidence references (`sha256:<64 lowercase hex>`)
-- No local paths, credentials, GPU placement, or mutable machine state
-- Dedicated local rungs require main and auxiliary manifests
-- Shared-main rungs preserve one main residency and omit an auxiliary manifest
-- The final rung is API-only and defines both role policies
-
-Eight class profiles are supplied for 8, 16, 24, 48, 64, 96, 200, and 300 GB. A class without measured local evidence remains API-only rather than advertising an unproven local winner.
-
-## Complete candidate configuration catalog
-
-`references/model-catalog.json` records the 12 requested main variants, their verified Hugging Face sources, capabilities, and runtime features. `references/configuration-matrix.json` is generated from it and contains every main × auxiliary × context combination: **12 × 4 × 4 = 192 candidates** across 64K, 128K, 262K, and 1M.
+## Install
 
 ```bash
-scripts/generate-configuration-matrix
+hermes skills tap add SouthpawIN/turbofit
+hermes skills install SouthpawIN/turbofit/skills/turbofit
 ```
 
-The candidate matrix is complete, but it is not a claim that every row fits every machine. A row enters an automatic Turbofile only after artifact, runtime, performance, quality, and pressure/self-heal evidence passes. The existing `references/main-aux-matrix.json` remains the live benchmark campaign ledger so prior measured evidence is not rewritten or relabeled.
+Development should happen from a Git checkout, not the installed skill directory.
 
-### Published auto ceilings through 48 GB
+Current requirements:
 
-| Physical class | Auto ceiling | Local roles |
-|---|---|---|
-| 1x8 GB | API policy, 64K route ceiling | API main + auxiliary |
-| 1x16 GB | API policy, 128K route ceiling | API main + auxiliary |
-| 1x24 GB | GRM 2.6 Plus, 128K | one shared main residency |
-| 2x24 GB | GRM 2.6 Plus, 128K on GPU 1 + Carwin Nano 1-bit Bonsai, 262K on GPU 0 | dedicated main + auxiliary |
+- Python 3.11+
+- Hermes Agent
+- Turbohaul Manager v0.7
+- PyYAML for YAML Turbofiles
+- a supported local runtime/accelerator backend
+- network access to the pinned Hugging Face artifacts on first acquisition
 
-The 48 GB composition uses two measured `split_mode=none` residents pinned to separate cards. The previous dual-1M draft is intentionally not the auto recommendation: its real Turbohaul admission/load gate exceeded a 24 GiB card, so publishing it would overclaim local support.
+NVIDIA is the currently exercised backend. The Turbofile and acquisition contracts are system-independent; additional runtime backends still require implementation and validation.
 
 ## Adaptive behavior
 
-Contraction is one rung at a time after configured dwell:
+<p align="center">
+  <img src="assets/turbofit-social-square.png" alt="AI that makes room: auto-selects main and auxiliary, steps down under VRAM load, and heals when memory returns" width="620">
+</p>
+
+A representative ladder is:
 
 ```text
-dedicated main+aux
-→ shared-main auxiliary
-→ smaller model/context rung(s)
-→ terminal API policy
+local main + dedicated local auxiliary
+→ local main shared with auxiliary work
+→ smaller local model/context
+→ minimum local floor
 ```
 
-Expansion/self-healing walks back toward the physical recommendation only after margin, dwell, hysteresis, cooldown, and flap controls pass.
+Contraction occurs only after a sustained deficit. Healing occurs one rung at a time only after the configured margin, dwell, hysteresis, cooldown, and flap controls pass.
 
 A transition:
 
 1. Blocks new auxiliary admission when leaving dedicated mode.
 2. Drains active auxiliary streams.
 3. Requests clean unload through Turbohaul.
-4. Leaves process escalation to Turbohaul; Turbofit never sends process signals.
-5. Activates the target rung or API policies.
-6. Verifies the target.
-7. Atomically publishes stable routes.
-8. Restores and verifies the previous state on any failure.
+4. Activates or acquires the target local rung.
+5. Verifies the target.
+6. Atomically publishes routes.
+7. Restores and verifies the previous state on failure.
 
-The admission guard may temporarily redirect new auxiliary work before drain. A new target rung is never published before target verification, and the previous route is restored on failure.
+At the minimum local floor, Turbofit does not route to an API model. If no lower local rung fits, it holds the floor and reports the capacity condition.
 
-## Benchmark and promotion gates
+## Configuration and evidence
 
-The canonical suite in `benchmarks/suite.yaml` requires these ordered stages:
+| Path | Purpose |
+|---|---|
+| `runtime-profiles/*gb.yaml` | production hardware profiles |
+| `runtime-profiles/acquisitions.json` | pinned sources, hashes, and Turbohaul tag recipes |
+| `runtime-profiles/runtime-resolutions.json` | rung-to-model-tag resolution |
+| `runtime-profiles/rung-requirements.json` | per-card VRAM requirements |
+| `references/model-catalog.json` | requested model variants and capabilities |
+| `references/configuration-matrix.json` | generated main × auxiliary × context candidate space |
+| `benchmarks/suite.yaml` | promotion gates |
+| `references/results/` | measured machine-readable evidence |
 
-1. artifact
-2. runtime
-3. performance
-4. quality
-5. pressure-self-heal
+The candidate matrix contains the requested 12 main variants × 4 auxiliary modes × 4 contexts: **192 research candidates**. A candidate row is not automatically a production recommendation. Production promotion requires artifact, runtime, performance, quality, and pressure/self-heal evidence.
 
-Promotion records include artifact hashes, host fingerprint, observed context, throughput, TTFT, per-card VRAM and power, quality score, raw-result identity, and per-stage evidence identity.
+The current source list includes:
 
-`matrix-benchmark.py --mark-success` fails closed unless `--promotion-record` passes the canonical suite.
+- [GLM/GRM 5.2 2.788 bpw](https://huggingface.co/sokann/GLM-5.2-GGUF-2.788bpw)
+- [MiniMax M3 GGUF](https://huggingface.co/unsloth/MiniMax-M3-GGUF)
+- [Laguna S 2.1](https://huggingface.co/poolside/Laguna-S-2.1)
+- [Laguna S 2.1 GGUF](https://huggingface.co/unsloth/Laguna-S-2.1-GGUF)
+- [GRM 2.6 Plus GGUF](https://huggingface.co/bartowski/OrionLLM_GRM-2.6-Plus-0628-GGUF)
+- [Carwin MoE Nano GGUF](https://huggingface.co/isneezekittens/Carwin-MoE-Nano-GGUF)
+- [Ternary Bonsai 27B GGUF](https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf)
+- [Bonsai 27B GGUF](https://huggingface.co/prism-ml/Bonsai-27B-gguf)
 
-## Candidate intelligence
+## Performance priorities
 
-Collectors are public-read-only and write only candidate status:
+Candidate ranking follows:
 
-```bash
-PYTHONPATH=. python3 research/discover_huggingface.py
-PYTHONPATH=. python3 research/discover_model_news.py --url <public-rss-or-atom-url>
-PYTHONPATH=. python3 research/discover_api_models.py --provider <name> --url <public-models-url>
+```text
+quality
+→ reach 128K context
+→ reach 30 tok/s
+→ reach 262K context
+→ reach 100 tok/s
+→ reach 1M context
+→ maximize speed
 ```
 
-They never edit production profiles or routes and never auto-promote discoveries. See `docs/cron/model-intelligence.md`. Live jobs require explicit schedule and delivery approval.
+Measured claims remain attached to their exact artifact, runtime flags, context, host fingerprint, throughput, TTFT, and per-card VRAM evidence.
 
-## Generated wiki
-
-`src/turbofit_runtime/wiki.py` publishes bounded deterministic sections to the Turbofit README/checklist in the Hermes wiki. Publication validates evidence paths and candidate state first. A second publication is idempotent.
-
-## Verification and release
+## Verification
 
 ```bash
-# Syntax, unit, integration, profiles, links, simulated adaptation
+# Unit, integration, schema, profile, link, and simulated adaptation checks
 scripts/release-check
 
-# Adds real NVML, Turbohaul, stable-route, bounded 3 GiB pressure,
-# contraction, pressure-process survival, and recovery gates
+# Adds live NVML, Turbohaul, stable-route, controlled-pressure,
+# external-process survival, contraction, and healing checks
 scripts/release-check --real
 ```
 
-A release is blocked unless the real gate passes. A simulated pass is not evidence of real pressure handling.
+A simulated pass is not represented as real pressure evidence. The latest machine-readable acceptance record is stored at `references/results/adaptive-runtime-acceptance.json`.
 
-The latest local real preflight record is stored at:
+## Safety invariants
 
-```text
-references/results/adaptive-runtime-acceptance.json
-```
+<p align="center">
+  <img src="assets/turbofit-story-9x16.png" alt="Your computer stays yours. Turbofit keeps local intelligence available while yielding resources to your work." width="430">
+</p>
 
-## Latest real acceptance and host state
+- No runtime behavior is keyed to one developer's 48 GB machine.
+- External GPU processes are never terminated or signaled.
+- Physical capacity selects the profile; transient availability selects the rung.
+- All model lifecycle operations go through Turbohaul.
+- Downloads use pinned revisions and required SHA-256 values.
+- Missing or mismatched artifacts fail closed.
+- New routes are not published before local verification.
+- Credentials and machine-local paths never enter portable profiles.
+- Research candidates never become production recommendations automatically.
 
-The latest controlled real gate passed using a non-disruptive compatibility userspace matching the loaded NVIDIA module:
+## Later development
 
-- **3,072 MiB** of acceptance-owned pressure was allocated on GPU 1.
-- Turbofit contracted from the selected local 48 GB ceiling to the terminal API rung.
-- The external pressure process survived contraction and no external process was signaled.
-- Turbofit healed back to the selected local ceiling after pressure was released.
-- Turbohaul Manager v0.7, the controller, and all three stable gateway routes passed.
+The earlier Turbofit README described a broader product. Those ideas are retained here as roadmap—not current behavior:
 
-The host still has a system-wide NVIDIA userspace/module mismatch (`580.173` userspace versus loaded `580.159.03` module), so plain `nvidia-smi` remains unavailable until the driver state is reconciled. The real acceptance record is valid because it explicitly used matching `580.159.03` NVML userspace without replacing the loaded module or interrupting external workloads.
+- broader local recommendations that fully use 64/96/200/300+ GB systems
+- per-model/per-aux/per-context manual configuration selection
+- 64K, 128K, 262K, and 1M promotion coverage across the complete model matrix
+- expert offload before MoE model replacement
+- multimodal routing and Bonsai/DSpark vision variants
+- additional Linux, Windows, macOS, NVIDIA, AMD, Intel, and Apple runtime backends
+- remote access and administration, including Tailscale workflows
+- Mixture-of-Agents presets
+- live benchmark leaderboards and model discovery feeds
+- pricing awareness for a future opt-in API mode
+- opt-in API providers, free-tier routing, and API fallback
+- model-database updates and recommendation intelligence
+- richer daemon/service management outside systemd
+
+None of these roadmap items should be inferred from the current release until its implementation and verification gates land.
 
 ## Repository map
 
 ```text
-src/turbofit_runtime/       portable schema, hardware, policy, client, reconciler
-runtime-profiles/           canonical class and migrated profiles
-benchmarks/                 canonical promotion suite
-research/                   candidate-only intelligence collectors
-scripts/turbofit-runtime    list/set/status selection entry point
-scripts/turbofit-controller persistent adaptive controller
+src/turbofit_runtime/       schemas, selection, acquisition, policy, controller
+runtime-profiles/           production profiles and runtime catalogs
+benchmarks/                 promotion suite
+research/                   candidate-only discovery
+scripts/turbofit-runtime    list/set/status selection CLI
+scripts/turbofit-controller adaptive local controller
 scripts/turbofit-gateway.py stable OpenAI-compatible gateway
-scripts/adaptive-acceptance controlled acceptance runner
-references/results/         machine-readable acceptance evidence
+references/results/         measured evidence
+assets/turbofit-hero.png    README image
 tests/                      unit and integration gates
 ```
-
-## Safety invariants
-
-- External GPU consumers are never terminated.
-- Recommendations never depend on transient free VRAM.
-- Local lifecycle changes go through Turbohaul.
-- Stable route IDs do not expose transient model identities.
-- Credentials never enter portable artifacts.
-- Candidate discovery never equals promotion.
-- Generated documentation never becomes runtime authority.

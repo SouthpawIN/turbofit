@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-import json
 from pathlib import Path
 
 import pytest
@@ -9,14 +8,19 @@ import pytest
 from turbofit_runtime.controller import AdaptiveController, ControllerState, load_rung_requirements
 from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
 from turbofit_runtime.pressure import CardPressure, PressureSnapshot
-from turbofit_runtime.profile_io import load_profile
 from turbofit_runtime.routes import load_runtime_resolutions
 from turbofit_runtime.selection import ProfileCatalog
 
 
 ROOT = Path(__file__).resolve().parents[2]
 REQUIREMENTS = ROOT / "runtime-profiles" / "rung-requirements.json"
-RESOLUTIONS = load_runtime_resolutions(ROOT / "runtime-profiles" / "runtime-resolutions.json")
+RESOLUTIONS = {
+    key: value
+    for key, value in load_runtime_resolutions(
+        ROOT / "runtime-profiles" / "runtime-resolutions.json"
+    ).items()
+    if key.startswith("hardware-")
+}
 
 
 def hardware(*memory_mb: int) -> HardwareFingerprint:
@@ -71,17 +75,9 @@ class Backend:
 
 
 def supported_catalog() -> ProfileCatalog:
-    requirements = json.loads(REQUIREMENTS.read_text())["profiles"]
-    api_only = {
-        profile_id
-        for profile_id, rows in requirements.items()
-        if all(not row["required_mb_per_card"] for row in rows)
-    }
-    ids = set(RESOLUTIONS) | api_only
-    paths = list((ROOT / "runtime-profiles").glob("*gb.yaml"))
-    paths.extend((ROOT / "runtime-profiles" / "migrated").glob("*.json"))
-    profiles = [item for item in (load_profile(path) for path in paths) if item.id in ids]
-    return ProfileCatalog(profiles)
+    return ProfileCatalog.from_paths(
+        sorted((ROOT / "runtime-profiles").glob("*gb.yaml"))
+    )
 
 
 def make_controller(requested: str, memory: tuple[int, ...]) -> AdaptiveController:
@@ -102,6 +98,9 @@ def make_controller(requested: str, memory: tuple[int, ...]) -> AdaptiveControll
         ((24576,), "hardware-24gb"),
         ((24576, 24576), "hardware-48gb"),
         ((32768, 32768), "hardware-64gb"),
+        ((24576, 24576, 24576, 24576), "hardware-96gb"),
+        ((102400, 102400), "hardware-200gb"),
+        ((102400, 102400, 102400), "hardware-300gb"),
     ],
 )
 def test_auto_selects_canonical_hardware_profile(memory, expected) -> None:
@@ -110,12 +109,42 @@ def test_auto_selects_canonical_hardware_profile(memory, expected) -> None:
     assert choice.initial_rung_index == len(choice.profile.rungs) - 1
 
 
-@pytest.mark.parametrize("memory", [(8192,), (16384,), (32768, 32768)])
-def test_api_only_small_cards_remain_safe(memory) -> None:
+def heal_to_ceiling(controller: AdaptiveController, clear: PressureSnapshot, now: float = 0) -> float:
+    while controller.state.adaptive.current_index > 0:
+        controller.tick(clear, now=now)
+        now += 120
+        result = controller.tick(clear, now=now)
+        assert result.transitioned is True
+        now += 31
+    return now
+
+
+def canonical_memory(profile) -> tuple[int, ...]:
+    sizes: list[int] = []
+    for part in profile.hardware.topology.split("+"):
+        count, size = (int(value) for value in part.lower().removesuffix("gb").split("x"))
+        sizes.extend([size * 1024] * count)
+    return tuple(sizes)
+
+
+@pytest.mark.parametrize(
+    "memory",
+    [
+        (8192,),
+        (16384,),
+        (32768, 32768),
+        (24576, 24576, 24576, 24576),
+        (102400, 102400),
+        (102400, 102400, 102400),
+    ],
+)
+def test_every_hardware_class_starts_on_a_local_floor(memory) -> None:
     controller = make_controller("auto", memory)
     result = controller.tick(pressure(*memory), now=500)
     assert result.transitioned is False
-    assert result.state.adaptive.current_index == 0
+    assert result.state.adaptive.current_index == len(controller.profile.rungs) - 1
+    assert result.state.reconciler.main_target.startswith("local:")
+    assert all(rung.aux_mode.value != "api" for rung in controller.profile.rungs)
 
 
 @pytest.mark.parametrize("memory", [(24576,), (24576, 24576)])
@@ -124,25 +153,31 @@ def test_local_auto_contracts_under_pressure_and_heals_after_stable_headroom(mem
     clear = pressure(*memory)
     pressured = pressure(*(10000 for _ in memory))
 
-    controller.tick(clear, now=0)
-    assert controller.tick(clear, now=120).state.adaptive.current_index == 0
-    controller.tick(pressured, now=151)
-    assert controller.tick(pressured, now=156).state.adaptive.current_index == 1
-    controller.tick(clear, now=187)
-    assert controller.tick(clear, now=307).state.adaptive.current_index == 0
+    now = heal_to_ceiling(controller, clear)
+    assert controller.state.adaptive.current_index == 0
+    controller.tick(pressured, now=now)
+    result = controller.tick(pressured, now=now + 5)
+    assert result.state.adaptive.current_index > 0
+    heal_to_ceiling(controller, clear, now + 36)
+    assert controller.state.adaptive.current_index == 0
 
 
 @pytest.mark.parametrize("profile_id", sorted(RESOLUTIONS))
 def test_every_offered_manual_local_combination_uses_the_same_contract_and_heal_path(profile_id) -> None:
     item = next(profile for profile in supported_catalog().profiles if profile.id == profile_id)
-    count = len(load_rung_requirements(REQUIREMENTS, item).required_mb_by_rung[0])
-    controller = make_controller(profile_id, tuple(24576 for _ in range(count)))
-    clear = pressure(*(24576 for _ in range(count)))
-    pressured = pressure(*(10000 for _ in range(count)))
+    memory = canonical_memory(item)
+    controller = make_controller(profile_id, memory)
+    clear = pressure(*memory)
+    pressured = pressure(*(7000 for _ in memory))
 
-    controller.tick(clear, now=0)
-    assert controller.tick(clear, now=120).state.adaptive.current_index == 0
-    controller.tick(pressured, now=151)
-    assert controller.tick(pressured, now=156).state.adaptive.current_index == 1
-    controller.tick(clear, now=187)
-    assert controller.tick(clear, now=307).state.adaptive.current_index == 0
+    now = heal_to_ceiling(controller, clear)
+    assert controller.state.adaptive.current_index == 0
+    controller.tick(pressured, now=now)
+    result = controller.tick(pressured, now=now + 5)
+    if len(item.rungs) == 1:
+        assert result.transitioned is False
+        assert result.state.adaptive.current_index == 0
+    else:
+        assert result.state.adaptive.current_index == len(item.rungs) - 1
+        heal_to_ceiling(controller, clear, now + 36)
+        assert controller.state.adaptive.current_index == 0

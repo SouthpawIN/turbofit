@@ -112,14 +112,14 @@ def test_manual_api_only_profile_is_safe_on_larger_hardware() -> None:
     assert choice.initial_rung_index == 0
 
 
-def test_catalog_rejects_duplicate_ids_and_profiles_without_terminal_api() -> None:
+def test_catalog_rejects_duplicate_ids_and_accepts_local_terminal_floor() -> None:
     item = profile(8, "1x8", local=False)
     with pytest.raises(ValueError, match="duplicate profile id"):
         ProfileCatalog((item, item))
 
-    local_only = replace(profile(24, "1x24", local=True), rungs=(profile(24, "1x24", local=True).rungs[0],))
-    with pytest.raises(ValueError, match="terminal API rung"):
-        ProfileCatalog((local_only,))
+    source = profile(24, "1x24", local=True)
+    local_only = replace(source, rungs=(source.rungs[0],))
+    assert ProfileCatalog((local_only,)).profiles == (local_only,)
 
 
 def test_selection_record_round_trips_atomically(tmp_path) -> None:

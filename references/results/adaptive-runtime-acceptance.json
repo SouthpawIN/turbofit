@@ -3,7 +3,7 @@
   "checks": {
     "controlled_pressure": {
       "exit_code": 0,
-      "output": "{\n  \"checks\": {\n    \"contracted_to_api\": true,\n    \"external_process_survived\": true,\n    \"healed_to_selected_ceiling\": true,\n    \"initial_local\": true,\n    \"pressure_allocated\": {\n      \"device\": 1,\n      \"mb\": 3072,\n      \"pid\": 55513\n    }\n  },\n  \"recorded_at\": \"2026-07-25T22:06:22.564411+00:00\",\n  \"safety\": {\n    \"acceptance_owned_processes_terminated\": 1,\n    \"external_processes_signaled\": 0\n  },\n  \"schema\": \"turbofit.controlled-pressure-acceptance/v1\",\n  \"status\": \"pass\"\n}\n",
+      "output": "{\n  \"checks\": {\n    \"contracted_to_local_rung\": \"local-grm-131072\",\n    \"external_process_survived\": true,\n    \"healed_to_selected_ceiling\": true,\n    \"initial_local\": true,\n    \"pressure_allocated\": {\n      \"device\": 0,\n      \"mb\": 12544,\n      \"pid\": 3901978\n    }\n  },\n  \"recorded_at\": \"2026-07-26T01:23:55.131370+00:00\",\n  \"safety\": {\n    \"acceptance_owned_processes_terminated\": 1,\n    \"external_processes_signaled\": 0\n  },\n  \"schema\": \"turbofit.controlled-pressure-acceptance/v1\",\n  \"status\": \"pass\"\n}\n",
       "passed": true
     },
     "controller_service": {
@@ -32,209 +32,6 @@
             "id": "active:aux",
             "object": "model",
             "owned_by": "turbofit"
-          },
-          {
-            "context_length": 1048576,
-            "description": "1 Bit Bonsai main with auto auxiliary at 1048576",
-            "id": "1-bit-bonsai-auto-1m",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 131072,
-            "description": "1 Bit Bonsai main with shared-main auto auxiliary at 128K",
-            "id": "bonsai-1bit-auto-128k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 262144,
-            "description": "1 Bit Bonsai main with shared-main auto auxiliary at 262K",
-            "id": "bonsai-1bit-auto-262k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 65536,
-            "description": "1 Bit Bonsai main with shared-main auto auxiliary at 64K",
-            "id": "bonsai-1bit-auto-64k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 131072,
-            "description": "Carwin Nano MTP main with shared-main auto auxiliary at 128K",
-            "id": "carwin-auto-128k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 262144,
-            "description": "Carwin Nano MTP main with shared-main auto auxiliary at 262K",
-            "id": "carwin-auto-262k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 65536,
-            "description": "Carwin Nano MTP main with shared-main auto auxiliary at 64K",
-            "id": "carwin-auto-64k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 131072,
-            "description": "Carwin Nano main with 1 Bit Bonsai auxiliary at 131072",
-            "id": "carwin-nano-1-bit-bonsai-128k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 262144,
-            "description": "Carwin Nano main with 1 Bit Bonsai auxiliary at 262144",
-            "id": "carwin-nano-1-bit-bonsai-262k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 65536,
-            "description": "Carwin Nano main with 1 Bit Bonsai auxiliary at 65536",
-            "id": "carwin-nano-1-bit-bonsai-64k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 131072,
-            "description": "Carwin Nano main with Ternary Bonsai auxiliary at 131072",
-            "id": "carwin-nano-ternary-bonsai-128k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 262144,
-            "description": "Carwin Nano main with Ternary Bonsai auxiliary at 262144",
-            "id": "carwin-nano-ternary-bonsai-262k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 65536,
-            "description": "Carwin Nano main with Ternary Bonsai auxiliary at 65536",
-            "id": "carwin-nano-ternary-bonsai-64k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 131072,
-            "description": "GRM 2.6 Plus main with 1 Bit Bonsai auxiliary at 131072",
-            "id": "grm-2-6-plus-1-bit-bonsai-128k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 65536,
-            "description": "GRM 2.6 Plus main with 1 Bit Bonsai auxiliary at 65536",
-            "id": "grm-2-6-plus-1-bit-bonsai-64k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 131072,
-            "description": "GRM 2.6 Plus main with auto auxiliary at 131072",
-            "id": "grm-2-6-plus-auto-128k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 65536,
-            "description": "GRM 2.6 Plus main with auto auxiliary at 65536",
-            "id": "grm-2-6-plus-auto-64k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 1048576,
-            "description": "GRM 2.6 Plus main with Carwin Nano auxiliary at 1048576",
-            "id": "grm-2-6-plus-carwin-nano-1m",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 262144,
-            "description": "GRM 2.6 Plus main with Carwin Nano auxiliary at 262144",
-            "id": "grm-2-6-plus-carwin-nano-262k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 131072,
-            "description": "GRM 2.6 Plus main with Ternary Bonsai auxiliary at 131072",
-            "id": "grm-2-6-plus-ternary-bonsai-128k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 65536,
-            "description": "GRM 2.6 Plus main with Ternary Bonsai auxiliary at 65536",
-            "id": "grm-2-6-plus-ternary-bonsai-64k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 131072,
-            "description": "GRM 2.6 Plus MTP main with Carwin Nano MTP auxiliary at 128K",
-            "id": "grm-carwin-128k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 65536,
-            "description": "GRM 2.6 Plus MTP main with Carwin Nano MTP auxiliary at 64K",
-            "id": "grm-carwin-64k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 131072,
-            "description": "Ternary Bonsai main with 1 Bit Bonsai auxiliary at 128K",
-            "id": "ternary-1bit-128k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 262144,
-            "description": "Ternary Bonsai main with 1 Bit Bonsai auxiliary at 262K",
-            "id": "ternary-1bit-262k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 65536,
-            "description": "Ternary Bonsai main with 1 Bit Bonsai auxiliary at 64K",
-            "id": "ternary-1bit-64k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 131072,
-            "description": "Ternary Bonsai main with shared-main auto auxiliary at 128K",
-            "id": "ternary-auto-128k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 262144,
-            "description": "Ternary Bonsai main with shared-main auto auxiliary at 262K",
-            "id": "ternary-auto-262k",
-            "object": "model",
-            "owned_by": "turbofit"
-          },
-          {
-            "context_length": 65536,
-            "description": "Ternary Bonsai main with shared-main auto auxiliary at 64K",
-            "id": "ternary-auto-64k",
-            "object": "model",
-            "owned_by": "turbofit"
           }
         ],
         "object": "list"
@@ -243,12 +40,12 @@
     },
     "nvml": {
       "exit_code": 0,
-      "output": "0, GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1, 24576, 447, 23669\n1, GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1, 24576, 57, 24068\n",
+      "output": "0, GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1, 24576, 10575, 13542\n1, GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1, 24576, 20040, 4085\n",
       "passed": true
     },
     "simulated_transitions": {
       "exit_code": 0,
-      "output": "...................                                                      [100%]\n19 passed in 1.03s\n",
+      "output": "..........................                                               [100%]\n26 passed in 1.51s\n",
       "passed": true
     },
     "turbohaul_status": {
@@ -256,19 +53,19 @@
       "payload": {
         "active": null,
         "background_sweeper": {
-          "last_sweep_iso": "2026-07-25T22:06:03+00:00",
+          "last_sweep_iso": "2026-07-26T01:23:03+00:00",
           "slots_finalized_lifetime": 0
         },
         "engine_stall": null,
         "evictions": {
-          "last_evicted_at": null,
-          "total_lifetime": 0
+          "last_evicted_at": "2026-07-26T00:30:00.219924+00:00",
+          "total_lifetime": 102
         },
         "generation": {
           "eta_s": null,
           "generation_id": null,
           "max_tokens": null,
-          "measured_at_iso": "2026-07-25T22:06:22+00:00",
+          "measured_at_iso": "2026-07-26T01:23:54+00:00",
           "n_ctx": null,
           "n_decoded": 0,
           "n_prompt_cache": null,
@@ -280,16 +77,16 @@
           "prompt_progress": null,
           "riders": 0,
           "stalled": false,
-          "state": "idle",
+          "state": "transitioning",
           "streaming": false,
-          "tok_s": 0.0,
+          "tok_s": null,
           "tok_s_instant": 0.0
         },
         "grace": null,
         "idle_hot": null,
         "kv_classifier": {
           "events": {
-            "sub-agent": 8
+            "sub-agent": 81
           },
           "forced_clean_restores": 0,
           "last": {
@@ -327,12 +124,81 @@
           "is_curator": null,
           "is_main": null,
           "is_sub_agent": null,
-          "model_tag": "carwin-nano-1-bit-bonsai-262k-aux",
+          "model_tag": "bonsai-27b-1bit-262k-main",
           "resolved_class": null,
           "session_id": null,
-          "thread_id": "auto-9103d4c985113b0a4b00ae3f"
+          "thread_id": "auto-9754d5e2f5e09346e030898a"
         },
-        "residents": [],
+        "residents": [
+          {
+            "generation": {
+              "eta_s": null,
+              "generation_id": null,
+              "max_tokens": null,
+              "measured_at_iso": "2026-07-26T01:23:54+00:00",
+              "n_ctx": null,
+              "n_decoded": 0,
+              "n_prompt_cache": null,
+              "n_prompt_proc": null,
+              "n_prompt_tokens": 0,
+              "n_remain": null,
+              "pct": null,
+              "prefill_pct": null,
+              "prompt_progress": null,
+              "riders": 0,
+              "stalled": false,
+              "state": "transitioning",
+              "streaming": false,
+              "tok_s": null,
+              "tok_s_instant": 0.0
+            },
+            "idle_expires_in_s": 466,
+            "inflight": 0,
+            "main_gpu": 1,
+            "model_tag": "grm-2-6-plus-128k-gpu1-main",
+            "parallel": 1,
+            "pid": 3645179,
+            "port": 11901,
+            "reserved_need_mib": 21554,
+            "spawn_seq": 1,
+            "split_mode": "none",
+            "state": "IDLE_EVICTABLE"
+          },
+          {
+            "generation": {
+              "eta_s": null,
+              "generation_id": null,
+              "max_tokens": null,
+              "measured_at_iso": "2026-07-26T01:23:54+00:00",
+              "n_ctx": null,
+              "n_decoded": 0,
+              "n_prompt_cache": null,
+              "n_prompt_proc": null,
+              "n_prompt_tokens": 0,
+              "n_remain": null,
+              "pct": null,
+              "prefill_pct": null,
+              "prompt_progress": null,
+              "riders": 0,
+              "stalled": false,
+              "state": "transitioning",
+              "streaming": false,
+              "tok_s": null,
+              "tok_s_instant": 0.0
+            },
+            "idle_expires_in_s": 477,
+            "inflight": 0,
+            "main_gpu": 0,
+            "model_tag": "bonsai-27b-1bit-262k-main",
+            "parallel": 1,
+            "pid": 3607768,
+            "port": 11900,
+            "reserved_need_mib": 11093,
+            "spawn_seq": 1,
+            "split_mode": "none",
+            "state": "IDLE_EVICTABLE"
+          }
+        ],
         "shadow_bytematch": {},
         "shadow_diag": {
           "byteparity": {},
@@ -348,10 +214,10 @@
             "protected_bytes": 0,
             "protected_threads": {},
             "total_bytes": 0,
-            "ts": 1785016923.1548462
+            "ts": 1785028923.791464
           },
           "restores": {
-            "fresh": 8
+            "fresh": 81
           },
           "saves": {}
         },
@@ -359,8 +225,8 @@
         "shadow_restore_prefer": {},
         "tooltail_restore_skip": {},
         "vram": [
-          23669,
-          24068
+          13542,
+          4085
         ],
         "vram_total_mib": null
       },
@@ -368,7 +234,7 @@
     }
   },
   "real_requested": true,
-  "recorded_at": "2026-07-25T22:14:24.012373+00:00",
+  "recorded_at": "2026-07-26T01:26:50.514828+00:00",
   "safety": {
     "direct_process_signals_sent": 0,
     "external_processes_modified": 0,

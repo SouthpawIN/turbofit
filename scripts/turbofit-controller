@@ -14,9 +14,9 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+from turbofit_runtime.acquisition import AcquisitionCatalog, ModelAcquirer  # noqa: E402
 from turbofit_runtime.hardware import probe_hardware  # noqa: E402
 from turbofit_runtime.pressure_probe import probe_nvidia_pressure  # noqa: E402
-from turbofit_runtime.profile_io import load_profile  # noqa: E402
 from turbofit_runtime.routes import load_runtime_resolutions  # noqa: E402
 from turbofit_runtime.runtime_service import RuntimeService  # noqa: E402
 from turbofit_runtime.selection import ProfileCatalog  # noqa: E402
@@ -25,33 +25,18 @@ from turbofit_runtime.turbohaul_client import TurbohaulClient  # noqa: E402
 
 
 def supported_profiles() -> tuple[Path, ...]:
-    requirements = json.loads(
-        (ROOT / "runtime-profiles" / "rung-requirements.json").read_text()
-    )["profiles"]
-    resolutions = json.loads(
-        (ROOT / "runtime-profiles" / "runtime-resolutions.json").read_text()
-    )["profiles"]
-    api_only = {
-        profile_id
-        for profile_id, rows in requirements.items()
-        if all(not row["required_mb_per_card"] for row in rows)
-    }
-    supported = set(resolutions) | api_only
-    candidates = list((ROOT / "runtime-profiles").glob("*gb.yaml"))
-    candidates.extend((ROOT / "runtime-profiles" / "migrated").glob("*.json"))
-    return tuple(
-        sorted(
-            path
-            for path in candidates
-            if load_profile(path).id in supported
-        )
-    )
+    """Production exposes only local-only hardware profiles."""
+    return tuple(sorted((ROOT / "runtime-profiles").glob("*gb.yaml")))
 
 
 def build_runtime(args: argparse.Namespace, client: TurbohaulClient) -> RuntimeService:
     catalog = ProfileCatalog.from_paths(supported_profiles())
     resolutions = load_runtime_resolutions(
         ROOT / "runtime-profiles" / "runtime-resolutions.json"
+    )
+    acquirer = ModelAcquirer(
+        AcquisitionCatalog.load(ROOT / "runtime-profiles" / "acquisitions.json"),
+        client,
     )
 
     def backend_factory(profile, state):
@@ -61,6 +46,7 @@ def build_runtime(args: argparse.Namespace, client: TurbohaulClient) -> RuntimeS
             route_state_path=args.routes,
             manager_port=args.manager_port,
             client=client,
+            acquirer=acquirer,
             current_state=state,
         )
 

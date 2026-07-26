@@ -25,7 +25,7 @@ def test_builds_shared_main_route_for_24gb_profile() -> None:
     state = build_route_state(profile(24), 0, resolutions, manager_port=11401)
 
     assert state["active"] == "hardware-24gb"
-    assert state["rung_id"] == "local-131072"
+    assert state["rung_id"] == "local-grm-131072"
     assert state["routes"]["main"] == {
         "kind": "local",
         "alias": "grm-2-6-plus-auto-128k-main",
@@ -41,24 +41,30 @@ def test_builds_dedicated_route_for_48gb_profile() -> None:
     state = build_route_state(profile(48), 0, resolutions, manager_port=11401)
 
     assert state["routes"]["main"]["alias"].endswith("-main")
-    assert state["routes"]["aux"]["alias"].endswith("-aux")
+    assert state["routes"]["aux"]["alias"] == "bonsai-27b-1bit-262k-main"
     assert state["routes"]["aux"]["mode"] == "dedicated"
     assert state["routes"]["main"]["port"] == 11401
 
 
-def test_terminal_api_route_uses_dynamic_policy_without_credentials() -> None:
-    state = build_route_state(profile(48), 1, {}, manager_port=11401)
+def test_local_floor_route_contains_no_api_policy_or_credentials() -> None:
+    resolutions = load_runtime_resolutions(
+        ROOT / "runtime-profiles" / "runtime-resolutions.json"
+    )
+    item = profile(8)
+    state = build_route_state(item, len(item.rungs) - 1, resolutions, manager_port=11401)
 
-    assert state["routes"] == {
-        "main": {"kind": "api-policy", "policy": "api:auto"},
-        "aux": {"kind": "api-policy", "policy": "api:auto"},
-    }
+    assert state["routes"]["main"]["kind"] == "local"
+    assert state["routes"]["aux"] == {"kind": "shared-main"}
+    assert "api-policy" not in json.dumps(state)
     assert "api_key" not in json.dumps(state)
 
 
 def test_route_publication_is_atomic(tmp_path: Path) -> None:
     path = tmp_path / "runtime-state.json"
-    state = build_route_state(profile(8), 0, {}, manager_port=11401)
+    resolutions = load_runtime_resolutions(
+        ROOT / "runtime-profiles" / "runtime-resolutions.json"
+    )
+    state = build_route_state(profile(8), 0, resolutions, manager_port=11401)
 
     publish_route_state(path, state)
 

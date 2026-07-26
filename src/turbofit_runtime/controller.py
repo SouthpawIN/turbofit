@@ -68,6 +68,7 @@ def load_rung_requirements(path: str | Path, profile: Turbofile) -> RungRequirem
 class ControllerState:
     selection_mode: SelectionMode
     profile_id: str
+    profile_revision: int
     adaptive: AdaptiveState
     reconciler: ReconcilerState
 
@@ -84,6 +85,7 @@ class ControllerState:
         return cls(
             selection_mode=choice.mode,
             profile_id=choice.profile.id,
+            profile_revision=choice.profile.revision,
             adaptive=AdaptiveState(
                 current_index=index,
                 last_stable_index=index,
@@ -102,9 +104,10 @@ def save_controller_state(path: str | Path, state: ControllerState) -> None:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     payload = {
-        "schema": "turbofit.controller-state/v1",
+        "schema": "turbofit.controller-state/v2",
         "selection_mode": state.selection_mode.value,
         "profile_id": state.profile_id,
+        "profile_revision": state.profile_revision,
         "adaptive": asdict(state.adaptive),
         "reconciler": asdict(state.reconciler),
     }
@@ -125,16 +128,16 @@ def save_controller_state(path: str | Path, state: ControllerState) -> None:
 
 def load_controller_state(path: str | Path) -> ControllerState:
     raw: Any = json.loads(Path(path).read_text(encoding="utf-8"))
-    if not isinstance(raw, Mapping) or set(raw) != {
-        "schema",
-        "selection_mode",
-        "profile_id",
-        "adaptive",
-        "reconciler",
-    }:
+    if not isinstance(raw, Mapping):
         raise ValueError("invalid controller state root")
-    if raw["schema"] != "turbofit.controller-state/v1":
+    schema = raw.get("schema")
+    required = {"schema", "selection_mode", "profile_id", "adaptive", "reconciler"}
+    if schema == "turbofit.controller-state/v2":
+        required.add("profile_revision")
+    elif schema != "turbofit.controller-state/v1":
         raise ValueError("unsupported controller state schema")
+    if set(raw) != required:
+        raise ValueError("invalid controller state root")
     adaptive_raw = raw["adaptive"]
     reconciler_raw = raw["reconciler"]
     if not isinstance(adaptive_raw, Mapping) or set(adaptive_raw) != {
@@ -164,6 +167,7 @@ def load_controller_state(path: str | Path) -> ControllerState:
     state = ControllerState(
         selection_mode=SelectionMode(raw["selection_mode"]),
         profile_id=raw["profile_id"],
+        profile_revision=raw["profile_revision"] if schema.endswith("/v2") else 0,
         adaptive=AdaptiveState(**adaptive_values),
         reconciler=ReconcilerState(**dict(reconciler_raw)),
     )

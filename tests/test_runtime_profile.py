@@ -264,9 +264,17 @@ def test_manifest_references_are_exact_sha256_content_addresses() -> None:
         Turbofile.from_mapping(mapping)
 
 
-def test_terminal_rung_is_api_only_with_both_policies_and_no_manifests() -> None:
+def test_terminal_rung_may_be_local_while_api_rungs_remain_terminal_only() -> None:
+    local_terminal = valid_mapping()
+    floor = local_terminal["rungs"][-1]
+    floor["aux_mode"] = "shared-main"
+    floor["main_manifest"] = DIGEST_A
+    floor.pop("main_api_policy")
+    floor.pop("aux_api_policy")
+    profile = Turbofile.from_mapping(local_terminal)
+    assert profile.rungs[-1].aux_mode is AuxMode.SHARED_MAIN
+
     for mutate, message in (
-        (lambda rung: rung.update(aux_mode="shared-main"), "terminal rung"),
         (lambda rung: rung.pop("main_api_policy"), "main_api_policy"),
         (lambda rung: rung.pop("aux_api_policy"), "aux_api_policy"),
         (lambda rung: rung.update(main_manifest=DIGEST_A), "local manifests"),
@@ -275,6 +283,15 @@ def test_terminal_rung_is_api_only_with_both_policies_and_no_manifests() -> None
         mutate(mapping["rungs"][-1])
         with pytest.raises(ValueError, match=message):
             Turbofile.from_mapping(mapping)
+
+    nonterminal_api = valid_mapping()
+    first = nonterminal_api["rungs"][0]
+    first["aux_mode"] = "api"
+    first.pop("main_manifest")
+    first["main_api_policy"] = "api:auto"
+    first["aux_api_policy"] = "api:auto"
+    with pytest.raises(ValueError, match="terminal"):
+        Turbofile.from_mapping(nonterminal_api)
 
 
 def test_empty_rung_list_is_rejected() -> None:

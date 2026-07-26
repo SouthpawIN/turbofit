@@ -166,9 +166,19 @@ def hardware_satisfies(
     if constraint.topology != "any":
         expected = _parse_topology(constraint.topology)
         actual = Counter(round(device.memory_total_mb / 1024) for device in devices)
-        if actual != expected:
+        if not _topology_satisfies(actual, expected):
             return False
     return True
+
+
+def _topology_satisfies(actual: Counter[int], expected: Counter[int]) -> bool:
+    """Match the same card count while allowing larger per-card VRAM."""
+    actual_cards = sorted(actual.elements())
+    expected_cards = sorted(expected.elements())
+    return len(actual_cards) == len(expected_cards) and all(
+        actual_size >= expected_size
+        for actual_size, expected_size in zip(actual_cards, expected_cards, strict=True)
+    )
 
 
 def _accelerator_matches(hardware: HardwareFingerprint, expected: str) -> bool:

@@ -97,9 +97,6 @@ class ProfileCatalog:
         ids = [profile.id for profile in ordered]
         if len(ids) != len(set(ids)):
             raise ValueError("duplicate profile id")
-        for profile in ordered:
-            if not profile.rungs or profile.rungs[-1].aux_mode is not AuxMode.API:
-                raise ValueError(f"profile {profile.id} must end in a terminal API rung")
         self._profiles = ordered
         self._by_id = {profile.id: profile for profile in ordered}
 

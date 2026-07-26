@@ -59,15 +59,45 @@ class RuntimeService:
             existing = load_controller_state(self.controller_state_path)
         except FileNotFoundError:
             existing = None
-        if existing is not None and (
-            existing.profile_id != choice.profile.id
-            or existing.selection_mode is not choice.mode
-        ):
-            self._retire_previous(existing)
-            existing = None
+        if existing is not None:
+            previous = next(
+                (profile for profile in self.catalog.profiles if profile.id == existing.profile_id),
+                None,
+            )
+            if previous is None:
+                raise ValueError(
+                    f"cannot safely retire unknown previous profile {existing.profile_id}"
+                )
+            if existing.profile_revision != previous.revision:
+                backend = self.backend_factory(previous, existing.reconciler)
+                backend.reset_managed()
+                existing = None
+            elif (
+                existing.profile_id != choice.profile.id
+                or existing.selection_mode is not choice.mode
+            ):
+                self._retire_previous(existing)
+                existing = None
 
         if existing is None:
             state = ControllerState.from_choice(choice)
+            backend = self.backend_factory(choice.profile, state.reconciler)
+            initial_rung = choice.profile.rungs[state.adaptive.current_index]
+            if initial_rung.aux_mode.value == "api":
+                assert initial_rung.main_api_policy is not None
+                assert initial_rung.aux_api_policy is not None
+                backend.activate_api(
+                    initial_rung.main_api_policy,
+                    initial_rung.aux_api_policy,
+                )
+            else:
+                backend.activate_local(initial_rung.id)
+                if initial_rung.aux_mode.value == "shared-main":
+                    backend.route_aux_to_main()
+                else:
+                    backend.route_aux_dedicated()
+            if not backend.verify_rung(initial_rung.id):
+                raise RuntimeError(f"initial rung verification failed: {initial_rung.id}")
             initial_routes = build_route_state(
                 choice.profile,
                 state.adaptive.current_index,
@@ -79,8 +109,8 @@ class RuntimeService:
         else:
             state = existing
             self._validate_state_bounds(state, choice.profile.id, len(choice.profile.rungs))
+            backend = self.backend_factory(choice.profile, state.reconciler)
 
-        backend = self.backend_factory(choice.profile, state.reconciler)
         self.controller = AdaptiveController(
             profile=choice.profile,
             requirements=load_rung_requirements(self.requirements_path, choice.profile),
@@ -114,6 +144,7 @@ class RuntimeService:
         safe_state = ControllerState(
             selection_mode=existing.selection_mode,
             profile_id=previous.id,
+            profile_revision=previous.revision,
             adaptive=existing.adaptive,
             reconciler=retired,
         )

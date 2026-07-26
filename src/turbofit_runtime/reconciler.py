@@ -24,6 +24,7 @@ class ReconcilerState:
 
 
 class RuntimeBackend(Protocol):
+    def reset_managed(self) -> None: ...
     def block_aux_admission(self) -> None: ...
     def drain_aux(self, timeout_s: float) -> bool: ...
     def clean_unload_aux(self) -> bool: ...
@@ -115,6 +116,10 @@ def _kv_preserving_seam(source: RuntimeRung, target: RuntimeRung) -> bool:
         source.main_manifest is not None
         and source.main_manifest == target.main_manifest
         and source.context == target.context
+        and not (
+            source.aux_mode is AuxMode.SHARED_MAIN
+            and target.aux_mode is AuxMode.DEDICATED
+        )
     )
 
 

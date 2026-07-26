@@ -24,27 +24,37 @@ PRESSURE_MODULE = importlib.util.module_from_spec(PRESSURE_SPEC)
 PRESSURE_SPEC.loader.exec_module(PRESSURE_MODULE)
 
 
-def test_route_state_predicates_distinguish_local_and_terminal_api(tmp_path: Path) -> None:
+def test_route_state_predicates_distinguish_ceiling_and_contracted_local_rungs(tmp_path: Path) -> None:
     state = tmp_path / "routes.json"
-    local = {
+    ceiling = {
         "active": "hardware-48gb",
         "rung_index": 0,
         "routes": {"main": {"kind": "local"}, "aux": {"kind": "local"}},
     }
-    state.write_text(json.dumps(local))
-    assert MODULE.wait_for(state, MODULE.is_local, 0.1) == local
-    assert not MODULE.is_api(local)
+    state.write_text(json.dumps(ceiling))
+    assert MODULE.wait_for(state, MODULE.is_local, 0.1) == ceiling
+    assert not MODULE.is_contracted_local(
+        ceiling,
+        profile_id="hardware-48gb",
+        ceiling_rung=0,
+    )
 
-    terminal = {
-        **local,
-        "rung_index": 1,
+    contracted = {
+        **ceiling,
+        "rung_index": 2,
+        "rung_id": "local-bonsai-262144",
         "routes": {
-            "main": {"kind": "api-policy"},
-            "aux": {"kind": "api-policy"},
+            "main": {"kind": "local"},
+            "aux": {"kind": "shared-main"},
         },
     }
-    state.write_text(json.dumps(terminal))
-    assert MODULE.wait_for(state, MODULE.is_api, 0.1) == terminal
+    state.write_text(json.dumps(contracted))
+    predicate = lambda value: MODULE.is_contracted_local(
+        value,
+        profile_id="hardware-48gb",
+        ceiling_rung=0,
+    )
+    assert MODULE.wait_for(state, predicate, 0.1) == contracted
 
 
 def test_acceptance_default_pressure_fits_allocator_bound() -> None:

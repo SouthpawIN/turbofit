@@ -20,7 +20,6 @@ TOPOLOGIES = {
     200: "2x100",
     300: "3x100",
 }
-MEASURED = {24, 48}
 
 
 def fingerprint(memory_gb: tuple[int, ...]) -> HardwareFingerprint:
@@ -50,21 +49,17 @@ def test_all_hardware_classes_are_valid_profiles() -> None:
         assert profile.id == f"hardware-{class_gb}gb"
         assert profile.hardware.class_vram_gb == class_gb
         assert profile.hardware.topology == TOPOLOGIES[class_gb]
-        assert profile.rungs[-1].aux_mode.value == "api"
-        assert profile.rungs[-1].main_api_policy == "api:auto"
-        assert profile.rungs[-1].aux_api_policy == "api:auto"
+        assert all(rung.aux_mode.value != "api" for rung in profile.rungs)
+        assert all(rung.main_api_policy is None for rung in profile.rungs)
+        assert all(rung.aux_api_policy is None for rung in profile.rungs)
 
 
-def test_only_measured_classes_publish_local_recommendation_rungs() -> None:
+def test_every_hardware_class_publishes_a_local_recommendation_ladder() -> None:
     for class_gb in CLASSES:
         profile = load_yaml_profile(ROOT / "runtime-profiles" / f"{class_gb}gb.yaml")
-        local_rungs = profile.rungs[:-1]
-        if class_gb in MEASURED:
-            assert local_rungs
-            assert profile.policy.recommendation == "measured-winner"
-        else:
-            assert local_rungs == ()
-            assert profile.policy.recommendation == "api-only-unproven-local"
+        assert profile.rungs
+        assert all(rung.aux_mode.value in {"shared-main", "dedicated"} for rung in profile.rungs)
+        assert profile.policy.recommendation in {"measured-winner", "portable-local-floor"}
 
 
 def test_every_rung_evidence_identity_resolves() -> None:
@@ -84,7 +79,16 @@ def test_topology_subkeys_are_used_for_physical_matching() -> None:
     assert not hardware_satisfies(fingerprint((48,)), profile_48.hardware)
 
 
-def test_hardware_envelopes_match_their_exact_canonical_topologies() -> None:
+def test_same_card_count_with_larger_vram_can_use_smaller_proven_envelope() -> None:
+    profile_24 = load_yaml_profile(ROOT / "runtime-profiles" / "24gb.yaml")
+    profile_48 = load_yaml_profile(ROOT / "runtime-profiles" / "48gb.yaml")
+
+    assert hardware_satisfies(fingerprint((32,)), profile_24.hardware)
+    assert hardware_satisfies(fingerprint((32, 32)), profile_48.hardware)
+    assert not hardware_satisfies(fingerprint((48,)), profile_48.hardware)
+
+
+def test_hardware_envelopes_match_their_canonical_topologies() -> None:
     for class_gb, topology in TOPOLOGIES.items():
         sizes: list[int] = []
         for part in topology.split("+"):

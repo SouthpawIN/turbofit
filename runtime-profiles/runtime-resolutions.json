@@ -52,23 +52,237 @@
         }
       }
     },
+    "hardware-16gb": {
+      "local-bonsai-131072": {
+        "main": {
+          "expected_vram_mb": 8149,
+          "model_tag": "bonsai-27b-1bit-128k-main"
+        }
+      },
+      "local-bonsai-262144": {
+        "main": {
+          "expected_vram_mb": 11093,
+          "model_tag": "bonsai-27b-1bit-262k-main"
+        }
+      },
+      "local-bonsai-65536": {
+        "main": {
+          "expected_vram_mb": 6677,
+          "model_tag": "bonsai-27b-1bit-64k-main"
+        }
+      }
+    },
+    "hardware-200gb": {
+      "local-bonsai-131072": {
+        "main": {
+          "expected_vram_mb": 8149,
+          "model_tag": "bonsai-27b-1bit-128k-main"
+        }
+      },
+      "local-bonsai-262144": {
+        "main": {
+          "expected_vram_mb": 11093,
+          "model_tag": "bonsai-27b-1bit-262k-main"
+        }
+      },
+      "local-bonsai-65536": {
+        "main": {
+          "expected_vram_mb": 6677,
+          "model_tag": "bonsai-27b-1bit-64k-main"
+        }
+      },
+      "local-dedicated-131072": {
+        "aux": {
+          "expected_vram_mb": 11163,
+          "model_tag": "bonsai-27b-1bit-262k-main"
+        },
+        "main": {
+          "expected_vram_mb": 21554,
+          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+        }
+      },
+      "local-grm-131072": {
+        "main": {
+          "expected_vram_mb": 21554,
+          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+        }
+      }
+    },
     "hardware-24gb": {
-      "local-131072": {
+      "local-bonsai-131072": {
+        "main": {
+          "expected_vram_mb": 8149,
+          "model_tag": "bonsai-27b-1bit-128k-main"
+        }
+      },
+      "local-bonsai-262144": {
+        "main": {
+          "expected_vram_mb": 11093,
+          "model_tag": "bonsai-27b-1bit-262k-main"
+        }
+      },
+      "local-bonsai-65536": {
+        "main": {
+          "expected_vram_mb": 6677,
+          "model_tag": "bonsai-27b-1bit-64k-main"
+        }
+      },
+      "local-grm-131072": {
         "main": {
           "expected_vram_mb": 21554,
           "model_tag": "grm-2-6-plus-auto-128k-main"
         }
       }
     },
-    "hardware-48gb": {
-      "local-131072": {
+    "hardware-300gb": {
+      "local-bonsai-131072": {
+        "main": {
+          "expected_vram_mb": 8149,
+          "model_tag": "bonsai-27b-1bit-128k-main"
+        }
+      },
+      "local-bonsai-262144": {
+        "main": {
+          "expected_vram_mb": 11093,
+          "model_tag": "bonsai-27b-1bit-262k-main"
+        }
+      },
+      "local-bonsai-65536": {
+        "main": {
+          "expected_vram_mb": 6677,
+          "model_tag": "bonsai-27b-1bit-64k-main"
+        }
+      },
+      "local-dedicated-131072": {
         "aux": {
           "expected_vram_mb": 11163,
-          "model_tag": "carwin-nano-1-bit-bonsai-262k-aux"
+          "model_tag": "bonsai-27b-1bit-262k-main"
         },
         "main": {
           "expected_vram_mb": 21554,
-          "model_tag": "hardware-48gb-grm-128k-main"
+          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+        }
+      },
+      "local-grm-131072": {
+        "main": {
+          "expected_vram_mb": 21554,
+          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+        }
+      }
+    },
+    "hardware-48gb": {
+      "local-bonsai-131072": {
+        "main": {
+          "expected_vram_mb": 8149,
+          "model_tag": "bonsai-27b-1bit-128k-main"
+        }
+      },
+      "local-bonsai-262144": {
+        "main": {
+          "expected_vram_mb": 11093,
+          "model_tag": "bonsai-27b-1bit-262k-main"
+        }
+      },
+      "local-bonsai-65536": {
+        "main": {
+          "expected_vram_mb": 6677,
+          "model_tag": "bonsai-27b-1bit-64k-main"
+        }
+      },
+      "local-dedicated-131072": {
+        "aux": {
+          "expected_vram_mb": 11163,
+          "model_tag": "bonsai-27b-1bit-262k-main"
+        },
+        "main": {
+          "expected_vram_mb": 21554,
+          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+        }
+      },
+      "local-grm-131072": {
+        "main": {
+          "expected_vram_mb": 21554,
+          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+        }
+      }
+    },
+    "hardware-64gb": {
+      "local-bonsai-131072": {
+        "main": {
+          "expected_vram_mb": 8149,
+          "model_tag": "bonsai-27b-1bit-128k-main"
+        }
+      },
+      "local-bonsai-262144": {
+        "main": {
+          "expected_vram_mb": 11093,
+          "model_tag": "bonsai-27b-1bit-262k-main"
+        }
+      },
+      "local-bonsai-65536": {
+        "main": {
+          "expected_vram_mb": 6677,
+          "model_tag": "bonsai-27b-1bit-64k-main"
+        }
+      },
+      "local-dedicated-131072": {
+        "aux": {
+          "expected_vram_mb": 11163,
+          "model_tag": "bonsai-27b-1bit-262k-main"
+        },
+        "main": {
+          "expected_vram_mb": 21554,
+          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+        }
+      },
+      "local-grm-131072": {
+        "main": {
+          "expected_vram_mb": 21554,
+          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+        }
+      }
+    },
+    "hardware-8gb": {
+      "local-bonsai-65536": {
+        "main": {
+          "expected_vram_mb": 6677,
+          "model_tag": "bonsai-27b-1bit-64k-main"
+        }
+      }
+    },
+    "hardware-96gb": {
+      "local-bonsai-131072": {
+        "main": {
+          "expected_vram_mb": 8149,
+          "model_tag": "bonsai-27b-1bit-128k-main"
+        }
+      },
+      "local-bonsai-262144": {
+        "main": {
+          "expected_vram_mb": 11093,
+          "model_tag": "bonsai-27b-1bit-262k-main"
+        }
+      },
+      "local-bonsai-65536": {
+        "main": {
+          "expected_vram_mb": 6677,
+          "model_tag": "bonsai-27b-1bit-64k-main"
+        }
+      },
+      "local-dedicated-131072": {
+        "aux": {
+          "expected_vram_mb": 11163,
+          "model_tag": "bonsai-27b-1bit-262k-main"
+        },
+        "main": {
+          "expected_vram_mb": 21554,
+          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+        }
+      },
+      "local-grm-131072": {
+        "main": {
+          "expected_vram_mb": 21554,
+          "model_tag": "grm-2-6-plus-128k-gpu1-main"
         }
       }
     }

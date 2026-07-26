@@ -17,6 +17,10 @@ class TurbohaulLike(Protocol):
     def unload_model(self, model: str, **kwargs: Any) -> dict[str, Any]: ...
 
 
+class ModelAcquirerLike(Protocol):
+    def ensure_tags(self, tags: tuple[str, ...]) -> None: ...
+
+
 class TurbohaulBackend:
     """All model lifecycle effects flow through Turbohaul; no direct signals."""
 
@@ -28,24 +32,63 @@ class TurbohaulBackend:
         route_state_path: str | Path,
         manager_port: int,
         client: TurbohaulLike,
+        acquirer: ModelAcquirerLike,
         current_state: ReconcilerState,
         sleep: Callable[[float], None] = time.sleep,
         clock: Callable[[], float] = time.monotonic,
+        verification_timeout_s: float = 30.0,
     ) -> None:
         if current_state.profile_id != profile.id:
             raise ValueError("backend state profile does not match profile")
+        if verification_timeout_s < 0:
+            raise ValueError("verification_timeout_s must be non-negative")
         self.profile = profile
         self.resolutions = resolutions
         self.route_state_path = Path(route_state_path)
         self.manager_port = manager_port
         self.client = client
+        self.acquirer = acquirer
         self.current_state = current_state
         self.sleep = sleep
         self.clock = clock
+        self.verification_timeout_s = verification_timeout_s
         self._target_rung_id: str | None = None
         self._target_aux_mode: AuxMode | None = None
         self._blocked_previous: dict[str, Any] | None = None
         self._retiring_aux_tag: str | None = None
+
+    def reset_managed(self) -> None:
+        """Unload only model tags owned by Turbofit before a profile revision migration."""
+        managed = {
+            str(role["model_tag"])
+            for rungs in self.resolutions.values()
+            for roles in rungs.values()
+            for role in roles.values()
+        }
+        try:
+            published = json.loads(self.route_state_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            published = {}
+        routes = published.get("routes")
+        if isinstance(routes, dict):
+            for route in routes.values():
+                if isinstance(route, dict) and route.get("kind") == "local":
+                    alias = route.get("alias")
+                    if isinstance(alias, str) and alias:
+                        managed.add(alias)
+
+        status = self.client.status()
+        for tag in sorted(managed):
+            if not _model_resident(status, tag):
+                continue
+            try:
+                status = self.client.unload_model(tag, verification_timeout_s=30.0)
+            except Exception as exc:
+                raise ReconcileError(f"Turbohaul failed to reset managed model {tag}") from exc
+            if _model_resident(status, tag):
+                raise ReconcileError(f"Turbohaul kept managed model resident: {tag}")
+        self._blocked_previous = None
+        self._retiring_aux_tag = None
 
     def block_aux_admission(self) -> None:
         state = json.loads(self.route_state_path.read_text(encoding="utf-8"))
@@ -103,6 +146,8 @@ class TurbohaulBackend:
 
     def activate_local(self, rung_id: str) -> None:
         roles = self._roles(rung_id)
+        tags = tuple(str(roles[role]["model_tag"]) for role in ("main", "aux") if role in roles)
+        self.acquirer.ensure_tags(tags)
         for role in ("main", "aux"):
             item = roles.get(role)
             if item is None:
@@ -168,8 +213,14 @@ class TurbohaulBackend:
             roles = self._roles(rung_id)
         except ReconcileError:
             return False
-        status = self.client.status()
-        return all(_model_resident(status, str(item["model_tag"])) for item in roles.values())
+        deadline = self.clock() + self.verification_timeout_s
+        while True:
+            status = self.client.status()
+            if all(_model_resident(status, str(item["model_tag"])) for item in roles.values()):
+                return True
+            if self.clock() >= deadline:
+                return False
+            self.sleep(min(0.25, max(0.0, deadline - self.clock())))
 
     def publish_routes(self, state: ReconcilerState) -> None:
         route_state = build_route_state(

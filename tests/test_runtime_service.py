@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class Backend:
     events: list[object] = field(default_factory=list)
 
+    def reset_managed(self): self.events.append("reset")
     def block_aux_admission(self): self.events.append("block")
     def drain_aux(self, timeout_s): return True
     def clean_unload_aux(self): return True
@@ -58,18 +59,21 @@ def service(tmp_path: Path):
     ), backends
 
 
-def test_fresh_auto_selection_starts_at_terminal_api_before_healing(tmp_path: Path) -> None:
-    runtime, _ = service(tmp_path)
+def test_fresh_auto_selection_acquires_and_verifies_local_floor_before_publication(tmp_path: Path) -> None:
+    runtime, backends = service(tmp_path)
     choice = runtime.catalog.select(hardware(24576), requested="auto")
     selection_path = tmp_path / "selection.json"
     save_selection(selection_path, choice)
 
     controller = runtime.synchronize(selection_path, hardware(24576))
 
-    assert controller.state.adaptive.current_index == 1
+    floor = len(choice.profile.rungs) - 1
+    assert controller.state.adaptive.current_index == floor
+    assert backends[0].events[0] == ("local", "local-bonsai-65536")
     route = json.loads((tmp_path / "routes.json").read_text())
-    assert route["rung_id"] == "api"
-    assert route["routes"]["main"]["kind"] == "api-policy"
+    assert route["rung_id"] == "local-bonsai-65536"
+    assert route["routes"]["main"]["kind"] == "local"
+    assert route["routes"]["aux"]["kind"] == "shared-main"
 
 
 def test_service_persists_healing_and_contraction_state(tmp_path: Path) -> None:
@@ -79,16 +83,46 @@ def test_service_persists_healing_and_contraction_state(tmp_path: Path) -> None:
     save_selection(selection_path, choice)
     runtime.synchronize(selection_path, hardware(24576))
 
-    runtime.tick(pressure(24576), now=0)
-    healed = runtime.tick(pressure(24576), now=120)
-    assert healed.state.adaptive.current_index == 0
+    now = 0
+    while runtime.controller is not None and runtime.controller.state.adaptive.current_index > 0:
+        runtime.tick(pressure(24576), now=now)
+        now += 120
+        healed = runtime.tick(pressure(24576), now=now)
+        assert healed.transitioned is True
+        now += 31
+    assert runtime.controller is not None
+    assert runtime.controller.state.adaptive.current_index == 0
 
-    runtime.tick(pressure(10000), now=151)
-    contracted = runtime.tick(pressure(10000), now=156)
-    assert contracted.state.adaptive.current_index == 1
+    runtime.tick(pressure(7000), now=now)
+    contracted = runtime.tick(pressure(7000), now=now + 5)
+    floor = len(choice.profile.rungs) - 1
+    assert contracted.state.adaptive.current_index == floor
     assert ("publish", 0) in backends[-1].events
-    assert ("publish", 1) in backends[-1].events
+    assert ("publish", floor) in backends[-1].events
 
     restarted, _ = service(tmp_path)
     restored = restarted.synchronize(selection_path, hardware(24576))
-    assert restored.state.adaptive.current_index == 1
+    assert restored.state.adaptive.current_index == floor
+
+
+def test_legacy_state_resets_managed_models_before_bootstrapping_new_revision(
+    tmp_path: Path,
+) -> None:
+    runtime, _ = service(tmp_path)
+    choice = runtime.catalog.select(hardware(24576), requested="auto")
+    selection_path = tmp_path / "selection.json"
+    save_selection(selection_path, choice)
+    runtime.synchronize(selection_path, hardware(24576))
+
+    state_path = tmp_path / "controller.json"
+    legacy = json.loads(state_path.read_text())
+    legacy["schema"] = "turbofit.controller-state/v1"
+    legacy.pop("profile_revision")
+    state_path.write_text(json.dumps(legacy))
+
+    restarted, backends = service(tmp_path)
+    controller = restarted.synchronize(selection_path, hardware(24576))
+
+    assert backends[0].events == ["reset"]
+    assert backends[1].events[0] == ("local", "local-bonsai-65536")
+    assert controller.state.profile_revision == choice.profile.revision

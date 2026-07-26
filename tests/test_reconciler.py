@@ -62,6 +62,9 @@ class FakeBackend:
     restore_ok: bool = True
     owned: tuple[int, ...] = (10, 11)
 
+    def reset_managed(self) -> None:
+        self.events.append("reset-managed")
+
     def block_aux_admission(self) -> None:
         self.events.append("block-aux")
 
@@ -132,6 +135,20 @@ def test_dedicated_to_shared_main_drains_aux_and_preserves_main_kv() -> None:
         ("publish", 1, "local:main", "local:main"),
     ]
     assert not any(event[0] == "activate-local" for event in backend.events if isinstance(event, tuple))
+
+
+def test_shared_to_dedicated_activates_missing_aux_before_verification() -> None:
+    backend = FakeBackend()
+
+    result = transition(state(1), 0, profile(), backend)
+
+    assert result.rung_index == 0
+    assert backend.events == [
+        ("activate-local", "dedicated"),
+        "route-aux-dedicated",
+        ("verify", "dedicated"),
+        ("publish", 0, "local:main", "local:aux"),
+    ]
 
 
 def test_active_aux_drain_failure_rolls_back_without_publishing() -> None:

@@ -1,6 +1,6 @@
 schema: turbofit.runtime/v1
 id: hardware-8gb
-revision: 1
+revision: 2
 hardware:
   class_vram_gb: 8
   min_devices: 1
@@ -9,22 +9,21 @@ hardware:
   accelerator: nvidia-cuda
   topology: 1x8
 policy:
-  recommendation: api-only-unproven-local
+  recommendation: portable-local-floor
   external_gpu_priority: absolute
   contraction_dwell_s: 5
   expansion_dwell_s: 120
-  expansion_margin_gb_per_card: 2
+  expansion_margin_gb_per_card: 0.5
   cooldown_s: 30
   flap_failure_limit: 3
   flap_window_s: 300
 roles:
   main: active:main
   auxiliary: active:aux
-  fallback: api:auto
+  fallback: active:main
 rungs:
-- id: api
+- id: local-bonsai-65536
   context: 65536
-  aux_mode: api
-  evidence: sha256:696c7b5957e4dfd144acbf846d4a5e652c4b8de180590d95c20823b939a37f64
-  main_api_policy: api:auto
-  aux_api_policy: api:auto
+  aux_mode: shared-main
+  evidence: sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591
+  main_manifest: sha256:da9ed9fb1b17f6423f759a783a150051b51d5555c7dea09f87c6effb3dac35a2

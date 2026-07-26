@@ -119,6 +119,7 @@ def test_terminal_api_rung_routes_main_and_aux_independently(tmp_path, monkeypat
         },
     })
     monkeypatch.setattr(GATEWAY, "RUNTIME_STATE", str(state))
+    monkeypatch.setattr(GATEWAY, "ALLOW_API", True)
 
     main = GATEWAY.runtime_override("main")
     aux = GATEWAY.runtime_override("aux")
@@ -134,6 +135,7 @@ def test_terminal_api_policy_resolves_current_configured_fallback(tmp_path, monk
         "aux": {"kind": "api-policy", "policy": "api:auto"},
     })
     monkeypatch.setattr(GATEWAY, "RUNTIME_STATE", str(state))
+    monkeypatch.setattr(GATEWAY, "ALLOW_API", True)
     monkeypatch.setattr(
         GATEWAY,
         "_find_api_fallback_in_profiles",
@@ -153,6 +155,29 @@ def test_terminal_api_policy_resolves_current_configured_fallback(tmp_path, monk
     assert main["model_id"] == "configured-model"
     assert aux["model_id"] == "configured-model"
     assert aux["mode"] == "api"
+
+
+def test_api_routes_fail_closed_without_explicit_opt_in(tmp_path, monkeypatch) -> None:
+    state = tmp_path / "runtime-state.json"
+    write_state(state, {
+        "main": {"kind": "api-policy", "policy": "api:auto"},
+        "aux": {
+            "kind": "api",
+            "alias": "aux-api",
+            "base_url": "https://api.example.test",
+            "model_id": "aux-model",
+        },
+    })
+    monkeypatch.setattr(GATEWAY, "RUNTIME_STATE", str(state))
+    monkeypatch.setattr(GATEWAY, "ALLOW_API", False)
+    monkeypatch.setattr(
+        GATEWAY,
+        "_find_api_fallback_in_profiles",
+        lambda: (_ for _ in ()).throw(AssertionError("API fallback must not be resolved")),
+    )
+
+    assert GATEWAY.runtime_override("main") is None
+    assert GATEWAY.runtime_override("aux") is None
 
 
 def test_warm_requests_observe_newly_published_route_state(tmp_path, monkeypatch) -> None:

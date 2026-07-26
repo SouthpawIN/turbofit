@@ -65,6 +65,17 @@ class _Handler(BaseHTTPRequestHandler):
                 self.__class__.residents = []
             self._json(200, {"choices": [{"message": {"role": "assistant", "content": "OK"}}]})
             return
+        if self.path == "/api/pull-hf":
+            self._json(
+                200,
+                {
+                    "pull_id": "pull-test",
+                    "status": "complete",
+                    "sha256": body.get("expected_sha256"),
+                    "bytes_written": 123,
+                },
+            )
+            return
         self._json(404, {"detail": "not found"})
 
     def _json(self, status: int, payload: dict[str, Any], *, etag: str | None = None) -> None:
@@ -142,6 +153,25 @@ def test_put_manifest_forwards_etag_and_returns_new_etag() -> None:
     ]
 
 
+def test_pull_hf_forwards_pinned_source_and_expected_hash() -> None:
+    payload = {
+        "repo_id": "org/repo",
+        "filename": "model.gguf",
+        "revision": "a" * 40,
+        "expected_sha256": "b" * 64,
+    }
+    with fake_turbohaul() as (base_url, handler):
+        client = TurbohaulClient(base_url, timeout_s=1, acquisition_timeout_s=2)
+
+        response = client.pull_hf(**payload)
+
+    assert response["status"] == "complete"
+    assert response["sha256"] == "b" * 64
+    assert handler.records == [
+        {"method": "POST", "path": "/api/pull-hf", "body": payload}
+    ]
+
+
 def test_chat_completion_forwards_openai_payload() -> None:
     payload = {
         "model": "main",
@@ -157,6 +187,27 @@ def test_chat_completion_forwards_openai_payload() -> None:
     assert handler.records == [
         {"method": "POST", "path": "/v1/chat/completions", "body": payload}
     ]
+
+
+def test_chat_completion_uses_activation_timeout(monkeypatch) -> None:
+    client = TurbohaulClient("http://127.0.0.1:1", timeout_s=1, activation_timeout_s=37)
+    captured = {}
+
+    def fake_request(method, path, *, payload=None, headers=None, timeout_s=None):
+        captured.update(method=method, path=path, payload=payload, timeout_s=timeout_s)
+        return {"choices": []}
+
+    monkeypatch.setattr(client, "_request_json", fake_request)
+    payload = {"model": "main", "messages": [{"role": "user", "content": "go"}]}
+
+    client.chat_completion(payload)
+
+    assert captured == {
+        "method": "POST",
+        "path": "/v1/chat/completions",
+        "payload": payload,
+        "timeout_s": 37,
+    }
 
 
 def test_unload_model_uses_keep_alive_zero_and_verifies_residency() -> None:

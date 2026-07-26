@@ -119,16 +119,14 @@ class RuntimeRung:
         _slug(self.id, "rung id")
         _positive_int(self.context, "context")
         _nonempty(self.evidence, "evidence")
-        if terminal:
-            if self.aux_mode is not AuxMode.API:
-                raise ValueError("terminal rung must have aux_mode=api")
+        if self.aux_mode is AuxMode.API:
+            if not terminal:
+                raise ValueError("API rung must be terminal")
             _nonempty(self.main_api_policy, "main_api_policy")
             _nonempty(self.aux_api_policy, "aux_api_policy")
             if self.main_manifest is not None or self.aux_manifest is not None:
-                raise ValueError("terminal rung cannot contain local manifests")
+                raise ValueError("API rung cannot contain local manifests")
             return
-        if self.aux_mode is AuxMode.API:
-            raise ValueError("only terminal rung may have aux_mode=api")
         _manifest(self.main_manifest, "main_manifest")
         if self.aux_mode is AuxMode.DEDICATED:
             _manifest(self.aux_manifest, "aux_manifest")
