@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import shlex
+import subprocess
+from pathlib import Path
+
+from turbofit_runtime.hybrid_runtime import HybridCatalog
+
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_CATALOG = ROOT / "runtime-profiles" / "hybrid-models.json"
+
+
+def host_capacity() -> tuple[int, int, tuple[int, ...], tuple[int, ...]]:
+    values: dict[str, int] = {}
+    for line in Path("/proc/meminfo").read_text().splitlines():
+        name, rest = line.split(":", 1)
+        values[name] = int(rest.strip().split()[0])
+    output = subprocess.run(
+        ["nvidia-smi", "--query-gpu=memory.total,memory.free", "--format=csv,noheader,nounits"],
+        check=True, capture_output=True, text=True, timeout=10,
+    ).stdout
+    gpu_rows = [tuple(int(value.strip()) for value in line.split(",")) for line in output.splitlines() if line.strip()]
+    return (
+        values["MemTotal"] // 1024,
+        values["MemAvailable"] // 1024,
+        tuple(row[0] for row in gpu_rows),
+        tuple(row[1] for row in gpu_rows),
+    )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Inspect and render hybrid CPU+GPU model configurations")
+    parser.add_argument("--catalog", default=str(DEFAULT_CATALOG))
+    commands = parser.add_subparsers(dest="action", required=True)
+    commands.add_parser("list")
+
+    check = commands.add_parser("check")
+    check.add_argument("model")
+    check.add_argument("configuration")
+
+    render = commands.add_parser("command")
+    render.add_argument("model")
+    render.add_argument("configuration")
+    render.add_argument("--binary", required=True)
+    render.add_argument("--model-path", required=True)
+    render.add_argument("--port", required=True, type=int)
+    args = parser.parse_args()
+
+    catalog = HybridCatalog.load(args.catalog)
+    if args.action == "list":
+        for model in catalog.models.values():
+            for config in model.configurations:
+                print(
+                    f"{model.id}\t{config.id}\t{config.status}\t"
+                    f"ram={config.min_system_ram_mib}MiB\t"
+                    f"available-ram={config.required_available_ram_mib}MiB\t"
+                    f"vram={','.join(str(value) for value in config.min_vram_mb_per_card)}MiB\t"
+                    f"engine={config.engine}"
+                )
+        return 0
+
+    try:
+        model = catalog.models[args.model]
+        config = model.configuration(args.configuration)
+    except KeyError as exc:
+        parser.error(f"unknown model or configuration: {exc.args[0]}")
+
+    if args.action == "check":
+        ram, available_ram, total_vram, free_vram = host_capacity()
+        hardware_fits = config.fits(
+            total_system_ram_mib=ram,
+            available_system_ram_mib=available_ram,
+            vram_mb_per_card=total_vram,
+        )
+        launch_ready = config.fits(
+            total_system_ram_mib=ram,
+            available_system_ram_mib=available_ram,
+            vram_mb_per_card=free_vram,
+        )
+        print(json.dumps({
+            "model": model.id,
+            "configuration": config.id,
+            "status": config.status,
+            "hardware_fits": hardware_fits,
+            "launch_ready": launch_ready,
+            "host_system_ram_mib": ram,
+            "host_available_ram_mib": available_ram,
+            "host_vram_total_mib_per_card": total_vram,
+            "host_vram_free_mib_per_card": free_vram,
+            "required_system_ram_mib": config.min_system_ram_mib,
+            "required_available_ram_mib": config.required_available_ram_mib,
+            "required_vram_mib_per_card": config.min_vram_mb_per_card,
+        }, sort_keys=True))
+        return 0 if hardware_fits else 1
+
+    print(shlex.join(config.command(binary=args.binary, model_path=args.model_path, port=args.port)))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

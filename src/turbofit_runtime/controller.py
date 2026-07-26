@@ -210,6 +210,36 @@ class AdaptiveController:
         self.requirements = requirements
         self.backend = backend
         self.state = state
+        self._next_readiness_check = 0.0
+
+    def _ensure_current_rung_ready(
+        self, available: tuple[int, ...], now: float
+    ) -> bool:
+        if now < self._next_readiness_check:
+            return False
+        self._next_readiness_check = now + 30.0
+        index = self.state.adaptive.current_index
+        rung = self.profile.rungs[index]
+        if rung.aux_mode is AuxMode.API:
+            return False
+        required = self.requirements.required_mb_by_rung[index]
+        if len(required) != len(available) or any(have < need for have, need in zip(available, required, strict=True)):
+            return False
+        if self.backend.verify_rung(rung.id):
+            return False
+        try:
+            self.backend.activate_local(rung.id)
+            if rung.aux_mode is AuxMode.SHARED_MAIN:
+                self.backend.route_aux_to_main()
+            else:
+                self.backend.route_aux_dedicated()
+            if not self.backend.verify_rung(rung.id):
+                raise RuntimeError("current rung did not become ready")
+            self.backend.publish_routes(self.state.reconciler)
+        except Exception:
+            self.backend.reset_managed()
+            return False
+        return True
 
     def tick(self, pressure: PressureSnapshot, *, now: float) -> ControllerResult:
         available = tuple(card.available_for_managed_mb for card in pressure.cards)
@@ -227,6 +257,11 @@ class AdaptiveController:
         plan = reconcile(self.state.adaptive, capacity, self.profile, now)
         if plan.action is not ActionKind.ACTIVATE:
             self.state = replace(self.state, adaptive=plan.state)
+            restored = self._ensure_current_rung_ready(available, now)
+            if restored:
+                return ControllerResult(
+                    self.state, True, ActionKind.ACTIVATE, "restored missing current rung"
+                )
             return ControllerResult(self.state, False, plan.action, plan.reason)
 
         target = plan.target_index

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import pytest
 
@@ -44,6 +44,7 @@ def pressure(*available: int) -> PressureSnapshot:
 class Backend:
     events: list[object] = field(default_factory=list)
 
+    def reset_managed(self): self.events.append("reset")
     def block_aux_admission(self): self.events.append("block")
     def drain_aux(self, timeout_s): self.events.append(("drain", timeout_s)); return True
     def clean_unload_aux(self): self.events.append("unload"); return True
@@ -93,6 +94,59 @@ def test_api_only_selections_remain_safe_without_local_activation(
     assert result.state.adaptive.current_index == 0
     assert result.transitioned is False
     assert backend.events == []
+
+
+def test_controller_repairs_a_missing_persisted_local_rung_after_manager_restart() -> None:
+    original, _ = controller_for(catalog(), "hardware-48gb", (24576, 24576))
+    state = replace(
+        original.state,
+        adaptive=replace(
+            original.state.adaptive,
+            current_index=0,
+            last_stable_index=0,
+            pending_index=None,
+            target_ceiling_index=0,
+        ),
+        reconciler=ReconcilerState(
+            profile_id=original.profile.id,
+            rung_index=0,
+            main_target="local:main",
+            aux_target="local:aux",
+        ),
+    )
+
+    @dataclass
+    class ColdBackend(Backend):
+        ready: bool = False
+
+        def activate_local(self, rung_id):
+            super().activate_local(rung_id)
+            self.ready = True
+
+        def verify_rung(self, rung_id):
+            self.events.append(("verify", rung_id))
+            return self.ready
+
+    backend = ColdBackend()
+    controller = AdaptiveController(
+        profile=original.profile,
+        requirements=original.requirements,
+        backend=backend,
+        state=state,
+    )
+
+    result = controller.tick(pressure(24576, 24576), now=0)
+
+    assert result.transitioned is True
+    assert result.reason == "restored missing current rung"
+    assert ("local", original.profile.rungs[0].id) in backend.events
+    assert ("publish", 0) in backend.events
+
+    backend.ready = False
+    assert controller.tick(pressure(24576, 24576), now=20).transitioned is False
+    repaired_again = controller.tick(pressure(24576, 24576), now=31)
+    assert repaired_again.transitioned is True
+    assert backend.events.count(("local", original.profile.rungs[0].id)) == 2
 
 
 @pytest.mark.parametrize(

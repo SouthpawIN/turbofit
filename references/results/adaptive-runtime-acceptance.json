@@ -3,7 +3,7 @@
   "checks": {
     "controlled_pressure": {
       "exit_code": 0,
-      "output": "{\n  \"checks\": {\n    \"contracted_to_local_rung\": \"local-grm-131072\",\n    \"external_process_survived\": true,\n    \"healed_to_selected_ceiling\": true,\n    \"initial_local\": true,\n    \"pressure_allocated\": {\n      \"device\": 0,\n      \"mb\": 12544,\n      \"pid\": 3901978\n    }\n  },\n  \"recorded_at\": \"2026-07-26T01:23:55.131370+00:00\",\n  \"safety\": {\n    \"acceptance_owned_processes_terminated\": 1,\n    \"external_processes_signaled\": 0\n  },\n  \"schema\": \"turbofit.controlled-pressure-acceptance/v1\",\n  \"status\": \"pass\"\n}\n",
+      "output": "{\n  \"checks\": {\n    \"contracted_to_local_rung\": \"local-grm-131072\",\n    \"external_process_survived\": true,\n    \"healed_to_selected_ceiling\": true,\n    \"initial_local\": true,\n    \"pressure_allocated\": {\n      \"device\": 0,\n      \"mb\": 12544,\n      \"pid\": 351778\n    }\n  },\n  \"recorded_at\": \"2026-07-26T04:35:33.673512+00:00\",\n  \"safety\": {\n    \"acceptance_owned_processes_terminated\": 1,\n    \"external_processes_signaled\": 0\n  },\n  \"schema\": \"turbofit.controlled-pressure-acceptance/v1\",\n  \"status\": \"pass\"\n}\n",
       "passed": true
     },
     "controller_service": {
@@ -40,12 +40,12 @@
     },
     "nvml": {
       "exit_code": 0,
-      "output": "0, GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1, 24576, 10575, 13542\n1, GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1, 24576, 20040, 4085\n",
+      "output": "0, GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1, 24576, 10576, 13540\n1, GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1, 24576, 20040, 4085\n",
       "passed": true
     },
     "simulated_transitions": {
       "exit_code": 0,
-      "output": "..........................                                               [100%]\n26 passed in 1.51s\n",
+      "output": "..........................                                               [100%]\n26 passed in 1.66s\n",
       "passed": true
     },
     "turbohaul_status": {
@@ -53,19 +53,19 @@
       "payload": {
         "active": null,
         "background_sweeper": {
-          "last_sweep_iso": "2026-07-26T01:23:03+00:00",
+          "last_sweep_iso": "2026-07-26T04:34:42+00:00",
           "slots_finalized_lifetime": 0
         },
         "engine_stall": null,
         "evictions": {
-          "last_evicted_at": "2026-07-26T00:30:00.219924+00:00",
-          "total_lifetime": 102
+          "last_evicted_at": null,
+          "total_lifetime": 0
         },
         "generation": {
           "eta_s": null,
           "generation_id": null,
           "max_tokens": null,
-          "measured_at_iso": "2026-07-26T01:23:54+00:00",
+          "measured_at_iso": "2026-07-26T04:35:33+00:00",
           "n_ctx": null,
           "n_decoded": 0,
           "n_prompt_cache": null,
@@ -86,7 +86,7 @@
         "idle_hot": null,
         "kv_classifier": {
           "events": {
-            "sub-agent": 81
+            "sub-agent": 2
           },
           "forced_clean_restores": 0,
           "last": {
@@ -124,10 +124,10 @@
           "is_curator": null,
           "is_main": null,
           "is_sub_agent": null,
-          "model_tag": "bonsai-27b-1bit-262k-main",
+          "model_tag": "grm-2-6-plus-128k-gpu1-main",
           "resolved_class": null,
           "session_id": null,
-          "thread_id": "auto-9754d5e2f5e09346e030898a"
+          "thread_id": "auto-8f45e2166021f8046949ed6d"
         },
         "residents": [
           {
@@ -135,7 +135,7 @@
               "eta_s": null,
               "generation_id": null,
               "max_tokens": null,
-              "measured_at_iso": "2026-07-26T01:23:54+00:00",
+              "measured_at_iso": "2026-07-26T04:35:33+00:00",
               "n_ctx": null,
               "n_decoded": 0,
               "n_prompt_cache": null,
@@ -152,24 +152,24 @@
               "tok_s": null,
               "tok_s_instant": 0.0
             },
-            "idle_expires_in_s": 466,
+            "idle_expires_in_s": null,
             "inflight": 0,
             "main_gpu": 1,
             "model_tag": "grm-2-6-plus-128k-gpu1-main",
             "parallel": 1,
-            "pid": 3645179,
-            "port": 11901,
+            "pid": 3815754,
+            "port": 11900,
             "reserved_need_mib": 21554,
             "spawn_seq": 1,
             "split_mode": "none",
-            "state": "IDLE_EVICTABLE"
+            "state": "ACTIVE"
           },
           {
             "generation": {
               "eta_s": null,
               "generation_id": null,
               "max_tokens": null,
-              "measured_at_iso": "2026-07-26T01:23:54+00:00",
+              "measured_at_iso": "2026-07-26T04:35:33+00:00",
               "n_ctx": null,
               "n_decoded": 0,
               "n_prompt_cache": null,
@@ -186,13 +186,13 @@
               "tok_s": null,
               "tok_s_instant": 0.0
             },
-            "idle_expires_in_s": 477,
+            "idle_expires_in_s": 278,
             "inflight": 0,
             "main_gpu": 0,
             "model_tag": "bonsai-27b-1bit-262k-main",
             "parallel": 1,
-            "pid": 3607768,
-            "port": 11900,
+            "pid": 3848443,
+            "port": 11901,
             "reserved_need_mib": 11093,
             "spawn_seq": 1,
             "split_mode": "none",
@@ -214,10 +214,10 @@
             "protected_bytes": 0,
             "protected_threads": {},
             "total_bytes": 0,
-            "ts": 1785028923.791464
+            "ts": 1785040422.975493
           },
           "restores": {
-            "fresh": 81
+            "fresh": 2
           },
           "saves": {}
         },
@@ -225,7 +225,7 @@
         "shadow_restore_prefer": {},
         "tooltail_restore_skip": {},
         "vram": [
-          13542,
+          13540,
           4085
         ],
         "vram_total_mib": null
@@ -234,7 +234,7 @@
     }
   },
   "real_requested": true,
-  "recorded_at": "2026-07-26T01:26:50.514828+00:00",
+  "recorded_at": "2026-07-26T04:39:51.927578+00:00",
   "safety": {
     "direct_process_signals_sent": 0,
     "external_processes_modified": 0,

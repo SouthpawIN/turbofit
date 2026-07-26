@@ -1,0 +1,34 @@
+{
+  "schema": "turbofit.benchmark-stage/v1",
+  "name": "local-runtime-smoke-v1",
+  "cases": [
+    {
+      "id": "quality-arithmetic",
+      "category": "quality",
+      "prompt": "Compute 17 multiplied by 23. Return only the integer, with no explanation.",
+      "max_tokens": 256,
+      "validator": {"kind": "exact", "value": "391"}
+    },
+    {
+      "id": "quality-instruction",
+      "category": "quality",
+      "prompt": "Return exactly this text and nothing else: TURBOFIT_LOCAL_OK",
+      "max_tokens": 256,
+      "validator": {"kind": "exact", "value": "TURBOFIT_LOCAL_OK"}
+    },
+    {
+      "id": "context-passkey-8k",
+      "category": "context",
+      "prompt": {"kind": "passkey", "target_words": 8192, "passkey": "739184"},
+      "max_tokens": 512,
+      "validator": {"kind": "exact", "value": "739184"}
+    },
+    {
+      "id": "throughput-128",
+      "category": "throughput",
+      "prompt": "Explain how a local adaptive inference runtime can contract under GPU pressure and heal afterward. Focus on concrete runtime mechanisms.",
+      "max_tokens": 128,
+      "validator": null
+    }
+  ]
+}

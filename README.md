@@ -204,6 +204,28 @@ quality
 
 Measured claims remain attached to their exact artifact, runtime flags, context, host fingerprint, throughput, TTFT, and per-card VRAM evidence.
 
+## Hybrid large-model bring-up
+
+`runtime-profiles/hybrid-models.json` now defines the first **configured-unmeasured** dual-24 GB GPU + system-RAM placements for Laguna S 2.1 Q4_K_M, MiniMax M3 MXFP4_MOE, and GLM 5.2 2.788 bpw. Every artifact is bound to an immutable Hugging Face revision, required SHA-256 identity, and exact file size. These configurations remain candidates until their own benchmark evidence passes; they are not production recommendations yet.
+
+The configuration checker reports both static `hardware_fits` and current `launch_ready`, so a machine is not called ready while another resident model still occupies required VRAM:
+
+```bash
+PYTHONPATH=src scripts/turbofit-hybrid-config list
+PYTHONPATH=src scripts/turbofit-hybrid-config check glm-5-2-2-788bpw dual-24gb-64k
+```
+
+The evidence-first benchmark stage records raw responses, measured token usage, exact-answer quality checks, passkey context retrieval, effective end-to-end output throughput, host RAM, per-GPU VRAM, and an evidence SHA-256:
+
+```bash
+PYTHONPATH=src scripts/turbofit-benchmark-stage \
+  --candidate <model-id> \
+  --configuration dual-24gb-64k \
+  --base-url http://127.0.0.1:<port>/v1 \
+  --model <served-model> \
+  --output references/results/<run>.json
+```
+
 ## Verification
 
 ```bash
@@ -251,6 +273,10 @@ The earlier Turbofit README described a broader product. Those ideas are retaine
 - richer daemon/service management outside systemd
 
 None of these roadmap items should be inferred from the current release until its implementation and verification gates land.
+
+## License
+
+MIT License. Copyright (c) 2026 **sovthpaw (SouthpawIN)**. See [`LICENSE`](LICENSE).
 
 ## Repository map
 

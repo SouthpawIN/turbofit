@@ -1,0 +1,207 @@
+{
+  "schema": "turbofit.hybrid-models/v1",
+  "models": [
+    {
+      "id": "laguna-s2-1-q4-k-m",
+      "name": "Laguna S 2.1 Q4_K_M",
+      "architecture": "laguna",
+      "runtime_requirement": "llama.cpp b10087 or newer with Laguna architecture support",
+      "parameter_count_b": 118,
+      "native_context": 262144,
+      "source": {
+        "repo_id": "poolside/Laguna-S-2.1-GGUF",
+        "revision": "e08e1fe855bb2d43f96ad78e24495283f3426c67",
+        "files": [
+          {
+            "filename": "laguna-s-2.1-Q4_K_M.gguf",
+            "expected_sha256": "sha256:7da520c5f44bc3c79d4eeebfd1151ba7114c5d7568e72a995638417093c5753f",
+            "size_bytes": 75173103200
+          }
+        ]
+      },
+      "configurations": [
+        {
+          "id": "dual-24gb-64k",
+          "status": "configured-unmeasured",
+          "evidence": null,
+          "context": 65536,
+          "min_system_ram_mib": 98304,
+          "required_available_ram_mib": 65536,
+          "min_vram_mb_per_card": [
+            21504,
+            21504
+          ],
+          "engine": "llama.cpp",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [
+              1,
+              1
+            ],
+            "threads": 16,
+            "threads_batch": 32,
+            "batch_size": 512,
+            "ubatch_size": 256,
+            "cache_type_k": "q4_0",
+            "cache_type_v": "q4_0",
+            "mlock": false,
+            "gpu_layers": 24,
+            "cpu_moe_layers": null,
+            "mmap": true,
+            "extra_args": [
+              "--jinja"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "minimax-m3-mxfp4-moe",
+      "name": "MiniMax M3 MXFP4_MOE",
+      "architecture": "minimax-m3",
+      "runtime_requirement": "llama.cpp MiniMax M3 PR 24523 or a descendant with minimax-m3 support",
+      "parameter_count_b": 428,
+      "native_context": 1048576,
+      "source": {
+        "repo_id": "unsloth/MiniMax-M3-GGUF",
+        "revision": "18039c2c5277fc64109acee91fa3ca3a9da73c57",
+        "files": [
+          {
+            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00001-of-00007.gguf",
+            "expected_sha256": "sha256:c74465b7a9a24e38a6e762e6b7cbd62dcacd11dd33b6361c55bee92657b951be",
+            "size_bytes": 8243104
+          },
+          {
+            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00002-of-00007.gguf",
+            "expected_sha256": "sha256:72dad74b69adfec3ceaef07b360f62893f1b23a5925d36d0ca0f0f417ef390d7",
+            "size_bytes": 49518313504
+          },
+          {
+            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00003-of-00007.gguf",
+            "expected_sha256": "sha256:7b8eaf23c24ea2f4b8c1704b4bf577ff5f33e91c3b698b4cc466fbd8615f1753",
+            "size_bytes": 49760112416
+          },
+          {
+            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00004-of-00007.gguf",
+            "expected_sha256": "sha256:5ae0b69e2baaf378d987fbc544695fe560cfdfd9930dba9824ecb88194bc5c94",
+            "size_bytes": 49870607968
+          },
+          {
+            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00005-of-00007.gguf",
+            "expected_sha256": "sha256:fbbb37659484c96f8a52d0dd5b7b34b217caaad15fe765eb6ab79be1b2a2c59f",
+            "size_bytes": 48453430784
+          },
+          {
+            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00006-of-00007.gguf",
+            "expected_sha256": "sha256:cbaf36461f9c72626a6448e324c6f4a2c7e5b979b3ba39a861eb4f29b9162861",
+            "size_bytes": 48774295040
+          },
+          {
+            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00007-of-00007.gguf",
+            "expected_sha256": "sha256:98bfcedebc8b0efc113753d419ae32e2cf1b581d0888a0b5f9e6d1c07b9266c2",
+            "size_bytes": 10092752032
+          }
+        ]
+      },
+      "configurations": [
+        {
+          "id": "dual-24gb-64k",
+          "status": "configured-unmeasured",
+          "evidence": null,
+          "context": 65536,
+          "min_system_ram_mib": 307200,
+          "required_available_ram_mib": 262144,
+          "min_vram_mb_per_card": [
+            21504,
+            21504
+          ],
+          "engine": "llama.cpp-minimax-m3",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [
+              1,
+              1
+            ],
+            "threads": 16,
+            "threads_batch": 32,
+            "batch_size": 512,
+            "ubatch_size": 256,
+            "cache_type_k": "q4_0",
+            "cache_type_v": "q4_0",
+            "mlock": false,
+            "gpu_layers": 99,
+            "cpu_moe_layers": 56,
+            "mmap": true,
+            "extra_args": [
+              "--jinja"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "glm-5-2-2-788bpw",
+      "name": "GLM 5.2 2.788 bpw (muzzy imatrix)",
+      "architecture": "glm-dsa",
+      "runtime_requirement": "ik_llama.cpp with GLM-DSA, IQ2_KL, and CPU-MoE support",
+      "parameter_count_b": 753.33,
+      "native_context": 1048576,
+      "source": {
+        "repo_id": "sokann/GLM-5.2-GGUF-2.788bpw",
+        "revision": "f7c4ef0107a861ac4007e67543ec4eb12c4248c5",
+        "files": [
+          {
+            "filename": "GLM-5.2-GGUF-2.788bpw-muzzy-imatrix.gguf",
+            "expected_sha256": "sha256:ab7c20106e1a84540f8151062db1c2d6fab71fbc119d8d44af68552ccfa0bd19",
+            "size_bytes": 262521465440
+          }
+        ]
+      },
+      "configurations": [
+        {
+          "id": "dual-24gb-64k",
+          "status": "configured-unmeasured",
+          "evidence": null,
+          "context": 65536,
+          "min_system_ram_mib": 378880,
+          "required_available_ram_mib": 262144,
+          "min_vram_mb_per_card": [
+            12288,
+            12288
+          ],
+          "engine": "ik_llama.cpp",
+          "launch": {
+            "split_mode": "graph",
+            "tensor_split": [
+              1,
+              1
+            ],
+            "threads": 16,
+            "threads_batch": 32,
+            "batch_size": 512,
+            "ubatch_size": 256,
+            "cache_type_k": "f16",
+            "cache_type_v": "f16",
+            "mlock": false,
+            "gpu_layers": 99,
+            "cpu_moe_layers": "all",
+            "mmap": false,
+            "extra_args": [
+              "-mla",
+              "1",
+              "-dsa",
+              "-fidx",
+              "-cram",
+              "0",
+              "-muge",
+              "-cuda",
+              "graphs=1",
+              "--jinja",
+              "--parallel-tool-calls"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
