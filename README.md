@@ -223,7 +223,6 @@ A simulated pass is not represented as real pressure evidence. The latest machin
   <img src="assets/turbofit-story-9x16.png" alt="Your computer stays yours. Turbofit keeps local intelligence available while yielding resources to your work." width="430">
 </p>
 
-- No runtime behavior is keyed to one developer's 48 GB machine.
 - External GPU processes are never terminated or signaled.
 - Physical capacity selects the profile; transient availability selects the rung.
 - All model lifecycle operations go through Turbohaul.
