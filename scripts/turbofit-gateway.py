@@ -352,7 +352,9 @@ def _runtime_policy_route(state, role):
             return None
         return {
             **main,
-            "alias": f"auto:{main.get('alias', 'main')}",
+            # Shared auxiliary work is the same concrete Turbohaul resident.
+            # `auto:` is a public Turbofit selector, not a valid manager tag.
+            "alias": main.get("alias", "main"),
             "mode": "shared-main",
             "shared_main_alias": main.get("alias"),
         }

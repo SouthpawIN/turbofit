@@ -96,6 +96,7 @@ def test_shared_main_aux_route_follows_current_main_without_restart(tmp_path, mo
     aux = GATEWAY.runtime_override("aux")
 
     assert aux["base_url"] == "http://127.0.0.1:8080"
+    assert aux["alias"] == "grm"
     assert aux["mode"] == "shared-main"
     assert aux["shared_main_alias"] == "grm"
 
