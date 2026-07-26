@@ -1,0 +1,181 @@
+#!/usr/bin/env python3
+"""Run one controlled real local contraction and self-heal acceptance cycle."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Callable
+
+ROOT = Path(__file__).resolve().parents[1]
+STATE_HOME = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state"))
+DEFAULT_ROUTE_STATE = STATE_HOME / "turbofit" / "runtime-state.json"
+DEFAULT_RESULT = ROOT / "references/results/controlled-pressure-acceptance.json"
+MAX_PRESSURE_MB = 14336
+DEFAULT_PRESSURE_MB = 12544
+
+
+def read_state(path: Path) -> dict:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or not isinstance(payload.get("routes"), dict):
+        raise ValueError("invalid runtime route state")
+    return payload
+
+
+def wait_for(path: Path, predicate: Callable[[dict], bool], timeout_s: float) -> dict:
+    deadline = time.monotonic() + timeout_s
+    last: dict = {}
+    while time.monotonic() < deadline:
+        try:
+            last = read_state(path)
+        except (OSError, ValueError, json.JSONDecodeError):
+            pass
+        else:
+            if predicate(last):
+                return last
+        time.sleep(1)
+    raise TimeoutError(f"runtime state did not reach target; last={last}")
+
+
+def is_local(state: dict) -> bool:
+    return state.get("routes", {}).get("main", {}).get("kind") == "local"
+
+
+def is_contracted_local(state: dict, *, profile_id: str, ceiling_rung: int) -> bool:
+    return (
+        is_local(state)
+        and state.get("active") == profile_id
+        and isinstance(state.get("rung_index"), int)
+        and state["rung_index"] > ceiling_rung
+    )
+
+
+def write_report(path: Path, report: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(temporary, path)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--route-state", type=Path, default=DEFAULT_ROUTE_STATE)
+    parser.add_argument("--output", type=Path, default=DEFAULT_RESULT)
+    parser.add_argument("--pressure-mb", type=int, default=DEFAULT_PRESSURE_MB)
+    parser.add_argument("--pressure-device", type=int, default=0)
+    parser.add_argument("--heal-timeout", type=float, default=900)
+    return parser
+
+
+def main() -> int:
+    args = build_parser().parse_args()
+    if not 128 <= args.pressure_mb <= MAX_PRESSURE_MB:
+        raise SystemExit(f"pressure-mb must be in [128, {MAX_PRESSURE_MB}]")
+    if args.pressure_device not in {0, 1}:
+        raise SystemExit("pressure-device must be 0 or 1")
+
+    report = {
+        "schema": "turbofit.controlled-pressure-acceptance/v1",
+        "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "status": "failed",
+        "checks": {},
+        "safety": {
+            "external_processes_signaled": 0,
+            "acceptance_owned_processes_terminated": 0,
+        },
+    }
+    pressure: subprocess.Popen[str] | None = None
+    log_fd, log_name = tempfile.mkstemp(prefix="turbofit-pressure-", suffix=".log")
+    os.close(log_fd)
+    log_path = Path(log_name)
+    ready_path = log_path.with_suffix(".ready.json")
+    try:
+        initial = wait_for(
+            args.route_state,
+            lambda state: is_local(state) and state.get("rung_index") == 0,
+            args.heal_timeout,
+        )
+        profile_id = initial.get("active")
+        initial_rung = initial.get("rung_index")
+        report["checks"]["initial_local"] = True
+        with log_path.open("w", encoding="utf-8") as log:
+            pressure = subprocess.Popen(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts/vram-pressure-acceptance"),
+                    "--device",
+                    str(args.pressure_device),
+                    "--mb",
+                    str(args.pressure_mb),
+                    "--ready",
+                    str(ready_path),
+                ],
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline and not ready_path.exists():
+            if pressure.poll() is not None:
+                raise RuntimeError(f"pressure process exited: {log_path.read_text(errors='replace')[-2000:]}")
+            time.sleep(0.5)
+        if not ready_path.exists():
+            raise TimeoutError("pressure allocation was not confirmed")
+        report["checks"]["pressure_allocated"] = json.loads(ready_path.read_text())
+
+        contracted = wait_for(
+            args.route_state,
+            lambda state: is_contracted_local(
+                state,
+                profile_id=profile_id,
+                ceiling_rung=initial_rung,
+            ),
+            120,
+        )
+        if pressure.poll() is not None:
+            raise RuntimeError("acceptance pressure process did not survive contraction")
+        report["checks"]["contracted_to_local_rung"] = contracted.get("rung_id")
+        report["checks"]["external_process_survived"] = True
+
+        pressure.terminate()
+        pressure.wait(timeout=15)
+        report["safety"]["acceptance_owned_processes_terminated"] = 1
+        pressure = None
+
+        healed = wait_for(
+            args.route_state,
+            lambda state: (
+                is_local(state)
+                and state.get("active") == profile_id
+                and state.get("rung_index") == initial_rung
+            ),
+            args.heal_timeout,
+        )
+        report["checks"]["healed_to_selected_ceiling"] = True
+        report["status"] = "pass"
+    except Exception as exc:
+        report["error"] = str(exc)
+    finally:
+        if pressure is not None and pressure.poll() is None:
+            pressure.terminate()
+            try:
+                pressure.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                pressure.kill()
+                pressure.wait(timeout=5)
+            report["safety"]["acceptance_owned_processes_terminated"] = 1
+        ready_path.unlink(missing_ok=True)
+        log_path.unlink(missing_ok=True)
+        write_report(args.output, report)
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0 if report["status"] == "pass" else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

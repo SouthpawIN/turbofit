@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "row": {
+    "id": "carwin-nano-1-bit-bonsai-64k",
+    "main": "Carwin Nano",
+    "aux": "1 Bit Bonsai",
+    "context": 65536,
+    "status": "pending",
+    "method_priority": [
+      "dspark",
+      "mtp",
+      "nextn"
+    ]
+  },
+  "profile_name": "carwin-nano-1-bit-bonsai-64k",
+  "components": [
+    {
+      "role": "aux",
+      "family": "1 Bit Bonsai",
+      "alias": "1-bit-bonsai",
+      "kind": "docker",
+      "method": "dspark",
+      "gpu": "0",
+      "port": 11610,
+      "command": [],
+      "image": "turbofit-prism-bonsai:local",
+      "environment": {
+        "PORT": "11610",
+        "CTX": "65536",
+        "MODEL": "/models/Bonsai-27B-Q1_0.gguf",
+        "MAIN_GPU": "0",
+        "NGL": "99",
+        "MMPROJ": "/models/Bonsai-27B-mmproj-Q8_0.gguf",
+        "DRAFT_MODEL": "/models/Bonsai-27B-dspark-Q4_1.gguf",
+        "DRAFT_NGL": "99",
+        "SPEC_DRAFT_N_MAX": "4"
+      },
+      "mounts": [
+        "/home/sovthpaw/Models/storage/gguf/Bonsai-27B:/models:ro"
+      ]
+    },
+    {
+      "role": "main",
+      "family": "Carwin Nano",
+      "alias": "carwin-nano",
+      "kind": "process",
+      "method": "mtp",
+      "gpu": "1",
+      "port": 11607,
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11607",
+        "-c",
+        "65536",
+        "-ngl",
+        "99",
+        "--fit",
+        "on",
+        "-fa",
+        "on",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--parallel",
+        "1",
+        "--spec-type",
+        "draft-mtp"
+      ],
+      "image": "",
+      "environment": {},
+      "mounts": []
+    }
+  ],
+  "checks": {
+    "aux": {
+      "context": 65536,
+      "model": "Bonsai-27B-Q1_0.gguf",
+      "health": {
+        "status": "ok"
+      }
+    },
+    "main": {
+      "context": 65536,
+      "model": "carwin-moe-Nano.gguf",
+      "health": {
+        "status": "ok"
+      }
+    }
+  },
+  "route": {
+    "main": "carwin-nano",
+    "aux": "1-bit-bonsai",
+    "status": {
+      "main": {
+        "alias": "carwin-nano",
+        "base_url": "http://127.0.0.1:11607",
+        "port": 11607,
+        "state": "ready",
+        "runtime_profile": "campaign:carwin-nano-1-bit-bonsai-64k"
+      },
+      "aux": {
+        "alias": "1-bit-bonsai",
+        "base_url": "http://127.0.0.1:11610",
+        "port": 11610,
+        "state": "ready",
+        "runtime_profile": "campaign:carwin-nano-1-bit-bonsai-64k",
+        "mode": "dedicated"
+      },
+      "stall_timeout_s": 90.0,
+      "backend_timeout_s": 300.0,
+      "gateway": "turbofit-gateway/2.0"
+    }
+  },
+  "results": {
+    "main": {
+      "backend": "carwin-nano",
+      "content": "```python\nfrom typing import List, Optional\n\ndef merge_sort(arr: List[int]) -> List[int]:\n    \"\"\"\n    Sorts a list of integers using the merge sort algorithm.\n    \n    Args:\n        arr: List of integers to sort\n        \n    Returns:\n        A new sorted list in ascending order\n    \"\"\"\n    # Base case: empty list or single element\n    if len(arr) <= 1:\n        return arr\n    \n    # Split the list into two halves\n    mid = len(arr) // 2\n    left_half = arr[:mid]\n    right_half = arr[mid:]\n    \n    # Recursively sort both halves\n    left_sorted = merge_sort(left_half)\n    right_sorted = merge_sort(right_half)\n    \n    # Merge the sorted halves\n    return merge(left_sorted, right_sorted)\n\ndef merge(left: List[int], right: List[int]) -> List[int]:\n    \"\"\"\n    Merges two sorted lists into a single sorted list.\n    \n    Args:\n        left: First sorted list\n        right: Second sorted list\n        \n    Returns:\n        Merged sorted list\n    \"\"\"\n    result = []\n    i = j = 0",
+      "usage": {
+        "completion_tokens": 256,
+        "prompt_tokens": 26,
+        "total_tokens": 282,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 26,
+        "prompt_ms": 277.933,
+        "prompt_per_token_ms": 10.689730769230769,
+        "prompt_per_second": 93.5477255309733,
+        "predicted_n": 256,
+        "predicted_ms": 1653.142,
+        "predicted_per_token_ms": 6.4575859375,
+        "predicted_per_second": 154.8566305858783,
+        "draft_n": 213,
+        "draft_n_accepted": 184
+      }
+    },
+    "aux": {
+      "backend": "1-bit-bonsai",
+      "content": "```python\nfrom typing import TypeVar, List\n\nT = TypeVar('T')\n\n\ndef merge_sort(arr: List[T]) -> List[T]:\n    \"\"\"\n    Sorts a list using the merge sort algorithm.\n    \n    Args:\n        arr: The list of comparable elements to sort.\n        \n    Returns:\n        A new sorted list.\n    \"\"\"\n    if len(arr) <= 1:\n        return arr\n    \n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    \n    return merge(left, right)\n\n\ndef merge(left: List[T], right: List[T]) -> List[T]:\n    \"\"\"\n    Merges two sorted lists into a single sorted list.\n    \n    Args:\n        left: The first sorted list.\n        right: The second sorted list.\n        \n    Returns:\n        A new list containing all elements from left and right, sorted.\n    \"\"\"\n    result: List[T] = []\n    i = 0\n    j = 0\n    \n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n",
+      "usage": {
+        "completion_tokens": 256,
+        "prompt_tokens": 26,
+        "total_tokens": 282,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 26,
+        "prompt_ms": 981.634,
+        "prompt_per_token_ms": 37.755153846153846,
+        "prompt_per_second": 26.48645014333244,
+        "predicted_n": 256,
+        "predicted_ms": 3093.131,
+        "predicted_per_token_ms": 12.08254296875,
+        "predicted_per_second": 82.76403424232598,
+        "draft_n": 248,
+        "draft_n_accepted": 192
+      }
+    }
+  },
+  "gpu_peak_mb": {
+    "0": 11977,
+    "1": 13052
+  },
+  "runtime_string": "turbofit-runtime use carwin-nano-1-bit-bonsai-64k"
+}

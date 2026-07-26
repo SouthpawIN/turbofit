@@ -1,0 +1,91 @@
+{
+  "context": 65536,
+  "pair": "GRM 2.6 Plus:Carwin Nano",
+  "status": {
+    "main": {
+      "alias": "grm-2.6-plus-q4",
+      "base_url": "http://127.0.0.1:11605",
+      "port": 11605,
+      "state": "ready"
+    },
+    "aux": {
+      "alias": "carwin-moe-nano",
+      "base_url": "http://127.0.0.1:11607",
+      "port": 11607,
+      "state": "ready",
+      "mode": "dedicated"
+    },
+    "stall_timeout_s": 90.0,
+    "backend_timeout_s": 300.0,
+    "gateway": "turbofit-gateway/2.0"
+  },
+  "results": {
+    "main": {
+      "elapsed_s": 5.764606952667236,
+      "backend": "grm-2.6-plus-q4",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 37,
+        "prompt_ms": 404.564,
+        "prompt_per_token_ms": 10.934162162162163,
+        "prompt_per_second": 91.4564815455651,
+        "predicted_n": 256,
+        "predicted_ms": 5256.202,
+        "predicted_per_token_ms": 20.5320390625,
+        "predicted_per_second": 48.704368667718626,
+        "draft_n": 266,
+        "draft_n_accepted": 166
+      },
+      "usage": {
+        "completion_tokens": 256,
+        "prompt_tokens": 37,
+        "total_tokens": 293,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "content": "```python\n\"\"\"\nMerge Sort Implementation\n\nThis module provides a detailed implementation of the merge sort algorithm,\na divide-and-conquer sorting algorithm that guarantees O(n log n) time\ncomplexity in all cases.\n\nComplexity Analysis:\n- Time Complexity:\n  - Best Case:    O(n log n) - The algorithm always divides the array and\n    merges, regardless of initial order.\n  - Average Case: O(n log n) - Consistent performance due to balanced\n    division.\n  - Worst Case:   O(n log n) - Even with reverse-sorted input, the divide\n    and merge steps remain the same.\n- Space Complexity: O(n) - Requires auxiliary space for the temporary arrays\n  used during merging. This is the primary trade-off of merge sort compared\n  to in-place algorithms like quicksort.\n- Stability: Stable - Equal elements maintain their relative order from the\n  input, which is guaranteed by the merge step's tie-breaking rule.\n- Comparison Count: Approximately n log2(n) comparisons in the average case.\n\nDesign Notes:\n1. The algorithm follows the classic divide-and-conquer paradigm: recursively\n   split the list into halves until single-element sublists"
+    },
+    "aux": {
+      "elapsed_s": 8.576562404632568,
+      "backend": "carwin-moe-nano",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 37,
+        "prompt_ms": 803.418,
+        "prompt_per_token_ms": 21.714,
+        "prompt_per_second": 46.05323754259924,
+        "predicted_n": 256,
+        "predicted_ms": 1913.283,
+        "predicted_per_token_ms": 7.47376171875,
+        "predicted_per_second": 133.80142927104876,
+        "draft_n": 223,
+        "draft_n_accepted": 180
+      },
+      "usage": {
+        "completion_tokens": 256,
+        "prompt_tokens": 37,
+        "total_tokens": 293,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "content": "```python\nfrom typing import List, TypeVar, Callable, Optional\n\nT = TypeVar('T')\n\ndef merge_sort(arr: List[T], key: Optional[Callable[[T], T]] = None) -> List[T]:\n    \"\"\"\n    Sorts a list using the merge sort algorithm.\n    \n    Args:\n        arr: The list to be sorted\n        key: Optional function to extract comparison key from elements\n        \n    Returns:\n        A new sorted list (original list is not modified)\n        \n    Time Complexity: O(n log n)\n    Space Complexity: O(n)\n    \"\"\"\n    if len(arr) <= 1:\n        return arr.copy()\n    \n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid], key)\n    right = merge_sort(arr[mid:], key)\n    \n    return _merge(left, right, key)\n\ndef _merge(left: List[T], right: List[T], key: Optional[Callable[[T], T]] = None) -> List[T]:\n    \"\"\"\n    Merges two sorted lists into a single sorted list.\n    \n    Args:\n        left: First sorted list\n        right: Second sorted"
+    }
+  },
+  "peak_gpu": {
+    "0": {
+      "max_used_mb": 13369,
+      "max_util_pct": 68,
+      "max_power_w": 331.73,
+      "max_fan_pct": 47
+    },
+    "1": {
+      "max_used_mb": 19361,
+      "max_util_pct": 94,
+      "max_power_w": 336.74,
+      "max_fan_pct": 100
+    }
+  },
+  "passed": true
+}

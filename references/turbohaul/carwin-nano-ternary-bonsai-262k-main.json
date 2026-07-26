@@ -1,0 +1,43 @@
+{
+  "evidence": "~/.hermes/wiki/topics/turbofit/evidence/carwin-nano-ternary-bonsai-262k.md",
+  "manifest": {
+    "arch": "",
+    "auto_place": false,
+    "context_size": 262144,
+    "description": "Turbofit measured main runtime; context=262144; method=mtp",
+    "display_name": "carwin-nano-ternary-bonsai-262k-main",
+    "expected_vram_bytes": 16026435584,
+    "gguf_blob_sha256": "5c6ddebfa5669d3f0dca4b569cbd3e06aa7fa781d2198ab1ec67b6d05e63636b",
+    "gguf_size_bytes": 12335504896,
+    "hybrid_kv_ratio": 1.0,
+    "kv_bytes_per_token": 14080.0,
+    "llama_server_flags": {
+      "cache_reuse": 256,
+      "cache_type_k": "q4_0",
+      "cache_type_v": "q4_0",
+      "ctx_size": 262144,
+      "flash_attn": true,
+      "jinja": true,
+      "main_gpu": 1,
+      "n_gpu_layers": 999,
+      "no_context_shift": true,
+      "no_perf": true,
+      "parallel": 1,
+      "slot_prompt_similarity": 0.5,
+      "spec_type": "draft-mtp",
+      "split_mode": "none"
+    },
+    "mmproj_blob_sha256": "",
+    "model_tag": "carwin-nano-ternary-bonsai-262k-main",
+    "prompt_template": {
+      "stop_tokens": [],
+      "system_default": ""
+    },
+    "revision": 1
+  },
+  "matrix_row": "carwin-nano-ternary-bonsai-262k",
+  "sources": {
+    "gguf": "~/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+    "mmproj": ""
+  }
+}

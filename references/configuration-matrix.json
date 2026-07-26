@@ -1,0 +1,1349 @@
+{
+  "schema": "turbofit.configuration-matrix/v1",
+  "rows": [
+    {
+      "id": "glm-5-2-2-788bpw--carwin-nano--64k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--carwin-nano--128k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--carwin-nano--262k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--carwin-nano--1m",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--ternary-bonsai-27b--64k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--ternary-bonsai-27b--128k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--ternary-bonsai-27b--262k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--ternary-bonsai-27b--1m",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--bonsai-27b--64k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--bonsai-27b--128k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--bonsai-27b--262k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--bonsai-27b--1m",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--auto--64k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--auto--128k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--auto--262k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--auto--1m",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--carwin-nano--64k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--carwin-nano--128k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--carwin-nano--262k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--carwin-nano--1m",
+      "main": "minimax-m3-q4",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--ternary-bonsai-27b--64k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--ternary-bonsai-27b--128k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--ternary-bonsai-27b--262k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--ternary-bonsai-27b--1m",
+      "main": "minimax-m3-q4",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--bonsai-27b--64k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--bonsai-27b--128k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--bonsai-27b--262k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--bonsai-27b--1m",
+      "main": "minimax-m3-q4",
+      "auxiliary": "bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--auto--64k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--auto--128k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--auto--262k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--auto--1m",
+      "main": "minimax-m3-q4",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--carwin-nano--64k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--carwin-nano--128k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--carwin-nano--262k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--carwin-nano--1m",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--ternary-bonsai-27b--64k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--ternary-bonsai-27b--128k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--ternary-bonsai-27b--262k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--ternary-bonsai-27b--1m",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--bonsai-27b--64k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--bonsai-27b--128k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--bonsai-27b--262k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--bonsai-27b--1m",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--auto--64k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--auto--128k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--auto--262k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--auto--1m",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--carwin-nano--64k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--carwin-nano--128k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--carwin-nano--262k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--carwin-nano--1m",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--ternary-bonsai-27b--64k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--ternary-bonsai-27b--128k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--ternary-bonsai-27b--262k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--ternary-bonsai-27b--1m",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--bonsai-27b--64k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--bonsai-27b--128k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--bonsai-27b--262k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--bonsai-27b--1m",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--auto--64k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--auto--128k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--auto--262k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--auto--1m",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--carwin-nano--64k",
+      "main": "grm-2-6-27b",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--carwin-nano--128k",
+      "main": "grm-2-6-27b",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--carwin-nano--262k",
+      "main": "grm-2-6-27b",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--carwin-nano--1m",
+      "main": "grm-2-6-27b",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--ternary-bonsai-27b--64k",
+      "main": "grm-2-6-27b",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--ternary-bonsai-27b--128k",
+      "main": "grm-2-6-27b",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--ternary-bonsai-27b--262k",
+      "main": "grm-2-6-27b",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--ternary-bonsai-27b--1m",
+      "main": "grm-2-6-27b",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--bonsai-27b--64k",
+      "main": "grm-2-6-27b",
+      "auxiliary": "bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--bonsai-27b--128k",
+      "main": "grm-2-6-27b",
+      "auxiliary": "bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--bonsai-27b--262k",
+      "main": "grm-2-6-27b",
+      "auxiliary": "bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--bonsai-27b--1m",
+      "main": "grm-2-6-27b",
+      "auxiliary": "bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--auto--64k",
+      "main": "grm-2-6-27b",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--auto--128k",
+      "main": "grm-2-6-27b",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--auto--262k",
+      "main": "grm-2-6-27b",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "grm-2-6-27b--auto--1m",
+      "main": "grm-2-6-27b",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--carwin-nano--64k",
+      "main": "carwin-nano",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--carwin-nano--128k",
+      "main": "carwin-nano",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--carwin-nano--262k",
+      "main": "carwin-nano",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--carwin-nano--1m",
+      "main": "carwin-nano",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--ternary-bonsai-27b--64k",
+      "main": "carwin-nano",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--ternary-bonsai-27b--128k",
+      "main": "carwin-nano",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--ternary-bonsai-27b--262k",
+      "main": "carwin-nano",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--ternary-bonsai-27b--1m",
+      "main": "carwin-nano",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--bonsai-27b--64k",
+      "main": "carwin-nano",
+      "auxiliary": "bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--bonsai-27b--128k",
+      "main": "carwin-nano",
+      "auxiliary": "bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--bonsai-27b--262k",
+      "main": "carwin-nano",
+      "auxiliary": "bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--bonsai-27b--1m",
+      "main": "carwin-nano",
+      "auxiliary": "bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--auto--64k",
+      "main": "carwin-nano",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--auto--128k",
+      "main": "carwin-nano",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--auto--262k",
+      "main": "carwin-nano",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "carwin-nano--auto--1m",
+      "main": "carwin-nano",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--carwin-nano--64k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--carwin-nano--128k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--carwin-nano--262k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--carwin-nano--1m",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--ternary-bonsai-27b--64k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--ternary-bonsai-27b--128k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--ternary-bonsai-27b--262k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--ternary-bonsai-27b--1m",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--bonsai-27b--64k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--bonsai-27b--128k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--bonsai-27b--262k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--bonsai-27b--1m",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--auto--64k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--auto--128k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--auto--262k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--auto--1m",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--carwin-nano--64k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--carwin-nano--128k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--carwin-nano--262k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--carwin-nano--1m",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--ternary-bonsai-27b--64k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--ternary-bonsai-27b--128k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--ternary-bonsai-27b--262k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--ternary-bonsai-27b--1m",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--bonsai-27b--64k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--bonsai-27b--128k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--bonsai-27b--262k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--bonsai-27b--1m",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--auto--64k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--auto--128k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--auto--262k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--auto--1m",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--carwin-nano--64k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--carwin-nano--128k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--carwin-nano--262k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--carwin-nano--1m",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--ternary-bonsai-27b--64k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--ternary-bonsai-27b--128k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--ternary-bonsai-27b--262k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--ternary-bonsai-27b--1m",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--bonsai-27b--64k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--bonsai-27b--128k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--bonsai-27b--262k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--bonsai-27b--1m",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--auto--64k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--auto--128k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--auto--262k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--auto--1m",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--carwin-nano--64k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--carwin-nano--128k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--carwin-nano--262k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--carwin-nano--1m",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--ternary-bonsai-27b--64k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--ternary-bonsai-27b--128k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--ternary-bonsai-27b--262k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--ternary-bonsai-27b--1m",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--bonsai-27b--64k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--bonsai-27b--128k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--bonsai-27b--262k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--bonsai-27b--1m",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--auto--64k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--auto--128k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--auto--262k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--auto--1m",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--carwin-nano--64k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--carwin-nano--128k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--carwin-nano--262k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--carwin-nano--1m",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--ternary-bonsai-27b--64k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--ternary-bonsai-27b--128k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--ternary-bonsai-27b--262k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--ternary-bonsai-27b--1m",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--bonsai-27b--64k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--bonsai-27b--128k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--bonsai-27b--262k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--bonsai-27b--1m",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--auto--64k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--auto--128k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--auto--262k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--auto--1m",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--carwin-nano--64k",
+      "main": "bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--carwin-nano--128k",
+      "main": "bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--carwin-nano--262k",
+      "main": "bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--carwin-nano--1m",
+      "main": "bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--ternary-bonsai-27b--64k",
+      "main": "bonsai-27b",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--ternary-bonsai-27b--128k",
+      "main": "bonsai-27b",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--ternary-bonsai-27b--262k",
+      "main": "bonsai-27b",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--ternary-bonsai-27b--1m",
+      "main": "bonsai-27b",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--bonsai-27b--64k",
+      "main": "bonsai-27b",
+      "auxiliary": "bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--bonsai-27b--128k",
+      "main": "bonsai-27b",
+      "auxiliary": "bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--bonsai-27b--262k",
+      "main": "bonsai-27b",
+      "auxiliary": "bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--bonsai-27b--1m",
+      "main": "bonsai-27b",
+      "auxiliary": "bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--auto--64k",
+      "main": "bonsai-27b",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--auto--128k",
+      "main": "bonsai-27b",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--auto--262k",
+      "main": "bonsai-27b",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--auto--1m",
+      "main": "bonsai-27b",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    }
+  ]
+}

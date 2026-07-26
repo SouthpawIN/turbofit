@@ -1,0 +1,279 @@
+#!/usr/bin/env python3
+"""Rank evidence-backed Turbofit runtime profiles using Turbohaul v0.7 fit ideas."""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+from dataclasses import dataclass, asdict
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.recommend import priority_key  # noqa: E402
+
+DEFAULT_PROFILES = Path("/home/sovthpaw/projects/turbofit/references/successful-runtime-profiles.json")
+DEFAULT_CATALOG = Path.home() / ".config/turbofit/models.yaml"
+SAFETY_FLOOR_MB = 1024
+
+
+
+def normalize_alias(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+
+
+def nvidia_memory() -> dict[int, dict[str, int]]:
+    result = subprocess.run([
+        "nvidia-smi", "--query-gpu=index,memory.total,memory.free,memory.used",
+        "--format=csv,noheader,nounits",
+    ], capture_output=True, text=True)
+    if result.returncode:
+        return {}
+    out = {}
+    for line in result.stdout.strip().splitlines():
+        idx, total, free, used = [int(item.strip()) for item in line.split(",")]
+        out[idx] = {"total_mb": total, "free_mb": free, "used_mb": used}
+    return out
+
+
+def load_tiers(path: Path) -> dict[str, str]:
+    try:
+        import yaml
+        data = yaml.safe_load(path.read_text()) or {}
+        tiers = {}
+        for name, model in (data.get("models") or {}).items():
+            tier = str(model.get("tier", "c"))
+            tiers[name] = tier
+            tiers[normalize_alias(name)] = tier
+            for alias in model.get("aliases") or []:
+                tiers[str(alias)] = tier
+                tiers[normalize_alias(str(alias))] = tier
+        return tiers
+    except Exception:
+        return {}
+
+
+def gpu_index(component: dict[str, Any]) -> int:
+    raw = str(component.get("gpu", "0"))
+    match = re.search(r"(\d+)$", raw)
+    return int(match.group(1)) if match else 0
+
+
+def model_path(component: dict[str, Any]) -> Path | None:
+    if component.get("kind") == "process":
+        command = [str(item) for item in component.get("command", [])]
+        for flag in ("-m", "--model"):
+            if flag in command and command.index(flag) + 1 < len(command):
+                return Path(command[command.index(flag) + 1])
+    if component.get("kind") == "docker":
+        model = str((component.get("environment") or {}).get("MODEL", ""))
+        for mount in component.get("mounts", []):
+            host, container, *_ = str(mount).split(":")
+            if model == container or model.startswith(container.rstrip("/") + "/"):
+                relative = model[len(container):].lstrip("/")
+                return Path(host) / relative
+    return None
+
+
+def is_vision(component: dict[str, Any]) -> bool:
+    env = component.get("environment") or {}
+    if env.get("MMPROJ"):
+        return True
+    command = [str(item) for item in component.get("command", [])]
+    return "--mmproj" in command
+
+
+def speculative_method(component: dict[str, Any]) -> str:
+    env = component.get("environment") or {}
+    if env.get("DRAFT_MODEL"):
+        return "dspark"
+    command = [str(item) for item in component.get("command", [])]
+    if "--spec-type" in command:
+        index = command.index("--spec-type")
+        return command[index + 1].removeprefix("draft-") if index + 1 < len(command) else "speculative"
+    return "baseline"
+
+
+def evidence_metrics(path: Path) -> dict[str, Any]:
+    try:
+        text = path.read_text()
+    except OSError:
+        return {"throughput": [], "memory_mb": [], "gpu_memory_mb": {}, "role_memory_mb": {}}
+    throughput = [float(value) for value in re.findall(r"([0-9]+(?:\.[0-9]+)?)\s*tok/s", text)]
+    memory = [int(value) for value in re.findall(r"([0-9][0-9,]*)\s*MiB", text.replace(",", ""))]
+    gpu_memory: dict[int, int] = {}
+    for gpu, value in re.findall(r"\|\s*([01])(?:\s*—[^|]*)?\|\s*([0-9,]+)\s*MiB", text):
+        gpu_memory[int(gpu)] = max(gpu_memory.get(int(gpu), 0), int(value.replace(",", "")))
+    role_memory = {}
+    for role in ("Main", "Aux"):
+        matches = re.findall(rf"\|\s*{role}[^|]*\|[^\n]*?([0-9,]+)\s*MiB", text, re.I)
+        if matches:
+            role_memory[role.lower()] = int(matches[-1].replace(",", ""))
+    return {
+        "throughput": throughput,
+        "memory_mb": memory,
+        "gpu_memory_mb": gpu_memory,
+        "role_memory_mb": role_memory,
+    }
+
+
+def estimate_requirements(profile: dict[str, Any], metrics: dict[str, Any]) -> tuple[dict[int, int], str]:
+    components = profile.get("components") or []
+    by_gpu = dict(metrics.get("gpu_memory_mb") or {})
+    if by_gpu:
+        return by_gpu, "measured-per-gpu"
+    role_memory = metrics.get("role_memory_mb") or {}
+    if role_memory:
+        for component in components:
+            role = str(component.get("role", "main"))
+            if role in role_memory:
+                idx = gpu_index(component)
+                by_gpu[idx] = max(by_gpu.get(idx, 0), role_memory[role])
+        if by_gpu:
+            return by_gpu, "measured-per-role"
+    memory = metrics.get("memory_mb") or []
+    if len(components) == 1 and memory:
+        return {gpu_index(components[0]): max(memory)}, "measured-profile-peak"
+    # Safe fallback: model bytes + a 2 GiB compute/KV floor. Profiles without
+    # measured telemetry rank below measured profiles and are never called exact.
+    for component in components:
+        path = model_path(component)
+        body_mb = (path.stat().st_size // (1024 * 1024)) if path and path.exists() else 0
+        idx = gpu_index(component)
+        by_gpu[idx] = by_gpu.get(idx, 0) + body_mb + 2048
+    return by_gpu, "weight-plus-floor"
+
+
+@dataclass
+class Recommendation:
+    profile: str
+    score: float
+    quality_points: int
+    context: int
+    main: str
+    aux: str
+    aux_mode: str
+    min_tps: float
+    vision: bool
+    methods: list[str]
+    gpu_requirements_mb: dict[int, int]
+    fit: bool
+    fit_reason: str
+    confidence: str
+    command: str
+    evidence: str
+
+
+def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
+    payload = json.loads(args.profiles.read_text())
+    tiers = load_tiers(args.catalog)
+    live = nvidia_memory()
+    tier_points = {"s": 50, "sf": 40, "sd": 30, "f": 20, "c": 10}
+    ranked = []
+    for name, profile in payload.get("profiles", {}).items():
+        context = int(profile.get("context", 0))
+        if context < args.context:
+            continue
+        components = profile.get("components") or []
+        vision = any(is_vision(component) for component in components)
+        if args.vision and not vision:
+            continue
+        evidence = Path(str(profile.get("evidence", "")))
+        metrics = evidence_metrics(evidence)
+        stored_metrics = profile.get("metrics") or {}
+        stored_gpu = stored_metrics.get("gpu_peak_mb") or {}
+        if stored_gpu:
+            metrics["gpu_memory_mb"] = {int(gpu): int(value) for gpu, value in stored_gpu.items()}
+        requirements, confidence = estimate_requirements(profile, metrics)
+        fit = True
+        reasons = []
+        for gpu, need in requirements.items():
+            available = (live.get(gpu) or {}).get("free_mb" if args.live else "total_mb", 0)
+            budget = max(0, available - args.safety_floor_mb)
+            if need > budget:
+                fit = False
+                reasons.append(f"GPU{gpu} needs {need} MiB > {budget} MiB budget")
+            else:
+                reasons.append(f"GPU{gpu} {need}/{budget} MiB")
+        if args.fit_only and not fit:
+            continue
+        expected = profile.get("expected") or {}
+        main = str(expected.get("main_alias", ""))
+        aux = str(expected.get("aux_alias", ""))
+        aux_mode = str(expected.get("aux_mode", "dedicated"))
+        stored_tps = [float(stored_metrics.get(key) or 0.0) for key in ("main_tps", "aux_tps")]
+        if all(value > 0 for value in stored_tps):
+            min_tps = min(stored_tps)
+        else:
+            tps_values = metrics.get("throughput") or []
+            min_tps = min(tps_values[:2]) if len(tps_values) >= 2 else (tps_values[0] if tps_values else 0.0)
+        methods = sorted(set(speculative_method(component) for component in components))
+        context_surplus = max(0.0, (context - args.context) / max(args.context, 1))
+        tier_score = tier_points.get(tiers.get(main, tiers.get(normalize_alias(main), "c")), 10)
+        score = tier_score + min_tps
+        score += 12 if aux_mode == "dedicated" else 4
+        score += 8 if vision else 0
+        score += 6 if any(method != "baseline" for method in methods) else 0
+        score += 8 if confidence.startswith("measured") else 0
+        score -= context_surplus * 6
+        if not fit:
+            score -= 1000
+        if args.prefer == "speed":
+            score += min_tps * 1.5
+        elif args.prefer == "context":
+            score += min(context / 65536, 16) * 4
+        ranked.append(Recommendation(
+            profile=name, score=round(score, 2), quality_points=tier_score, context=context,
+            main=main, aux=aux, aux_mode=aux_mode, min_tps=round(min_tps, 2),
+            vision=vision, methods=methods, gpu_requirements_mb=requirements,
+            fit=fit, fit_reason="; ".join(reasons), confidence=confidence,
+            command=f"turbofit-runtime use {name}", evidence=str(evidence),
+        ))
+    ranked.sort(key=lambda item: item.profile)
+    return sorted(
+        ranked,
+        key=lambda item: (item.fit, priority_key(item.context, item.min_tps, item.quality_points), item.score),
+        reverse=True,
+    )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--profiles", type=Path, default=DEFAULT_PROFILES)
+    parser.add_argument("--catalog", type=Path, default=DEFAULT_CATALOG)
+    parser.add_argument("--context", type=int, default=65536)
+    parser.add_argument("--vision", action="store_true")
+    parser.add_argument("--live", action="store_true", help="fit against current free VRAM instead of clear-card total")
+    parser.add_argument("--fit-only", action="store_true")
+    parser.add_argument("--prefer", choices=("balanced", "speed", "context"), default="balanced")
+    parser.add_argument("--safety-floor-mb", type=int, default=SAFETY_FLOOR_MB)
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--limit", type=int, default=20)
+    args = parser.parse_args()
+    ranked = rank_profiles(args)[: args.limit]
+    if args.json:
+        print(json.dumps([asdict(item) for item in ranked], indent=2))
+        return 0 if ranked else 1
+    print(f"Evidence-backed runtime recommendations — context >= {args.context:,}")
+    print("Priority: quality tier -> 128K -> 30 tok/s -> 262K -> 100 tok/s -> 1M")
+    print(f"Fit basis: {'current free VRAM' if args.live else 'clear-card total VRAM'}; safety floor {args.safety_floor_mb} MiB/card")
+    print(f"{'#':<3} {'PROFILE':<30} {'CTX':>8} {'TPS':>7} {'FIT':>5} {'AUX':<11} {'METHOD':<12}")
+    print("-" * 88)
+    for index, item in enumerate(ranked, 1):
+        methods = "+".join(item.methods)
+        print(f"{index:<3} {item.profile:<30} {item.context:>8,} {item.min_tps:>7.2f} {('yes' if item.fit else 'NO'):>5} {item.aux_mode:<11} {methods:<12}")
+        print(f"    {item.fit_reason} | {item.command}")
+    if ranked:
+        best = next((item for item in ranked if item.fit), ranked[0])
+        print(f"\nRECOMMEND: {best.profile}\nRUN: {best.command}\nEVIDENCE: {best.evidence}")
+    return 0 if ranked else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

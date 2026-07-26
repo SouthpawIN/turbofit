@@ -1,0 +1,286 @@
+{
+  "timestamp": "2026-07-22T23:51:51.911990+00:00",
+  "family": "1bit",
+  "image": "turbofit-prism-bonsai:local",
+  "model": "/home/sovthpaw/Models/storage/gguf/Bonsai-27B/Bonsai-27B-Q1_0.gguf",
+  "draft": "/home/sovthpaw/Models/storage/gguf/Bonsai-27B/Bonsai-27B-dspark-Q4_1.gguf",
+  "contexts": [
+    {
+      "context": 65536,
+      "runs": {
+        "baseline": {
+          "elapsed_s": 4.474,
+          "content": "```python\n\"\"\"\nMerge Sort Implementation in Python\n\nThis module provides a robust, type-hinted implementation of the Merge Sort algorithm\nwith comprehensive documentation, complexity analysis, and design notes.\n\"\"\"\n\nfrom typing import TypeVar, List, Optional\n\nT = TypeVar('T')\n\n\ndef merge_sort(arr: List[T]) -> List[T]:\n    \"\"\"\n    Sorts a list of comparable elements using the Merge Sort algorithm.\n\n    Merge Sort is a divide-and-conquer algorithm that recursively divides the input\n    list into halves until each sublist contains a single element, then merges\n    the sublists back together in sorted order.\n\n    Args:\n        arr: A list of elements that support comparison operations (e.g., int, float, str).\n\n    Returns:\n        A new list containing the elements of `arr` in ascending sorted order.\n        The original list is not modified.\n\n    Raises:\n        TypeError: If the input is not a list.\n        ValueError: If the list contains elements that cannot be compared.\n\n    Example:\n        >>> merge_sort([38, 27, 43, 3, 9, 82, 10])\n        [",
+          "usage": {
+            "completion_tokens": 256,
+            "prompt_tokens": 37,
+            "total_tokens": 293,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 37,
+            "prompt_ms": 387.804,
+            "prompt_per_token_ms": 10.48118918918919,
+            "prompt_per_second": 95.40902105187158,
+            "predicted_n": 256,
+            "predicted_ms": 4050.491,
+            "predicted_per_token_ms": 15.82223046875,
+            "predicted_per_second": 63.20221425007487
+          },
+          "peak_gpu": {
+            "0": {
+              "max_util_pct": 0,
+              "max_power_w": 38.12,
+              "max_fan_pct": 30,
+              "max_used_mb": 11093
+            },
+            "1": {
+              "max_util_pct": 90,
+              "max_power_w": 319.58,
+              "max_fan_pct": 100,
+              "max_used_mb": 5489
+            }
+          },
+          "health_status": 200,
+          "server_context": 65536,
+          "dspark_initialized": false,
+          "logs": ""
+        },
+        "dspark": {
+          "elapsed_s": 4.701,
+          "content": "```python\n\"\"\"\nMerge Sort Implementation in Python\n\nThis module provides a robust, type-hinted implementation of the Merge Sort algorithm\nwith comprehensive documentation, complexity analysis, and design notes.\n\"\"\"\n\nfrom typing import TypeVar, List, Optional\n\nT = TypeVar('T')\n\n\ndef merge_sort(arr: List[T]) -> List[T]:\n    \"\"\"\n    Sorts a list of comparable elements using the Merge Sort algorithm.\n\n    Merge Sort is a divide-and-conquer algorithm that recursively divides the input\n    list into halves until each sublist contains a single element, then merges\n    the sublists back together in sorted order.\n\n    Args:\n        arr: A list of elements that support comparison operations (e.g., int, float, str).\n\n    Returns:\n        A new list containing the elements of `arr` in ascending sorted order.\n        The original list is not modified.\n\n    Raises:\n        TypeError: If the input is not a list.\n        TypeError: If elements in the list are not comparable.\n\n    Example:\n        >>> merge_sort([38, 27, 43, 3, 9, 82, 10])\n        [3",
+          "usage": {
+            "completion_tokens": 256,
+            "prompt_tokens": 37,
+            "total_tokens": 293,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 37,
+            "prompt_ms": 887.39,
+            "prompt_per_token_ms": 23.983513513513515,
+            "prompt_per_second": 41.69530871431952,
+            "predicted_n": 256,
+            "predicted_ms": 3777.783,
+            "predicted_per_token_ms": 14.75696484375,
+            "predicted_per_second": 67.76461220774195,
+            "draft_n": 312,
+            "draft_n_accepted": 176
+          },
+          "peak_gpu": {
+            "0": {
+              "max_util_pct": 0,
+              "max_power_w": 38.34,
+              "max_fan_pct": 30,
+              "max_used_mb": 11093
+            },
+            "1": {
+              "max_util_pct": 83,
+              "max_power_w": 306.06,
+              "max_fan_pct": 100,
+              "max_used_mb": 10721
+            }
+          },
+          "health_status": 200,
+          "server_context": 65536,
+          "dspark_initialized": true,
+          "logs": ""
+        }
+      },
+      "optimized_mode": "dspark",
+      "speedup": 1.0722,
+      "passed": true
+    },
+    {
+      "context": 131072,
+      "runs": {
+        "baseline": {
+          "elapsed_s": 4.643,
+          "content": "```python\n\"\"\"\nMerge Sort Implementation in Python\n\nThis module provides a robust, type-hinted implementation of the Merge Sort algorithm\nwith comprehensive documentation, complexity analysis, and design notes.\n\"\"\"\n\nfrom typing import TypeVar, List, Optional\n\nT = TypeVar('T')\n\n\ndef merge_sort(arr: List[T]) -> List[T]:\n    \"\"\"\n    Sorts a list of comparable elements using the Merge Sort algorithm.\n\n    Merge Sort is a divide-and-conquer algorithm that recursively divides the input\n    list into halves until each sublist contains a single element, then merges\n    the sublists back together in sorted order.\n\n    Args:\n        arr: A list of elements that support comparison operations (e.g., int, float, str).\n\n    Returns:\n        A new list containing the elements of `arr` in ascending sorted order.\n        The original list is not modified.\n\n    Raises:\n        TypeError: If the input is not a list.\n        ValueError: If the list contains elements that cannot be compared.\n\n    Example:\n        >>> merge_sort([38, 27, 43, 3, 9, 82, 10])\n        [",
+          "usage": {
+            "completion_tokens": 256,
+            "prompt_tokens": 37,
+            "total_tokens": 293,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 37,
+            "prompt_ms": 428.547,
+            "prompt_per_token_ms": 11.582351351351353,
+            "prompt_per_second": 86.33825461384632,
+            "predicted_n": 256,
+            "predicted_ms": 4177.521,
+            "predicted_per_token_ms": 16.31844140625,
+            "predicted_per_second": 61.28036220524086
+          },
+          "peak_gpu": {
+            "0": {
+              "max_util_pct": 0,
+              "max_power_w": 39.23,
+              "max_fan_pct": 30,
+              "max_used_mb": 11093
+            },
+            "1": {
+              "max_util_pct": 90,
+              "max_power_w": 297.08,
+              "max_fan_pct": 100,
+              "max_used_mb": 6961
+            }
+          },
+          "health_status": 200,
+          "server_context": 131072,
+          "dspark_initialized": false,
+          "logs": ""
+        },
+        "dspark": {
+          "elapsed_s": 4.696,
+          "content": "```python\n\"\"\"\nMerge Sort Implementation in Python\n\nThis module provides a robust, type-hinted implementation of the Merge Sort algorithm\nwith comprehensive documentation, complexity analysis, and design notes.\n\"\"\"\n\nfrom typing import TypeVar, List, Optional\n\nT = TypeVar('T')\n\n\ndef merge_sort(arr: List[T]) -> List[T]:\n    \"\"\"\n    Sorts a list of comparable elements using the Merge Sort algorithm.\n\n    Merge Sort is a divide-and-conquer algorithm that recursively divides the input\n    list into halves until each sublist contains a single element, then merges\n    the sublists back together in sorted order.\n\n    Args:\n        arr: A list of elements that support comparison operations (e.g., int, float, str).\n\n    Returns:\n        A new list containing the elements of `arr` in ascending sorted order.\n        The original list is not modified.\n\n    Raises:\n        TypeError: If the input is not a list.\n        TypeError: If elements in the list are not comparable.\n\n    Example:\n        >>> merge_sort([38, 27, 43, 3, 9, 82, 10])\n        [3",
+          "usage": {
+            "completion_tokens": 256,
+            "prompt_tokens": 37,
+            "total_tokens": 293,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 37,
+            "prompt_ms": 951.731,
+            "prompt_per_token_ms": 25.722459459459458,
+            "prompt_per_second": 38.876531288778025,
+            "predicted_n": 256,
+            "predicted_ms": 3707.976,
+            "predicted_per_token_ms": 14.48428125,
+            "predicted_per_second": 69.04036056328304,
+            "draft_n": 312,
+            "draft_n_accepted": 176
+          },
+          "peak_gpu": {
+            "0": {
+              "max_util_pct": 0,
+              "max_power_w": 38.4,
+              "max_fan_pct": 30,
+              "max_used_mb": 11093
+            },
+            "1": {
+              "max_util_pct": 85,
+              "max_power_w": 305.21,
+              "max_fan_pct": 60,
+              "max_used_mb": 13435
+            }
+          },
+          "health_status": 200,
+          "server_context": 131072,
+          "dspark_initialized": true,
+          "logs": ""
+        }
+      },
+      "optimized_mode": "dspark",
+      "speedup": 1.1266,
+      "passed": true
+    },
+    {
+      "context": 262144,
+      "runs": {
+        "baseline": {
+          "elapsed_s": 4.484,
+          "content": "```python\n\"\"\"\nMerge Sort Implementation in Python\n\nThis module provides a robust, type-hinted implementation of the Merge Sort algorithm\nwith comprehensive documentation, complexity analysis, and design notes.\n\"\"\"\n\nfrom typing import TypeVar, List, Optional\n\nT = TypeVar('T')\n\n\ndef merge_sort(arr: List[T]) -> List[T]:\n    \"\"\"\n    Sorts a list of comparable elements using the Merge Sort algorithm.\n\n    Merge Sort is a divide-and-conquer algorithm that recursively divides the input\n    list into halves until each sublist contains a single element, then merges\n    the sublists back together in sorted order.\n\n    Args:\n        arr: A list of elements that support comparison operations (e.g., int, float, str).\n\n    Returns:\n        A new list containing the elements of `arr` in ascending sorted order.\n        The original list is not modified.\n\n    Raises:\n        TypeError: If the input is not a list.\n        ValueError: If the list contains elements that cannot be compared.\n\n    Example:\n        >>> merge_sort([38, 27, 43, 3, 9, 82, 10])\n        [",
+          "usage": {
+            "completion_tokens": 256,
+            "prompt_tokens": 37,
+            "total_tokens": 293,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 37,
+            "prompt_ms": 384.388,
+            "prompt_per_token_ms": 10.388864864864864,
+            "prompt_per_second": 96.25690708346775,
+            "predicted_n": 256,
+            "predicted_ms": 4064.946,
+            "predicted_per_token_ms": 15.8786953125,
+            "predicted_per_second": 62.9774663673269
+          },
+          "peak_gpu": {
+            "0": {
+              "max_util_pct": 0,
+              "max_power_w": 36.23,
+              "max_fan_pct": 30,
+              "max_used_mb": 11093
+            },
+            "1": {
+              "max_util_pct": 89,
+              "max_power_w": 308.15,
+              "max_fan_pct": 100,
+              "max_used_mb": 9905
+            }
+          },
+          "health_status": 200,
+          "server_context": 262144,
+          "dspark_initialized": false,
+          "logs": ""
+        },
+        "dspark": {
+          "elapsed_s": 5.536,
+          "content": "```python\n\"\"\"\nMerge Sort Implementation in Python\n\nThis module provides a robust, type-hinted implementation of the Merge Sort algorithm\nwith comprehensive documentation, complexity analysis, and design notes.\n\"\"\"\n\nfrom typing import TypeVar, List, Optional\n\nT = TypeVar('T')\n\n\ndef merge_sort(arr: List[T]) -> List[T]:\n    \"\"\"\n    Sorts a list of comparable elements using the Merge Sort algorithm.\n\n    Merge Sort is a divide-and-conquer algorithm that recursively divides the input\n    list into halves until each sublist contains a single element, then merges\n    the sublists back together in sorted order.\n\n    Args:\n        arr: A list of elements that support comparison operations (e.g., int, float, str).\n\n    Returns:\n        A new list containing the elements of `arr` in ascending sorted order.\n        The original list is not modified.\n\n    Raises:\n        TypeError: If the input is not a list.\n        TypeError: If elements in the list are not comparable.\n\n    Example:\n        >>> merge_sort([38, 27, 43, 3, 9, 82, 10])\n        [3",
+          "usage": {
+            "completion_tokens": 256,
+            "prompt_tokens": 37,
+            "total_tokens": 293,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 37,
+            "prompt_ms": 1226.936,
+            "prompt_per_token_ms": 33.16043243243243,
+            "prompt_per_second": 30.156422176869864,
+            "predicted_n": 256,
+            "predicted_ms": 4267.701,
+            "predicted_per_token_ms": 16.67070703125,
+            "predicted_per_second": 59.98545821274733,
+            "draft_n": 312,
+            "draft_n_accepted": 176
+          },
+          "peak_gpu": {
+            "0": {
+              "max_util_pct": 0,
+              "max_power_w": 38.55,
+              "max_fan_pct": 30,
+              "max_used_mb": 11093
+            },
+            "1": {
+              "max_util_pct": 75,
+              "max_power_w": 311.04,
+              "max_fan_pct": 100,
+              "max_used_mb": 18943
+            }
+          },
+          "health_status": 200,
+          "server_context": 262144,
+          "dspark_initialized": true,
+          "logs": ""
+        }
+      },
+      "optimized_mode": "baseline",
+      "speedup": 0.9525,
+      "passed": true
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,156 @@
+{
+  "schema": "turbofit.model-catalog/v1",
+  "contexts": [65536, 131072, 262144, 1048576],
+  "auxiliary_options": [
+    "carwin-nano",
+    "ternary-bonsai-27b",
+    "bonsai-27b",
+    "auto"
+  ],
+  "models": [
+    {
+      "id": "glm-5-2-2-788bpw",
+      "name": "GLM 5.2 2.788 bpw",
+      "family": "GLM 5.2",
+      "source": "https://huggingface.co/sokann/GLM-5.2-GGUF-2.788bpw",
+      "artifact": "GLM-5.2-GGUF-2.788bpw-muzzy-imatrix.gguf",
+      "quantization": "2.788 bpw",
+      "vision": false,
+      "moe": true,
+      "runtime_features": ["expert-offload"],
+      "roles": ["main"]
+    },
+    {
+      "id": "minimax-m3-q4",
+      "name": "MiniMax M3 Q4",
+      "family": "MiniMax M3",
+      "source": "https://huggingface.co/unsloth/MiniMax-M3-GGUF",
+      "artifact": "Q4-class GGUF shard set",
+      "quantization": "Q4",
+      "vision": true,
+      "moe": true,
+      "runtime_features": ["vision", "expert-offload"],
+      "roles": ["main"]
+    },
+    {
+      "id": "laguna-s2-1-fp16",
+      "name": "Laguna S2.1 FP16",
+      "family": "Laguna S2.1",
+      "source": "https://huggingface.co/poolside/Laguna-S-2.1",
+      "artifact": "safetensors shard set",
+      "quantization": "FP16/BF16",
+      "vision": false,
+      "moe": true,
+      "runtime_features": ["vllm", "expert-offload"],
+      "roles": ["main"]
+    },
+    {
+      "id": "laguna-s2-1-q4",
+      "name": "Laguna S2.1 Q4",
+      "family": "Laguna S2.1",
+      "source": "https://huggingface.co/unsloth/Laguna-S-2.1-GGUF",
+      "artifact": "Q4 GGUF shard set",
+      "quantization": "Q4",
+      "vision": false,
+      "moe": true,
+      "runtime_features": ["expert-offload"],
+      "roles": ["main"]
+    },
+    {
+      "id": "grm-2-6-27b",
+      "name": "GRM 2.6 Plus 27B",
+      "family": "GRM 2.6 Plus",
+      "source": "https://huggingface.co/bartowski/OrionLLM_GRM-2.6-Plus-0628-GGUF",
+      "artifact": "OrionLLM_GRM-2.6-Plus-0628-Q4_K_M.gguf",
+      "quantization": "Q4_K_M",
+      "vision": true,
+      "moe": false,
+      "runtime_features": ["vision", "mtp"],
+      "roles": ["main"]
+    },
+    {
+      "id": "carwin-nano",
+      "name": "Carwin MoE Nano",
+      "family": "Carwin Nano",
+      "source": "https://huggingface.co/isneezekittens/Carwin-MoE-Nano-GGUF",
+      "artifact": "carwin-moe-Nano.gguf",
+      "quantization": "repository GGUF",
+      "vision": false,
+      "moe": true,
+      "runtime_features": ["mtp", "expert-offload"],
+      "roles": ["main", "aux"]
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark",
+      "name": "Ternary Bonsai 27B FP16 Vision with DSpark",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-F16.gguf + mmproj + dspark draft",
+      "quantization": "FP16",
+      "vision": true,
+      "moe": false,
+      "runtime_features": ["vision", "dspark"],
+      "roles": ["main"]
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark",
+      "name": "Ternary Bonsai 27B with DSpark",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-Q2_0.gguf + dspark draft",
+      "quantization": "ternary/Q2",
+      "vision": false,
+      "moe": false,
+      "runtime_features": ["dspark"],
+      "roles": ["main"]
+    },
+    {
+      "id": "ternary-bonsai-27b",
+      "name": "Ternary Bonsai 27B",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-Q2_0.gguf",
+      "quantization": "ternary/Q2",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [],
+      "roles": ["main", "aux"]
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark",
+      "name": "Bonsai 27B FP16 Vision with DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-F16.gguf + mmproj + dspark draft",
+      "quantization": "FP16",
+      "vision": true,
+      "moe": false,
+      "runtime_features": ["vision", "dspark"],
+      "roles": ["main"]
+    },
+    {
+      "id": "bonsai-27b-dspark",
+      "name": "Bonsai 27B with DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-Q1_0.gguf + dspark draft",
+      "quantization": "Q1",
+      "vision": false,
+      "moe": false,
+      "runtime_features": ["dspark"],
+      "roles": ["main"]
+    },
+    {
+      "id": "bonsai-27b",
+      "name": "Bonsai 27B",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-Q1_0.gguf",
+      "quantization": "Q1",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [],
+      "roles": ["main", "aux"]
+    }
+  ]
+}

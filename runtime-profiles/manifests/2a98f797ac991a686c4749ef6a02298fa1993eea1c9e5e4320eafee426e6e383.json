@@ -1,0 +1,8 @@
+{
+  "aux_mode": "shared-main",
+  "context": 131072,
+  "method": "legacy-verified",
+  "model_alias": "bonsai-27b-1bit",
+  "role": "main",
+  "schema": "turbofit.manifest-ref/v1"
+}

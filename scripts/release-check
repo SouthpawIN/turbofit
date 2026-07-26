@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+export PYTHONPATH="src:.${PYTHONPATH:+:$PYTHONPATH}"
+
+python3 -m compileall -q src research scripts tests
+python3 -m pytest -q -o 'addopts='
+
+python3 - <<'PY'
+import json
+import re
+from pathlib import Path
+from turbofit_runtime.profile_io import load_profile
+from turbofit_runtime.model_catalog import ModelCatalog, validate_configuration_matrix
+from turbofit_runtime.wiki import WikiPublisher
+
+root=Path.cwd()
+profiles=(
+    sorted((root/'runtime-profiles').glob('*.yaml'))
+    + sorted((root/'runtime-profiles/migrated').glob('*.yaml'))
+    + sorted((root/'runtime-profiles/migrated').glob('*.json'))
+)
+if not profiles:
+    raise SystemExit('no runtime profiles found')
+for path in profiles:
+    load_profile(path)
+
+catalog=ModelCatalog.load(root/'references/model-catalog.json')
+matrix=json.loads((root/'references/configuration-matrix.json').read_text())
+validate_configuration_matrix(matrix,catalog)
+
+queue=json.loads((root/'research/candidates.json').read_text())
+assert queue['schema']=='turbofit.research-candidates/v1'
+assert all(item.get('status')=='candidate' for item in queue['candidates'])
+
+broken=[]
+pattern=re.compile(r'!?\[[^]]*\]\(([^)]+)\)')
+for doc in [root/'README.md',root/'SKILL.md',root/'skills/turbofit/SKILL.md']+list((root/'docs').rglob('*.md')):
+    for raw in pattern.findall(doc.read_text()):
+        target=raw.split('#',1)[0].strip()
+        if not target or '://' in target or target.startswith(('mailto:','file:')):
+            continue
+        if not (doc.parent/target).resolve().exists():
+            broken.append(f'{doc.relative_to(root)} -> {target}')
+if broken:
+    raise SystemExit('broken markdown links:\n'+'\n'.join(broken))
+
+# Canonical data and generated views must remain renderable without mutation.
+WikiPublisher(root,Path.home()/'.hermes/wiki').render()
+print(f'profiles={len(profiles)} links=pass candidates={len(queue["candidates"])} wiki=renderable')
+PY
+
+python3 scripts/adaptive-acceptance --output /tmp/turbofit-simulated-acceptance.json >/dev/null
+
+if [[ "${1:-}" == "--real" ]]; then
+  python3 scripts/adaptive-acceptance --real
+fi
+
+echo "release-check=pass real=$([[ "${1:-}" == "--real" ]] && echo yes || echo no)"

@@ -1,0 +1,8 @@
+{
+  "aux_mode": "dedicated",
+  "context": 65536,
+  "method": "legacy-verified",
+  "model_alias": "grm-2.6-plus-q4",
+  "role": "main",
+  "schema": "turbofit.manifest-ref/v1"
+}

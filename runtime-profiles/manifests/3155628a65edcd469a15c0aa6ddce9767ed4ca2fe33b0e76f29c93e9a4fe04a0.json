@@ -1,0 +1,8 @@
+{
+  "aux_mode": "dedicated",
+  "context": 262144,
+  "method": "baseline+mtp",
+  "model_alias": "1-bit-bonsai",
+  "role": "auxiliary",
+  "schema": "turbofit.manifest-ref/v1"
+}

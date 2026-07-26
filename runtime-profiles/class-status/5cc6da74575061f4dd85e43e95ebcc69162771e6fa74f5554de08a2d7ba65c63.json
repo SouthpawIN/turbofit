@@ -1,0 +1,7 @@
+{
+  "class_vram_gb": 200,
+  "local_status": "unproven",
+  "recommendation": "api-only",
+  "schema": "turbofit.hardware-class-status/v1",
+  "topology": "2x100"
+}

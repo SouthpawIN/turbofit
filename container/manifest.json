@@ -1,0 +1,118 @@
+{
+  "schema_version": 2,
+  "name": "turbofit-universal-fleet",
+  "policy": {
+    "api_is_last_resort": true,
+    "aux_defaults_to_main": true,
+    "selection_order": ["hardware_fit", "measured_benchmark", "quality", "api_fallback"],
+    "api_fallback": "best-performance-main-aux-combo-from-user-subscriptions"
+  },
+  "models": [
+    {
+      "alias": "bonsai-27b-1bit",
+      "role": "main",
+      "profile": "mobile",
+      "image": "ghcr.io/southpawin/turbofit-bonsai-1bit:latest",
+      "model_subdir": "Bonsai-27B",
+      "port": 11610,
+      "memory_gb": 4,
+      "min_memory_gb": 6,
+      "context": 65536,
+      "hf_repo": "prism-ml/Bonsai-27B-gguf",
+      "files": ["Bonsai-27B-Q1_0.gguf", "Bonsai-27B-mmproj-Q8_0.gguf"],
+      "backends": ["cuda", "rocm", "vulkan", "metal", "cpu"]
+    },
+    {
+      "alias": "ternary-bonsai-27b-dspark",
+      "role": "main",
+      "profile": "laptop-small-gpu",
+      "image": "ghcr.io/southpawin/turbofit-ternary-bonsai:latest",
+      "model_subdir": "Ternary-Bonsai-27B",
+      "port": 11611,
+      "memory_gb": 8,
+      "min_memory_gb": 16,
+      "context": 131072,
+      "hf_repo": "prism-ml/Ternary-Bonsai-27B-gguf",
+      "backends": ["cuda", "rocm", "vulkan", "metal", "cpu"]
+    },
+    {
+      "alias": "grm-2.6-plus-q4",
+      "role": "main",
+      "profile": "beefy-gpu",
+      "image": "ghcr.io/southpawin/turbofit-grm-q4:latest",
+      "model_subdir": "GRM-2.6-Plus-0628",
+      "port": 11612,
+      "memory_gb": 18,
+      "min_memory_gb": 24,
+      "context": 262144,
+      "hf_repo": "bartowski/OrionLLM_GRM-2.6-Plus-0628-GGUF",
+      "backends": ["cuda", "rocm", "vulkan", "metal"]
+    },
+    {
+      "alias": "laguna-s21-q4",
+      "role": "main",
+      "profile": "large-gpu",
+      "image": "ghcr.io/southpawin/turbofit-laguna-q4:latest",
+      "model_subdir": "Laguna-S-2.1",
+      "port": 11613,
+      "memory_gb": 76,
+      "min_memory_gb": 96,
+      "context": 262144,
+      "hf_repo": "poolside/Laguna-S-2.1-GGUF",
+      "backends": ["cuda", "rocm", "vulkan", "metal"]
+    },
+    {
+      "alias": "minimax-m3-mxfp4",
+      "role": "main",
+      "profile": "upper-tier",
+      "image": "ghcr.io/southpawin/turbofit-minimax-mxfp4:latest",
+      "model_subdir": "MiniMax-M3",
+      "port": 11615,
+      "memory_gb": 254,
+      "min_memory_gb": 300,
+      "context": 1048576,
+      "hf_repo": "unsloth/MiniMax-M3-GGUF",
+      "backends": ["cuda", "rocm", "vulkan"]
+    },
+    {
+      "alias": "glm-5.2-ternary-2788",
+      "role": "main",
+      "profile": "extreme",
+      "image": "ghcr.io/southpawin/turbofit-glm-ternary:latest",
+      "model_subdir": "GLM-5.2",
+      "port": 11616,
+      "memory_gb": 277,
+      "min_memory_gb": 370,
+      "context": 1048576,
+      "hf_repo": "sokann/GLM-5.2-GGUF-2.788bpw",
+      "backends": ["cuda", "rocm", "vulkan"]
+    }
+  ],
+  "profiles": [
+    {"name": "mobile", "minimum_memory_gb": 6, "preferred": "bonsai-27b-1bit"},
+    {"name": "laptop-small-gpu", "minimum_memory_gb": 16, "preferred": "ternary-bonsai-27b-dspark"},
+    {"name": "beefy-gpu", "minimum_memory_gb": 24, "preferred": "grm-2.6-plus-q4"},
+    {"name": "large-gpu", "minimum_memory_gb": 96, "preferred": "laguna-s21-q4"},
+    {"name": "upper-tier", "minimum_memory_gb": 300, "preferred": "minimax-m3-mxfp4"},
+    {"name": "extreme", "minimum_memory_gb": 370, "preferred": "glm-5.2-ternary-2788"}
+  ],
+  "fallback_chains": {
+    "universal": [
+      {"main": "bonsai-27b-1bit", "aux": null},
+      {"main": "ternary-bonsai-27b-dspark", "aux": null},
+      {"main": "grm-2.6-plus-q4", "aux": "ternary-bonsai-27b-dspark"},
+      {"main": "laguna-s21-q4", "aux": "ternary-bonsai-27b-dspark"},
+      {"main": "minimax-m3-mxfp4", "aux": "ternary-bonsai-27b-dspark"},
+      {"main": "glm-5.2-ternary-2788", "aux": "ternary-bonsai-27b-dspark"},
+      {"main": "api:best-subscribed", "aux": "api:best-subscribed-aux"}
+    ],
+    "sovthpaw-3090-dual": [
+      {"main": "grm-2.6-plus-q4", "aux": "ternary-bonsai-27b-dspark"},
+      {"main": "grm-2.6-plus-q4", "aux": "auto"},
+      {"main": "ternary-bonsai-27b-dspark", "aux": null},
+      {"main": "bonsai-27b-1bit", "aux": null},
+      {"main": "api:best-subscribed", "aux": "api:best-subscribed-aux"}
+    ]
+  },
+  "fallback": ["bonsai-27b-1bit", "ternary-bonsai-27b-dspark", "grm-2.6-plus-q4", "laguna-s21-q4", "minimax-m3-mxfp4", "glm-5.2-ternary-2788"]
+}

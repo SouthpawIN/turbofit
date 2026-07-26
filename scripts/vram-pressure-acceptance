@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""Allocate a bounded CUDA buffer for controlled Turbofit acceptance only."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import time
+from pathlib import Path
+
+MAX_PRESSURE_MB = 14336
+MIN_FREE_RESERVE_MB = 512
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--device", type=int, default=0)
+    parser.add_argument("--mb", type=int, default=512)
+    parser.add_argument("--ready", type=Path, required=True)
+    args = parser.parse_args()
+    if args.device < 0 or not 1 <= args.mb <= MAX_PRESSURE_MB:
+        raise SystemExit(f"device must be non-negative and mb must be in [1, {MAX_PRESSURE_MB}]")
+
+    import torch
+
+    if not torch.cuda.is_available():
+        raise SystemExit("CUDA is unavailable")
+    free_bytes, _ = torch.cuda.mem_get_info(args.device)
+    free_mb = free_bytes // (1024 * 1024)
+    if args.mb > free_mb - MIN_FREE_RESERVE_MB:
+        raise SystemExit(
+            f"requested {args.mb} MiB leaves less than {MIN_FREE_RESERVE_MB} MiB free "
+            f"on device {args.device} (currently {free_mb} MiB free)"
+        )
+    buffer = torch.empty(args.mb * 1024 * 1024, dtype=torch.uint8, device=f"cuda:{args.device}")
+    buffer.zero_()
+    torch.cuda.synchronize(args.device)
+    args.ready.parent.mkdir(parents=True, exist_ok=True)
+    temporary = args.ready.with_suffix(".tmp")
+    temporary.write_text(json.dumps({"pid": os.getpid(), "device": args.device, "mb": args.mb}) + "\n")
+    os.replace(temporary, args.ready)
+    while True:
+        time.sleep(1)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

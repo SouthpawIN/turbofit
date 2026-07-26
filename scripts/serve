@@ -516,6 +516,7 @@ declare -A LAUNCHER_NAME=(
     [ollama]="Ollama"
     [vllm]="vLLM"
     [sglang]="SGlang"
+    [colibri]="Colibri (JustVugg — disk-streamed MoE)"
 )
 
 declare -A LAUNCHER_INSTALL=(
@@ -523,6 +524,7 @@ declare -A LAUNCHER_INSTALL=(
     [ollama]="ollama:curl_install"
     [vllm]="vllm:pip_install"
     [sglang]="sglang:pip_install"
+    [colibri]="colibri:git_clone"
 )
 
 declare -A LAUNCHER_TEMPLATE=(
@@ -530,6 +532,7 @@ declare -A LAUNCHER_TEMPLATE=(
     [ollama]='OLLAMA_HOST="$HOST:$PORT" ollama serve'
     [vllm]='vllm serve "$MODEL_PATH" --host "$HOST" --port "$PORT" --max-model-len "$CTX" --gpu-memory-utilization 0.9'
     [sglang]='python -m sglang.launch_server --model-path "$MODEL_PATH" --host "$HOST" --port "$PORT" --context-length "$CTX" --tp 1'
+    [colibri]='COLI_MODEL="$MODEL_PATH" "$COLI_ENGINE_DIR/coli" serve --model "$MODEL_PATH" --host "$HOST" --port "$PORT" --model-id "$ALIAS"'
 )
 
 declare -A LAUNCHER_URL=(
@@ -537,6 +540,7 @@ declare -A LAUNCHER_URL=(
     [ollama]='http://$HOST:$PORT/v1'
     [vllm]='http://$HOST:$PORT/v1'
     [sglang]='http://$HOST:$PORT/v1'
+    [colibri]='http://$HOST:$PORT/v1'
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -690,6 +694,18 @@ install_launcher() {
             pip install -U "sglang[all]"
             echo "✓ SGlang installed"
             ;;
+        colibri)
+            local src="${HOME}/.local/src/colibri"
+            mkdir -p "${src%/*}"
+            if [ ! -d "${src}/.git" ]; then
+                echo "Cloning colibri (JustVugg/colibri)..."
+                git clone https://github.com/JustVugg/colibri.git "${src}"
+            fi
+            cd "${src}/c"
+            git pull --rebase --autostash 2>/dev/null || git pull --rebase
+            ./setup.sh || make glm olmoe
+            echo "✓ colibri engine built at ${src}/c/glm"
+            ;;
         *)
             echo "✗ Unknown launcher: ${which}"
             echo "  Supported: ${!LAUNCHER_NAME[*]}"
@@ -723,6 +739,7 @@ update_all_launchers() {
                 ollama)    install_launcher ollama ;;
                 vllm)      pip install -U vllm ;;
                 sglang)    pip install -U "sglang[all]" ;;
+                colibri)   install_launcher colibri ;;
             esac
         done
     else
@@ -731,6 +748,7 @@ update_all_launchers() {
             ollama)    install_launcher ollama ;;
             vllm)      pip install -U vllm ;;
             sglang)    pip install -U "sglang[all]" ;;
+            colibri)   install_launcher colibri ;;
             *) echo "Unknown launcher: ${target}"; return 1 ;;
         esac
     fi
@@ -1011,6 +1029,17 @@ python -m sglang.launch_server \\
   --tp 1
 EOF
             ;;
+        colibri)
+            local src="${HOME}/.local/src/colibri/c"
+            cat <<EOF
+# Colibri: disk-streamed MoE engine
+# Requires: model downloaded to ${src}/${path}
+# Uses COLI_MODEL environment variable
+export COLI_MODEL="${path}"
+cd "${src}"
+./coli serve --host ${host} --port ${port}
+EOF
+            ;;
     esac
 }
 
@@ -1113,6 +1142,14 @@ launch_server() {
                 --context-length "${ctx}" \
                 --served-model-name "${alias}" --tp 1 "${extra_args[@]}" \
                 > "${log_file}" 2>&1 &
+            ;;
+        colibri)
+            local coli_src="${HOME}/.local/src/colibri/c"
+            cd "${coli_src}"
+            COLI_MODEL="${path}" nohup ./coli serve \
+                --host "${host}" --port "${port}" \
+                > "${log_file}" 2>&1 &
+            cd - > /dev/null
             ;;
     esac
 
@@ -2362,28 +2399,28 @@ daemon_migrate() {
 
 fetch_model() {
     local alias="$1"
-    local repo
-    repo=$(python3 - "$alias" "$CATALOG" <<'PYEOF'
+    local repo include
+    read -r repo include < <(python3 - "$alias" "$CATALOG" <<'PYEOF'
 import sys, yaml
 alias, catalog = sys.argv[1], sys.argv[2]
 with open(catalog) as f:
     cfg = yaml.safe_load(f) or {}
 m = cfg.get("models", {}).get(alias)
 if not m or not m.get("hf_repo"):
-    print("")
+    print(" *Q4_K_M*")
     sys.exit(1)
-print(m["hf_repo"])
+print(m["hf_repo"], m.get("hf_include", "*Q4_K_M*"))
 PYEOF
 )
-    if [ -z "${repo}" ]; then
+    if [ -z "${repo}" ] || [ "${repo}" = "*" ]; then
         echo "No hf_repo field. Add 'hf_repo: org/repo' to catalog entry for ${alias}"
         return 1
     fi
-    echo "Downloading ${alias} from huggingface.co/${repo} (Q4_K_M only)..."
+    echo "Downloading ${alias} from huggingface.co/${repo} (include: ${include})..."
     local dest_dir
     dest_dir=$(dirname "$(alias_info "${alias}" 2>/dev/null | awk '{print $2}')")
     mkdir -p "${dest_dir}"
-    hf download "${repo}" --include="*Q4_K_M*" --local-dir "${dest_dir}"
+    hf download "${repo}" --include="${include}" --local-dir "${dest_dir}"
     echo "Done."
 }
 
@@ -3015,6 +3052,21 @@ print(f'Updated catalog: mmproj set to $new_mmproj')
 # ─────────────────────────────────────────────────────────────────────────────
 
 recommend_fit() {
+    local serve_dir
+    serve_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local runtime_recommender="${TURBOFIT_SKILL_DIR:-${serve_dir}}/scripts/turbofit-runtime-recommend"
+    if [ ! -x "${runtime_recommender}" ]; then
+        runtime_recommender="${serve_dir}/turbofit-runtime-recommend"
+    fi
+    if [ ! -x "${runtime_recommender}" ] && command -v turbofit-runtime-recommend >/dev/null 2>&1; then
+        runtime_recommender="$(command -v turbofit-runtime-recommend)"
+    fi
+    if [ -x "${runtime_recommender}" ]; then
+        echo "═══ Evidence-backed Main:Aux runtime profiles ═══"
+        "${runtime_recommender}" "$@" || true
+        echo ""
+        echo "═══ Legacy single-model catalog ranking ═══"
+    fi
     echo "Scanning catalog + pulling benchmark results from GitHub..."
     python3.12 - "$CATALOG" <<'PYEOF'
 import sys, yaml, os, json
@@ -3477,7 +3529,7 @@ for r in sorted(data.get('results',[]), key=lambda x: x.get('tok_s',0), reverse=
             *)  echo "Usage: serve bench {run <alias>|pipeline [--push]|pull}"; exit 1 ;;
         esac
         ;;
-    recommend)      recommend_fit ;;
+    recommend)      recommend_fit "$@" ;;
     mmproj)         manage_mmproj "$@" ;;
     auto)
         # serve auto [main|aux] [--vision] [--free] [--ui ...]

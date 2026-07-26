@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+"""Run simulated gates and preflight a controlled real adaptive acceptance run."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import urllib.error
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+RESULT = ROOT / "references" / "results" / "adaptive-runtime-acceptance.json"
+
+
+def command(args: list[str], timeout: int = 30) -> dict:
+    environment = {**os.environ, "PYTHONPATH": f"{ROOT / 'src'}:{ROOT}"}
+    try:
+        run = subprocess.run(
+            args,
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=timeout,
+            env=environment,
+        )
+    except subprocess.TimeoutExpired as exc:
+        output = ((exc.stdout or "") + (exc.stderr or ""))[-4000:]
+        return {"passed": False, "exit_code": 124, "output": output, "timeout": True}
+    return {"passed": run.returncode == 0, "exit_code": run.returncode, "output": (run.stdout + run.stderr)[-4000:]}
+
+
+def http_json(url: str) -> dict:
+    try:
+        with urllib.request.urlopen(url, timeout=5) as response:
+            payload = json.loads(response.read())
+            return {"passed": response.status == 200, "status": response.status, "payload": payload}
+    except urllib.error.HTTPError as exc:
+        return {"passed": False, "status": exc.code, "error": exc.read().decode(errors="replace")[-1000:]}
+    except Exception as exc:
+        return {"passed": False, "status": 0, "error": str(exc)}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--real", action="store_true", help="attempt controlled real-host preflight")
+    parser.add_argument("--turbohaul-url", default="http://127.0.0.1:11401")
+    parser.add_argument("--gateway-url", default="http://127.0.0.1:8091")
+    parser.add_argument("--output", type=Path, default=RESULT)
+    args = parser.parse_args()
+
+    checks = {
+        "simulated_transitions": command([
+            "python3", "-m", "pytest", "tests/integration", "-q", "-o", "addopts="
+        ], timeout=120),
+    }
+    status = "simulated-pass" if checks["simulated_transitions"]["passed"] else "failed"
+    blockers: list[str] = []
+    if args.real:
+        checks["nvml"] = command([
+            "nvidia-smi", "--query-gpu=index,uuid,memory.total,memory.used,memory.free", "--format=csv,noheader,nounits"
+        ])
+        checks["turbohaul_status"] = http_json(args.turbohaul_url.rstrip("/") + "/status")
+        checks["gateway_models"] = http_json(args.gateway_url.rstrip("/") + "/v1/models")
+        if not checks["nvml"]["passed"]:
+            blockers.append("NVML is unavailable; controlled pressure cannot be measured safely")
+        if not checks["turbohaul_status"]["passed"]:
+            blockers.append("Turbohaul Manager /status is unavailable; polite residency transitions have no live authority")
+        model_ids = {
+            item.get("id") for item in checks["gateway_models"].get("payload", {}).get("data", [])
+            if isinstance(item, dict)
+        }
+        if not {"auto", "active:main", "active:aux"}.issubset(model_ids):
+            blockers.append("running gateway has not loaded the stable active route IDs")
+        checks["controller_service"] = command([
+            "systemctl", "--user", "is-active", "turbofit-controller.service"
+        ])
+        if not checks["controller_service"]["passed"]:
+            blockers.append("live adaptive controller service is not active")
+        if not blockers:
+            checks["controlled_pressure"] = command([
+                "python3",
+                "scripts/controlled-pressure-acceptance",
+                "--output",
+                "/tmp/turbofit-controlled-pressure.json",
+            ], timeout=1200)
+            if checks["controlled_pressure"]["passed"]:
+                status = "real-pass"
+            else:
+                blockers.append("controlled external-pressure contraction/heal cycle failed")
+                status = "blocked"
+        else:
+            status = "blocked"
+
+    report = {
+        "schema": "turbofit.adaptive-acceptance/v1",
+        "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "status": status,
+        "real_requested": args.real,
+        "checks": checks,
+        "blockers": blockers,
+        "safety": {
+            "direct_process_signals_sent": 0,
+            "external_processes_modified": 0,
+            "gpu_allocation_attempted": bool(checks.get("controlled_pressure")),
+        },
+    }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return exit_code_for_status(status)
+
+
+def exit_code_for_status(status: str) -> int:
+    return 0 if status in {"simulated-pass", "real-pass"} else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

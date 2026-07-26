@@ -1,0 +1,8 @@
+{
+  "aux_mode": "dedicated",
+  "context": 1048576,
+  "method": "baseline+mtp",
+  "model_alias": "grm-2-6-plus",
+  "role": "main",
+  "schema": "turbofit.manifest-ref/v1"
+}

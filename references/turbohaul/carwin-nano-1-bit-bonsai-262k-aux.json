@@ -1,0 +1,42 @@
+{
+  "evidence": "~/.hermes/wiki/topics/turbofit/evidence/carwin-nano-1-bit-bonsai-262k.md",
+  "manifest": {
+    "arch": "",
+    "auto_place": false,
+    "context_size": 262144,
+    "description": "Turbofit measured aux runtime; context=262144; method=baseline",
+    "display_name": "carwin-nano-1-bit-bonsai-262k-aux",
+    "expected_vram_bytes": 11705253888,
+    "gguf_blob_sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+    "gguf_size_bytes": 3803452480,
+    "hybrid_kv_ratio": 1.0,
+    "kv_bytes_per_token": 30144.0,
+    "llama_server_flags": {
+      "cache_reuse": 256,
+      "cache_type_k": "q4_0",
+      "cache_type_v": "q4_0",
+      "ctx_size": 262144,
+      "flash_attn": true,
+      "jinja": true,
+      "main_gpu": 0,
+      "n_gpu_layers": 999,
+      "no_context_shift": true,
+      "no_perf": true,
+      "parallel": 1,
+      "slot_prompt_similarity": 0.5,
+      "split_mode": "none"
+    },
+    "mmproj_blob_sha256": "eb561d41a7bbeb0fcf04883c8af11078ef6cae0a66862a0b68443cfca495269d",
+    "model_tag": "carwin-nano-1-bit-bonsai-262k-aux",
+    "prompt_template": {
+      "stop_tokens": [],
+      "system_default": ""
+    },
+    "revision": 1
+  },
+  "matrix_row": "carwin-nano-1-bit-bonsai-262k",
+  "sources": {
+    "gguf": "~/Models/storage/gguf/Bonsai-27B/Bonsai-27B-Q1_0.gguf",
+    "mmproj": "~/Models/storage/gguf/Bonsai-27B/Bonsai-27B-mmproj-Q8_0.gguf"
+  }
+}

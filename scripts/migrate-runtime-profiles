@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""Migrate verified local runtime records into portable Turbofiles."""
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.migration import migrate_registry  # noqa: E402
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--registry",
+        type=Path,
+        default=ROOT / "references" / "successful-runtime-profiles.json",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=ROOT / "runtime-profiles",
+    )
+    parser.add_argument("--hardware-class-vram-gb", type=int, default=24)
+    parser.add_argument("--accelerator", default="nvidia-cuda")
+    args = parser.parse_args()
+    result = migrate_registry(
+        args.registry,
+        args.output,
+        args.output / "evidence-index.json",
+        hardware_class_vram_gb=args.hardware_class_vram_gb,
+        accelerator=args.accelerator,
+    )
+    print(
+        f"migrated={result.migrated} profiles={len(result.profile_paths)} "
+        f"manifests={len(result.manifest_paths)}"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,17 @@
+schema: turbofit.benchmark-suite/v1
+stages:
+  - id: artifact
+    required: true
+    required_fields: [artifact_hashes, raw_result_identity]
+  - id: runtime
+    required: true
+    required_fields: [host_fingerprint, observed_context]
+  - id: performance
+    required: true
+    required_fields: [throughput_tps, ttft_ms, per_card_vram_mb, power_w_by_card]
+  - id: quality
+    required: true
+    required_fields: [quality_score]
+  - id: pressure-self-heal
+    required: true
+    required_fields: [per_card_vram_mb, raw_result_identity]

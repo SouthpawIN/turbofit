@@ -1,0 +1,8 @@
+{
+  "aux_mode": "dedicated",
+  "context": 262144,
+  "method": "baseline+mtp",
+  "model_alias": "carwin-nano",
+  "role": "main",
+  "schema": "turbofit.manifest-ref/v1"
+}

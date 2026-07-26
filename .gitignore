@@ -1,1 +1,19 @@
 __pycache__/
+*.py[cod]
+*.so
+*.so.*
+*.log
+
+# Local runtime payloads are rebuilt or mounted; never commit compiled binaries.
+container/capsules/*/runtime/
+container/state.json
+
+# Campaign scratch files; compact JSON summaries remain versioned.
+references/results/*.log
+references/results/*.tmp
+references/results/*.partial
+
+# Local environment and editor state.
+.venv/
+.pytest_cache/
+.ruff_cache/

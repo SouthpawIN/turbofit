@@ -1,0 +1,46 @@
+{
+  "hardware": {
+    "accelerator": "nvidia-cuda",
+    "class_vram_gb": 24,
+    "min_devices": 2,
+    "per_device_min_gb": 24,
+    "topology": "2x24",
+    "total_vram_gb": 48
+  },
+  "id": "grm-2-6-plus-ternary-bonsai-64k",
+  "policy": {
+    "contraction_dwell_s": 5,
+    "cooldown_s": 30,
+    "expansion_dwell_s": 120,
+    "expansion_margin_gb_per_card": 2,
+    "external_gpu_priority": "absolute",
+    "flap_failure_limit": 3,
+    "flap_window_s": 300,
+    "recommendation": "quality-first"
+  },
+  "revision": 1,
+  "roles": {
+    "auxiliary": "active:aux",
+    "fallback": "api:auto",
+    "main": "active:main"
+  },
+  "rungs": [
+    {
+      "aux_manifest": "sha256:192abdb3fedc2027889290391948287faa33fdcb973eaa9259eb12ca8c99c0a1",
+      "aux_mode": "dedicated",
+      "context": 65536,
+      "evidence": "sha256:a9185f6d1f290992200b9575508909457013ee72068aa0b82feb5192c54b75da",
+      "id": "local-65536",
+      "main_manifest": "sha256:af97ae8c3da8e98b9e2fc310c0cbdfc79237571eb00427a2eee997fdc7c79aca"
+    },
+    {
+      "aux_api_policy": "api:auto",
+      "aux_mode": "api",
+      "context": 65536,
+      "evidence": "sha256:a9185f6d1f290992200b9575508909457013ee72068aa0b82feb5192c54b75da",
+      "id": "api",
+      "main_api_policy": "api:auto"
+    }
+  ],
+  "schema": "turbofit.runtime/v1"
+}

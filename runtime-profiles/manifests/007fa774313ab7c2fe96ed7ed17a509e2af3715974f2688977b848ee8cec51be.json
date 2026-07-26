@@ -1,0 +1,8 @@
+{
+  "aux_mode": "shared-main",
+  "context": 65536,
+  "method": "legacy-verified",
+  "model_alias": "carwin-moe-nano",
+  "role": "main",
+  "schema": "turbofit.manifest-ref/v1"
+}

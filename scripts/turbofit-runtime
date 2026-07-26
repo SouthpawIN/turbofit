@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+"""Configure Turbofit auto or manual adaptive selection safely."""
+from __future__ import annotations
+
+import json
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.hardware import probe_hardware  # noqa: E402
+from turbofit_runtime.runtime_cli import run  # noqa: E402
+from turbofit_runtime.selection import ProfileCatalog  # noqa: E402
+
+
+def profile_paths() -> tuple[Path, ...]:
+    """Production exposes only local-only hardware profiles."""
+    return tuple(sorted((ROOT / "runtime-profiles").glob("*gb.yaml")))
+
+
+def main(argv: list[str]) -> int:
+    selection_path = Path(
+        os.getenv(
+            "TURBOFIT_SELECTION_STATE",
+            Path.home() / ".config" / "turbofit" / "selection.json",
+        )
+    )
+    try:
+        catalog = ProfileCatalog.from_paths(profile_paths())
+        hardware = probe_hardware()
+        return run(
+            argv[1:],
+            catalog=catalog,
+            hardware=hardware,
+            selection_path=selection_path,
+            output=sys.stdout,
+        )
+    except Exception as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))

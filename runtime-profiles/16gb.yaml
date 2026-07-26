@@ -1,0 +1,39 @@
+schema: turbofit.runtime/v1
+id: hardware-16gb
+revision: 2
+hardware:
+  class_vram_gb: 16
+  min_devices: 1
+  total_vram_gb: 16
+  per_device_min_gb: 16
+  accelerator: nvidia-cuda
+  topology: 1x16
+policy:
+  recommendation: portable-local-floor
+  external_gpu_priority: absolute
+  contraction_dwell_s: 5
+  expansion_dwell_s: 120
+  expansion_margin_gb_per_card: 0.5
+  cooldown_s: 30
+  flap_failure_limit: 3
+  flap_window_s: 300
+roles:
+  main: active:main
+  auxiliary: active:aux
+  fallback: active:main
+rungs:
+- id: local-bonsai-262144
+  context: 262144
+  aux_mode: shared-main
+  evidence: sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87
+  main_manifest: sha256:6456085521bfd9d8846c0f7e581611d56b2fe108e31c02af2dfdf56dea474e1c
+- id: local-bonsai-131072
+  context: 131072
+  aux_mode: shared-main
+  evidence: sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5
+  main_manifest: sha256:2a98f797ac991a686c4749ef6a02298fa1993eea1c9e5e4320eafee426e6e383
+- id: local-bonsai-65536
+  context: 65536
+  aux_mode: shared-main
+  evidence: sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591
+  main_manifest: sha256:da9ed9fb1b17f6423f759a783a150051b51d5555c7dea09f87c6effb3dac35a2

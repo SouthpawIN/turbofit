@@ -1,0 +1,8 @@
+{
+  "aux_mode": "dedicated",
+  "context": 262144,
+  "method": "legacy-verified",
+  "model_alias": "bonsai-27b-1bit",
+  "role": "auxiliary",
+  "schema": "turbofit.manifest-ref/v1"
+}

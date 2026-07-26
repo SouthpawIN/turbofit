@@ -1,616 +1,121 @@
 ---
 name: turbofit
-description: "Opinionated unified LLM backend (turbofit v1.1). Picks the best main + aux model for your hardware — local or API — launches them detached, wires Hermes-Agent config, and adapts to live VRAM pressure via a scaling ladder. Three hardware tiers: Beefy (local+local), Modest (API+local), Thin (API+API). `serve auto main` auto-detects GPU and suggests the right setup. API fallback is always available (free: DeepSeek V4 Pro + Kimi K2.6). Replaces llama-launch, omni-va, and ad-hoc llama-server scripts. Catalog schema supports per-model binary pinning (atomic fork vs stock), named flag presets (nextn, draft-mtp, turbo4-kv, vision-mmproj), tier ladder (s/sf/sd/f/c), and the 64K Hermes context floor is enforced everywhere. End-user UX is `serve auto main` and the user is done."
-version: 1.1.0
+description: "Hardware-aware adaptive Hermes runtime using portable Turbofiles, Turbohaul-owned local residency, stable auto/active:main/active:aux routes, evidence-backed promotion, and external-GPU-first pressure handling. Use for recommending, activating, inspecting, testing, or troubleshooting Turbofit runtimes."
+version: 2.0.0
 author: SouthpawIN + Nous Girl
 license: MIT
-tags: [llama.cpp, ollama, vllm, sglang, llmfit, gguf, hermes-agent, nvidia-nim, catalog, scaling-ladder, opinionated, unified-backend]
-metadata:
-  hermes:
-    tags: [llama.cpp, ollama, vllm, sglang, llmfit, gguf, hermes-agent, nvidia-nim, catalog, scaling-ladder, opinionated, unified-backend]
-    related_skills: [southpaw-models, local-llm-fleet-management, llama-cpp, gguf-quantization, omni-va-local-server, evolutionary-radio]
-  changelog: |
-    5.0.0 (2026-06-22): Opinionated unified backend.
-      - 18 named flag presets: nextn/nextn-tight, draft-mtp/draft-mtp-tight, turbo4/3/2-kv, q8/q4-kv, cpu-moe-2/4/8, no-mmap, split-none, mlock, parallel-4/2/1.
-      - Per-model binary pin: atomic fork for TurboQuant+NextN models, stock for legacy.
-      - New commands: serve vram, serve auto [main|aux], serve downscale, serve stop-all, serve fetch, serve bench, serve recommend.
-      - serve recommend ranks catalog by ctx≥64K, tok/s≥25, vision bonus, tier priority — all hardware-neutral (tok/s measured locally, varies by GPU).
-      - All local models vision-enabled via shared mmproj-F32.gguf symlink.
-      - serve herm fixed: launches herm TUI only (herm handles hermes internally — no double-launch).
-      - NIM API ranking: DeepSeek V4 Pro → GLM 5.1 → DS V4 Flash → MiniMax M3 → Nemotron Ultra.
-      - Default aux: Step 3.7 Flash (free, vision). Fallback: MiniMax M3 (free, vision, 1M ctx) → Qwen 3.5 Flash 02-23 (paid, vision, 1M ctx).
-      - Multi-GPU tensor split via catalog extra_args (no hardcoded GPU values — hardware-neutral).
-      - Migrated 23 curated picks from llama-launch catalog; 13 dead launchers consolidated.
-      - Replaces: llama-launch, omni-va, model-server.sh, start-{qwen,glm,...}-server.sh.
-    4.0.0: Initial multi-launcher (llama.cpp / Ollama / vLLM / SGlang), NVIDIA NIM API list.
+tags: [hermes-agent, turbohaul, llm, gpu, adaptive-runtime, turbofile]
 ---
 
-# Turbofit v5 — opinionated unified backend
+# Turbofit adaptive runtime
 
-End-user UX is `serve auto main` — picks the best main model for your system state, launches it detached, and wires Hermes config. The user is done.
+## Use when
 
-For the scaling/adaptation half of the opinionated story, see [`references/scaling-ladder.md`](references/scaling-ladder.md).
+- Selecting an evidence-backed main/aux runtime for physical hardware
+- Activating or inspecting a Turbofile profile
+- Diagnosing pressure, contraction, expansion, routing, or Turbohaul residency
+- Benchmarking or promoting a model pair
+- Updating candidate intelligence or generated wiki views
 
-## When to use
+## Canonical workflow
 
-Trigger phrases: "set up my local LLM", "launch a model", "what model should I run", "my GPU is busy, scale down", "I need a coder model", "I need vision", "turbofit auto", "swap models", "swap main", "swap aux", "which model fits my box", "stop everything".
-
-## Quick start
-
-```bash
-# Source the shim (one-time setup)
-source <hermes-skills-dir>/turbofit/scripts/turbofit.sharco
-
-# One-shot: pick best main for your box, launch, wire Hermes
-serve auto main                    # opinionated: auto-detects hardware, picks local or API
-serve auto main --vision           # require vision
-serve auto main --api              # force API mode (no local GPU needed)
-serve auto main --free             # only free API endpoints
-AUTO_CTX=131072 serve auto main    # raise ctx target
-
-# Stop everything
-serve stop-all
-
-# Browse the catalog (featured first, tier-ordered)
-serve catalog
-
-# Launch a specific model
-serve darwin-28b-reason
-serve string darwin-apex-36b-i-compact   # print launch string, don't launch
-
-# Register a new model
-name mymodel /path/to/file.gguf --port 9090
-
-# Wire to Hermes (main / aux)
-serve main mymodel --ui tui
-serve aux mymodel --ui tui
-
-# VRAM probe (live)
-serve vram
-
-# Adapt to current VRAM pressure
-serve downscale
-```
-
-## Dynamic Model Database
-
-The model universe, pricing, and benchmarks are stored in [`references/model-database.yaml`](references/model-database.yaml) — a single source of truth that is **auto-updated daily** by a research cron job.
-
-### How it works
-
-1. **Daily research cron** runs at 6am — scans OpenRouter, HuggingFace, Price Per Token, and LLMCheck for new models, pricing changes, and benchmark updates
-2. **Research script** (`scripts/research-models.py`) fetches live data and generates a report
-3. **Agent reviews** the report, updates `model-database.yaml` with new models or pricing changes
-4. **GitHub sync** (`scripts/sync-github.sh`) pushes updates to `SouthpawIN/turbofit` (primary) and `SouthpawIN/sovth-config` (collection)
-5. **All turbofit users** get fresh data by running `hermes skills update turbofit`
-
-### What's in the database
-
-Each model entry includes:
-- **Pricing** across all providers (Nous, OpenRouter, NIM, direct API)
-- **Context window** and supported context tiers
-- **Vision capability** (text-only models must pair with vision aux)
-- **Benchmark scores** (MMLU, SWE-Verified, HumanEval, AIME — when available)
-- **Local model info** (GGUF repo, quants, size, archetypes, mmproj)
-- **Discovery date** and **last verified date**
-
-### Manual usage
+Work from the Git repository, not an installed copy.
 
 ```bash
-# Run the research script manually
-python3 ~/.hermes/skills/turbofit/scripts/research-models.py
-
-# Check the latest report
-cat ~/.hermes/skills/turbofit/references/research-report.md
-
-# Sync to GitHub manually (pushes to SouthpawIN/turbofit + SouthpawIN/sovth-config)
-bash ~/.hermes/skills/turbofit/scripts/sync-github.sh
-
-# Update turbofit skill (for end users)
-hermes skills update turbofit
+scripts/turbofit-runtime list
+scripts/turbofit-runtime set auto
+scripts/turbofit-runtime set <profile-id>
+scripts/turbofit-runtime status
+scripts/turbofit-controller --once
+curl -fsS http://127.0.0.1:8091/v1/models
 ```
 
-## Opinionated defaults (turbofit v5)
+`set auto` chooses a canonical profile from immutable physical topology. `set
+<profile-id>` validates a measured, Turbohaul-resolvable manual combination.
+Both begin at API safety and use the same adaptive controller to contract and
+heal; manual selection changes only the healing ceiling.
 
-| Setting | Value | Source |
-|---|---|---|
-| ctx floor | **65536** tokens | Hermes-Agent hard requirement |
-| tok/s floor (main) | **25 tok/s** | Spec decoding assumption |
-| prefer vision on main | **yes** | Use `vision:` field in catalog |
-| tier ladder | `s → sf → sd → f → c` | `serve auto` |
-| scale down triggers | free VRAM < 14GB → < 8GB → < 4GB | `serve downscale` |
-| per-model binary pin | atomic (TurboQuant+NextN) or stock | `binary:` field |
+Use only stable provider IDs: `auto`, `active:main`, and `active:aux`.
 
-**End-user UX:** `serve auto main` → done. If VRAM pressure hits, `serve downscale` adapts.
+## Runtime authorities
 
-## Catalog schema (v5 extended)
+1. Turbofile: portable recommendation and ordered rung policy.
+2. Hardware fingerprint: physical topology/capacity; never current free VRAM.
+3. Pressure snapshot: ownership-aware transient capacity.
+4. Pure policy: dwell/hysteresis/cooldown/flap decision.
+5. Turbohaul Manager v0.7: sole local residency authority.
+6. Reconciler: drain, activate, verify, publish, rollback.
+7. Gateway route state: backing targets for stable IDs.
 
-```yaml
-models:
-  <alias>:
-    # Required
-    launcher: llama-cpp           # llama-cpp | ollama | vllm | sglang
-    path: /abs/path/to.gguf        # OR HF repo for vllm/sglang
-    port: 11500                    # auto-assigned if absent
+Legacy `serve`, direct launchers, and scaling watcher are compatibility tools, not adaptive authorities.
 
-    # Recommended
-    ctx: 262144                    # 64K floor enforced
-    gpu: 0                         # 0 | 1 (single-GPU target)
-    gpu: 0                         # 0 | 1 (single-GPU target)
-    mmproj: /path/to/mmproj.gguf   # vision projector
-    presets: [nextn, turbo4-kv, no-mmap]   # see below
-    extra_args: [--draft-block-size 3]           # raw flag list
-    aliases: [short, alt]          # alternative names resolved by serve的政策
-    description: "..."             # shown in `serve catalog`
-    tags: [qwen, mtp, featured]
+## Non-negotiable safety
 
-    # Opinionated metadata (used by `serve auto` and Garage UI)
-    tier: s                        # s | sf | sd | f | c
-    featured: true                 # Garage top row
-    tok_s_target: 107              # measured throughput
-    vision: true                   # has vision tower + mmproj
-    size_gb: 16.0                  # disk footprint
-    hf_repo: org/repo              # for `serve fetch <alias>` (future)
-    role: main                     # main | aux | either
-```
+- Never kill or signal external GPU processes.
+- Never directly signal model processes; use Turbohaul HTTP operations.
+- Count external memory as unavailable and managed residency as reclaimable.
+- A temporary auxiliary admission redirect may precede drain; never publish a
+  new target rung before verification.
+- Restore and verify the previous rung after any failed transition.
+- Never place paths, secrets, credentials, provider keys, or GPU indices in Turbofiles.
+- Never treat research candidates or generated wiki text as production authority.
+- Never mark benchmark success without a canonical promotion record.
 
-### Named flag presets
-
-Apply by listing in `presets:`. Multiple presets merge; later presets override earlier flags.
-
-| Preset | Expands to |
-|---|---|
-| `nextn` | `--spec-type nextn --draft-block-size 3` |
-| `nextn-tight` | `--spec-type nextn --draft-block-size 2` |
-| `draft-mtp` | `--spec-type draft-mtp` |
-| `draft-mtp-tight` | `--spec-type draft-mtp --draft-block-size 2` |
-| `turbo4-kv` | `-ctk turbo4 -ctv turbo4` |
-| `turbo3-kv` | `-ctk turbo3 -ctv turbo3` |
-| `turbo2-kv` | `-ctk turbo2 -ctv turbo2` |
-| `q8-kv` | `-ctk q8_0 -ctv q8_0` |
-| `q4-kv` | `-ctk q4_0 -ctv q4_0` |
-| `no-mmap` | `--no-mmap` |
-| `split-none` | `--split-mode none` |
-| `mlock` | `--mlock` |
-| `cpu-moe-2` / `cpu-moe-4` / `cpu-moe-8` | `--n-cpu-moe N` (MoE expert offload) |
-| `parallel-4` / `parallel-2` / `parallel-1` | `--parallel N` |
-
-Multi-GPU tensor split: use `extra_args: ['--tensor-split', 'X,Y']` in catalog — no hardcoded preset.
-
-### Tier ladder (used by `serve auto`)
-
-| Tier | Meaning | Examples |
-|---|---|---|
-| `s` | smartest | Darwin Reason, Darwin Apex-Compact, Prism Eagle |
-| `sf` | smart + fast | Carwin-MTP, Qwopus v2-MTP, Qwopus Coder-MTP |
-| `sd` | smart + dense | Carnice Apex Compact |
-| `f` | fast | Qwable MTP, Qwopus abliterated-MTP |
-| `c` | cheap | Qwen legacy, devstral, step-flash, omni-3b |
-
-## Commands
+## Profile/recommendation checks
 
 ```bash
-# Install / update
-serve install                            # llama.cpp from source (atomic fork if path set)
-serve install <launcher>                 # one launcher: llama-cpp, ollama, vllm, sglang
-serve update                             # update llama.cpp
-serve update <launcher|all>              # specific launcher or all
-serve check                              # version status
-
-# Hardware / VRAM
-serve fit <model> [ctx]                  # llmfit fit check (default ctx=65536)
-serve vram                               # live GPU VRAM probe (JSON)
-serve recommend                          # scan catalog, rank by fit (ctx≥64K, tok/s≥25, Q4, vision)
-
-# Catalog
-serve register <alias> <path>            # register model
-           [--launcher llama-cpp|ollama|vllm|sglang] [--port N]
-serve catalog                            # show registered (featured first, tier-ordered)
-
-# Launch
-serve <alias>                            # launch detached, shows backend/port/logs
-serve string <alias>                     # print launch string, don't launch
-serve stop <alias>                       # stop a running server
-serve stop-all                           # stop everything
-serve list                               # list running + detect rogue llama-servers
-
-# Fetch / benchmark
-serve fetch <alias>                      # download missing model from HF (uses hf_repo)
-serve bench <alias>                      # lm-eval-harness benchmark (launches if needed)
-
-# Opinionated auto (turbofit v1.1 — hardware-aware, API-aware)
-serve auto main [--vision] [--api] [--free] [--ui ...]    # pick best main (auto-detects hardware, picks local or API)
-serve auto aux [--vision] [--api] [--free] [--ui ...]     # pick best aux
-serve downscale                          # adapt to current VRAM pressure
-AUTO_CTX=131072 serve auto main          # override ctx target
-
-# Hardware-aware auto-detection:
-#   ≥24GB VRAM → local main + local aux (Beefy)
-#   8-24GB VRAM → API main + free/cheap aux (Modest)
-#   <8GB / no GPU → API main + API aux, zero cost with free endpoints (Thin)
-# Use --api to force API mode, --free to restrict to free endpoints
-#
-# API pairings use the model universe from references/api-pairing-matrix.md
-# Gateway indicators: 🟢 NOUS+TG (full Tool Gateway), 🟡 NOUS+OR, 🟠 NOUS+NIM, ⚪ NIM (free, no TG)
-
-# Hermes routing
-serve main <alias> [--ui tui|dashboard|gateway|desktop|herm]
-serve aux  <alias> [--ui ...]
-serve herm <alias>                       # launch + main + herm TUI (herm handles hermes internally)
-serve herm aux <alias>
-serve herm                               # auto-pick main + launch herm TUI
-
-# NVIDIA NIM API (curated)
-serve api list
-serve api use <rank|api_id> [main|aux]
+PYTHONPATH=src python3 scripts/turbofit-runtime-recommend --fit-only --json
+PYTHONPATH=src:. python3 -m pytest tests/test_runtime_profile.py tests/test_profile_io.py tests/test_hardware.py tests/test_recommend.py -q -o 'addopts='
 ```
 
-## How the auto-picker decides
+Topology matters: `1x48` and `2x24` are different classes. Unmeasured local classes remain API-only.
 
-1. **Filter** catalog by `role` (main | aux) and (if `--vision`) `vision: true`.
-2. **Filter** by `ctx >= target` (default 65536).
-3. **Sort** by `(tier_rank, featured, -tok_s_target)` — best tier wins, then featured, then speed.
-4. **Skip** entries whose `path:` doesn't exist (catalog has them but disk doesn't).
-5. **Launch** via the per-model `binary:` if set, else stock `llama-server`.
-
-The auto-picker does NOT yet weight by current VRAM headroom. Use `serve downscale` to adapt after the fact, or run `serve vram` first to know.
-
-## How the scaling ladder works (v1.1 — 3 hardware tiers, universal)
-
-The ladder covers three hardware profiles and is **hardware-neutral** — any user can plug in their GPU and get the right setup. See [`references/scaling-ladder.md`](references/scaling-ladder.md) for full step-by-step details.
-
-### Hardware Tiers (auto-detected by `serve auto`)
-
-| Tier | VRAM | Typical GPUs | Default Main | Default Aux |
-|------|------|-------------|-------------|-------------|
-| **Beefy** | ≥24GB | Dual GPU or single 24GB+ | Local 27-28B dense (Q4) | Local 35B MoE 3B-active |
-| **Modest** | 8-24GB | RTX 3060/4060/4070 (8-16GB) | DeepSeek V4 Pro (API) | Qwen 3.6 Plus (OR free) or MiniMax M3 (NIM free) |
-| **Thin** | <8GB or no GPU | Integrated graphics, no GPU | DeepSeek V4 Flash (free NIM) | MiniMax M3 (free NIM) |
-
-`serve auto` detects which tier you're in by probing `nvidia-smi`. If no NVIDIA GPU is found, it defaults to **Thin** (API-only). Use `--api` to force API mode, `--free` to restrict to free endpoints.
-
-### Context-Level Ladder (4 tiers)
-
-| Level | Context | Local VRAM (Beefy) | API Price Tier |
-|-------|---------|-------------------|---------------|
-| 1 | 1M | ~40GB+ (dual GPU) | Free-Budget |
-| 2 | 512K | ~28GB (pressured) | Budget-Mid |
-| 3 | 262K | ~16GB (single GPU) | Mid-Premium |
-| 4 | 132K | ~8GB (survival) | Budget |
-
-### Beefy-tier scaling ladder (7 steps, triggered by `serve downscale`)
-
-Uses model **archetypes** — users register their own local models that match the archetype. `serve recommend` scans the catalog and picks the best fit.
-
-```
-Step  1: Ideal          — 27-28B dense (Q4) + 35B MoE (3B active) aux, both @ 1M
-Step  2: Mild pressure  — Offload aux MoE experts to CPU (--cpu-moe), ~10 tok/s
-Step  3: Moderate       — Drop both models' context to 512K
-Step  4: High pressure  — Drop local aux, route aux to API (free vision model)
-Step  5: Swap main       — Swap to 27B hybrid/Mamba (lighter, ~14 GB)
-Step  6: MoE main        — Swap to 35B MoE 3B-active main + API aux @ 132K
-Step  7: API-only       — No local serving viable. API main + API aux. Zero cost with free endpoints.
-```
-
-Each step preserves maximum intelligence while respecting VRAM. Never auto-skip steps based on free VRAM alone — present the ladder and let users choose, or use `serve downscale` which walks it conservatively.
-
-### API Pairing Matrix
-
-For API-only users (Modest/Thin tiers) or Beefy API fallback, see [`references/api-pairing-matrix.md`](references/api-pairing-matrix.md) for the complete pairing matrix — all model combinations across 4 context tiers and 5 price tiers, with Provider Gateway indicators showing whether the Nous Tool Gateway is active.
-
-**Gateway indicators:**
-- 🟢 **NOUS** — Both through Nous
-- 🟡 **NOUS+OR** — Main through Nous, aux through OpenRouter (10% bonus)
-- 🟠 **NOUS+NIM** — Main through Nous, aux through NIM (free)
-- ⚪ **NIM** — Both through NIM (free)
-
-Note: The Nous Tool Gateway (Firecrawl, FAL, OpenAI TTS, Browser Use) is a subscription feature — it is active whenever the user has a Nous Portal subscription, regardless of which models are used for main or aux.
-
-### API model rankings (by volume performance)
-
-**Main API — text-only (must pair with vision aux), ranked by reasoning quality:**
-
-| Tier | Model | Vision | Cost | Context | Through Nous? |
-|------|-------|--------|------|---------|---------------|
-| S | GLM 5.2 | No | $0.95/$3.00 (OR) / $1.40/$4.40 (Z.AI) | 1M | ✅ `z-ai/glm-5.2` |
-| S | Qwen 3.7 MAX | No | $1.25/$3.75 | 1M | ✅ `qwen/qwen3.7-max` |
-| S | DeepSeek V4 Pro | No | FREE (NIM) / $0.435/$0.87 (DS) | 1M | ✅ `deepseek/deepseek-v4-pro` |
-| SF | DeepSeek V4 Flash | No | FREE (NIM) / $0.09/$0.18 (OR) | 1M | ✅ `deepseek/deepseek-v4-flash` |
-| SF | Mimo V2.5 Pro | No | ~$1.00/$3.00 | 1M | ✅ `xiaomi/mimo-v2.5-pro` |
-
-**Vision-capable models (main or aux):**
-
-| Tier | Model | Cost | Context | Through Nous? |
-|------|-------|------|---------|---------------|
-| SF | MiniMax M3 | FREE (NIM) / ~$0.30/$1.20 | 1M | ✅ `minimaxai/minimax-m3` |
-| SF | Qwen 3.7 Plus | $0.32/$1.28 (OR) | 1M | ✅ `qwen/qwen3.7-plus` |
-| F | Mimo V2.5 | $0.105/$0.28 | 1M | ✅ `xiaomi/mimo-v2.5` |
-| F | Qwen 3.6 Plus | FREE (OR preview) | 1M | ❌ OR only |
-| SD | Qwen 3.5 Flash | $0.065/$0.26 | 1M | ✅ `qwen/qwen3.5-flash-02-23` |
-
-**Aux API — ranked by vision > speed > cost, free first:**
-
-| Tier | Model | Vision | Cost | Context |
-|------|-------|--------|------|---------|
-| F | Qwen 3.6 Plus | Yes | FREE (OR) | 1M |
-| SF | MiniMax M3 | Yes | FREE (NIM) | 1M |
-| F | Mimo V2.5 | Yes | $0.105/$0.28 | 1M |
-| SD | Qwen 3.5 Flash | Yes | $0.065/$0.26 | 1M |
-
-See [`references/api-pairing-matrix.md`](references/api-pairing-matrix.md) for optimal main+aux pairings at each price point and context level.
-
-## Pitfalls
-
-- **`Restart=on-failure` means clean stops stay dead.** If the scaling watcher runs `systemctl stop` on a daemon (exit 0), systemd won't restart it even though the unit is enabled. Combined with the watcher itself stopping (manual, crash, systemctl), all models stay dead until manual intervention. Fix: use `Restart=always` on all turbofit daemon units AND the watcher itself. But note: `systemctl stop` still blocks `Restart=always` — the watcher must not use `systemctl stop` to pause daemons; use signal-based mechanisms or let idle timeout handle it.
-- **turbofit-gateway now handles local-model failures gracefully** (v2). When a request hits the gateway and the local model is LOADING (port bound but model not yet serving), the gateway stalls the request with backoff up to `TURBOFIT_STALL_TIMEOUT` (default 90s) before falling through to the API. If the local model is genuinely DEAD, the gateway auto-falls-back to the API chain in `preferences.yaml` (api_fallback) — it does NOT 503. If the local model returns 4xx/5xx during a request, the gateway tries the next backend in the ladder. This means a Hermes user never sees "model provider failed after retries" because of a local-model issue — they get an answer from the API fallback instead. See `scripts/turbofit-gateway.py` for the full implementation.
-- **Per-GPU absolute free VRAM causes false contraction.** When Darwin is loaded healthy, GPU 0 has ~1.5GB free. The old contraction logic used `min_free_gb < 2.0` as the STOP_AUX trigger — meaning Darwin being loaded looked identical to external VRAM pressure. Fix: contract on `non_turbofit_used` (external VRAM only). Turbofit's own models consuming VRAM is expected — only contract when something ELSE hogs VRAM.
-- **Watcher cascades all levels in one poll tick.** If target_level jumps 0→4, the old code executed shrink ctx, expert offload, swap model, AND stop aux in a single iteration. Combined with the false-positive above, this killed both models within seconds of Darwin loading. Fix: cap contraction to one level per poll and add startup grace period (60s) + stability check (2 polls).
-- **Service name mapping points to old disabled units.** The watcher's `short_map` hardcoded `"darwin-28b-reason": "darwin.service"` (disabled, legacy) instead of `turbofit-darwin-28b-reason.service`. Fix: update short_map to point to turbofit-managed daemon services. See `references/scaling-watcher-architecture.md` for full details.
-- **`serve auto main` double-launches on occupied ports.** If a systemd daemon is already running for the picked model, `serve_main` still calls `launch_server`, which tries to bind the same port and hangs in the health-check loop. Fixed by checking `systemctl --user is-active turbofit-${alias}.service` and PID files before launching — if already running, skip launch and just wire Hermes config.
-- **`serve herm` crashes with `set -euo pipefail` + shift.** The case statement had `shift; serve_herm "$@"` but after the command parser already shifted past the command name, the extra shift fails on empty args and `set -e` causes silent exit. Fixed by removing the redundant shift.
-- **`start_ui` doesn't recognize `herm_main`/`herm_aux` UI values.** `serve_herm` sets `UI="herm_main"` or `UI="herm_aux"` but `start_ui` only matched the case `herm)`. The unrecognized case falls through to "Unknown UI" error. Fixed by matching `herm|herm_main|herm_aux)`.
-- **`--main-gpu` must be 0 when `CUDA_VISIBLE_DEVICES` is set.** The llama-proxy sets `CUDA_VISIBLE_DEVICES=<gpu_id>` which makes only one GPU visible to llama-server. But the catalog's `--main-gpu N` flag uses the physical GPU index. When `CUDA_VISIBLE_DEVICES=1` is set, `--main-gpu 1` is invalid (only device 0 exists). Fixed in llama-proxy by rewriting `--main-gpu` to 0 in the extra args before spawning.
-- **`LLAMA_LIB_DIR` must be set in the systemd service, not just `LD_LIBRARY_PATH`.** The llama-proxy reads `LLAMA_LIB_DIR` (not `LD_LIBRARY_PATH`) to set the library path for the spawned backend process. If only `LD_LIBRARY_PATH` is set, the proxy uses its default (stock llama.cpp path) and the atomic fork's symbols aren't found.
-- **`--cpu-moe-draft` and `--mmproj-draft` are not supported by the current atomic fork.** The `generate_string` function was adding these automatically for MoE models with spec decoding. Removed — the draft model shares the same GGUF, so `--cpu-moe` applies to both automatically.
-- **Atomic fork clip loader crashes on 35B-A3B mmproj.** The atomic fork's `clip_model_loader::load_tensors` aborts on `ggml_backend_buffer_set_usage` when loading the 35B-A3B mmproj (n_embd=2048). Stock llama.cpp loads it fine. Fix: remove the `binary:` field from the catalog entry so it uses stock llama-server, and switch presets from `turbo2-kv` to `q8-kv` (stock doesn't support turbo cache types). Also remove `nextn`/`draft-mtp` presets if GPU VRAM is tight — the draft model loads a second copy of the GGUF, doubling VRAM. Stock supports `draft-mtp` but not `nextn`.
-
-- **Systemd services override turbofit.** If legacy `llama-*.service` or `omni-va.service` units are running, they will hold ports and restart killed processes, silently replacing turbofit-managed launches. Before `serve <alias>`, run `systemctl --user list-units | grep llama` and stop+disable any conflicting units on the target port.
-- **YAML duplicate keys silently overwrite.** When editing `models.yaml`, never paste a new entry that shares keys with the one above it (e.g. two `role:` lines, two `mmproj:` lines). YAML last-key-wins means the earlier value is silently discarded. Always verify with `grep` after editing.
-- **mmproj must match the text model's `n_embd`.** A 27B-dense mmproj (`n_embd=5120`) will NOT work with a 35A3B MoE (`n_embd=2048`). The error is `mismatch between text model (n_embd = X) and mmproj (n_embd = Y)`. For Qwen3.6-35B-A3B MoE models, use the mmproj from `unsloth/Qwen3.6-35B-A3B-GGUF` (mmproj-BF16.gguf, ~889MB). For 27B dense models, use the per-model F32 mmproj.
-- **Symlink mmproj files can be stale.** Several model directories had `mmproj-F32.gguf` symlinked to a different model's mmproj (e.g. Carnice → Qwopus 27B). Always verify with `ls -la` and `readlink -f`. If the target is wrong, delete the symlink and download the correct file from the matching HF repo.
-- **`serve <alias>` may report success but launch the wrong model** if a stale systemd service or leftover process holds the port. Always verify with `ps aux | grep <port>` that the actual command line matches the catalog entry.
-- **The `serve` script reads the catalog fresh each time.** If you edit `models.yaml` while a serve command is running, the next invocation will pick up the changes. But the *currently running* process won't be affected — you must `serve stop <alias>` and re-launch.
-- **GitHub repo creation requires explicit user permission.** Never create new repos or publish anything publicly without the user explicitly asking. Existing repos can be updated when the user directs work on them.
-
-## mmproj Reference
-
-Vision-capable models need the correct mmproj file. Architecture mismatch (`n_embd` difference) causes a hard crash at load time.
-
-| Model family | n_embd | mmproj source | File |
-|---|---|---|---|
-| Qwen3.6-27B dense (Darwin Reason, Prism Eagle, Carwin, Qwopus, Qwable) | 5120 | Per-model `mmproj-F32.gguf` in GGUF dir | mmproj-F32.gguf |
-| Qwen3.6-35B-A3B MoE (Carnice, Darwin APEX) | 2048 | `unsloth/Qwen3.6-35B-A3B-GGUF` | mmproj-BF16.gguf |
-| Qwen2.5-Omni-3B | 2048 | Per-model dir | mmproj-F32.gguf |
-
-**Check before launch:** `ls -la <model_dir>/mmproj*.gguf` — if it's a symlink, verify the target is the right architecture.
-
-### 7. HF download: use exact filenames, never wildcards
-
-`hf download <repo> --include="*.gguf"` downloads **every quant in the repo** (BF16, F16, Q8_0, Q2_K, Q3_K_S, ...). For Qwen/Coder/Darwin repos this can be 100-200 GB of junk. Only Q4_K_M + mmproj are needed.
-
-**Correct pattern:**
+## Pressure and adaptation checks
 
 ```bash
-hf download <repo> --include="*Q4_K_M*" --include="mmproj-F32.gguf" --local-dir <dest>
+PYTHONPATH=src:. python3 -m pytest tests/test_pressure.py tests/test_pressure_probe.py tests/test_policy.py tests/test_reconciler.py tests/test_controller.py tests/test_runtime_service.py tests/integration -q -o 'addopts='
 ```
 
-Even safer: download only the one specific file you need:
+Expected contraction:
+
+```text
+dedicated aux → shared-main → smaller context/model → terminal API
+```
+
+Expected recovery walks one rung at a time toward the recommendation after margin and dwell.
+
+## Release gates
 
 ```bash
-hf download <repo> --include="<exact-filename>.gguf" --local-dir <dest>
+scripts/release-check
+scripts/release-check --real
 ```
 
-### 8. `serve` in PATH is Ray's CLI (v5)
-Ray ships a `serve` Python script at `~/.local/bin/serve`. The turbofit bash shim (in `turbofit.sharco`) overrides it as a function. If you bypass the shim, you'll hit Ray. Use `tf` as a future alias if you want a separate namespace.
+The first command validates syntax, tests, profiles, links, and simulated transitions. The second additionally requires working NVML, Turbohaul `/status`, stable live routes, and controlled real pressure/recovery evidence. Do not claim release readiness if `--real` is blocked.
 
-### 2. Per-model `binary:` is REQUIRED for TurboQuant + NextN models
-Stock `llama-server` doesn't support `-ctk turbo4` or `--spec-type nextn`. If you remove the `binary:` field from `darwin-28b-reason` or `qwopus-27b-coder-mtp`, the launch will fail with "Unsupported cache type" or "unknown speculative type".
+Acceptance evidence: `references/results/adaptive-runtime-acceptance.json`.
 
-The atomic fork lives at `~/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server`.
+## Candidate intelligence
 
-### 3. Context floor is enforced everywhere
-Every launch string uses `ctx >= 65536`. Hermes-Agent crashes on first multi-turn message if ctx < 64K.
-
-### 4. `flash_attn` is tri-state
-`-fa on` / `-fa off` / `-fa auto`. Bare `--flash-attn` errors out.
-
-### 5. `--gpu` is not a valid llama.cpp flag
-Use `-ngl N` to control GPU layers, or `--device CUDA0` + `--main-gpu 0` for device selection. The catalog's `gpu:` field maps to `--main-gpu N` automatically.
-
-### 6. NVIDIA NIM has TWO tiers — free and paid serverless
-The 5 models listed all have **free endpoints** at `https://integrate.api.nvidia.com/v1` — covered by your `NVIDIA_API_KEY` from a free `build.nvidia.com` signup (~1000 RPM, no credit card).
-
-### 7. Never create new GitHub repos without explicit user permission
-Existing repos can be updated when the user directs work on them. Publishing, creating, or making anything public always requires the user to say so first.
-
-NVIDIA also sells a paid serverless tier with the same model IDs (e.g. $1.30/$2.60 for DeepSeek V4 Pro) under the same base URL. The same API key works for both, but the free tier has tighter rate limits.
-
-### 7. The Omni*/Senter* training artifacts and OmniStep are excluded
-OmniStep-SFT-8B was removed from the fleet catalog in v1.1.0 — it's no longer a fleet pick. The 12 other Omni*/Senter* training artifacts are user-made Darwin-merged models for training research. They live in the legacy catalog but not in the turbofit catalog. Add them back with `name <alias> <path>` if needed.
-
-### 8. Hermes Desktop → Android APK via Capacitor
-The Hermes Desktop app (`apps/desktop/`) is an Electron + React + Vite + Tailwind app. It can be wrapped for Android using Capacitor:
+Collectors write only `research/candidates.json`:
 
 ```bash
-# 1. Install deps + Capacitor (from the Hermes Agent repo)
-npm install --workspace apps/desktop
-npm install --workspace apps/desktop @capacitor/core @capacitor/cli @capacitor/android
-
-# 2. Init Capacitor (in apps/desktop/)
-cd apps/desktop && npx cap init "Hermes" "com.nousresearch.hermes" --web-dir dist
-
-# 3. Add Android platform
-npx cap add android
-
-# 4. Build the Vite renderer
-npm run build
-
-# 5. Sync to Android
-npx cap sync android
-
-# 6. Build APK (requires Android SDK)
-export ANDROID_HOME=~/android-sdk
-cd android && ./gradlew assembleDebug
-
-# 7. Install on phone
-adb install app/build/outputs/apk/debug/app-debug.apk
+PYTHONPATH=. python3 research/discover_huggingface.py
+PYTHONPATH=. python3 research/discover_model_news.py --url <public-feed>
+PYTHONPATH=. python3 research/discover_api_models.py --provider <name> --url <public-model-list>
 ```
 
-**Key insight:** The Desktop app's React renderer talks to the Hermes gateway via WebSocket — it doesn't need Electron's Node.js backend. On Android, it connects to the gateway running on the host machine. The gateway URL is configured at first launch.
+No collector may modify runtime profiles, routes, or credentials. Live cron schedules/delivery require explicit user approval.
 
-**Android SDK setup (if not installed):**
-```bash
-mkdir -p ~/android-sdk/cmdline-tools
-cd /tmp && curl -sSL -o cmdline-tools.zip \
-  "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
-unzip -q cmdline-tools.zip -d ~/android-sdk/cmdline-tools/
-mv ~/android-sdk/cmdline-tools/cmdline-tools ~/android-sdk/cmdline-tools/latest
-export ANDROID_HOME=~/android-sdk
-yes | ~/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
-```
+## Troubleshooting order
 
-## Extending turbofit
+1. `nvidia-smi --query-gpu=index,uuid,memory.total,memory.used,memory.free --format=csv,noheader,nounits`
+2. Turbohaul Manager `/status` and `/api/tags`
+3. Gateway `/v1/models`
+4. Route-state freshness and stable IDs
+5. Acceptance record blockers
+6. Focused tests, then full `scripts/release-check`
 
-### Removing a model from the catalog
+If NVIDIA reports a driver/library mismatch, stop the real pressure test. Do not attempt blind module reloads or disruptive GPU work.
 
-```bash
-# Use Python to safely remove an entry from models.yaml
-python3 -c "
-import yaml
-with open('$HOME/.config/turbofit/models.yaml') as f:
-    cfg = yaml.safe_load(f)
-if '<alias>' in cfg.get('models', {}):
-    del cfg['models']['<alias>']
-    print('REMOVED <alias>')
-with open('$HOME/.config/turbofit/models.yaml', 'w') as f:
-    yaml.dump(cfg, f, default_flow_style=False, sort_keys=False)
-print(f'Total models: {len(cfg[\"models\"])}')
-"
-```
-
-After removal, also check if the model appears in the scaling ladder (`references/scaling-ladder.md` or `references/curated-lineup.md`) and remove/update those references.
-
-### Adding a new model
-
-```bash
-name mynew /path/to/file.gguf --port 11530
-# then edit ~/.config/turbofit/models.yaml to add tier, presets, gpu, etc.
-serve mynew
-```
-
-### Adding a new flag preset
-
-Edit `~/.hermes/skills/turbofit/scripts/serve`, find `declare -A PRESET_FLAGS=(`, add a line like:
-
-```bash
-[my-preset]='--my-flag value'
-```
-
-### Adding a new tier
-
-Edit `scale_pick()` and `list_catalog()` in the same script.
-
-### Adding a new launcher
-
-Extend the four `declare -A LAUNCHER_*` arrays at the top, add cases in `install_launcher()`, `update_all_launchers()`, `generate_string()`, and `launch_server()`.
-
-## Mixture of Agents (MoA) Integration
-
-### What is MoA?
-
-Hermes MoA (Mixture of Agents) runs **reference models** (analysis layer, no tool schemas) before the **aggregator** (final response + tool schemas). This produces higher-quality responses than any single model alone. Reference models provide diverse perspectives; the aggregator synthesizes them into the final answer.
-
-- **Reference models**: Run first, no tool schemas. Can fail without aborting the turn.
-- **Aggregator**: Runs second, with tool schemas. Produces the final response. Cannot be another MoA preset (no recursion).
-- **Config location**: Hermes configuration file under the `moa:` key.
-
-Docs: https://hermes-agent.nousresearch.com/docs/user-guide/features/mixture-of-agents
-
-### Available presets
-
-| Preset | References | Aggregator | Use Case |
-|--------|-----------|------------|----------|
-| `default` | Darwin + DeepSeek V4 Pro | GLM 5.2 | Best quality, balanced cost |
-| `local` | Carnice | Darwin | Zero API cost, both local |
-| `reasoning` | Darwin + DeepSeek V4 Pro + Qwen 3.7 MAX | GLM 5.2 | Maximum reasoning power |
-| `fast` | Carnice | DeepSeek V4 Flash | Speed-optimized |
-| `review` | Darwin + DeepSeek V4 Pro | GLM 5.2 | Code review (low temp) |
-
-### `serve moa` commands
-
-```bash
-serve moa list                    # List configured MoA presets
-serve moa use <preset>            # Print command to switch to a preset
-serve moa shot <prompt>           # Print command for one-shot MoA query
-serve moa status                  # Show active preset details
-serve moa presets                 # Show full preset details (models, temps, max_tokens)
-serve moa recommend               # Hardware-aware preset recommendation
-```
-
-The serve script can't invoke Hermes slash commands directly, so `use` and `shot` print the command for the user to run:
-
-- Activate: `/model <preset> --provider moa`
-- One-shot: `/moa <prompt>`
-
-### `serve moa recommend` logic
-
-Probes current hardware state and recommends the best preset:
-
-1. Runs `probe_vram` (nvidia-smi) for free VRAM
-2. Curls `:11500` (Darwin) and `:8082` (Carnice) to check which local models are alive
-3. Recommends:
-   - Both local running + VRAM healthy (≥8GB free) → `local` (zero cost)
-   - Both local running + VRAM pressured (<8GB) → `fast` (API aggregator)
-   - Only Darwin running → `default` (Darwin ref + API ref + API aggregator)
-   - Only Carnice running → `fast` (Carnice ref + API aggregator)
-   - Nothing local running → `reasoning` (all API, max diversity)
-
-### Creating custom presets
-
-Edit your Hermes configuration and add a new entry under `moa.presets`:
-
-```yaml
-moa:
-  presets:
-    my-custom:
-      reference_models:
-        - provider: custom:llama-main
-          model: Darwin-28B-REASON.Q4_K_M.gguf
-        - provider: nous
-          model: deepseek/deepseek-v4-pro
-      aggregator:
-        provider: nous
-        model: z-ai/glm-5.2
-      reference_temperature: 0.6
-      aggregator_temperature: 0.4
-      max_tokens: 8192
-      enabled: true
-```
-
-Providers: `custom:llama-main`, `custom:llama-aux`, `nous` (Nous API). The aggregator cannot be another MoA preset.
-
-### VRAM considerations
-
-- MoA with local models = **2x+ compute per iteration** (reference + aggregator both use GPU)
-- When VRAM pressure hits and a local model is the MoA aggregator, swap to an API aggregator
-- The `local` preset uses both GPUs (Carnice ref on GPU 1, Darwin aggregator on GPU 0) — monitor VRAM
-- The `fast` preset offloads the aggregator to API, keeping only one local model active
-- Use `serve moa recommend` for hardware-aware suggestions before activating a preset
-
-## See also
-
-- `references/model-database.yaml` — **dynamic source of truth** for all model specs, pricing, benchmarks. Auto-updated daily via research cron, synced to GitHub.
-- `references/api-pairing-matrix.md` — complete main+aux pairing matrix by price tier × context level, with gateway indicators
-- `references/binary-selection.md` — atomic fork vs stock decision tree (which binary for which model, VRAM considerations for spec decoding)
-- `references/scaling-watcher-architecture.md` — scaling watcher v3 fixes, external-VRAM contraction, grace period, stability check, debugging checklist
-- `references/scaling-ladder.md` — full scaling ladders for all three hardware tiers (Beefy 7-step, Modest 5-step, Thin 4-step)
-- `references/curated-lineup.md` — the curated picks (local archetypes + API models, pairing rules)
-- `references/api-model-rankings.md` — API main + aux rankings by volume performance, hardware tier mapping
-- `references/api-tier-rankings.md` — quick-reference API tier rankings with provider details
-- `scripts/research-models.py` — daily research script (scans OpenRouter, HuggingFace, Price Per Token, LLMCheck)
-- `scripts/sync-github.sh` — GitHub sync script (pushes to SouthpawIN/sovth-config)
-- `southpaw-models` — curated lineup rationale (Darwin / Prism / Carnice / Carwin / Qwopus)
-- `local-llm-fleet-management` — legacy catalog mechanics (now subsumed by turbofit)
-- `llama-cpp` — llama.cpp build + GGUF discovery
-- `omni-va-local-server` — wake-on-ping proxy (kept for Carnice slot)
-- `evolutionary-radio` — where Darwin-merged checkpoints run
-
-## Design rules (hardware-neutral, learned this session)
-
-1. **No multi-GPU hardcoding.** Tensor split is user-configurable via catalog `extra_args: ['--tensor-split', 'X,Y']`. No preset assumes dual-GPU or specific VRAM amounts.
-2. **tok/s varies by GPU.** Catalog `tok_s_target` values are measured locally — mark them as approximate. Use relative ranking (tier priority > vision bonus > speed bonus) rather than absolute claims.
-3. **All models get vision.** Every local Qwen-family model can use the same `mmproj-F32.gguf` via symlink. Set `vision: true` and `mmproj:` in every catalog entry. One mmproj file serves the entire fleet.
-4. **Model picks ARE the cascade.** The slot-ordered picks are the hand-chosen scale-down sequence — not generic examples. When building recommendations, preserve the actual model aliases and their tier assignments.
-5. **No workarounds — fix the root cause.** When a backend fails to load, fix the binary, flags, or catalog entry. Do NOT disable features as a workaround. Do NOT route around turbofit to another backend. The whole point of turbofit is that ALL local model servers are managed through it.
-6. **If a model can't load with one binary, try the other.** The atomic fork has turbo KV cache and NextN but crashes on 35B-A3B mmproj. Stock has q8 KV and draft-mtp but no turbo/nextn. Use whichever binary makes the model work. See `references/binary-selection.md` for the decision tree.
+Full architecture and schema: `README.md`.

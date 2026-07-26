@@ -1,0 +1,12 @@
+services:
+  turbofit:
+    build: .
+    image: turbofit-control-plane:local
+    container_name: turbofit-control-plane
+    network_mode: host
+    environment:
+      TURBOFIT_PORT: "8091"
+      TURBOFIT_STATE: /var/lib/turbofit/state.json
+    volumes:
+      - ./state.json:/var/lib/turbofit/state.json:ro
+    restart: unless-stopped
