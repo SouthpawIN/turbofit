@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
@@ -19,6 +20,39 @@ DEFAULT_ROUTE_STATE = STATE_HOME / "turbofit" / "runtime-state.json"
 DEFAULT_RESULT = ROOT / "references/results/controlled-pressure-acceptance.json"
 MAX_PRESSURE_MB = 14336
 DEFAULT_PRESSURE_MB = 12544
+PRESSURE_HEADROOM_MB = 2048
+DEFAULT_MANAGER_STATUS = "http://127.0.0.1:11401/status"
+
+
+def safe_pressure_mb(requested_mb: int, free_mb: int) -> int:
+    """Cap pressure to leave the allocator's mandatory safety headroom."""
+    return min(requested_mb, free_mb - PRESSURE_HEADROOM_MB)
+
+
+def free_vram_mb(device: int) -> int:
+    result = subprocess.run(
+        ["nvidia-smi", f"--id={device}", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
+        check=True, capture_output=True, text=True, timeout=15,
+    )
+    return int(result.stdout.strip().splitlines()[0])
+
+
+def wait_for_resident(status_url: str, model_tag: str, timeout_s: float) -> None:
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        try:
+            with urllib.request.urlopen(status_url, timeout=5) as response:
+                payload = json.load(response)
+            if any(
+                item.get("model_tag") == model_tag
+                and item.get("state") in {"ACTIVE", "IDLE_EVICTABLE"}
+                for item in payload.get("residents", [])
+            ):
+                return
+        except (OSError, ValueError, json.JSONDecodeError):
+            pass
+        time.sleep(1)
+    raise TimeoutError(f"manager did not report resident model {model_tag}")
 
 
 def read_state(path: Path) -> dict:
@@ -69,6 +103,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output", type=Path, default=DEFAULT_RESULT)
     parser.add_argument("--pressure-mb", type=int, default=DEFAULT_PRESSURE_MB)
     parser.add_argument("--pressure-device", type=int, default=0)
+    parser.add_argument("--manager-status", default=DEFAULT_MANAGER_STATUS)
     parser.add_argument("--heal-timeout", type=float, default=900)
     return parser
 
@@ -103,7 +138,14 @@ def main() -> int:
         )
         profile_id = initial.get("active")
         initial_rung = initial.get("rung_index")
+        initial_alias = initial.get("routes", {}).get("main", {}).get("alias")
+        if not initial_alias:
+            raise RuntimeError("initial local route has no main alias")
+        wait_for_resident(args.manager_status, initial_alias, args.heal_timeout)
         report["checks"]["initial_local"] = True
+        pressure_mb = safe_pressure_mb(args.pressure_mb, free_vram_mb(args.pressure_device))
+        if pressure_mb < 128:
+            raise RuntimeError("insufficient free VRAM for safe controlled pressure")
         with log_path.open("w", encoding="utf-8") as log:
             pressure = subprocess.Popen(
                 [
@@ -112,7 +154,7 @@ def main() -> int:
                     "--device",
                     str(args.pressure_device),
                     "--mb",
-                    str(args.pressure_mb),
+                    str(pressure_mb),
                     "--ready",
                     str(ready_path),
                 ],

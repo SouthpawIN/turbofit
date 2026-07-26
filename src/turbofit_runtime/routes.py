@@ -33,18 +33,26 @@ def load_runtime_resolutions(path: str | Path) -> RuntimeResolutions:
                 raise ValueError("local resolution requires main and optional aux roles")
             parsed_roles: dict[str, dict[str, int | str]] = {}
             for role, value in roles.items():
-                if not isinstance(value, Mapping) or set(value) != {
-                    "model_tag",
-                    "expected_vram_mb",
-                }:
+                if (
+                    not isinstance(value, Mapping)
+                    or not {"model_tag", "expected_vram_mb"} <= set(value)
+                    or not set(value) <= {"model_tag", "expected_vram_mb", "split_mode"}
+                ):
                     raise ValueError("invalid runtime resolution role")
                 tag = value["model_tag"]
                 expected = value["expected_vram_mb"]
+                split_mode = value.get("split_mode", "none")
                 if not isinstance(tag, str) or not tag or "/" in tag or "\\" in tag:
                     raise ValueError("runtime model_tag must be a portable tag")
                 if isinstance(expected, bool) or not isinstance(expected, int) or expected <= 0:
                     raise ValueError("expected_vram_mb must be a positive integer")
-                parsed_roles[role] = {"model_tag": tag, "expected_vram_mb": expected}
+                if split_mode not in {"none", "layer", "row"}:
+                    raise ValueError("split_mode must be none, layer, or row")
+                parsed_roles[role] = {
+                    "model_tag": tag,
+                    "expected_vram_mb": expected,
+                    "split_mode": split_mode,
+                }
             result[profile_id][rung_id] = parsed_roles
     return result
 

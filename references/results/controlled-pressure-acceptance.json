@@ -1,13 +1,20 @@
 {
   "checks": {
-    "initial_local": true
+    "contracted_to_local_rung": "local-grm-131072",
+    "external_process_survived": true,
+    "healed_to_selected_ceiling": true,
+    "initial_local": true,
+    "pressure_allocated": {
+      "device": 0,
+      "mb": 9710,
+      "pid": 3585767
+    }
   },
-  "error": "pressure process exited: device must be non-negative and mb must be in [1, 2048]\n",
-  "recorded_at": "2026-07-25T15:00:03.453580+00:00",
+  "recorded_at": "2026-07-26T11:54:19.142298+00:00",
   "safety": {
-    "acceptance_owned_processes_terminated": 0,
+    "acceptance_owned_processes_terminated": 1,
     "external_processes_signaled": 0
   },
   "schema": "turbofit.controlled-pressure-acceptance/v1",
-  "status": "failed"
+  "status": "pass"
 }

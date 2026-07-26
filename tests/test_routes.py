@@ -34,15 +34,14 @@ def test_builds_shared_main_route_for_24gb_profile() -> None:
     assert state["routes"]["aux"] == {"kind": "shared-main"}
 
 
-def test_builds_dedicated_route_for_48gb_profile() -> None:
+def test_builds_context_matched_shared_route_for_48gb_profile() -> None:
     resolutions = load_runtime_resolutions(
         ROOT / "runtime-profiles" / "runtime-resolutions.json"
     )
     state = build_route_state(profile(48), 0, resolutions, manager_port=11401)
 
-    assert state["routes"]["main"]["alias"].endswith("-main")
-    assert state["routes"]["aux"]["alias"] == "bonsai-27b-1bit-262k-main"
-    assert state["routes"]["aux"]["mode"] == "dedicated"
+    assert state["routes"]["main"]["alias"] == "grm-2-6-plus-262k-split-main"
+    assert state["routes"]["aux"] == {"kind": "shared-main"}
     assert state["routes"]["main"]["port"] == 11401
 
 

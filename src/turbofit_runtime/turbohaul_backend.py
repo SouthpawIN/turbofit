@@ -144,10 +144,41 @@ class TurbohaulBackend:
             "Turbohaul Manager owns escalation; Turbofit will not signal model processes"
         )
 
+    def _retire_conflicting_split_residents(
+        self, target_tags: set[str], *, target_uses_split: bool
+    ) -> None:
+        managed_tags = {
+            str(item["model_tag"])
+            for roles in self.resolutions.get(self.profile.id, {}).values()
+            for item in roles.values()
+        }
+        status = self.client.status()
+        for resident in tuple(status.get("residents") or ()):
+            tag = str(resident.get("model_tag") or "")
+            split_mode = str(resident.get("split_mode") or "none").lower()
+            if (
+                tag not in managed_tags
+                or tag in target_tags
+                or (split_mode == "none" and not target_uses_split)
+            ):
+                continue
+            try:
+                status = self.client.unload_model(tag, verification_timeout_s=30.0)
+            except Exception as exc:
+                raise ReconcileError(f"Turbohaul failed to unload split resident {tag}") from exc
+            if _model_resident(status, tag):
+                raise ReconcileError(f"Turbohaul kept split resident active: {tag}")
+
     def activate_local(self, rung_id: str) -> None:
         roles = self._roles(rung_id)
         tags = tuple(str(roles[role]["model_tag"]) for role in ("main", "aux") if role in roles)
         self.acquirer.ensure_tags(tags)
+        self._retire_conflicting_split_residents(
+            set(tags),
+            target_uses_split=any(
+                str(item.get("split_mode", "none")) != "none" for item in roles.values()
+            ),
+        )
         for role in ("main", "aux"):
             item = roles.get(role)
             if item is None:

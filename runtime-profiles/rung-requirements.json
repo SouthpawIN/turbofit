@@ -366,12 +366,12 @@
     ],
     "hardware-48gb": [
       {
-        "evidence": "sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853",
+        "evidence": "sha256:2dd320671f7f891ede49a22820754fa657335581ed1272a3444fe45af9426223",
         "required_mb_per_card": [
-          11163,
-          21554
+          20000,
+          20000
         ],
-        "rung_id": "local-dedicated-131072"
+        "rung_id": "local-grm-262144"
       },
       {
         "evidence": "sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba",

@@ -114,7 +114,7 @@ def test_verify_rung_waits_for_turbohaul_residency_to_settle(tmp_path: Path) -> 
 
 
 def test_block_aux_admission_redirects_new_work_before_drain(tmp_path: Path) -> None:
-    _, _, routes, _, client, backend = fixture(tmp_path, 48, 0)
+    _, _, routes, _, client, backend = fixture(tmp_path, 64, 0)
     current = json.loads(routes.read_text())
     aux_tag = current["routes"]["aux"]["alias"]
     client.snapshot["active"] = {"model_tag": aux_tag, "pid": 1002}
@@ -128,6 +128,32 @@ def test_block_aux_admission_redirects_new_work_before_drain(tmp_path: Path) -> 
     assert backend.drain_aux(0) is True
 
 
+def test_layer_split_source_is_unloaded_before_loading_a_different_rung(tmp_path: Path) -> None:
+    profile, _, _, _, client, backend = fixture(tmp_path, 48, 0)
+    source_tag = "grm-2-6-plus-262k-split-main"
+    client.snapshot["residents"] = [
+        {"model_tag": source_tag, "pid": 1001, "split_mode": "layer"}
+    ]
+
+    backend.activate_local(profile.rungs[1].id)
+
+    assert client.unloads == [source_tag]
+    assert client.chats[0]["model"] == "grm-2-6-plus-128k-gpu1-main"
+
+
+def test_pinned_source_is_unloaded_before_loading_a_layer_split_rung(tmp_path: Path) -> None:
+    profile, _, _, _, client, backend = fixture(tmp_path, 48, 1)
+    source_tag = "grm-2-6-plus-128k-gpu1-main"
+    client.snapshot["residents"] = [
+        {"model_tag": source_tag, "pid": 1001, "split_mode": "none"}
+    ]
+
+    backend.activate_local(profile.rungs[0].id)
+
+    assert client.unloads == [source_tag]
+    assert client.chats[0]["model"] == "grm-2-6-plus-262k-split-main"
+
+
 def test_local_activation_acquires_every_resolved_tag_before_inference(tmp_path: Path) -> None:
     profile, _, _, _, client, backend = fixture(tmp_path, 48, 1)
 
@@ -135,30 +161,28 @@ def test_local_activation_acquires_every_resolved_tag_before_inference(tmp_path:
 
     assert client.acquired == [
         (
-            "grm-2-6-plus-128k-gpu1-main",
-            "bonsai-27b-1bit-262k-main",
+            "grm-2-6-plus-262k-split-main",
         )
     ]
 
 
-def test_activate_verify_and_publish_dedicated_local_rung(tmp_path: Path) -> None:
+def test_activate_verify_and_publish_shared_262k_local_rung(tmp_path: Path) -> None:
     profile, _, routes, _, client, backend = fixture(tmp_path, 48, 1)
 
     rung_id = profile.rungs[0].id
     backend.activate_local(rung_id)
-    backend.route_aux_dedicated()
+    backend.route_aux_to_main()
     assert backend.verify_rung(rung_id) is True
     published = ReconcilerState(profile.id, 0, "local:main", "local:aux")
     backend.publish_routes(published)
 
     tags = [payload["model"] for payload in client.chats]
     assert tags == [
-        "grm-2-6-plus-128k-gpu1-main",
-        "bonsai-27b-1bit-262k-main",
+        "grm-2-6-plus-262k-split-main",
     ]
     state = json.loads(routes.read_text())
     assert state["rung_index"] == 0
-    assert state["routes"]["aux"]["mode"] == "dedicated"
+    assert state["routes"]["aux"] == {"kind": "shared-main"}
 
 
 def test_local_floor_publication_contains_no_api_policy_or_credentials(tmp_path: Path) -> None:
@@ -178,7 +202,7 @@ def test_local_floor_publication_contains_no_api_policy_or_credentials(tmp_path:
 
 
 def test_unload_is_delegated_to_turbohaul_and_escalation_never_signals(tmp_path: Path) -> None:
-    _, _, routes, _, client, backend = fixture(tmp_path, 48, 0)
+    _, _, routes, _, client, backend = fixture(tmp_path, 64, 0)
     aux_tag = json.loads(routes.read_text())["routes"]["aux"]["alias"]
     client.snapshot["residents"] = [{"model_tag": aux_tag, "pid": 4321}]
     backend.block_aux_admission()

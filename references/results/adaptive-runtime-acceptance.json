@@ -3,7 +3,7 @@
   "checks": {
     "controlled_pressure": {
       "exit_code": 0,
-      "output": "{\n  \"checks\": {\n    \"contracted_to_local_rung\": \"local-grm-131072\",\n    \"external_process_survived\": true,\n    \"healed_to_selected_ceiling\": true,\n    \"initial_local\": true,\n    \"pressure_allocated\": {\n      \"device\": 0,\n      \"mb\": 12544,\n      \"pid\": 1890660\n    }\n  },\n  \"recorded_at\": \"2026-07-26T10:18:37.159225+00:00\",\n  \"safety\": {\n    \"acceptance_owned_processes_terminated\": 1,\n    \"external_processes_signaled\": 0\n  },\n  \"schema\": \"turbofit.controlled-pressure-acceptance/v1\",\n  \"status\": \"pass\"\n}\n",
+      "output": "{\n  \"checks\": {\n    \"contracted_to_local_rung\": \"local-grm-131072\",\n    \"external_process_survived\": true,\n    \"healed_to_selected_ceiling\": true,\n    \"initial_local\": true,\n    \"pressure_allocated\": {\n      \"device\": 0,\n      \"mb\": 9710,\n      \"pid\": 125015\n    }\n  },\n  \"recorded_at\": \"2026-07-26T11:59:02.194272+00:00\",\n  \"safety\": {\n    \"acceptance_owned_processes_terminated\": 1,\n    \"external_processes_signaled\": 0\n  },\n  \"schema\": \"turbofit.controlled-pressure-acceptance/v1\",\n  \"status\": \"pass\"\n}\n",
       "passed": true
     },
     "controller_service": {
@@ -40,12 +40,12 @@
     },
     "nvml": {
       "exit_code": 0,
-      "output": "0, GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1, 24576, 10158, 13958\n1, GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1, 24576, 19999, 4126\n",
+      "output": "0, GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1, 24576, 12359, 11758\n1, GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1, 24576, 15421, 8704\n",
       "passed": true
     },
     "simulated_transitions": {
       "exit_code": 0,
-      "output": "..........................                                               [100%]\n26 passed in 1.77s\n",
+      "output": "..........................                                               [100%]\n26 passed in 1.66s\n",
       "passed": true
     },
     "turbohaul_status": {
@@ -53,7 +53,7 @@
       "payload": {
         "active": null,
         "background_sweeper": {
-          "last_sweep_iso": "2026-07-26T10:18:02+00:00",
+          "last_sweep_iso": "2026-07-26T11:58:06+00:00",
           "slots_finalized_lifetime": 0
         },
         "engine_stall": null,
@@ -65,7 +65,7 @@
           "eta_s": null,
           "generation_id": null,
           "max_tokens": null,
-          "measured_at_iso": "2026-07-26T10:18:36+00:00",
+          "measured_at_iso": "2026-07-26T11:59:01+00:00",
           "n_ctx": null,
           "n_decoded": 0,
           "n_prompt_cache": null,
@@ -86,7 +86,7 @@
         "idle_hot": null,
         "kv_classifier": {
           "events": {
-            "sub-agent": 2
+            "sub-agent": 9
           },
           "forced_clean_restores": 0,
           "last": {
@@ -124,10 +124,10 @@
           "is_curator": null,
           "is_main": null,
           "is_sub_agent": null,
-          "model_tag": "bonsai-27b-1bit-262k-main",
+          "model_tag": "grm-2-6-plus-262k-split-main",
           "resolved_class": null,
           "session_id": null,
-          "thread_id": "auto-329301db9072e0bfaf8e4cf4"
+          "thread_id": "auto-88fc8ea4c4d97f72a4cfef2a"
         },
         "residents": [
           {
@@ -135,7 +135,7 @@
               "eta_s": null,
               "generation_id": null,
               "max_tokens": null,
-              "measured_at_iso": "2026-07-26T10:18:36+00:00",
+              "measured_at_iso": "2026-07-26T11:59:01+00:00",
               "n_ctx": null,
               "n_decoded": 0,
               "n_prompt_cache": null,
@@ -152,51 +152,17 @@
               "tok_s": null,
               "tok_s_instant": 0.0
             },
-            "idle_expires_in_s": 198,
+            "idle_expires_in_s": null,
             "inflight": 0,
             "main_gpu": 1,
-            "model_tag": "grm-2-6-plus-128k-gpu1-main",
+            "model_tag": "grm-2-6-plus-262k-split-main",
             "parallel": 1,
-            "pid": 660737,
+            "pid": 4192707,
             "port": 11900,
-            "reserved_need_mib": 21554,
+            "reserved_need_mib": 30517,
             "spawn_seq": 1,
-            "split_mode": "none",
-            "state": "IDLE_EVICTABLE"
-          },
-          {
-            "generation": {
-              "eta_s": null,
-              "generation_id": null,
-              "max_tokens": null,
-              "measured_at_iso": "2026-07-26T10:18:36+00:00",
-              "n_ctx": null,
-              "n_decoded": 0,
-              "n_prompt_cache": null,
-              "n_prompt_proc": null,
-              "n_prompt_tokens": 0,
-              "n_remain": null,
-              "pct": null,
-              "prefill_pct": null,
-              "prompt_progress": null,
-              "riders": 0,
-              "stalled": false,
-              "state": "transitioning",
-              "streaming": false,
-              "tok_s": null,
-              "tok_s_instant": 0.0
-            },
-            "idle_expires_in_s": 506,
-            "inflight": 0,
-            "main_gpu": 0,
-            "model_tag": "bonsai-27b-1bit-262k-main",
-            "parallel": 1,
-            "pid": 863943,
-            "port": 11901,
-            "reserved_need_mib": 11093,
-            "spawn_seq": 1,
-            "split_mode": "none",
-            "state": "IDLE_EVICTABLE"
+            "split_mode": "layer",
+            "state": "ACTIVE"
           }
         ],
         "shadow_bytematch": {},
@@ -214,10 +180,10 @@
             "protected_bytes": 0,
             "protected_threads": {},
             "total_bytes": 0,
-            "ts": 1785061082.1040928
+            "ts": 1785066966.862908
           },
           "restores": {
-            "fresh": 2
+            "fresh": 9
           },
           "saves": {}
         },
@@ -225,8 +191,8 @@
         "shadow_restore_prefer": {},
         "tooltail_restore_skip": {},
         "vram": [
-          13958,
-          4126
+          11758,
+          8704
         ],
         "vram_total_mib": null
       },
@@ -234,7 +200,7 @@
     }
   },
   "real_requested": true,
-  "recorded_at": "2026-07-26T10:22:15.534617+00:00",
+  "recorded_at": "2026-07-26T12:03:15.047564+00:00",
   "safety": {
     "direct_process_signals_sent": 0,
     "external_processes_modified": 0,

@@ -1,0 +1,1149 @@
+{
+  "artifact_sha256": null,
+  "candidate": "hardware-48gb-grm-262k-shared",
+  "cases": [
+    {
+      "category": "quality",
+      "elapsed_seconds": 20.96223,
+      "error": null,
+      "id": "quality-arithmetic",
+      "passed": true,
+      "response_content": "<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - Task: Compute 17 multiplied by 23.\n   - Constraint: Return only the integer, with no explanation.\n\n2.  **Perform Calculation:**\n   - 17 * 23\n   - Break it down: 17 * 20 = 340, 17 * 3 = 51\n   - Sum: 340 + 51 = 391\n   - Verify: 23 * 10 = 230, 23 * 7 = 161, 230 + 161 = 391. Correct.\n\n3.  **Format Output:**\n   - Constraint says: \"Return only the integer, with no explanation.\"\n   - Output should be exactly: 391\n\n4.  **Final Check:**\n   - Calculation correct? Yes.\n   - Format matches constraint? Yes.\n   - Ready.\u2705\n</think>\n\n391",
+      "usage": {
+        "completion_tokens": 232,
+        "prompt_tokens": 29,
+        "total_tokens": 261
+      }
+    },
+    {
+      "category": "quality",
+      "elapsed_seconds": 33.028179,
+      "error": null,
+      "id": "quality-instruction",
+      "passed": true,
+      "response_content": "<think>\nThinking Process:\n\n1.  **Analyze the Request:** The user wants me to return exactly the text \"TURBOFIT_LOCAL_OK\" and nothing else.\n2.  **Analyze the Constraints:** \"Return exactly this text and nothing else\". This means no greetings, no explanations, no markdown formatting (unless the text itself contains it, which it doesn't), just the raw string.\n3.  **Formulate the Output:** The output should be the string `TURBOFIT_LOCAL_OK`.\n4.  **Final Verification:** Does the output match the requested text exactly? Yes. Does it contain anything else? No.\n\nOutput: TURBOFIT_LOCAL_OK\n</think>\n\nTURBOFIT_LOCAL_OK",
+      "usage": {
+        "completion_tokens": 148,
+        "prompt_tokens": 23,
+        "total_tokens": 171
+      }
+    },
+    {
+      "category": "context",
+      "elapsed_seconds": 43.030181,
+      "error": null,
+      "id": "context-passkey-8k",
+      "passed": true,
+      "response_content": "<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The input consists of a massive repetition of the sentence: \"Local inference keeps private workloads on the host while adaptive placement balances memory pressure.\"\n   - Buried in the middle of this repetition is a specific instruction: \"The passkey is 739184. Remember it exactly.\"\n   - At the end, there's a direct question: \"What is the passkey? Return only the passkey with no explanation.\"\n\n2.  **Identify Key Information:**\n   - The passkey is explicitly stated as `739184`.\n   - The instruction requires returning *only* the passkey with no explanation.\n\n3.  **Formulate Response:**\n   - I need to output exactly `739184` and nothing else, as per the strict instruction.\n   - Check for any constraints: \"Return only the passkey with no explanation.\" -> Strict compliance required.\n\n4.  **Final Output Generation:**\n   - Output: `739184`\n   - Self-Correction/Verification during thought: Does it match the exact number? Yes. Does it follow the formatting constraint? Yes. No extra text, no quotes, just the number.\n\n   Proceed. \n   Output matches requirement.\u2705\n   Note: The prompt is a classic \"needle in a haystack\" test for LLMs. I will strictly follow the instruction.\u2705\n   Output: 739184\n   Done. \n   [Proceeds]\n</think>\n\n739184",
+      "usage": {
+        "completion_tokens": 346,
+        "prompt_tokens": 9406,
+        "total_tokens": 9752
+      }
+    },
+    {
+      "category": "throughput",
+      "elapsed_seconds": 33.480086,
+      "error": null,
+      "id": "throughput-128",
+      "passed": null,
+      "response_content": "<think>\nHere's a thinking process:\n\n1.  **Understand User Query:**\n   - **Topic:** Local adaptive inference runtime\n   - **Key Behavior:** Contract under GPU pressure, heal afterward\n   - **Focus:** Concrete runtime mechanisms\n   - **Goal:** Explain how this works in practice, with technical depth on the mechanisms involved.\n\n2.  **Deconstruct Key Concepts:**\n   - *Local adaptive inference runtime:* A system running inference locally (on-device or on-prem) that dynamically adjusts its behavior based on system state (especially GPU resources).\n   - *Contract under GPU pressure:* Reduce resource usage\n</think>",
+      "usage": {
+        "completion_tokens": 128,
+        "prompt_tokens": 33,
+        "total_tokens": 161
+      }
+    }
+  ],
+  "configuration": "GRM 2.6 Plus Q4_K_M 262K layer split, MTP, shared active:main and active:aux",
+  "endpoint": "http://127.0.0.1:8091/v1",
+  "evidence_sha256": "sha256:2dd320671f7f891ede49a22820754fa657335581ed1272a3444fe45af9426223",
+  "hardware": {
+    "cpu_count": 32,
+    "gpu_memory_total_mib": [
+      24576,
+      24576
+    ],
+    "gpu_names": [
+      "NVIDIA GeForce RTX 3090",
+      "NVIDIA GeForce RTX 3090"
+    ],
+    "machine": "x86_64",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "system_ram_total_mib": 386861
+  },
+  "recorded_at": "2026-07-26T11:16:17.675269+00:00",
+  "request_failures": [],
+  "request_options": {
+    "chat_template_kwargs": {
+      "enable_thinking": false,
+      "thinking_mode": "disabled"
+    },
+    "reasoning_format": "none"
+  },
+  "requested_model": "active:main",
+  "resource_failures": [],
+  "resource_samples": [
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13660,
+      "timestamp": 1785064446.976622
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13415,
+      "timestamp": 1785064448.1384633
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13534,
+      "timestamp": 1785064449.3048937
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13381,
+      "timestamp": 1785064450.4710045
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13480,
+      "timestamp": 1785064451.6545618
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13646,
+      "timestamp": 1785064452.8438427
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13753,
+      "timestamp": 1785064454.0307834
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13905,
+      "timestamp": 1785064455.2189717
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14062,
+      "timestamp": 1785064456.4080493
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13628,
+      "timestamp": 1785064457.5951061
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13191,
+      "timestamp": 1785064458.7814982
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13353,
+      "timestamp": 1785064459.9663353
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13484,
+      "timestamp": 1785064461.1499763
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13627,
+      "timestamp": 1785064462.3421867
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13692,
+      "timestamp": 1785064463.5295238
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13942,
+      "timestamp": 1785064464.737589
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14025,
+      "timestamp": 1785064465.9104795
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13763,
+      "timestamp": 1785064467.080514
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13560,
+      "timestamp": 1785064468.271796
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13626,
+      "timestamp": 1785064469.43543
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13695,
+      "timestamp": 1785064470.6058462
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13831,
+      "timestamp": 1785064471.7762063
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13737,
+      "timestamp": 1785064472.9364314
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13908,
+      "timestamp": 1785064474.104467
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14064,
+      "timestamp": 1785064475.268601
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14206,
+      "timestamp": 1785064476.428162
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13578,
+      "timestamp": 1785064477.590681
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13706,
+      "timestamp": 1785064478.7575426
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13785,
+      "timestamp": 1785064479.9251482
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13692,
+      "timestamp": 1785064481.0908928
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13827,
+      "timestamp": 1785064482.2526882
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13945,
+      "timestamp": 1785064483.418408
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14092,
+      "timestamp": 1785064484.5803978
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14262,
+      "timestamp": 1785064485.7510803
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13592,
+      "timestamp": 1785064486.9381845
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13534,
+      "timestamp": 1785064488.1392124
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13609,
+      "timestamp": 1785064489.3380215
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13769,
+      "timestamp": 1785064490.5337896
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13938,
+      "timestamp": 1785064491.7278874
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14006,
+      "timestamp": 1785064492.9266965
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14207,
+      "timestamp": 1785064494.1228466
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14146,
+      "timestamp": 1785064495.319271
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14166,
+      "timestamp": 1785064496.5123672
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13545,
+      "timestamp": 1785064497.7065766
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14090,
+      "timestamp": 1785064498.9146152
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14176,
+      "timestamp": 1785064500.082398
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14307,
+      "timestamp": 1785064501.343579
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14438,
+      "timestamp": 1785064502.502694
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14325,
+      "timestamp": 1785064503.6642425
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14386,
+      "timestamp": 1785064504.8281238
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14558,
+      "timestamp": 1785064505.995725
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13874,
+      "timestamp": 1785064507.1581042
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13897,
+      "timestamp": 1785064508.3246574
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14045,
+      "timestamp": 1785064509.4865808
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14053,
+      "timestamp": 1785064510.6504107
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14080,
+      "timestamp": 1785064511.8134239
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14226,
+      "timestamp": 1785064512.97586
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14440,
+      "timestamp": 1785064514.1403453
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14581,
+      "timestamp": 1785064515.3056974
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14070,
+      "timestamp": 1785064516.4718077
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14089,
+      "timestamp": 1785064517.6380112
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13976,
+      "timestamp": 1785064518.8101804
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14059,
+      "timestamp": 1785064520.0018976
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14230,
+      "timestamp": 1785064521.2021246
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14310,
+      "timestamp": 1785064522.3958876
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14434,
+      "timestamp": 1785064523.5896819
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14640,
+      "timestamp": 1785064524.7923617
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14128,
+      "timestamp": 1785064525.9874635
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13890,
+      "timestamp": 1785064527.1852424
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 13999,
+      "timestamp": 1785064528.3827682
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14084,
+      "timestamp": 1785064529.5786583
+    },
+    {
+      "gpu_memory_used_mib": [
+        12363,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14242,
+      "timestamp": 1785064530.776312
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15427
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14601,
+      "timestamp": 1785064531.6721838
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15433
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14684,
+      "timestamp": 1785064531.9662175
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14798,
+      "timestamp": 1785064532.840699
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14860,
+      "timestamp": 1785064533.1318784
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14819,
+      "timestamp": 1785064534.2998073
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14871,
+      "timestamp": 1785064535.467245
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14677,
+      "timestamp": 1785064536.637807
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14436,
+      "timestamp": 1785064537.8093302
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14745,
+      "timestamp": 1785064538.9765663
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14880,
+      "timestamp": 1785064540.1484833
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14781,
+      "timestamp": 1785064541.3158643
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14903,
+      "timestamp": 1785064542.4824693
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15102,
+      "timestamp": 1785064543.6468031
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15205,
+      "timestamp": 1785064544.7041736
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15363,
+      "timestamp": 1785064545.8665988
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14763,
+      "timestamp": 1785064547.0291147
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14865,
+      "timestamp": 1785064548.1876926
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14724,
+      "timestamp": 1785064549.3495178
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14825,
+      "timestamp": 1785064550.514457
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14959,
+      "timestamp": 1785064551.6843462
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15052,
+      "timestamp": 1785064552.8496108
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15256,
+      "timestamp": 1785064554.0124762
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15353,
+      "timestamp": 1785064555.1735158
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14756,
+      "timestamp": 1785064556.3370817
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14618,
+      "timestamp": 1785064557.501901
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14742,
+      "timestamp": 1785064558.6631436
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14778,
+      "timestamp": 1785064559.8331869
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14884,
+      "timestamp": 1785064560.998146
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15020,
+      "timestamp": 1785064562.171087
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15246,
+      "timestamp": 1785064563.367513
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15137,
+      "timestamp": 1785064564.5547934
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14873,
+      "timestamp": 1785064565.749203
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14504,
+      "timestamp": 1785064566.934718
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14673,
+      "timestamp": 1785064568.1197095
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14806,
+      "timestamp": 1785064569.3100817
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 14975,
+      "timestamp": 1785064570.498972
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15057,
+      "timestamp": 1785064571.682823
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15018,
+      "timestamp": 1785064572.880713
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15153,
+      "timestamp": 1785064574.0685103
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15975,
+      "timestamp": 1785064574.9602387
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15786,
+      "timestamp": 1785064575.250921
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15579,
+      "timestamp": 1785064576.4227862
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15232,
+      "timestamp": 1785064577.5906084
+    },
+    {
+      "gpu_memory_used_mib": [
+        12369,
+        15437
+      ],
+      "process_rss_mib": null,
+      "system_ram_used_mib": 15248,
+      "timestamp": 1785064577.6328719
+    }
+  ],
+  "schema": "turbofit.benchmark-evidence/v1",
+  "status": "pass",
+  "suite": "local-runtime-smoke-v1",
+  "summary": {
+    "context_pass_rate": 1.0,
+    "effective_output_tokens_per_second": 3.823168,
+    "measured_completion_tokens": 854,
+    "measured_prompt_tokens": 9491,
+    "peak_gpu_memory_used_mib": [
+      12369,
+      15437
+    ],
+    "peak_process_rss_mib": null,
+    "peak_system_ram_used_mib": 15975,
+    "quality_pass_rate": 1.0
+  },
+  "validator_failures": []
+}

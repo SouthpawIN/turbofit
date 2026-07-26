@@ -122,6 +122,33 @@
         "system_default": ""
       }
     },
+    "grm-2-6-plus-262k-split-main": {
+      "artifact": "grm-2-6-plus",
+      "context_size": 262144,
+      "description": "Measured GRM 2.6 Plus 262K layer-split runtime shared by main and auxiliary routes.",
+      "display_name": "GRM 2.6 Plus 262K (layer split)",
+      "expected_vram_bytes": 32000000000,
+      "llama_server_flags": {
+        "cache_reuse": 256,
+        "cache_type_k": "q4_0",
+        "cache_type_v": "q4_0",
+        "ctx_size": 262144,
+        "flash_attn": true,
+        "jinja": true,
+        "main_gpu": 1,
+        "n_gpu_layers": 999,
+        "no_context_shift": true,
+        "no_perf": true,
+        "parallel": 1,
+        "slot_prompt_similarity": 0.5,
+        "spec_type": "draft-mtp",
+        "split_mode": "layer"
+      },
+      "prompt_template": {
+        "stop_tokens": [],
+        "system_default": ""
+      }
+    },
     "grm-2-6-plus-auto-128k-main": {
       "artifact": "grm-2-6-plus",
       "context_size": 131072,

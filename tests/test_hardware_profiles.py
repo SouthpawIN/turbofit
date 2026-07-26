@@ -62,6 +62,29 @@ def test_every_hardware_class_publishes_a_local_recommendation_ladder() -> None:
         assert profile.policy.recommendation in {"measured-winner", "portable-local-floor"}
 
 
+def test_every_resolved_role_matches_its_rung_context() -> None:
+    resolutions = json.loads(
+        (ROOT / "runtime-profiles" / "runtime-resolutions.json").read_text()
+    )["profiles"]
+    acquisitions = json.loads(
+        (ROOT / "runtime-profiles" / "acquisitions.json").read_text()
+    )["tags"]
+
+    for class_gb in CLASSES:
+        profile = load_yaml_profile(ROOT / "runtime-profiles" / f"{class_gb}gb.yaml")
+        for rung in profile.rungs:
+            for target in resolutions[profile.id][rung.id].values():
+                assert acquisitions[target["model_tag"]]["context_size"] == rung.context
+
+
+def test_48gb_ceiling_routes_main_and_aux_at_262k() -> None:
+    profile = load_yaml_profile(ROOT / "runtime-profiles" / "48gb.yaml")
+    ceiling = profile.rungs[0]
+
+    assert ceiling.context == 262144
+    assert ceiling.aux_mode.value == "shared-main"
+
+
 def test_every_rung_evidence_identity_resolves() -> None:
     measured_index = json.loads((ROOT / "runtime-profiles" / "evidence-index.json").read_text())
     class_index = json.loads((ROOT / "runtime-profiles" / "class-evidence-index.json").read_text())

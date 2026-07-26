@@ -142,6 +142,10 @@ def test_priority_is_lexicographic_without_weighted_score() -> None:
     assert priority_key(262144, 60, 20) > priority_key(1048576, 100, 10)
 
 
+def test_twenty_tokens_per_second_is_interactive() -> None:
+    assert priority_key(262144, 100, 20)[2] == 20
+
+
 def test_clear_card_shortfall_has_no_eligible_recommendation() -> None:
     candidates = (candidate(profile("quality-24", topology="1x24")),)
 

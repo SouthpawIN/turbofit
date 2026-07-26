@@ -6,6 +6,13 @@
     "source": "runtime-profiles/class-status/24ac15e11138eb9bd1441a6e0846f2e6742e38aff696b7060eb5d6b81faf2b0d.json",
     "status": "unproven-local"
   },
+  "sha256:2dd320671f7f891ede49a22820754fa657335581ed1272a3444fe45af9426223": {
+    "profiles": [
+      "hardware-48gb"
+    ],
+    "source": "references/results/benchmark-hardware-48gb-grm-262k-shared.json",
+    "status": "validated"
+  },
   "sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853": {
     "profiles": [
       "hardware-48gb"

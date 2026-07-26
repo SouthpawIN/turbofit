@@ -39,11 +39,13 @@ Turbofit ships local-only profiles for these physical classes:
 | 8 GB | `1x8` | Bonsai 27B 1-bit, 64K shared main/aux floor |
 | 16 GB | `1x16` | Bonsai 27B 1-bit: 262K → 128K → 64K |
 | 24 GB | `1x24` | GRM 2.6 Plus 128K → Bonsai 262K → 128K → 64K |
-| 48 GB | `2x24` | GRM 128K + dedicated Bonsai 262K aux → shared GRM → Bonsai floors |
+| 48 GB | `2x24` | GRM 2.6 Plus 262K shared main/aux → GRM 128K → Bonsai floors |
 | 64 GB | `2x32` | same verified dual-model ladder with additional headroom |
 | 96 GB | `4x24` | same verified dual-model ladder; unused cards remain available to other work |
 | 200 GB | `2x100` | same verified dual-model ladder while larger candidates are promoted |
 | 300+ GB | `3x100` | same verified dual-model ladder; unused cards remain available to other work |
+
+The current dual-24 GB production ceiling routes both `active:main` and `active:aux` to the same GRM 2.6 Plus 262K runtime. Stage-v1 passed with 100% quality, 100% context retrieval, 3.823 effective end-to-end tok/s, and 12,369 / 15,437 MiB peak GPU use (`sha256:2dd320671f7f891ede49a22820754fa657335581ed1272a3444fe45af9426223`). A separate live 256-token probe reported 55.885 llama-server decode tok/s; effective throughput includes gateway and manager orchestration.
 
 Profiles are selected from physical capacity, not transient free VRAM. Larger cards can satisfy a smaller per-card envelope when card count and topology shape remain compatible; `1x48` is still not treated as `2x24`.
 
@@ -196,7 +198,7 @@ Candidate ranking follows:
 ```text
 quality
 → reach 128K context
-→ reach 30 tok/s
+→ reach 20 tok/s
 → reach 262K context
 → reach 100 tok/s
 → reach 1M context

@@ -14,7 +14,7 @@ from .runtime_profile import HardwareConstraint, Turbofile
 MIN_CONTEXT = 131_072
 WORKING_CONTEXT = 262_144
 MAX_CONTEXT = 1_048_576
-INTERACTIVE_TPS = 30.0
+INTERACTIVE_TPS = 20.0
 FAST_TPS = 100.0
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _TOPOLOGY_PART_RE = re.compile(r"^(\d+)x(\d+)(?:gb)?$", re.IGNORECASE)
@@ -91,7 +91,7 @@ class RecommendationResult:
 def priority_key(
     context: int, min_tps: float, quality_rank: int
 ) -> tuple[int, bool, float, bool, float, int]:
-    """Quality → 128K → 30 tok/s → 262K → 100 tok/s → 1M."""
+    """Quality → 128K → 20 tok/s → 262K → 100 tok/s → 1M."""
     return (
         quality_rank,
         context >= MIN_CONTEXT,

@@ -250,7 +250,7 @@ def test_48gb_class_accounts_managed_residency_on_the_pinned_cards() -> None:
     requirements = load_rung_requirements(
         root / "runtime-profiles/rung-requirements.json", profile
     )
-    assert requirements.required_mb_by_rung[0] == (11_163, 21_554)
+    assert requirements.required_mb_by_rung[0] == (20_000, 20_000)
 
 
 def test_controller_state_round_trips_atomically(tmp_path) -> None:

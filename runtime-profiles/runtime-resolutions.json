@@ -93,8 +93,8 @@
       },
       "local-dedicated-131072": {
         "aux": {
-          "expected_vram_mb": 11163,
-          "model_tag": "bonsai-27b-1bit-262k-main"
+          "expected_vram_mb": 8149,
+          "model_tag": "bonsai-27b-1bit-128k-main"
         },
         "main": {
           "expected_vram_mb": 21554,
@@ -155,8 +155,8 @@
       },
       "local-dedicated-131072": {
         "aux": {
-          "expected_vram_mb": 11163,
-          "model_tag": "bonsai-27b-1bit-262k-main"
+          "expected_vram_mb": 8149,
+          "model_tag": "bonsai-27b-1bit-128k-main"
         },
         "main": {
           "expected_vram_mb": 21554,
@@ -189,20 +189,17 @@
           "model_tag": "bonsai-27b-1bit-64k-main"
         }
       },
-      "local-dedicated-131072": {
-        "aux": {
-          "expected_vram_mb": 11163,
-          "model_tag": "bonsai-27b-1bit-262k-main"
-        },
+      "local-grm-131072": {
         "main": {
           "expected_vram_mb": 21554,
           "model_tag": "grm-2-6-plus-128k-gpu1-main"
         }
       },
-      "local-grm-131072": {
+      "local-grm-262144": {
         "main": {
-          "expected_vram_mb": 21554,
-          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+          "expected_vram_mb": 30518,
+          "model_tag": "grm-2-6-plus-262k-split-main",
+          "split_mode": "layer"
         }
       }
     },
@@ -227,8 +224,8 @@
       },
       "local-dedicated-131072": {
         "aux": {
-          "expected_vram_mb": 11163,
-          "model_tag": "bonsai-27b-1bit-262k-main"
+          "expected_vram_mb": 8149,
+          "model_tag": "bonsai-27b-1bit-128k-main"
         },
         "main": {
           "expected_vram_mb": 21554,
@@ -271,8 +268,8 @@
       },
       "local-dedicated-131072": {
         "aux": {
-          "expected_vram_mb": 11163,
-          "model_tag": "bonsai-27b-1bit-262k-main"
+          "expected_vram_mb": 8149,
+          "model_tag": "bonsai-27b-1bit-128k-main"
         },
         "main": {
           "expected_vram_mb": 21554,

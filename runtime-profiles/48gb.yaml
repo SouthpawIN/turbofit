@@ -1,6 +1,6 @@
 schema: turbofit.runtime/v1
 id: hardware-48gb
-revision: 2
+revision: 4
 hardware:
   class_vram_gb: 48
   min_devices: 2
@@ -22,12 +22,11 @@ roles:
   auxiliary: active:aux
   fallback: active:main
 rungs:
-- id: local-dedicated-131072
-  context: 131072
-  aux_mode: dedicated
-  evidence: sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853
-  main_manifest: sha256:05d85116405e37360ba6057a2746e4769d9ee08f239df8fdc973e3e75041437d
-  aux_manifest: sha256:6456085521bfd9d8846c0f7e581611d56b2fe108e31c02af2dfdf56dea474e1c
+- id: local-grm-262144
+  context: 262144
+  aux_mode: shared-main
+  evidence: sha256:2dd320671f7f891ede49a22820754fa657335581ed1272a3444fe45af9426223
+  main_manifest: sha256:c9c1903de0eff0d6753e098077ed205f3918f1fb725a75a0239ecc46a6ba4200
 - id: local-grm-131072
   context: 131072
   aux_mode: shared-main
