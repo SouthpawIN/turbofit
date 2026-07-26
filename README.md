@@ -3,7 +3,7 @@
 ![Turbofit — unified backend, amber and mint aesthetic](assets/turbofit-hero.png)
 
 <p align="center">
-  <a href="assets/turbofit-promo-1080p.mp4"><strong>▶ Watch the 53-second Turbofit overview</strong></a>
+  <a[▶ Watch the 53-second Turbofit](https://x.com/vSouthvPawv/status/2081193435172618461?s=20)</strong></a>
 </p>
 
 **A local-model provider for Hermes Agent that fits itself around the way you use your computer.**
@@ -38,7 +38,7 @@ Turbofit ships local-only profiles for these physical classes:
 | 8 GB | `1x8` | Bonsai 27B 1-bit, 64K shared main/aux floor |
 | 16 GB | `1x16` | Bonsai 27B 1-bit: 262K → 128K → 64K |
 | 24 GB | `1x24` | GRM 2.6 Plus 128K → Bonsai 262K → 128K → 64K |
-| 48 GB | `2x24` | GRM 128K + dedicated Bonsai 262K aux → shared GRM → Bonsai floors |
+| 48 GB | `2x24` | GRM 262K + dedicated Bonsai 262K aux → shared GRM → Bonsai floors |
 | 64 GB | `2x32` | same verified dual-model ladder with additional headroom |
 | 96 GB | `4x24` | same verified dual-model ladder; unused cards remain available to other work |
 | 200 GB | `2x100` | same verified dual-model ladder while larger candidates are promoted |
