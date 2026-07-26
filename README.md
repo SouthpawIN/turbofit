@@ -3,7 +3,7 @@
 ![Turbofit — unified backend, amber and mint aesthetic](assets/turbofit-hero.png)
 
 <p align="center">
-  <a href="assets/turbofit-promo-1080p.mp4"><strong>▶ Watch the 53-second Turbofit overview</strong></a>
+  <a[▶ Watch the 53-second Turbofit](https://x.com/vSouthvPawv/status/2081193435172618461?s=20)</strong></a>
 </p>
 
 **A local-model provider for Hermes Agent that fits itself around the way you use your computer.**
