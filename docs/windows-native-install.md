@@ -126,7 +126,9 @@ curl http://127.0.0.1:11401/health
 curl http://127.0.0.1:11401/v1/models
 ```
 
-## Step 7 — Run as a scheduled task (survives logoff)
+## Step 7 — Run as a scheduled task (production mode)
+
+> **Foreground = debug.** Running the shim directly shows live logs and is useful for troubleshooting, but it dies when the console closes. **Task Scheduler is the production method** — it survives logoff, auto-restarts on failure, and runs without a visible window. A `--daemon` flag is available as a lighter alternative that self-backgrounds and logs to file, but it lacks Task Scheduler's restart-on-crash guarantees.
 
 Create `C:\Users\%USERNAME%\turbofit\start-shim.bat`:
 
