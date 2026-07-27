@@ -215,6 +215,16 @@ fallback_providers:
 | 262K | ~9.4 GB | +3.8 GB | ~14 GB | 10 GB |
 | 1M | ~38 GB | +3.8 GB | ~42 GB | ❌ won't fit |
 
+## Idle Behavior
+
+With `sleep_idle_seconds: 60` in the manifest, llama-server automatically:
+
+1. **Stops compute** after 60 seconds of no requests (GPU utilization drops to ~0%)
+2. **Releases VRAM** — model weights and KV cache are unloaded (observed: 13.3 GB → 3.7 GB on RTX 3090)
+3. **Lazy-reloads** on the next request via the shim's health-probe readiness
+
+This means TurboFit genuinely "fits around your computer" — your GPU is fully available for games, rendering, or other work when the model isn't actively serving requests.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |

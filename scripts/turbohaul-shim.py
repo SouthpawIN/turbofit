@@ -291,6 +291,7 @@ class NativeLlamaBackend(Backend):
             "rope_freq_scale": "--rope-freq-scale",
             "n_threads_batch": "--n-threads-batch",
             "grp_attn_n": "--grp-attn-n",
+            "sleep_idle_seconds": "--sleep-idle-seconds",
             "grp_attn_w": "--grp-attn-w",
         }
 
