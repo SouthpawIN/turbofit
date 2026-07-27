@@ -230,6 +230,7 @@ This means TurboFit genuinely "fits around your computer" — your GPU is fully 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `model failed to become ready` | `--flash-attn` needs a value in newer builds | Set `"flash_attn": "on"` in manifest |
+| `model failed to become ready` (GRM) | Invalid `n_gpu_moe` flag — doesn't exist in llama-server; GRM is a dense model, not MoE | Remove `n_gpu_moe` and `n_cpu_moe` from GRM manifest |
 | Empty response / `Expecting value` | Client sent `stream: true`, shim returned JSON | Update shim (now handles SSE conversion) |
 | `exceeds context size` | `--parallel N` splits ctx per slot | Increase `ctx_size` or reduce `parallel` |
 | GPU at 100% but no response | Context too large, zero compute headroom | Reduce `ctx_size` to leave ≥4 GB free |
