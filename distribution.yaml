@@ -1,10 +1,10 @@
-# Turbofit Hermes skill distribution
+# Turbofit Hermes plugin distribution
 name: turbofit
-version: "2.0.0"
+version: "3.0.0"
 description: >-
-  Hardware-aware adaptive Hermes runtime using portable Turbofiles,
-  Turbohaul Manager v0.7 local residency, stable auto/active role routes,
-  evidence-backed promotion, and external-GPU-first pressure handling.
+  Hermes plugin and setup dashboard for hardware-aware adaptive local inference,
+  portable Turbofiles, Turbohaul Manager v0.7 residency, stable auto/active role
+  routes, evidence-backed promotion, and external-GPU-first pressure handling.
 author: SouthpawIN
 license: MIT
 homepage: https://github.com/SouthpawIN/turbofit
@@ -16,6 +16,11 @@ hermes_requires: ">=0.12.0"
 env_requires: []
 
 distribution_owned:
+  - plugin.yaml
+  - __init__.py
+  - schemas.py
+  - plugin_tools.py
+  - dashboard/
   - SKILL.md
   - README.md
   - distribution.yaml

@@ -1,0 +1,14 @@
+{
+  "name": "turbofit",
+  "label": "Turbofit",
+  "description": "Adaptive local inference setup, routes, and provider controls",
+  "icon": "Activity",
+  "version": "3.0.0",
+  "tab": {
+    "path": "/turbofit",
+    "position": "before:config"
+  },
+  "entry": "dist/index.js",
+  "css": "dist/style.css",
+  "api": "plugin_api.py"
+}

@@ -1,12 +1,31 @@
 ---
 name: turbofit
-description: "Repository pointer for the installable TurboFit adaptive-runtime skill."
-version: 2.0.0
+description: "Operate the Turbofit adaptive local inference plugin."
+version: 3.0.0
 author: SouthpawIN + Nous Girl
 license: MIT
-tags: [hermes-agent, turbohaul, adaptive-runtime]
+tags: [hermes-agent, plugin, turbohaul, adaptive-runtime]
 ---
 
-# TurboFit
+# Turbofit
 
-The single canonical installable skill is [`skills/turbofit/SKILL.md`](skills/turbofit/SKILL.md). Load and follow that file.
+Use this bundled plugin skill when configuring or inspecting Turbofit for Hermes Agent.
+
+## Operator workflow
+
+1. Call `turbofit_status` to inspect provider registration, gateway health, selected hardware profile, active rung, and stable routes.
+2. Call `turbofit_configure` with `profile: auto` for hardware selection. Manual `hardware-*gb` profiles are accepted only when physical topology fits.
+3. Set `primary: true` to use `custom:turbofit` with model `auto` as the main Hermes provider.
+4. Set `fallback: true` to append Turbofit to the canonical `fallback_providers` chain; set it false to remove only Turbofit while preserving other fallbacks.
+5. Start a new Hermes session after provider changes.
+
+The same controls are available in `hermes dashboard` under **Turbofit** and through `/turbofit status|setup`.
+
+## Invariants
+
+- Stable model IDs are `auto`, `active:main`, and `active:aux`.
+- External GPU processes are read-only pressure signals and are never terminated or signaled.
+- The hardware recommendation remains the healing ceiling; transient pressure changes only the effective rung.
+- Runtime activation and model lifecycle remain owned by Turbohaul Manager.
+- Plain HTTP provider endpoints are limited to loopback or Tailscale addresses; all other endpoints require HTTPS.
+- `--jinja` is represented as `llama_server_flags.jinja: true` in compiled Turbohaul manifests.

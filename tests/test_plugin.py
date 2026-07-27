@@ -1,0 +1,151 @@
+from __future__ import annotations
+
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).parents[1]
+
+
+def _load_plugin_module():
+    spec = importlib.util.spec_from_file_location(
+        "turbofit_plugin",
+        ROOT / "__init__.py",
+        submodule_search_locations=[str(ROOT)],
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_configure_hermes_registers_named_provider_and_primary_model() -> None:
+    from plugin_tools import configure_hermes
+
+    original = {
+        "custom_providers": [
+            {
+                "name": "other",
+                "base_url": "http://example.test/v1",
+                "api_key": "secret",
+                "models": {"model-a": {}},
+            }
+        ],
+        "model": {"provider": "nous", "default": "some-model"},
+    }
+
+    configured = configure_hermes(
+        original,
+        primary=True,
+        fallback=False,
+        base_url="http://127.0.0.1:8091/v1",
+    )
+
+    assert configured is not original
+    assert configured["custom_providers"][0] == original["custom_providers"][0]
+    assert configured["custom_providers"][1] == {
+        "name": "turbofit",
+        "base_url": "http://127.0.0.1:8091/v1",
+        "api_key": "not-needed",
+        "api_mode": "chat_completions",
+        "models": {"auto": {}, "active:main": {}, "active:aux": {}},
+    }
+    assert configured["model"]["provider"] == "custom:turbofit"
+    assert configured["model"]["default"] == "auto"
+    assert original["custom_providers"][-1]["name"] == "other"
+
+
+def test_configure_hermes_fallback_is_idempotent_and_removable() -> None:
+    from plugin_tools import configure_hermes
+
+    config = {
+        "fallback_providers": [
+            {"provider": "nous", "model": "some-cloud-model"},
+            {"provider": "custom:turbofit", "model": "old"},
+        ]
+    }
+    enabled = configure_hermes(config, primary=False, fallback=True)
+    enabled_again = configure_hermes(enabled, primary=False, fallback=True)
+
+    assert enabled_again["fallback_providers"] == [
+        {"provider": "nous", "model": "some-cloud-model"},
+        {
+            "provider": "custom:turbofit",
+            "model": "auto",
+            "base_url": "http://127.0.0.1:8091/v1",
+            "api_mode": "chat_completions",
+        },
+    ]
+
+    disabled = configure_hermes(enabled_again, primary=False, fallback=False)
+    assert disabled["fallback_providers"] == [
+        {"provider": "nous", "model": "some-cloud-model"}
+    ]
+
+
+def test_plain_http_provider_url_is_limited_to_loopback_or_tailnet() -> None:
+    import pytest
+
+    from plugin_tools import configure_hermes
+
+    with pytest.raises(ValueError, match="Tailscale"):
+        configure_hermes({}, base_url="http://example.com/v1")
+    with pytest.raises(ValueError, match="Tailscale"):
+        configure_hermes({}, base_url="http://172.20.0.1:8091/v1")
+
+    assert configure_hermes({}, base_url="http://100.100.10.20:8091/v1")[
+        "custom_providers"
+    ][0]["base_url"] == "http://100.100.10.20:8091/v1"
+
+
+def test_plugin_registers_status_configure_and_slash_command() -> None:
+    plugin = _load_plugin_module()
+
+    class Context:
+        def __init__(self) -> None:
+            self.tools = []
+            self.commands = []
+            self.skills = []
+
+        def register_tool(self, **kwargs):
+            self.tools.append(kwargs)
+
+        def register_command(self, name, handler, description):
+            self.commands.append((name, handler, description))
+
+        def register_skill(self, name, path):
+            self.skills.append((name, Path(path)))
+
+    ctx = Context()
+    plugin.register(ctx)
+
+    assert {item["name"] for item in ctx.tools} == {
+        "turbofit_status",
+        "turbofit_configure",
+    }
+    assert all(item["toolset"] == "turbofit" for item in ctx.tools)
+    assert [item[0] for item in ctx.commands] == ["turbofit"]
+    assert ctx.skills == [("turbofit", ROOT / "SKILL.md")]
+
+
+def test_dashboard_contract_is_installable() -> None:
+    manifest = json.loads((ROOT / "dashboard" / "manifest.json").read_text())
+    assert manifest["name"] == "turbofit"
+    assert manifest["tab"]["path"] == "/turbofit"
+    assert manifest["api"] == "plugin_api.py"
+    assert (ROOT / "dashboard" / manifest["entry"]).is_file()
+    assert (ROOT / "dashboard" / manifest["css"]).is_file()
+
+
+def test_plugin_manifest_declares_registered_tools() -> None:
+    import yaml
+
+    manifest = yaml.safe_load((ROOT / "plugin.yaml").read_text())
+    assert manifest["kind"] == "standalone"
+    assert set(manifest["provides_tools"]) == {
+        "turbofit_status",
+        "turbofit_configure",
+    }

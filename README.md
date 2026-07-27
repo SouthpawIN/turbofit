@@ -116,14 +116,25 @@ Stable model IDs:
 
 The IDs stay constant while the controller changes the backing local model and context.
 
-## Install
+## Install the Hermes plugin
 
 ```bash
-hermes skills tap add SouthpawIN/turbofit
-hermes skills install SouthpawIN/turbofit/skills/turbofit
+hermes plugins install SouthpawIN/turbofit --enable
 ```
 
-Development should happen from a Git checkout, not the installed skill directory.
+Restart Hermes, then open the setup screen:
+
+```bash
+hermes dashboard
+```
+
+Select **Turbofit** in the dashboard. The plugin can scan/select a compatible
+hardware profile, register the `custom:turbofit` endpoint, set `auto` as the
+primary model, and add or remove Turbofit from the canonical
+`fallback_providers` chain. It also registers `/turbofit`,
+`turbofit_status`, and `turbofit_configure` for CLI and gateway sessions.
+
+Development should happen from a Git checkout, not the installed plugin directory.
 
 Current requirements:
 

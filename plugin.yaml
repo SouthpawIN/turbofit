@@ -1,0 +1,12 @@
+name: turbofit
+version: "3.0.0"
+description: Adaptive local-model provider and setup dashboard for Hermes Agent
+author: SouthpawIN
+license: MIT
+homepage: https://github.com/SouthpawIN/turbofit
+kind: standalone
+provides_tools:
+  - turbofit_status
+  - turbofit_configure
+provides_commands:
+  - turbofit
