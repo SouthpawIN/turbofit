@@ -6,7 +6,7 @@ hardware:
   min_devices: 1
   total_vram_gb: 8
   per_device_min_gb: 8
-  accelerator: nvidia-cuda
+  accelerator: llama.cpp-local
   topology: 1x8
 policy:
   recommendation: portable-local-floor

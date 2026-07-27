@@ -235,16 +235,15 @@ class HybridModel:
     runtime_requirement: str
     parameter_count_b: float
     native_context: int
+    context_scaling: Mapping[str, Any] | None
     source: ArtifactSource
     configurations: tuple[HybridConfiguration, ...]
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> "HybridModel":
-        _exact(
-            value,
-            {"id", "name", "architecture", "runtime_requirement", "parameter_count_b", "native_context", "source", "configurations"},
-            "hybrid model",
-        )
+        required = {"id", "name", "architecture", "runtime_requirement", "parameter_count_b", "native_context", "source", "configurations"}
+        if not required <= set(value) or set(value) - required != ({"context_scaling"} if "context_scaling" in value else set()):
+            raise ValueError("hybrid model fields do not match schema")
         raw_configs = value["configurations"]
         if not isinstance(raw_configs, list) or not raw_configs:
             raise ValueError("hybrid model configurations must be a non-empty list")
@@ -252,6 +251,7 @@ class HybridModel:
             id=str(value["id"]), name=str(value["name"]), architecture=str(value["architecture"]),
             runtime_requirement=str(value["runtime_requirement"]),
             parameter_count_b=float(value["parameter_count_b"]), native_context=value["native_context"],
+            context_scaling=value.get("context_scaling"),
             source=ArtifactSource.from_mapping(value["source"]),
             configurations=tuple(HybridConfiguration.from_mapping(config) for config in raw_configs),
         )
@@ -262,8 +262,18 @@ class HybridModel:
         _positive_int(item.native_context, "native_context")
         if len({config.id for config in item.configurations}) != len(item.configurations):
             raise ValueError("duplicate hybrid configuration id")
-        if any(config.context > item.native_context for config in item.configurations):
-            raise ValueError("configuration exceeds native context without scaling evidence")
+        maximum_context = item.native_context
+        if item.context_scaling is not None:
+            if set(item.context_scaling) != {"method", "scale", "original_context", "max_context"}:
+                raise ValueError("invalid context_scaling fields")
+            if item.context_scaling["method"] not in {"yarn", "linear"}:
+                raise ValueError("unsupported context scaling method")
+            _positive_int(item.context_scaling["scale"], "context_scaling.scale")
+            _positive_int(item.context_scaling["original_context"], "context_scaling.original_context")
+            _positive_int(item.context_scaling["max_context"], "context_scaling.max_context")
+            maximum_context = item.context_scaling["max_context"]
+        if any(config.context > maximum_context for config in item.configurations):
+            raise ValueError("configuration exceeds supported context scaling limit")
         return item
 
     def configuration(self, config_id: str) -> HybridConfiguration:

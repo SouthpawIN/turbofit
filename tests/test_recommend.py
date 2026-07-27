@@ -108,6 +108,25 @@ def test_topology_constraint_distinguishes_one_48_from_two_24() -> None:
     assert tuple(item.profile.id for item in result.eligible) == ("two-24",)
 
 
+def test_portable_llama_cpp_profile_matches_cuda_and_metal_backends() -> None:
+    portable = profile("portable-24", topology="1x24")
+    portable = replace(
+        portable,
+        hardware=replace(portable.hardware, accelerator="llama.cpp-local", compute_capability_min=None),
+    )
+    metal = HardwareFingerprint(
+        os="darwin",
+        architecture="arm64",
+        system_ram_mb=98304,
+        devices=(AcceleratorDevice(0, "apple-unified-memory", "Apple Silicon", "apple", "metal", 98304, None, None),),
+    )
+
+    assert hardware_satisfies(hardware(24576), portable.hardware)
+    assert hardware_satisfies(metal, portable.hardware)
+    cuda_only = replace(portable, hardware=replace(portable.hardware, accelerator="nvidia-cuda"))
+    assert not hardware_satisfies(metal, cuda_only.hardware)
+
+
 def test_only_candidates_with_valid_evidence_are_eligible() -> None:
     item = profile("quality-24", topology="1x24")
     candidates = (

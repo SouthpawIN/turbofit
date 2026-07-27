@@ -68,12 +68,26 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
     fallback = body.get("fallback") if "fallback" in body else None
     profile = body.get("profile")
     base_url = body.get("base_url")
-    if not isinstance(primary, bool) or (fallback is not None and not isinstance(fallback, bool)):
-        raise HTTPException(status_code=422, detail="primary and fallback must be booleans")
+    publish_tailnet_routes = body.get("publish_tailnet", False)
+    port_defaults = {
+        "dashboard_local_port": 9127,
+        "provider_local_port": 8091,
+        "dashboard_https_port": 9444,
+        "provider_https_port": 9443,
+    }
+    ports = {name: body.get(name, default) for name, default in port_defaults.items()}
+    if (
+        not isinstance(primary, bool)
+        or (fallback is not None and not isinstance(fallback, bool))
+        or not isinstance(publish_tailnet_routes, bool)
+    ):
+        raise HTTPException(status_code=422, detail="primary, fallback, and publish_tailnet must be booleans")
     if profile is not None and not isinstance(profile, str):
         raise HTTPException(status_code=422, detail="profile must be a string")
     if base_url is not None and not isinstance(base_url, str):
         raise HTTPException(status_code=422, detail="base_url must be a string")
+    if any(isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 65535 for value in ports.values()):
+        raise HTTPException(status_code=422, detail="Tailscale ports must be integers from 1 to 65535")
     try:
         return await asyncio.to_thread(
             apply_configuration,
@@ -81,6 +95,8 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
             fallback=fallback,
             profile=profile,
             base_url=base_url,
+            publish_tailnet_routes=publish_tailnet_routes,
+            **ports,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

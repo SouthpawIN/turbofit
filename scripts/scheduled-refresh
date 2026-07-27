@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -u
+ROOT=/home/sovthpaw/projects/turbofit
+cd "$ROOT" || exit 1
+
+intel_output=$(scripts/update-model-intel 2>&1) || {
+  printf '{"model_intel":"failed","benchmark":"skipped"}\n'
+  exit 1
+}
+
+if ! gpu_pids=$(nvidia-smi --query-compute-apps=pid --format=csv,noheader,nounits 2>/dev/null); then
+  printf '{"model_intel":"updated","benchmark":"skipped","reason":"accelerator probe unavailable"}\n'
+  exit 0
+fi
+if [ -n "${gpu_pids//[[:space:]]/}" ]; then
+  printf '{"model_intel":"updated","benchmark":"skipped","reason":"external GPU workload active"}\n'
+  exit 0
+fi
+
+if scripts/turbofit-campaign run-one; then
+  printf '{"model_intel":"updated","benchmark":"completed"}\n'
+else
+  status=$?
+  printf '{"model_intel":"updated","benchmark":"failed","exit_code":%d}\n' "$status"
+  exit "$status"
+fi

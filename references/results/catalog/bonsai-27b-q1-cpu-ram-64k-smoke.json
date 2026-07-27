@@ -1,0 +1,38 @@
+{
+  "schema": "turbofit.smoke-evidence/v1",
+  "recorded_at": "2026-07-27T03:57:46.077678+00:00",
+  "candidate": "bonsai-27b-q1-cpu",
+  "configuration": "cpu-ram-64k-jinja",
+  "endpoint": "http://127.0.0.1:19001/v1/chat/completions",
+  "model": "/home/sovthpaw/Models/storage/gguf/Bonsai-27B/Bonsai-27B-Q1_0.gguf",
+  "context": 65536,
+  "gpu_layers": 0,
+  "jinja": true,
+  "thinking_disabled": true,
+  "prompt": "Reply with exactly: TURBOFIT_OK",
+  "response": "TURBOFIT_OK",
+  "reasoning_content": "",
+  "finish_reason": "stop",
+  "elapsed_s": 4.907390011998359,
+  "timings": {
+    "cache_n": 14,
+    "prompt_n": 6,
+    "prompt_ms": 2714.985,
+    "prompt_per_token_ms": 452.4975,
+    "prompt_per_second": 2.2099569610881824,
+    "predicted_n": 5,
+    "predicted_ms": 2136.656,
+    "predicted_per_token_ms": 427.33119999999997,
+    "predicted_per_second": 2.3401052860170286
+  },
+  "usage": {
+    "completion_tokens": 5,
+    "prompt_tokens": 20,
+    "total_tokens": 25,
+    "prompt_tokens_details": {
+      "cached_tokens": 14
+    }
+  },
+  "promotion_eligible": false,
+  "note": "Real CPU/system-RAM smoke evidence only; not production promotion evidence."
+}

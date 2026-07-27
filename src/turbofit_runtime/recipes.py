@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -36,16 +37,18 @@ class ResolvedRecipe:
 
 
 class RecipeBook:
-    def __init__(self, data: dict) -> None:
+    def __init__(self, data: dict, *, platform_name: str | None = None) -> None:
         if data.get("schema_version") != 1:
             raise ValueError(f"unsupported recipe schema: {data.get('schema_version')}")
         self.data = data
         self.models = data.get("models") or {}
+        self.variants = data.get("variants") or {}
         self.atomic_binary = str(data["atomic_binary"])
+        self.platform_name = platform_name or sys.platform
 
     @classmethod
-    def load(cls, path: Path | str) -> "RecipeBook":
-        return cls(json.loads(Path(path).read_text()))
+    def load(cls, path: Path | str, *, platform_name: str | None = None) -> "RecipeBook":
+        return cls(json.loads(Path(path).read_text()), platform_name=platform_name)
 
     @staticmethod
     def _context_method(spec: dict, context: int) -> str:
@@ -54,11 +57,19 @@ class RecipeBook:
         except KeyError as exc:
             raise ValueError(f"no method recipe for context {context}") from exc
 
+    def _spec(self, name: str) -> tuple[str, dict]:
+        variant = self.variants.get(name)
+        if variant is not None:
+            family = str(variant.get("family", ""))
+            if family not in self.models:
+                raise ValueError(f"unknown recipe family for variant {name}: {family}")
+            return family, {**self.models[family], **{key: value for key, value in variant.items() if key != "family"}}
+        if name not in self.models:
+            raise ValueError(f"unknown model family: {name}")
+        return name, dict(self.models[name])
+
     def _component(self, family: str, role: str, context: int, gpu: str) -> ResolvedComponent:
-        try:
-            spec = self.models[family]
-        except KeyError as exc:
-            raise ValueError(f"unknown model family: {family}") from exc
+        _, spec = self._spec(family)
         method = self._context_method(spec, context)
         context_override = (spec.get("context_overrides") or {}).get(str(context)) or {}
         kind = str(spec["kind"])
@@ -83,7 +94,7 @@ class RecipeBook:
                     "DRAFT_NGL": "99",
                     "SPEC_DRAFT_N_MAX": "4",
                 })
-            command: list[str] = []
+            command: list[str] = ["--jinja"]
             if context_override.get("split_mode"):
                 command.extend(["--split-mode", str(context_override["split_mode"])])
             if context_override.get("tensor_split"):
@@ -96,6 +107,23 @@ class RecipeBook:
                     "--rope-scale", str(scaling["scale"]),
                     "--yarn-orig-ctx", str(scaling["original_context"]),
                 ])
+            if self.platform_name == "darwin":
+                native_command = [
+                    self.atomic_binary, "-m", str(root / model),
+                    "--host", "127.0.0.1", "--port", str(port),
+                    "-c", str(context), "-ngl", "99", "-fa", "on",
+                    *command,
+                ]
+                if method == "dspark":
+                    native_command.extend(["--model-draft", str(root / str(spec["draft"]))])
+                if projector:
+                    native_command.extend(["--mmproj", str(root / projector)])
+                return ResolvedComponent(
+                    role=role, family=family, alias=alias, kind="process", method=method,
+                    gpu=gpu, port=port, command=tuple(native_command),
+                    model_path=str(root / model),
+                    projector_path=str(root / projector) if projector else "",
+                )
             return ResolvedComponent(
                 role=role, family=family, alias=alias, kind=kind, method=method,
                 gpu=gpu, port=port, command=tuple(command), image=str(spec["image"]),
@@ -111,7 +139,7 @@ class RecipeBook:
         command = [
             self.atomic_binary, "-m", model,
             "--host", "127.0.0.1", "--port", str(port),
-            "-c", str(context), "-ngl", str(context_override.get("gpu_layers", 99)), "--fit", fit, "-fa", "on",
+            "-c", str(context), "-ngl", str(context_override.get("gpu_layers", 99)), "--fit", fit, "-fa", "on", "--jinja",
             "--cache-type-k", "q4_0", "--cache-type-v", "q4_0", "--parallel", "1",
         ]
         if context_override.get("split_mode"):
@@ -143,28 +171,40 @@ class RecipeBook:
         )
 
     def resolve(self, row: MatrixRow) -> ResolvedRecipe:
-        main_spec = self.models.get(row.main)
-        if not main_spec:
-            raise ValueError(f"no recipe for main family: {row.main}")
+        return self._resolve_values(row.id, row.main, row.aux, row.context)
+
+    def resolve_catalog_configuration(self, value: dict) -> ResolvedRecipe:
+        required = {"id", "main", "auxiliary", "context", "status"}
+        if set(value) != required or value.get("status") != "candidate":
+            raise ValueError("invalid catalog configuration")
+        context = value["context"]
+        if isinstance(context, bool) or not isinstance(context, int):
+            raise ValueError("catalog context must be an integer")
+        return self._resolve_values(
+            str(value["id"]), str(value["main"]), str(value["auxiliary"]), context
+        )
+
+    def _resolve_values(self, row_id: str, main_name: str, aux_name: str, context: int) -> ResolvedRecipe:
+        _, main_spec = self._spec(main_name)
         main_large = bool(main_spec.get("large", False))
-        main_override = (main_spec.get("context_overrides") or {}).get(str(row.context)) or {}
+        main_override = (main_spec.get("context_overrides") or {}).get(str(context)) or {}
         override_gpu = str(main_override.get("gpu", ""))
-        if row.aux == "auto":
+        if aux_name == "auto":
             main_gpu = override_gpu or ("0,1" if main_large else "0")
-            main = self._component(row.main, "main", row.context, main_gpu)
+            main = self._component(main_name, "main", context, main_gpu)
             return ResolvedRecipe(
-                row_id=row.id,
-                profile_name=row.id,
+                row_id=row_id,
+                profile_name=row_id,
                 main_alias=main.alias,
                 aux_alias=f"auto:{main.alias}",
                 aux_mode="shared-main",
                 components=(main,),
             )
-        aux = self._component(row.aux, "aux", row.context, "0")
-        main = self._component(row.main, "main", row.context, override_gpu or ("0,1" if main_large else "1"))
+        aux = self._component(aux_name, "aux", context, "0")
+        main = self._component(main_name, "main", context, override_gpu or ("0,1" if main_large else "1"))
         return ResolvedRecipe(
-            row_id=row.id,
-            profile_name=row.id,
+            row_id=row_id,
+            profile_name=row_id,
             main_alias=main.alias,
             aux_alias=aux.alias,
             aux_mode="dedicated",

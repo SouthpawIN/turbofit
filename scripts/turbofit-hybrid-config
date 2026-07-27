@@ -22,10 +22,13 @@ def host_capacity() -> tuple[int, int, tuple[int, ...], tuple[int, ...]]:
     for line in Path("/proc/meminfo").read_text().splitlines():
         name, rest = line.split(":", 1)
         values[name] = int(rest.strip().split()[0])
-    output = subprocess.run(
-        ["nvidia-smi", "--query-gpu=memory.total,memory.free", "--format=csv,noheader,nounits"],
-        check=True, capture_output=True, text=True, timeout=10,
-    ).stdout
+    try:
+        output = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.total,memory.free", "--format=csv,noheader,nounits"],
+            check=True, capture_output=True, text=True, timeout=10,
+        ).stdout
+    except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        output = ""
     gpu_rows = [tuple(int(value.strip()) for value in line.split(",")) for line in output.splitlines() if line.strip()]
     return (
         values["MemTotal"] // 1024,

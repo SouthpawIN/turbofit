@@ -126,6 +126,41 @@ def test_probe_uses_stable_nvidia_query() -> None:
     assert fingerprint.devices[0].name == "RTX 4090"
 
 
+def test_probe_apple_silicon_exposes_unified_memory_as_metal_capacity() -> None:
+    def missing(_command: list[str]) -> str:
+        raise FileNotFoundError("nvidia-smi")
+
+    fingerprint = probe_hardware(
+        command_runner=missing,
+        os_name="Darwin",
+        architecture="arm64",
+        system_ram_mb=65536,
+    )
+
+    assert fingerprint.os == "darwin"
+    assert fingerprint.backends == ("metal",)
+    assert fingerprint.total_vram_mb == 57_344
+    assert fingerprint.total_vram_mb < fingerprint.system_ram_mb
+    assert fingerprint.devices[0].vendor == "apple"
+
+
+def test_probe_labels_wsl2_without_losing_nvidia_topology() -> None:
+    def run(_command: list[str]) -> str:
+        return "0, GPU-a, RTX 4090, 24576, 8.9, 00000000:01:00.0\n"
+
+    fingerprint = probe_hardware(
+        command_runner=run,
+        os_name="Linux",
+        architecture="x86_64",
+        system_ram_mb=32768,
+        kernel_release="5.15.153.1-microsoft-standard-WSL2",
+    )
+
+    assert fingerprint.os == "windows-wsl2"
+    assert fingerprint.backends == ("cuda",)
+    assert fingerprint.total_vram_mb == 24576
+
+
 def test_fingerprint_rejects_boolean_capacities_and_duplicate_device_identity() -> None:
     with pytest.raises(ValueError, match="memory_total_mb"):
         AcceleratorDevice(0, "a", "A", "nvidia", "cuda", True, "8.6", "01")

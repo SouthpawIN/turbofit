@@ -47,6 +47,27 @@ def test_dual_24gb_configuration_uses_system_ram_and_both_gpus() -> None:
         assert config.launch.tensor_split == (1.0, 1.0)
 
 
+def test_each_system_ram_model_has_64k_128k_262k_and_1m_configurations() -> None:
+    catalog = HybridCatalog.load(CATALOG)
+
+    for model in catalog.models.values():
+        assert {config.context for config in model.configurations} == {
+            65_536, 131_072, 262_144, 1_048_576,
+        }
+        for config in model.configurations:
+            command = config.command(binary="/opt/llama-server", model_path="/models/model.gguf", port=8080)
+            assert "--jinja" in command
+            if config.context > 65_536:
+                assert config.status == "configured-unmeasured"
+                assert config.evidence is None
+                assert "--no-kv-offload" in command
+
+    laguna_1m = catalog.models["laguna-s2-1-q4-k-m"].configuration("dual-24gb-1m")
+    laguna_command = laguna_1m.command(binary="/opt/llama-server", model_path="/models/model.gguf", port=8080)
+    assert laguna_command[laguna_command.index("--rope-scaling") + 1] == "yarn"
+    assert laguna_command[laguna_command.index("--rope-scale") + 1] == "4"
+
+
 def test_fit_requires_ram_and_every_gpu_budget() -> None:
     config = HybridCatalog.load(CATALOG).models["laguna-s2-1-q4-k-m"].configuration("dual-24gb-64k")
 

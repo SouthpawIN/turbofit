@@ -27,7 +27,21 @@ class LocalPairExecutor:
         self.result_dir = result_dir
 
     def execute(self, item: MatrixRow) -> RawBenchmark:
-        recipe = self.recipes.resolve(item)
+        return self._execute(
+            recipe=self.recipes.resolve(item), item_id=item.id,
+            context=item.context, row_payload=item.to_dict(),
+        )
+
+    def execute_catalog(self, item: dict) -> RawBenchmark:
+        return self._execute(
+            recipe=self.recipes.resolve_catalog_configuration(item),
+            item_id=str(item["id"]), context=int(item["context"]), row_payload=dict(item),
+        )
+
+    def _execute(
+        self, *, recipe: ResolvedRecipe, item_id: str,
+        context: int, row_payload: dict,
+    ) -> RawBenchmark:
         started: list[tuple[ResolvedComponent, object]] = []
         checks: dict[str, dict] = {}
         route: dict = {}
@@ -48,7 +62,7 @@ class LocalPairExecutor:
             for component, handle in reversed(started):
                 self.backend.stop(component, handle)
 
-        exact_context = all(int(check.get("context", 0)) == item.context for check in checks.values())
+        exact_context = all(int(check.get("context", 0)) == context for check in checks.values())
         main = results.get("main") or {}
         aux = results.get("aux") or {}
         if route.get("main") != recipe.main_alias:
@@ -58,10 +72,10 @@ class LocalPairExecutor:
         methods = sorted({component.method for component in recipe.components})
         method = "+".join(methods)
         runtime_string = f"turbofit-runtime use {recipe.profile_name}"
-        raw_path = self.result_dir / f"{item.id}.json"
+        raw_path = self.result_dir / f"{item_id}.json"
         payload = {
             "schema_version": 1,
-            "row": item.to_dict(),
+            "row": row_payload,
             "profile_name": recipe.profile_name,
             "components": [
                 {

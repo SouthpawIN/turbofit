@@ -183,6 +183,8 @@ def _topology_satisfies(actual: Counter[int], expected: Counter[int]) -> bool:
 
 def _accelerator_matches(hardware: HardwareFingerprint, expected: str) -> bool:
     normalized = expected.lower()
+    if normalized == "llama.cpp-local":
+        return bool(set(hardware.backends) & {"cuda", "metal", "rocm", "vulkan"})
     accepted: set[str] = set()
     for device in hardware.devices:
         accepted.update((device.vendor, device.backend, f"{device.vendor}-{device.backend}"))

@@ -13,6 +13,8 @@ from typing import Any, Mapping
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
+from turbofit_runtime.tailnet import publish_tailnet, tailnet_status
+
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8091/v1"
 PLUGIN_ROOT = Path(__file__).resolve().parent
@@ -182,6 +184,7 @@ def status_snapshot(config: Mapping[str, Any], *, probe: bool = True) -> dict[st
         "selection": selection,
         "runtime": runtime,
         "gateway": gateway_health(endpoint) if probe else {"reachable": None, "endpoint": endpoint},
+        "tailnet": tailnet_status(),
         "platform": {"os": os.name, "sys_platform": sys.platform},
     }
 
@@ -213,19 +216,41 @@ def apply_configuration(
     fallback: bool | None,
     profile: str | None,
     base_url: str | None,
+    publish_tailnet_routes: bool = False,
+    dashboard_local_port: int = 9127,
+    provider_local_port: int = 8091,
+    dashboard_https_port: int = 9444,
+    provider_https_port: int = 9443,
 ) -> dict[str, Any]:
     from hermes_cli.config import load_config, save_config
 
     with _CONFIG_LOCK:
+        selected = select_profile(profile) if profile else None
+        publication = (
+            publish_tailnet(
+                dashboard_local_port=dashboard_local_port,
+                provider_local_port=provider_local_port,
+                dashboard_https_port=dashboard_https_port,
+                provider_https_port=provider_https_port,
+            )
+            if publish_tailnet_routes
+            else None
+        )
+        effective_base_url = publication["provider_base_url"] if publication else base_url
         configured = configure_hermes(
             load_config(),
             primary=primary,
             fallback=fallback,
-            base_url=base_url,
+            base_url=effective_base_url,
         )
         save_config(configured, merge_existing=False)
-        selected = select_profile(profile) if profile else None
-    return {"ok": True, "configured": True, "selection": selected, "restart_required": True}
+    return {
+        "ok": True,
+        "configured": True,
+        "selection": selected,
+        "tailnet": publication,
+        "restart_required": True,
+    }
 
 
 def handle_status(_args: dict[str, Any], **_: Any) -> str:
@@ -239,11 +264,39 @@ def handle_status(_args: dict[str, Any], **_: Any) -> str:
 
 def handle_configure(args: dict[str, Any], **_: Any) -> str:
     try:
+        primary = args.get("primary", False)
+        fallback = args.get("fallback") if "fallback" in args else None
+        publish_routes = args.get("publish_tailnet", False)
+        if (
+            not isinstance(primary, bool)
+            or (fallback is not None and not isinstance(fallback, bool))
+            or not isinstance(publish_routes, bool)
+        ):
+            raise ValueError("primary, fallback, and publish_tailnet must be booleans")
+        profile = args.get("profile")
+        base_url = args.get("base_url")
+        if profile is not None and not isinstance(profile, str):
+            raise ValueError("profile must be a string")
+        if base_url is not None and not isinstance(base_url, str):
+            raise ValueError("base_url must be a string")
+        ports = {
+            name: args.get(name, default)
+            for name, default in {
+                "dashboard_local_port": 9127,
+                "provider_local_port": 8091,
+                "dashboard_https_port": 9444,
+                "provider_https_port": 9443,
+            }.items()
+        }
+        if any(isinstance(value, bool) or not isinstance(value, int) for value in ports.values()):
+            raise ValueError("Tailscale ports must be integers")
         result = apply_configuration(
-            primary=bool(args.get("primary", False)),
-            fallback=args.get("fallback") if "fallback" in args else None,
-            profile=str(args["profile"]) if args.get("profile") else None,
-            base_url=str(args["base_url"]) if args.get("base_url") else None,
+            primary=primary,
+            fallback=fallback,
+            profile=profile,
+            base_url=base_url,
+            publish_tailnet_routes=publish_routes,
+            **ports,
         )
         return json.dumps(result)
     except Exception as exc:

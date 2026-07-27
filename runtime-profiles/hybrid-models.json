@@ -52,8 +52,122 @@
               "--jinja"
             ]
           }
+        },
+        {
+          "id": "dual-24gb-128k",
+          "status": "configured-unmeasured",
+          "evidence": null,
+          "context": 131072,
+          "min_system_ram_mib": 114688,
+          "required_available_ram_mib": 81920,
+          "min_vram_mb_per_card": [
+            21504,
+            21504
+          ],
+          "engine": "llama.cpp",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [
+              1,
+              1
+            ],
+            "threads": 16,
+            "threads_batch": 32,
+            "batch_size": 512,
+            "ubatch_size": 256,
+            "cache_type_k": "q4_0",
+            "cache_type_v": "q4_0",
+            "mlock": false,
+            "gpu_layers": 24,
+            "cpu_moe_layers": null,
+            "mmap": true,
+            "extra_args": [
+              "--jinja",
+              "--no-kv-offload"
+            ]
+          }
+        },
+        {
+          "id": "dual-24gb-262k",
+          "status": "configured-unmeasured",
+          "evidence": null,
+          "context": 262144,
+          "min_system_ram_mib": 147456,
+          "required_available_ram_mib": 114688,
+          "min_vram_mb_per_card": [
+            21504,
+            21504
+          ],
+          "engine": "llama.cpp",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [
+              1,
+              1
+            ],
+            "threads": 16,
+            "threads_batch": 32,
+            "batch_size": 512,
+            "ubatch_size": 256,
+            "cache_type_k": "q4_0",
+            "cache_type_v": "q4_0",
+            "mlock": false,
+            "gpu_layers": 24,
+            "cpu_moe_layers": null,
+            "mmap": true,
+            "extra_args": [
+              "--jinja",
+              "--no-kv-offload"
+            ]
+          }
+        },
+        {
+          "id": "dual-24gb-1m",
+          "status": "configured-unmeasured",
+          "evidence": null,
+          "context": 1048576,
+          "min_system_ram_mib": 262144,
+          "required_available_ram_mib": 229376,
+          "min_vram_mb_per_card": [
+            21504,
+            21504
+          ],
+          "engine": "llama.cpp",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [
+              1,
+              1
+            ],
+            "threads": 16,
+            "threads_batch": 32,
+            "batch_size": 512,
+            "ubatch_size": 256,
+            "cache_type_k": "q4_0",
+            "cache_type_v": "q4_0",
+            "mlock": false,
+            "gpu_layers": 24,
+            "cpu_moe_layers": null,
+            "mmap": true,
+            "extra_args": [
+              "--jinja",
+              "--no-kv-offload",
+              "--rope-scaling",
+              "yarn",
+              "--rope-scale",
+              "4",
+              "--yarn-orig-ctx",
+              "262144"
+            ]
+          }
         }
-      ]
+      ],
+      "context_scaling": {
+        "method": "yarn",
+        "scale": 4,
+        "original_context": 262144,
+        "max_context": 1048576
+      }
     },
     {
       "id": "minimax-m3-mxfp4-moe",
@@ -136,6 +250,108 @@
               "--jinja"
             ]
           }
+        },
+        {
+          "id": "dual-24gb-128k",
+          "status": "configured-unmeasured",
+          "evidence": null,
+          "context": 131072,
+          "min_system_ram_mib": 327680,
+          "required_available_ram_mib": 278528,
+          "min_vram_mb_per_card": [
+            21504,
+            21504
+          ],
+          "engine": "llama.cpp-minimax-m3",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [
+              1,
+              1
+            ],
+            "threads": 16,
+            "threads_batch": 32,
+            "batch_size": 512,
+            "ubatch_size": 256,
+            "cache_type_k": "q4_0",
+            "cache_type_v": "q4_0",
+            "mlock": false,
+            "gpu_layers": 40,
+            "cpu_moe_layers": 56,
+            "mmap": true,
+            "extra_args": [
+              "--jinja",
+              "--no-kv-offload"
+            ]
+          }
+        },
+        {
+          "id": "dual-24gb-262k",
+          "status": "configured-unmeasured",
+          "evidence": null,
+          "context": 262144,
+          "min_system_ram_mib": 360448,
+          "required_available_ram_mib": 294912,
+          "min_vram_mb_per_card": [
+            21504,
+            21504
+          ],
+          "engine": "llama.cpp-minimax-m3",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [
+              1,
+              1
+            ],
+            "threads": 16,
+            "threads_batch": 32,
+            "batch_size": 512,
+            "ubatch_size": 256,
+            "cache_type_k": "q4_0",
+            "cache_type_v": "q4_0",
+            "mlock": false,
+            "gpu_layers": 40,
+            "cpu_moe_layers": 56,
+            "mmap": true,
+            "extra_args": [
+              "--jinja",
+              "--no-kv-offload"
+            ]
+          }
+        },
+        {
+          "id": "dual-24gb-1m",
+          "status": "configured-unmeasured",
+          "evidence": null,
+          "context": 1048576,
+          "min_system_ram_mib": 409600,
+          "required_available_ram_mib": 348160,
+          "min_vram_mb_per_card": [
+            21504,
+            21504
+          ],
+          "engine": "llama.cpp-minimax-m3",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [
+              1,
+              1
+            ],
+            "threads": 16,
+            "threads_batch": 32,
+            "batch_size": 512,
+            "ubatch_size": 256,
+            "cache_type_k": "q4_0",
+            "cache_type_v": "q4_0",
+            "mlock": false,
+            "gpu_layers": 40,
+            "cpu_moe_layers": 56,
+            "mmap": true,
+            "extra_args": [
+              "--jinja",
+              "--no-kv-offload"
+            ]
+          }
         }
       ]
     },
@@ -198,6 +414,138 @@
               "graphs=1",
               "--jinja",
               "--parallel-tool-calls"
+            ]
+          }
+        },
+        {
+          "id": "dual-24gb-128k",
+          "status": "configured-unmeasured",
+          "evidence": null,
+          "context": 131072,
+          "min_system_ram_mib": 399360,
+          "required_available_ram_mib": 286720,
+          "min_vram_mb_per_card": [
+            12288,
+            12288
+          ],
+          "engine": "ik_llama.cpp",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [
+              1,
+              1
+            ],
+            "threads": 16,
+            "threads_batch": 32,
+            "batch_size": 512,
+            "ubatch_size": 256,
+            "cache_type_k": "f16",
+            "cache_type_v": "f16",
+            "mlock": false,
+            "gpu_layers": 99,
+            "cpu_moe_layers": "all",
+            "mmap": false,
+            "extra_args": [
+              "-mla",
+              "1",
+              "-dsa",
+              "-fidx",
+              "-cram",
+              "0",
+              "-muge",
+              "-cuda",
+              "graphs=1",
+              "--jinja",
+              "--parallel-tool-calls",
+              "--no-kv-offload"
+            ]
+          }
+        },
+        {
+          "id": "dual-24gb-262k",
+          "status": "configured-unmeasured",
+          "evidence": null,
+          "context": 262144,
+          "min_system_ram_mib": 430080,
+          "required_available_ram_mib": 317440,
+          "min_vram_mb_per_card": [
+            12288,
+            12288
+          ],
+          "engine": "ik_llama.cpp",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [
+              1,
+              1
+            ],
+            "threads": 16,
+            "threads_batch": 32,
+            "batch_size": 512,
+            "ubatch_size": 256,
+            "cache_type_k": "f16",
+            "cache_type_v": "f16",
+            "mlock": false,
+            "gpu_layers": 99,
+            "cpu_moe_layers": "all",
+            "mmap": false,
+            "extra_args": [
+              "-mla",
+              "1",
+              "-dsa",
+              "-fidx",
+              "-cram",
+              "0",
+              "-muge",
+              "-cuda",
+              "graphs=1",
+              "--jinja",
+              "--parallel-tool-calls",
+              "--no-kv-offload"
+            ]
+          }
+        },
+        {
+          "id": "dual-24gb-1m",
+          "status": "configured-unmeasured",
+          "evidence": null,
+          "context": 1048576,
+          "min_system_ram_mib": 491520,
+          "required_available_ram_mib": 368640,
+          "min_vram_mb_per_card": [
+            12288,
+            12288
+          ],
+          "engine": "ik_llama.cpp",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [
+              1,
+              1
+            ],
+            "threads": 16,
+            "threads_batch": 32,
+            "batch_size": 512,
+            "ubatch_size": 256,
+            "cache_type_k": "f16",
+            "cache_type_v": "f16",
+            "mlock": false,
+            "gpu_layers": 99,
+            "cpu_moe_layers": "all",
+            "mmap": false,
+            "extra_args": [
+              "-mla",
+              "1",
+              "-dsa",
+              "-fidx",
+              "-cram",
+              "0",
+              "-muge",
+              "-cuda",
+              "graphs=1",
+              "--jinja",
+              "--parallel-tool-calls",
+              "--no-kv-offload"
             ]
           }
         }

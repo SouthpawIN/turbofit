@@ -1,6 +1,54 @@
 {
   "schema_version": 1,
   "atomic_binary": "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
+  "variants": {
+    "glm-5-2-2-788bpw": {"family": "GLM 5.2", "alias": "glm-5-2-2-788bpw"},
+    "minimax-m3-q4": {
+      "family": "MiniMax M3",
+      "alias": "minimax-m3-q4",
+      "model": "/home/sovthpaw/Models/storage/gguf/MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf"
+    },
+    "laguna-s2-1-fp16": {
+      "family": "Laguna S2.1",
+      "alias": "laguna-s2-1-fp16",
+      "model": "/home/sovthpaw/Models/storage/gguf/Laguna-S-2.1/laguna-s2.1-F16.gguf"
+    },
+    "laguna-s2-1-q4": {"family": "Laguna S2.1", "alias": "laguna-s2-1-q4"},
+    "grm-2-6-27b": {"family": "GRM 2.6 Plus", "alias": "grm-2-6-27b"},
+    "carwin-nano": {"family": "Carwin Nano", "alias": "carwin-nano"},
+    "ternary-bonsai-27b-fp16-vision-dspark": {
+      "family": "Ternary Bonsai",
+      "alias": "ternary-bonsai-27b-fp16-vision-dspark",
+      "model": "Ternary-Bonsai-27B-F16.gguf",
+      "methods": {"65536": "dspark", "131072": "dspark", "262144": "baseline", "1048576": "baseline"}
+    },
+    "ternary-bonsai-27b-dspark": {
+      "family": "Ternary Bonsai",
+      "alias": "ternary-bonsai-27b-dspark",
+      "methods": {"65536": "dspark", "131072": "dspark", "262144": "baseline", "1048576": "baseline"}
+    },
+    "ternary-bonsai-27b": {
+      "family": "Ternary Bonsai",
+      "alias": "ternary-bonsai-27b",
+      "methods": {"65536": "baseline", "131072": "baseline", "262144": "baseline", "1048576": "baseline"}
+    },
+    "bonsai-27b-fp16-vision-dspark": {
+      "family": "1 Bit Bonsai",
+      "alias": "bonsai-27b-fp16-vision-dspark",
+      "model": "Bonsai-27B-F16.gguf",
+      "methods": {"65536": "dspark", "131072": "dspark", "262144": "baseline", "1048576": "baseline"}
+    },
+    "bonsai-27b-dspark": {
+      "family": "1 Bit Bonsai",
+      "alias": "bonsai-27b-dspark",
+      "methods": {"65536": "dspark", "131072": "dspark", "262144": "baseline", "1048576": "baseline"}
+    },
+    "bonsai-27b": {
+      "family": "1 Bit Bonsai",
+      "alias": "bonsai-27b",
+      "methods": {"65536": "baseline", "131072": "baseline", "262144": "baseline", "1048576": "baseline"}
+    }
+  },
   "models": {
     "1 Bit Bonsai": {
       "alias": "bonsai-27b-1bit",

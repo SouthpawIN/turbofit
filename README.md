@@ -130,9 +130,16 @@ hermes dashboard
 
 Select **Turbofit** in the dashboard. The plugin can scan/select a compatible
 hardware profile, register the `custom:turbofit` endpoint, set `auto` as the
-primary model, and add or remove Turbofit from the canonical
-`fallback_providers` chain. It also registers `/turbofit`,
+primary model, add or remove Turbofit from the canonical
+`fallback_providers` chain, and publish both provider and dashboard endpoints
+privately with Tailscale Serve. Tailnet publishing defaults to separate HTTPS
+ports and never exposes a public Funnel route. It also registers `/turbofit`,
 `turbofit_status`, and `turbofit_configure` for CLI and gateway sessions.
+
+Linux/WSL2 NVIDIA launches use CUDA. Apple Silicon is detected as one unified
+Metal device; the portable 8/16/24 GB profiles compile Docker-only Bonsai
+recipes to native `llama-server` processes with Metal enabled. Every generated
+launch path includes `--jinja` for tool-call templates.
 
 Development should happen from a Git checkout, not the installed plugin directory.
 
@@ -145,7 +152,7 @@ Current requirements:
 - a supported local runtime/accelerator backend
 - network access to the pinned Hugging Face artifacts on first acquisition
 
-NVIDIA is the currently exercised backend. The Turbofile and acquisition contracts are system-independent; additional runtime backends still require implementation and validation.
+CUDA on Linux/WSL2 and Metal on Apple Silicon are implemented. NVIDIA remains the primary measured backend; Metal launch compilation is portable but still requires host-specific benchmark promotion before claiming equivalent performance. AMD/Intel backends remain discovery-only.
 
 ## Adaptive behavior
 
@@ -189,7 +196,9 @@ At the minimum local floor, Turbofit does not route to an API model. If no lower
 | `benchmarks/suite.yaml` | promotion gates |
 | `references/results/` | measured machine-readable evidence |
 
-The candidate matrix contains the requested 12 main variants × 4 auxiliary modes × 4 contexts: **192 research candidates**. A candidate row is not automatically a production recommendation. Production promotion requires artifact, runtime, performance, quality, and pressure/self-heal evidence.
+The matrix contains the requested 12 main variants × 4 auxiliary modes × 4 contexts: **192 research configurations**. Every row now compiles to a concrete, `--jinja`-enabled launch recipe; FP16, quantized, vision-projector, and DSpark artifacts resolve independently. A compilable row is not automatically a production recommendation. Production promotion requires artifact, runtime, performance, quality, and pressure/self-heal evidence.
+
+The hybrid system-RAM catalog separately defines executable 64K, 128K, 262K, and 1M candidates for Laguna, MiniMax M3, and GLM 5.2. Higher-context rows are explicitly `configured-unmeasured`, use CPU/system-RAM policies (including MoE expert offload where supported), and cannot be promoted until real evidence exists.
 
 The current source list includes:
 
@@ -277,25 +286,17 @@ A simulated pass is not represented as real pressure evidence. The latest machin
 - Credentials and machine-local paths never enter portable profiles.
 - Research candidates never become production recommendations automatically.
 
-## Later development
+## Remaining development
 
-The earlier Turbofit README described a broader product. Those ideas are retained here as roadmap—not current behavior:
+The following items remain outside the verified release boundary:
 
-- broader local recommendations that fully use 64/96/200/300+ GB systems
-- per-model/per-aux/per-context manual configuration selection
-- 64K, 128K, 262K, and 1M promotion coverage across the complete model matrix
-- expert offload before MoE model replacement
-- multimodal routing and Bonsai/DSpark vision variants
-- additional Linux, Windows, macOS, NVIDIA, AMD, Intel, and Apple runtime backends
-- remote access and administration, including Tailscale workflows
+- host-specific Metal performance evidence and AMD/Intel runtime backends
+- promotion evidence for every one of the 192 compiled model configurations
 - Mixture-of-Agents presets
-- live benchmark leaderboards and model discovery feeds
-- pricing awareness for a future opt-in API mode
-- opt-in API providers, free-tier routing, and API fallback
-- model-database updates and recommendation intelligence
+- pricing-aware opt-in API routing
 - richer daemon/service management outside systemd
 
-None of these roadmap items should be inferred from the current release until its implementation and verification gates land.
+Model-source intelligence is refreshed daily by `.github/workflows/model-intel.yml`; discovery never bypasses the benchmark promotion gates.
 
 ## License
 

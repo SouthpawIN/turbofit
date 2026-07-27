@@ -147,16 +147,39 @@ def probe_hardware(
     os_name: str | None = None,
     architecture: str | None = None,
     system_ram_mb: int | None = None,
+    kernel_release: str | None = None,
 ) -> HardwareFingerprint:
     runner = command_runner or _run_command
+    normalized_os = (os_name or platform.system()).lower()
+    normalized_architecture = (architecture or platform.machine()).lower()
+    memory_mb = system_ram_mb or _system_ram_mb()
+    release = (kernel_release or platform.release()).lower()
     try:
         devices = parse_nvidia_inventory_csv(runner(list(NVIDIA_INVENTORY_QUERY)))
     except (FileNotFoundError, OSError, subprocess.SubprocessError):
         devices = ()
+    if not devices and normalized_os == "darwin" and normalized_architecture in {"arm64", "aarch64"}:
+        # Metal shares system memory with macOS. Reserve 8 GiB so profile matching
+        # never treats memory required by the OS as fully allocatable model VRAM.
+        usable_unified_memory_mb = max(1, memory_mb - 8 * 1024)
+        devices = (
+            AcceleratorDevice(
+                index=0,
+                uuid="apple-unified-memory",
+                name="Apple Silicon Unified Memory",
+                vendor="apple",
+                backend="metal",
+                memory_total_mb=usable_unified_memory_mb,
+                compute_capability=None,
+                bus_id=None,
+            ),
+        )
+    if normalized_os == "linux" and ("microsoft" in release or os.getenv("WSL_INTEROP")):
+        normalized_os = "windows-wsl2"
     return HardwareFingerprint(
-        os=(os_name or platform.system()).lower(),
-        architecture=(architecture or platform.machine()).lower(),
-        system_ram_mb=system_ram_mb or _system_ram_mb(),
+        os=normalized_os,
+        architecture=normalized_architecture,
+        system_ram_mb=memory_mb,
         devices=devices,
     )
 

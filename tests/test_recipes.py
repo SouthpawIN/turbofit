@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from turbofit_runtime.recipes import RecipeBook
@@ -54,6 +55,7 @@ def test_one_bit_bonsai_one_million_uses_four_x_yarn_across_both_gpus() -> None:
     assert component.method == "baseline"
     assert component.environment["CTX"] == "1048576"
     assert component.command == (
+        "--jinja",
         "--split-mode", "layer", "--tensor-split", "1,1",
         "--rope-scaling", "yarn", "--rope-scale", "4",
         "--yarn-orig-ctx", "262144",
@@ -101,6 +103,67 @@ def test_one_million_context_applies_matching_four_x_yarn_to_both_models() -> No
     assert main.command[main.command.index("-ngl") + 1] == "64"
     assert "--no-kv-offload" in main.command
     assert "--spec-type" not in main.command
+
+
+def test_every_resolved_component_enables_jinja_tool_calling() -> None:
+    book = RecipeBook.load(RECIPES)
+    cases = (
+        row("Carwin Nano", "auto", 131_072),
+        row("GRM 2.6 Plus", "Carwin Nano", 131_072),
+        row("Ternary Bonsai", "1 Bit Bonsai", 65_536),
+    )
+
+    for case in cases:
+        for component in book.resolve(case).components:
+            assert "--jinja" in component.command
+
+
+def test_macos_compiles_docker_only_bonsai_recipe_to_native_metal_process() -> None:
+    data = json.loads(RECIPES.read_text())
+    component = RecipeBook(data, platform_name="darwin").resolve(
+        row("1 Bit Bonsai", "auto", 131_072)
+    ).components[0]
+
+    assert component.kind == "process"
+    assert component.command[0] == data["atomic_binary"]
+    assert "--jinja" in component.command
+    assert "--model-draft" in component.command
+    assert component.model_path.endswith("Bonsai-27B-Q1_0.gguf")
+
+
+def test_every_catalog_configuration_compiles_to_an_actual_jinja_launch_recipe() -> None:
+    book = RecipeBook.load(RECIPES)
+    matrix = json.loads((ROOT / "references" / "configuration-matrix.json").read_text())
+
+    resolved = [book.resolve_catalog_configuration(item) for item in matrix["rows"]]
+
+    assert len(resolved) == 192
+    assert len({item.row_id for item in resolved}) == 192
+    assert all(component.command and "--jinja" in component.command for item in resolved for component in item.components)
+
+
+def test_catalog_variants_compile_distinct_artifacts_and_features() -> None:
+    book = RecipeBook.load(RECIPES)
+    fp16 = book.resolve_catalog_configuration({
+        "id": "ternary-bonsai-27b-fp16-vision-dspark--auto--64k",
+        "main": "ternary-bonsai-27b-fp16-vision-dspark",
+        "auxiliary": "auto",
+        "context": 65_536,
+        "status": "candidate",
+    }).components[0]
+    baseline = book.resolve_catalog_configuration({
+        "id": "ternary-bonsai-27b--auto--64k",
+        "main": "ternary-bonsai-27b",
+        "auxiliary": "auto",
+        "context": 65_536,
+        "status": "candidate",
+    }).components[0]
+
+    assert fp16.model_path.endswith("Ternary-Bonsai-27B-F16.gguf")
+    assert fp16.projector_path.endswith("Ternary-Bonsai-27B-mmproj-BF16.gguf")
+    assert fp16.method == "dspark"
+    assert baseline.model_path.endswith("Ternary-Bonsai-27B-Q2_0.gguf")
+    assert baseline.method == "baseline"
 
 
 def test_recipe_compiles_deterministic_profile_name_and_aliases() -> None:

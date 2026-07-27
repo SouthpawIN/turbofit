@@ -101,6 +101,71 @@ def test_plain_http_provider_url_is_limited_to_loopback_or_tailnet() -> None:
     ][0]["base_url"] == "http://100.100.10.20:8091/v1"
 
 
+def test_status_includes_tailnet_publication_state(monkeypatch) -> None:
+    import plugin_tools
+
+    monkeypatch.setattr(plugin_tools, "tailnet_status", lambda: {
+        "available": True,
+        "connected": True,
+        "dns_name": "host.example.ts.net",
+        "serve": {},
+        "error": None,
+    })
+
+    status = plugin_tools.status_snapshot({}, probe=False)
+
+    assert status["tailnet"]["connected"] is True
+    assert status["tailnet"]["dns_name"] == "host.example.ts.net"
+
+
+def test_apply_configuration_can_publish_tailnet_and_use_remote_provider_url(monkeypatch) -> None:
+    import types
+    import plugin_tools
+
+    saved: list[dict] = []
+    hermes_package = types.ModuleType("hermes_cli")
+    hermes_config = types.ModuleType("hermes_cli.config")
+    setattr(hermes_config, "load_config", lambda: {})
+    setattr(hermes_config, "save_config", lambda config, merge_existing=False: saved.append(config))
+    monkeypatch.setitem(sys.modules, "hermes_cli", hermes_package)
+    monkeypatch.setitem(sys.modules, "hermes_cli.config", hermes_config)
+    monkeypatch.setattr(plugin_tools, "publish_tailnet", lambda **_: {
+        "ok": True,
+        "dashboard_url": "https://host.example.ts.net:9444/",
+        "provider_base_url": "https://host.example.ts.net:9443/v1",
+    })
+
+    result = plugin_tools.apply_configuration(
+        primary=True,
+        fallback=True,
+        profile=None,
+        base_url=None,
+        publish_tailnet_routes=True,
+    )
+
+    assert result["tailnet"]["dashboard_url"] == "https://host.example.ts.net:9444/"
+    assert saved[0]["custom_providers"][0]["base_url"] == "https://host.example.ts.net:9443/v1"
+    assert saved[0]["fallback_providers"][0]["base_url"] == "https://host.example.ts.net:9443/v1"
+
+
+def test_handle_configure_rejects_string_booleans_before_side_effects(monkeypatch) -> None:
+    import plugin_tools
+
+    called = False
+
+    def apply(**_):
+        nonlocal called
+        called = True
+        return {}
+
+    monkeypatch.setattr(plugin_tools, "apply_configuration", apply)
+    result = json.loads(plugin_tools.handle_configure({"primary": "false", "publish_tailnet": "false"}))
+
+    assert result["ok"] is False
+    assert "boolean" in result["error"]
+    assert called is False
+
+
 def test_plugin_registers_status_configure_and_slash_command() -> None:
     plugin = _load_plugin_module()
 

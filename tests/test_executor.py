@@ -48,12 +48,12 @@ class FakeBackend:
         self.actions.append(("stop", component.role))
 
 
-def test_executor_starts_aux_before_main_and_stops_reverse() -> None:
+def test_executor_starts_aux_before_main_and_stops_reverse(tmp_path: Path) -> None:
     backend = FakeBackend()
     executor = LocalPairExecutor(
         recipes=RecipeBook.load(ROOT / "references/model-recipes.json"),
         backend=backend,
-        result_dir=ROOT / "references/results",
+        result_dir=tmp_path,
     )
 
     result = executor.execute(row("Ternary Bonsai", "1 Bit Bonsai", 65_536))
@@ -71,7 +71,30 @@ def test_executor_starts_aux_before_main_and_stops_reverse() -> None:
     assert result.runtime_string.startswith("turbofit-runtime use ternary-bonsai-1-bit-bonsai-64k")
 
 
-def test_executor_stops_started_component_when_second_start_fails() -> None:
+def test_executor_runs_catalog_variant_configuration(tmp_path: Path) -> None:
+    backend = FakeBackend()
+    executor = LocalPairExecutor(
+        recipes=RecipeBook.load(ROOT / "references/model-recipes.json"),
+        backend=backend,
+        result_dir=tmp_path,
+    )
+    item = {
+        "id": "ternary-bonsai-27b-dspark--bonsai-27b-dspark--65536",
+        "main": "ternary-bonsai-27b-dspark",
+        "auxiliary": "bonsai-27b-dspark",
+        "context": 65_536,
+        "status": "candidate",
+    }
+
+    result = executor.execute_catalog(item)
+
+    assert result.main_output == "main output"
+    assert result.aux_output == "aux output"
+    assert result.exact_context is True
+    assert (tmp_path / f"{item['id']}.json").exists()
+
+
+def test_executor_stops_started_component_when_second_start_fails(tmp_path: Path) -> None:
     class FailingBackend(FakeBackend):
         def start(self, component):
             if component.role == "main":
@@ -82,7 +105,7 @@ def test_executor_stops_started_component_when_second_start_fails() -> None:
     executor = LocalPairExecutor(
         recipes=RecipeBook.load(ROOT / "references/model-recipes.json"),
         backend=backend,
-        result_dir=ROOT / "references/results",
+        result_dir=tmp_path,
     )
 
     try:

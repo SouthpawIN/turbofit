@@ -37,6 +37,14 @@ TURBOFIT_CONFIGURE = {
                 "type": "string",
                 "description": "OpenAI-compatible Turbofit endpoint; defaults to http://127.0.0.1:8091/v1.",
             },
+            "publish_tailnet": {
+                "type": "boolean",
+                "description": "Publish the provider and Hermes dashboard privately with Tailscale Serve and use the resulting HTTPS provider URL.",
+            },
+            "dashboard_local_port": {"type": "integer", "minimum": 1, "maximum": 65535},
+            "provider_local_port": {"type": "integer", "minimum": 1, "maximum": 65535},
+            "dashboard_https_port": {"type": "integer", "minimum": 1, "maximum": 65535},
+            "provider_https_port": {"type": "integer", "minimum": 1, "maximum": 65535},
         },
     },
 }

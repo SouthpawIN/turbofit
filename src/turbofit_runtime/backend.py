@@ -6,6 +6,7 @@ import os
 import signal
 import socket
 import subprocess
+import sys
 import threading
 import time
 import urllib.error
@@ -86,9 +87,17 @@ class CampaignBackend:
         self._monitor_thread.start()
 
     @staticmethod
-    def process_environment(command: tuple[str, ...], *, gpu: str, base: dict[str, str] | None = None) -> dict[str, str]:
+    def process_environment(
+        command: tuple[str, ...], *, gpu: str, base: dict[str, str] | None = None,
+        platform_name: str | None = None,
+    ) -> dict[str, str]:
         env = dict(os.environ if base is None else base)
-        env["CUDA_VISIBLE_DEVICES"] = gpu
+        platform_id = platform_name or sys.platform
+        if platform_id == "darwin":
+            env.pop("CUDA_VISIBLE_DEVICES", None)
+            env["GGML_METAL"] = "1"
+        else:
+            env["CUDA_VISIBLE_DEVICES"] = gpu
         if command:
             binary_dir = Path(command[0]).resolve().parent
             if (binary_dir / "libllama.so.0").exists():

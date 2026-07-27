@@ -51,6 +51,11 @@
     const [fallback, setFallback] = useState(false);
     const [profile, setProfile] = useState("auto");
     const [baseUrl, setBaseUrl] = useState("http://127.0.0.1:8091/v1");
+    const [publishTailnet, setPublishTailnet] = useState(false);
+    const [dashboardLocalPort, setDashboardLocalPort] = useState("9127");
+    const [providerLocalPort, setProviderLocalPort] = useState("8091");
+    const [dashboardHttpsPort, setDashboardHttpsPort] = useState("9444");
+    const [providerHttpsPort, setProviderHttpsPort] = useState("9443");
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState("");
 
@@ -85,7 +90,14 @@
         const result = await SDK.fetchJSON("/api/plugins/turbofit/configure", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ primary, fallback, profile, base_url: baseUrl }),
+          body: JSON.stringify({
+            primary, fallback, profile, base_url: baseUrl,
+            publish_tailnet: publishTailnet,
+            dashboard_local_port: Number(dashboardLocalPort),
+            provider_local_port: Number(providerLocalPort),
+            dashboard_https_port: Number(dashboardHttpsPort),
+            provider_https_port: Number(providerHttpsPort),
+          }),
         });
         setMessage(result.restart_required
           ? "Saved. Start a new Hermes session to use the provider changes."
@@ -99,6 +111,7 @@
     }
 
     const gateway = value(status, "gateway", {});
+    const tailnet = value(status, "tailnet", {});
     const runtime = value(status, "runtime", null);
     const selection = value(status, "selection", null);
     const routes = value(runtime, "routes", {});
@@ -114,6 +127,7 @@
         ),
         h("div", { className: "tf-hero-status" },
           statusBadge(Boolean(gateway.reachable), "Gateway online", "Gateway offline"),
+          statusBadge(Boolean(tailnet.connected), "Tailnet connected", "Tailnet unavailable"),
           statusBadge(Boolean(value(status, "provider.registered", false)), "Provider registered", "Not registered"),
         ),
       ),
@@ -147,6 +161,28 @@
                 }),
               ),
             ),
+            h(Separator, null),
+            h("div", { className: "tf-toggles" },
+              h(Toggle, {
+                checked: publishTailnet,
+                onChange: setPublishTailnet,
+                label: "Publish provider and dashboard privately with Tailscale Serve",
+              }),
+            ),
+            publishTailnet ? h("div", { className: "tf-two" },
+              h(Field, { id: "tf-dashboard-local", label: "Dashboard local port" },
+                h(Input, { id: "tf-dashboard-local", type: "number", value: dashboardLocalPort, onChange: (event) => setDashboardLocalPort(event.target.value) })
+              ),
+              h(Field, { id: "tf-dashboard-https", label: "Dashboard Tailnet HTTPS port" },
+                h(Input, { id: "tf-dashboard-https", type: "number", value: dashboardHttpsPort, onChange: (event) => setDashboardHttpsPort(event.target.value) })
+              ),
+              h(Field, { id: "tf-provider-local", label: "Provider local port" },
+                h(Input, { id: "tf-provider-local", type: "number", value: providerLocalPort, onChange: (event) => setProviderLocalPort(event.target.value) })
+              ),
+              h(Field, { id: "tf-provider-https", label: "Provider Tailnet HTTPS port" },
+                h(Input, { id: "tf-provider-https", type: "number", value: providerHttpsPort, onChange: (event) => setProviderHttpsPort(event.target.value) })
+              ),
+            ) : null,
             h(Separator, null),
             h("div", { className: "tf-toggles" },
               h(Toggle, { checked: primary, onChange: setPrimary, label: "Use Turbofit as primary provider (model: auto)" }),

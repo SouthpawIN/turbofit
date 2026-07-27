@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+"""Refresh tracked model revisions and discover recent GGUF releases."""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from urllib.request import Request, urlopen
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.model_intel import build_snapshot
+
+CATALOG = ROOT / "references" / "model-catalog.json"
+HYBRID_CATALOG = ROOT / "runtime-profiles" / "hybrid-models.json"
+OUTPUT = ROOT / "references" / "model-intel.json"
+REPORT = ROOT / "references" / "model-intel.md"
+
+
+def fetch_json(url: str):
+    request = Request(url, headers={"Accept": "application/json", "User-Agent": "turbofit-model-intel/1.0"})
+    with urlopen(request, timeout=30) as response:
+        return json.load(response)
+
+
+def markdown(snapshot: dict) -> str:
+    lines = [
+        "# Turbofit Model Intel", "",
+        f"Generated: `{snapshot['generated_at']}`", "",
+        "## Tracked artifacts", "",
+        "| Repository | Pinned | Live | Changed | Downloads | Likes |",
+        "|---|---|---|---:|---:|---:|",
+    ]
+    for item in snapshot["tracked"]:
+        lines.append(
+            f"| `{item['repo_id']}` | `{item['pinned_revision'] or '-'}` | `{item['live_revision'] or '-'}` | "
+            f"{'yes' if item['revision_changed'] else 'no'} | {item['downloads']} | {item['likes']} |"
+        )
+    lines.extend(["", "## Recently updated GGUF releases", "", "| Repository | Updated | Downloads | Likes |", "|---|---|---:|---:|"])
+    for item in snapshot["discoveries"]:
+        lines.append(f"| `{item['repo_id']}` | {item['last_modified'] or '-'} | {item['downloads']} | {item['likes']} |")
+    lines.extend(["", "Discovery is informational. Promotion into recommendations still requires local benchmark evidence.", ""])
+    return "\n".join(lines)
+
+
+def main() -> int:
+    catalog = json.loads(CATALOG.read_text())
+    hybrid = json.loads(HYBRID_CATALOG.read_text())
+    catalog["models"] = [*(catalog.get("models") or []), *(hybrid.get("models") or [])]
+    snapshot = build_snapshot(catalog, fetch_json=fetch_json)
+    OUTPUT.write_text(json.dumps(snapshot, indent=2) + "\n")
+    REPORT.write_text(markdown(snapshot))
+    print(json.dumps({"tracked": len(snapshot["tracked"]), "discoveries": len(snapshot["discoveries"]), "output": str(OUTPUT)}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
