@@ -12,8 +12,9 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
+from .hardware import _nvidia_compatibility_library_dir
 from .recipes import ResolvedComponent, ResolvedRecipe
 
 
@@ -90,6 +91,7 @@ class CampaignBackend:
     def process_environment(
         command: tuple[str, ...], *, gpu: str, base: dict[str, str] | None = None,
         platform_name: str | None = None,
+        compatibility_library_dir: Callable[[], str | None] | None = None,
     ) -> dict[str, str]:
         env = dict(os.environ if base is None else base)
         platform_id = platform_name or sys.platform
@@ -98,6 +100,15 @@ class CampaignBackend:
             env["GGML_METAL"] = "1"
         else:
             env["CUDA_VISIBLE_DEVICES"] = gpu
+            find_compatibility_dir = (
+                compatibility_library_dir or _nvidia_compatibility_library_dir
+            )
+            compatibility_dir = find_compatibility_dir()
+            if compatibility_dir:
+                existing = env.get("LD_LIBRARY_PATH", "")
+                env["LD_LIBRARY_PATH"] = compatibility_dir + (
+                    f":{existing}" if existing else ""
+                )
         if command:
             binary_dir = Path(command[0]).resolve().parent
             if (binary_dir / "libllama.so.0").exists():

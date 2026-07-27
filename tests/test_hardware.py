@@ -7,6 +7,7 @@ import pytest
 from turbofit_runtime.hardware import (
     AcceleratorDevice,
     HardwareFingerprint,
+    _run_command,
     parse_nvidia_inventory_csv,
     probe_hardware,
 )
@@ -173,6 +174,43 @@ def test_fingerprint_rejects_boolean_capacities_and_duplicate_device_identity() 
         HardwareFingerprint(
             os="linux", architecture="x86_64", system_ram_mb=8192, devices=(first, duplicate)
         )
+
+
+def test_run_command_retries_nvidia_smi_with_loaded_kernel_compatibility_library() -> None:
+    calls: list[dict[str, str] | None] = []
+
+    def check_output(
+        _command: list[str],
+        *,
+        text: bool,
+        timeout: int,
+        stderr: int,
+        env: dict[str, str] | None = None,
+    ) -> str:
+        assert text is True
+        assert timeout == 5
+        assert stderr == subprocess.PIPE
+        calls.append(env)
+        if env is None:
+            raise subprocess.CalledProcessError(
+                18,
+                ["nvidia-smi"],
+                stderr="Failed to initialize NVML: Driver/library version mismatch",
+            )
+        return "0, GPU-a, RTX 3090, 24576, 8.6, 00000000:01:00.0\n"
+
+    result = _run_command(
+        ["nvidia-smi"],
+        check_output=check_output,
+        compatibility_library_dir=lambda: "/home/test/.local/lib/nvidia-580.159.03/usr/lib/x86_64-linux-gnu",
+    )
+
+    assert result.startswith("0, GPU-a")
+    assert calls[0] is None
+    assert calls[1] is not None
+    assert calls[1]["LD_LIBRARY_PATH"].startswith(
+        "/home/test/.local/lib/nvidia-580.159.03/usr/lib/x86_64-linux-gnu"
+    )
 
 
 @pytest.mark.parametrize(

@@ -55,14 +55,14 @@
         },
         {
           "id": "dual-24gb-128k",
-          "status": "configured-unmeasured",
-          "evidence": null,
+          "status": "validated",
+          "evidence": "sha256:801cd8ce4b11005bc4e39dc3e3957b2619c3d1d1720edd245efcdb2ce8830cac",
           "context": 131072,
           "min_system_ram_mib": 114688,
           "required_available_ram_mib": 81920,
           "min_vram_mb_per_card": [
-            21504,
-            21504
+            23552,
+            23552
           ],
           "engine": "llama.cpp",
           "launch": {
@@ -78,7 +78,7 @@
             "cache_type_k": "q4_0",
             "cache_type_v": "q4_0",
             "mlock": false,
-            "gpu_layers": 24,
+            "gpu_layers": 28,
             "cpu_moe_layers": null,
             "mmap": true,
             "extra_args": [
@@ -95,8 +95,8 @@
           "min_system_ram_mib": 147456,
           "required_available_ram_mib": 114688,
           "min_vram_mb_per_card": [
-            21504,
-            21504
+            23552,
+            23552
           ],
           "engine": "llama.cpp",
           "launch": {
@@ -112,7 +112,7 @@
             "cache_type_k": "q4_0",
             "cache_type_v": "q4_0",
             "mlock": false,
-            "gpu_layers": 24,
+            "gpu_layers": 28,
             "cpu_moe_layers": null,
             "mmap": true,
             "extra_args": [
@@ -129,8 +129,8 @@
           "min_system_ram_mib": 262144,
           "required_available_ram_mib": 229376,
           "min_vram_mb_per_card": [
-            21504,
-            21504
+            23552,
+            23552
           ],
           "engine": "llama.cpp",
           "launch": {
@@ -146,7 +146,7 @@
             "cache_type_k": "q4_0",
             "cache_type_v": "q4_0",
             "mlock": false,
-            "gpu_layers": 24,
+            "gpu_layers": 28,
             "cpu_moe_layers": null,
             "mmap": true,
             "extra_args": [

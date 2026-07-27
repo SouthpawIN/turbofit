@@ -4,10 +4,12 @@ from __future__ import annotations
 import csv
 import os
 import platform
+import re
 import subprocess
 from collections import Counter
 from dataclasses import dataclass
 from io import StringIO
+from pathlib import Path
 from typing import Callable
 
 NVIDIA_INVENTORY_QUERY = [
@@ -184,8 +186,57 @@ def probe_hardware(
     )
 
 
-def _run_command(command: list[str]) -> str:
-    return subprocess.check_output(command, text=True, timeout=5)
+def _run_command(
+    command: list[str],
+    *,
+    check_output: Callable[..., str] | None = None,
+    compatibility_library_dir: Callable[[], str | None] | None = None,
+) -> str:
+    run = check_output or subprocess.check_output
+    try:
+        return run(command, text=True, timeout=5, stderr=subprocess.PIPE)
+    except subprocess.CalledProcessError:
+        if not command or Path(command[0]).name != "nvidia-smi":
+            raise
+        find_compatibility_dir = compatibility_library_dir or _nvidia_compatibility_library_dir
+        library_dir = find_compatibility_dir()
+        if not library_dir:
+            raise
+        env = os.environ.copy()
+        current = env.get("LD_LIBRARY_PATH")
+        env["LD_LIBRARY_PATH"] = (
+            f"{library_dir}:{current}" if current else library_dir
+        )
+        return run(
+            command,
+            text=True,
+            timeout=5,
+            stderr=subprocess.PIPE,
+            env=env,
+        )
+
+
+def _nvidia_compatibility_library_dir() -> str | None:
+    override = os.getenv("TURBOFIT_NVIDIA_COMPAT_LIB_DIR")
+    if override and Path(override).is_dir():
+        return override
+    try:
+        raw_version = Path("/proc/driver/nvidia/version").read_text(encoding="utf-8")
+    except OSError:
+        return None
+    match = re.search(r"Kernel Module\s+(\d+\.\d+(?:\.\d+)?)", raw_version)
+    if not match:
+        return None
+    candidate = (
+        Path.home()
+        / ".local"
+        / "lib"
+        / f"nvidia-{match.group(1)}"
+        / "usr"
+        / "lib"
+        / "x86_64-linux-gnu"
+    )
+    return str(candidate) if candidate.is_dir() else None
 
 
 def _system_ram_mb() -> int:

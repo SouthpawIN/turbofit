@@ -58,14 +58,31 @@ def test_each_system_ram_model_has_64k_128k_262k_and_1m_configurations() -> None
             command = config.command(binary="/opt/llama-server", model_path="/models/model.gguf", port=8080)
             assert "--jinja" in command
             if config.context > 65_536:
-                assert config.status == "configured-unmeasured"
-                assert config.evidence is None
+                if (
+                    model.id == "laguna-s2-1-q4-k-m"
+                    and config.id == "dual-24gb-128k"
+                ):
+                    assert config.status == "validated"
+                    assert config.evidence
+                else:
+                    assert config.status == "configured-unmeasured"
+                    assert config.evidence is None
                 assert "--no-kv-offload" in command
 
     laguna_1m = catalog.models["laguna-s2-1-q4-k-m"].configuration("dual-24gb-1m")
     laguna_command = laguna_1m.command(binary="/opt/llama-server", model_path="/models/model.gguf", port=8080)
     assert laguna_command[laguna_command.index("--rope-scaling") + 1] == "yarn"
     assert laguna_command[laguna_command.index("--rope-scale") + 1] == "4"
+
+
+def test_laguna_host_kv_profiles_use_measured_maximal_gpu_offload() -> None:
+    laguna = HybridCatalog.load(CATALOG).models["laguna-s2-1-q4-k-m"]
+
+    assert laguna.configuration("dual-24gb-64k").launch.gpu_layers == 24
+    for configuration_id in ("dual-24gb-128k", "dual-24gb-262k", "dual-24gb-1m"):
+        configuration = laguna.configuration(configuration_id)
+        assert configuration.launch.gpu_layers == 28
+        assert configuration.min_vram_mb_per_card == (23_552, 23_552)
 
 
 def test_fit_requires_ram_and_every_gpu_budget() -> None:
