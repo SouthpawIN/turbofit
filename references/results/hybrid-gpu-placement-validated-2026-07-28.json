@@ -1,0 +1,879 @@
+{
+  "schema": "turbofit.hybrid-placement-validation/v1",
+  "created_at": "2026-07-28T14:23:06.604221+00:00",
+  "hardware": "2x NVIDIA RTX 3090 24GB; 377 GiB RAM; dual Intel E5-2620 v4",
+  "metric": "median server decode tokens/second from two post-warmup 128-token generations",
+  "screening_artifact": "hybrid-gpu-placement-all-rungs-v2-2026-07-28.json",
+  "models": [
+    "Laguna S 2.1 Q4_K_M",
+    "MiniMax M3 UD-Q4_K_M",
+    "GLM 5.2 2.788 bpw"
+  ],
+  "results": [
+    {
+      "model": "glm",
+      "ctx": 65536,
+      "name": "glm-64k-cpuall-layer-hostkv-mg0-numa-distribute",
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/ik_llama.cpp/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/GLM-5.2-2.788bpw/GLM-5.2-GGUF-2.788bpw-muzzy-imatrix.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11999",
+        "-c",
+        "65536",
+        "-ngl",
+        "79",
+        "-fa",
+        "on",
+        "-mla",
+        "1",
+        "-dsa",
+        "-fidx",
+        "-b",
+        "512",
+        "-ub",
+        "256",
+        "-t",
+        "14",
+        "-sm",
+        "layer",
+        "-ts",
+        "1,1",
+        "-mg",
+        "0",
+        "-cram",
+        "0",
+        "--jinja",
+        "--cpu-moe",
+        "--no-kv-offload",
+        "--numa",
+        "distribute"
+      ],
+      "status": "ok",
+      "startup_seconds": 50.058,
+      "gpu_at_ready": [
+        "8315, 15802, 0, 130.64",
+        "7055, 17070, 0, 112.59"
+      ],
+      "repeats": [
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 119.385,
+          "wall_output_tok_s": 1.072,
+          "decode_tok_s": 1.153985883921768,
+          "prompt_tok_s": 2.8536600330168467
+        },
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 111.552,
+          "wall_output_tok_s": 1.147,
+          "decode_tok_s": 1.1573049586267998,
+          "prompt_tok_s": 1.1120984073638709
+        }
+      ],
+      "decode_tok_s": 1.155645421274284,
+      "wall_output_tok_s": 1.1095000000000002,
+      "gpu_after_request": [
+        "8387, 15730, 0, 133.44",
+        "7125, 17000, 0, 116.03"
+      ]
+    },
+    {
+      "model": "glm",
+      "ctx": 131072,
+      "name": "validate-glm-128k-cpuall-layer-hostkv-mg0-numa-distribute",
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/ik_llama.cpp/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/GLM-5.2-2.788bpw/GLM-5.2-GGUF-2.788bpw-muzzy-imatrix.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11999",
+        "-c",
+        "131072",
+        "-ngl",
+        "79",
+        "-fa",
+        "on",
+        "-mla",
+        "1",
+        "-dsa",
+        "-fidx",
+        "-b",
+        "512",
+        "-ub",
+        "256",
+        "-t",
+        "14",
+        "-sm",
+        "layer",
+        "-ts",
+        "1,1",
+        "-mg",
+        "0",
+        "-cram",
+        "0",
+        "--jinja",
+        "--cpu-moe",
+        "--no-kv-offload",
+        "--numa",
+        "distribute"
+      ],
+      "status": "ok",
+      "startup_seconds": 66.052,
+      "gpu_at_ready": [
+        "8315, 15802, 0, 130.07",
+        "7323, 16802, 0, 112.45"
+      ],
+      "repeats": [
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 118.304,
+          "wall_output_tok_s": 1.082,
+          "decode_tok_s": 1.16258820581695,
+          "prompt_tok_s": 2.945088818970299
+        },
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 111.268,
+          "wall_output_tok_s": 1.15,
+          "decode_tok_s": 1.159887974757213,
+          "prompt_tok_s": 1.155615133935794
+        }
+      ],
+      "decode_tok_s": 1.1612380902870816,
+      "wall_output_tok_s": 1.116,
+      "gpu_after_request": [
+        "8387, 15730, 0, 133.27",
+        "7393, 16732, 0, 115.78"
+      ]
+    },
+    {
+      "model": "glm",
+      "ctx": 262144,
+      "name": "validate-glm-256k-cpuall-layer-hostkv-mg0-numa-distribute",
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/ik_llama.cpp/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/GLM-5.2-2.788bpw/GLM-5.2-GGUF-2.788bpw-muzzy-imatrix.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11999",
+        "-c",
+        "262144",
+        "-ngl",
+        "79",
+        "-fa",
+        "on",
+        "-mla",
+        "1",
+        "-dsa",
+        "-fidx",
+        "-b",
+        "512",
+        "-ub",
+        "256",
+        "-t",
+        "14",
+        "-sm",
+        "layer",
+        "-ts",
+        "1,1",
+        "-mg",
+        "0",
+        "-cram",
+        "0",
+        "--jinja",
+        "--cpu-moe",
+        "--no-kv-offload",
+        "--numa",
+        "distribute"
+      ],
+      "status": "ok",
+      "startup_seconds": 142.097,
+      "gpu_at_ready": [
+        "8645, 15472, 0, 30.92",
+        "7867, 16258, 0, 17.30"
+      ],
+      "repeats": [
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 117.307,
+          "wall_output_tok_s": 1.091,
+          "decode_tok_s": 1.1724397124859067,
+          "prompt_tok_s": 2.9673106225269326
+        },
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 109.438,
+          "wall_output_tok_s": 1.17,
+          "decode_tok_s": 1.1796986688317086,
+          "prompt_tok_s": 1.1281753906589336
+        }
+      ],
+      "decode_tok_s": 1.1760691906588077,
+      "wall_output_tok_s": 1.1305,
+      "gpu_after_request": [
+        "8717, 15400, 0, 133.82",
+        "7937, 16188, 3, 117.11"
+      ]
+    },
+    {
+      "model": "glm",
+      "ctx": 1048576,
+      "name": "validate-glm-1024k-cpu72-layer-hostkv-mg0",
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/ik_llama.cpp/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/GLM-5.2-2.788bpw/GLM-5.2-GGUF-2.788bpw-muzzy-imatrix.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11999",
+        "-c",
+        "1048576",
+        "-ngl",
+        "79",
+        "-fa",
+        "on",
+        "-mla",
+        "1",
+        "-dsa",
+        "-fidx",
+        "-b",
+        "512",
+        "-ub",
+        "256",
+        "-t",
+        "14",
+        "-sm",
+        "layer",
+        "-ts",
+        "1,1",
+        "-mg",
+        "0",
+        "-cram",
+        "0",
+        "--jinja",
+        "--n-cpu-moe",
+        "72",
+        "--no-kv-offload"
+      ],
+      "status": "ok",
+      "startup_seconds": 518.397,
+      "gpu_at_ready": [
+        "15387, 8730, 0, 30.67",
+        "20811, 3314, 0, 16.81"
+      ],
+      "repeats": [
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 142.338,
+          "wall_output_tok_s": 0.899,
+          "decode_tok_s": 0.9609915294377644,
+          "prompt_tok_s": 2.6389938835818842
+        },
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 139.96,
+          "wall_output_tok_s": 0.915,
+          "decode_tok_s": 0.9224445319149269,
+          "prompt_tok_s": 0.870500816529766
+        }
+      ],
+      "decode_tok_s": 0.9417180306763457,
+      "wall_output_tok_s": 0.907,
+      "gpu_after_request": [
+        "15457, 8660, 0, 133.45",
+        "20879, 3246, 0, 115.39"
+      ]
+    },
+    {
+      "model": "laguna",
+      "ctx": 65536,
+      "name": "validate-laguna-64k-cpu34-layer-hostkv-mg1",
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-laguna/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Laguna-S-2.1/laguna-s-2.1-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "12001",
+        "-c",
+        "65536",
+        "-ngl",
+        "999",
+        "-fa",
+        "on",
+        "--jinja",
+        "--parallel",
+        "1",
+        "--threads",
+        "10",
+        "--threads-batch",
+        "32",
+        "-b",
+        "512",
+        "-ub",
+        "256",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1",
+        "--main-gpu",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--n-cpu-moe",
+        "34",
+        "--no-kv-offload"
+      ],
+      "status": "ok",
+      "startup_seconds": 350.294,
+      "gpu_at_ready": [
+        "4435, 19682, 0, 118.76",
+        "23665, 460, 0, 107.85"
+      ],
+      "repeats": [
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 29.726,
+          "wall_output_tok_s": 4.306,
+          "decode_tok_s": 5.465946533904519,
+          "prompt_tok_s": 4.773293233427245
+        },
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 26.558,
+          "wall_output_tok_s": 4.82,
+          "decode_tok_s": 5.457864052963795,
+          "prompt_tok_s": 1.6411032020877458
+        }
+      ],
+      "decode_tok_s": 5.461905293434157,
+      "wall_output_tok_s": 4.563000000000001,
+      "gpu_after_request": [
+        "4439, 19678, 2, 132.08",
+        "23669, 456, 9, 117.12"
+      ]
+    },
+    {
+      "model": "laguna",
+      "ctx": 131072,
+      "name": "validate-laguna-128k-cpu34-layer-hostkv-mg0",
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-laguna/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Laguna-S-2.1/laguna-s-2.1-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "12002",
+        "-c",
+        "131072",
+        "-ngl",
+        "999",
+        "-fa",
+        "on",
+        "--jinja",
+        "--parallel",
+        "1",
+        "--threads",
+        "10",
+        "--threads-batch",
+        "32",
+        "-b",
+        "512",
+        "-ub",
+        "256",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1",
+        "--main-gpu",
+        "0",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--n-cpu-moe",
+        "34",
+        "--no-kv-offload"
+      ],
+      "status": "ok",
+      "startup_seconds": 19.281,
+      "gpu_at_ready": [
+        "4435, 19682, 0, 129.32",
+        "24025, 100, 0, 112.01"
+      ],
+      "repeats": [
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 29.622,
+          "wall_output_tok_s": 4.321,
+          "decode_tok_s": 5.496291742135118,
+          "prompt_tok_s": 4.76191080877563
+        },
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 26.227,
+          "wall_output_tok_s": 4.881,
+          "decode_tok_s": 5.490035178687134,
+          "prompt_tok_s": 1.748626541283149
+        }
+      ],
+      "decode_tok_s": 5.493163460411126,
+      "wall_output_tok_s": 4.601,
+      "gpu_after_request": [
+        "4439, 19678, 6, 134.99",
+        "24029, 96, 2, 119.86"
+      ]
+    },
+    {
+      "model": "laguna",
+      "ctx": 262144,
+      "name": "validate-laguna-256k-cpu40-layer-hostkv-mg0",
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-laguna/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Laguna-S-2.1/laguna-s-2.1-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "12003",
+        "-c",
+        "262144",
+        "-ngl",
+        "999",
+        "-fa",
+        "on",
+        "--jinja",
+        "--parallel",
+        "1",
+        "--threads",
+        "10",
+        "--threads-batch",
+        "32",
+        "-b",
+        "512",
+        "-ub",
+        "256",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1",
+        "--main-gpu",
+        "0",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--n-cpu-moe",
+        "40",
+        "--no-kv-offload"
+      ],
+      "status": "ok",
+      "startup_seconds": 25.945,
+      "gpu_at_ready": [
+        "4973, 19144, 0, 130.55",
+        "16573, 7552, 0, 113.12"
+      ],
+      "repeats": [
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 40.278,
+          "wall_output_tok_s": 3.178,
+          "decode_tok_s": 3.949435744423744,
+          "prompt_tok_s": 3.8264935186852784
+        },
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 36.318,
+          "wall_output_tok_s": 3.524,
+          "decode_tok_s": 3.9090646506154365,
+          "prompt_tok_s": 1.4202471570912656
+        }
+      ],
+      "decode_tok_s": 3.92925019751959,
+      "wall_output_tok_s": 3.351,
+      "gpu_after_request": [
+        "4977, 19140, 0, 134.16",
+        "16577, 7548, 6, 116.42"
+      ]
+    },
+    {
+      "model": "laguna",
+      "ctx": 1048576,
+      "name": "validate-laguna-1024k-cpu40-layer-hostkv-mg0",
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-laguna/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Laguna-S-2.1/laguna-s-2.1-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "12004",
+        "-c",
+        "1048576",
+        "-ngl",
+        "999",
+        "-fa",
+        "on",
+        "--jinja",
+        "--parallel",
+        "1",
+        "--threads",
+        "10",
+        "--threads-batch",
+        "32",
+        "-b",
+        "512",
+        "-ub",
+        "256",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1",
+        "--main-gpu",
+        "0",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--n-cpu-moe",
+        "40",
+        "--no-kv-offload",
+        "--rope-scaling",
+        "yarn",
+        "--rope-scale",
+        "4",
+        "--yarn-orig-ctx",
+        "262144"
+      ],
+      "status": "ok",
+      "startup_seconds": 51.971,
+      "gpu_at_ready": [
+        "9715, 14402, 0, 130.55",
+        "20885, 3240, 0, 112.07"
+      ],
+      "repeats": [
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 38.898,
+          "wall_output_tok_s": 3.291,
+          "decode_tok_s": 4.057383961750788,
+          "prompt_tok_s": 4.093899870851105
+        },
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 39.075,
+          "wall_output_tok_s": 3.276,
+          "decode_tok_s": 3.606458107072698,
+          "prompt_tok_s": 1.4141363289643123
+        }
+      ],
+      "decode_tok_s": 3.831921034411743,
+      "wall_output_tok_s": 3.2835,
+      "gpu_after_request": [
+        "9727, 14390, 0, 133.97",
+        "20897, 3228, 6, 117.03"
+      ]
+    },
+    {
+      "model": "minimax",
+      "ctx": 65536,
+      "name": "validate-minimax-64k-cpu56-layer-hostkv-mg0",
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-minimax-m3/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "12005",
+        "-c",
+        "65536",
+        "-ngl",
+        "999",
+        "-fa",
+        "on",
+        "--jinja",
+        "--parallel",
+        "1",
+        "--threads",
+        "12",
+        "--threads-batch",
+        "32",
+        "-b",
+        "512",
+        "-ub",
+        "256",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1",
+        "--main-gpu",
+        "0",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--n-cpu-moe",
+        "56",
+        "--no-kv-offload"
+      ],
+      "status": "ok",
+      "startup_seconds": 1271.651,
+      "gpu_at_ready": [
+        "9261, 14856, 0, 118.98",
+        "23739, 386, 0, 112.15"
+      ],
+      "repeats": [
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 84.107,
+          "wall_output_tok_s": 1.522,
+          "decode_tok_s": 1.6764030760320041,
+          "prompt_tok_s": 3.5220049652443333
+        },
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 80.858,
+          "wall_output_tok_s": 1.583,
+          "decode_tok_s": 1.5980954697239564,
+          "prompt_tok_s": 1.36482624397088
+        }
+      ],
+      "decode_tok_s": 1.6372492728779804,
+      "wall_output_tok_s": 1.5525,
+      "gpu_after_request": [
+        "9279, 14838, 0, 132.80",
+        "23753, 372, 0, 116.97"
+      ]
+    },
+    {
+      "model": "minimax",
+      "ctx": 131072,
+      "name": "validate-minimax-128k-cpu56-layer-hostkv-mg0",
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-minimax-m3/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "12006",
+        "-c",
+        "131072",
+        "-ngl",
+        "999",
+        "-fa",
+        "on",
+        "--jinja",
+        "--parallel",
+        "1",
+        "--threads",
+        "12",
+        "--threads-batch",
+        "32",
+        "-b",
+        "512",
+        "-ub",
+        "256",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1",
+        "--main-gpu",
+        "0",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--n-cpu-moe",
+        "56",
+        "--no-kv-offload"
+      ],
+      "status": "ok",
+      "startup_seconds": 35.407,
+      "gpu_at_ready": [
+        "9263, 14854, 0, 131.03",
+        "23953, 172, 0, 112.71"
+      ],
+      "repeats": [
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 90.069,
+          "wall_output_tok_s": 1.421,
+          "decode_tok_s": 1.5489249359755508,
+          "prompt_tok_s": 3.6494613935644042
+        },
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 81.069,
+          "wall_output_tok_s": 1.579,
+          "decode_tok_s": 1.5920489097325683,
+          "prompt_tok_s": 1.5613192523154364
+        }
+      ],
+      "decode_tok_s": 1.5704869228540597,
+      "wall_output_tok_s": 1.5,
+      "gpu_after_request": [
+        "9279, 14838, 0, 132.26",
+        "23967, 158, 2, 116.42"
+      ]
+    },
+    {
+      "model": "minimax",
+      "ctx": 262144,
+      "name": "validate-minimax-256k-cpu58-layer-hostkv-mg0",
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-minimax-m3/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "12007",
+        "-c",
+        "262144",
+        "-ngl",
+        "999",
+        "-fa",
+        "on",
+        "--jinja",
+        "--parallel",
+        "1",
+        "--threads",
+        "12",
+        "--threads-batch",
+        "32",
+        "-b",
+        "512",
+        "-ub",
+        "256",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1",
+        "--main-gpu",
+        "0",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--n-cpu-moe",
+        "58",
+        "--no-kv-offload"
+      ],
+      "status": "ok",
+      "startup_seconds": 37.865,
+      "gpu_at_ready": [
+        "9263, 14854, 0, 130.59",
+        "16029, 8096, 0, 113.38"
+      ],
+      "repeats": [
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 91.425,
+          "wall_output_tok_s": 1.4,
+          "decode_tok_s": 1.5320449401923766,
+          "prompt_tok_s": 3.4414290444885
+        },
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 89.853,
+          "wall_output_tok_s": 1.425,
+          "decode_tok_s": 1.4369011090193597,
+          "prompt_tok_s": 1.350973443915013
+        }
+      ],
+      "decode_tok_s": 1.4844730246058682,
+      "wall_output_tok_s": 1.4125,
+      "gpu_after_request": [
+        "9279, 14838, 0, 132.68",
+        "16043, 8082, 4, 116.82"
+      ]
+    },
+    {
+      "model": "minimax",
+      "ctx": 1048576,
+      "name": "validate-minimax-1024k-cpu58-layer-hostkv-mg1",
+      "command": [
+        "/home/sovthpaw/projects/LLM-Infra/llama.cpp-minimax-m3/build/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "12008",
+        "-c",
+        "1048576",
+        "-ngl",
+        "999",
+        "-fa",
+        "on",
+        "--jinja",
+        "--parallel",
+        "1",
+        "--threads",
+        "12",
+        "--threads-batch",
+        "32",
+        "-b",
+        "512",
+        "-ub",
+        "256",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1",
+        "--main-gpu",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--n-cpu-moe",
+        "58",
+        "--no-kv-offload"
+      ],
+      "status": "ok",
+      "startup_seconds": 154.842,
+      "gpu_at_ready": [
+        "9511, 14606, 0, 31.08",
+        "18585, 5540, 0, 17.15"
+      ],
+      "repeats": [
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 79.186,
+          "wall_output_tok_s": 1.616,
+          "decode_tok_s": 1.9281160381204205,
+          "prompt_tok_s": 2.872102713200971
+        },
+        {
+          "completion_tokens": 128,
+          "wall_seconds": 63.511,
+          "wall_output_tok_s": 2.015,
+          "decode_tok_s": 2.0354459879220768,
+          "prompt_tok_s": 1.8026560333996111
+        }
+      ],
+      "decode_tok_s": 1.9817810130212488,
+      "wall_output_tok_s": 1.8155000000000001,
+      "gpu_after_request": [
+        "9539, 14578, 0, 133.33",
+        "18611, 5514, 2, 116.73"
+      ]
+    }
+  ]
+}

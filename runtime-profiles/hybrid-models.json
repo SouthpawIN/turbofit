@@ -23,7 +23,7 @@
         {
           "id": "dual-24gb-64k",
           "status": "validated",
-          "evidence": "sha256:1b58f63cb5decbfaaa3b545f7316f6191884628954863328762f88fc7f5883b1",
+          "evidence": "sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b",
           "context": 65536,
           "min_system_ram_mib": 98304,
           "required_available_ram_mib": 65536,
@@ -46,18 +46,20 @@
             "cache_type_v": "q4_0",
             "mlock": false,
             "gpu_layers": 999,
-            "cpu_moe_layers": 46,
+            "cpu_moe_layers": 34,
             "mmap": true,
             "extra_args": [
               "--jinja",
-              "--no-kv-offload"
+              "--no-kv-offload",
+              "--main-gpu",
+              "1"
             ]
           }
         },
         {
           "id": "dual-24gb-128k",
           "status": "validated",
-          "evidence": "sha256:62d45fb10a03ffbcfe1859195e741e2ee526d68f8e8270ed0b0fb276dbe87338",
+          "evidence": "sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b",
           "context": 131072,
           "min_system_ram_mib": 114688,
           "required_available_ram_mib": 81920,
@@ -80,7 +82,7 @@
             "cache_type_v": "q4_0",
             "mlock": false,
             "gpu_layers": 999,
-            "cpu_moe_layers": 46,
+            "cpu_moe_layers": 34,
             "mmap": true,
             "extra_args": [
               "--jinja",
@@ -90,8 +92,8 @@
         },
         {
           "id": "dual-24gb-262k",
-          "status": "configured-unmeasured",
-          "evidence": null,
+          "status": "validated",
+          "evidence": "sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b",
           "context": 262144,
           "min_system_ram_mib": 147456,
           "required_available_ram_mib": 114688,
@@ -114,7 +116,7 @@
             "cache_type_v": "q4_0",
             "mlock": false,
             "gpu_layers": 999,
-            "cpu_moe_layers": 46,
+            "cpu_moe_layers": 40,
             "mmap": true,
             "extra_args": [
               "--jinja",
@@ -124,8 +126,8 @@
         },
         {
           "id": "dual-24gb-1m",
-          "status": "configured-unmeasured",
-          "evidence": null,
+          "status": "validated",
+          "evidence": "sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b",
           "context": 1048576,
           "min_system_ram_mib": 262144,
           "required_available_ram_mib": 229376,
@@ -148,7 +150,7 @@
             "cache_type_v": "q4_0",
             "mlock": false,
             "gpu_layers": 999,
-            "cpu_moe_layers": 46,
+            "cpu_moe_layers": 40,
             "mmap": true,
             "extra_args": [
               "--jinja",
@@ -171,8 +173,8 @@
       }
     },
     {
-      "id": "minimax-m3-mxfp4-moe",
-      "name": "MiniMax M3 MXFP4_MOE",
+      "id": "minimax-m3-q4-k-m",
+      "name": "MiniMax M3 UD-Q4_K_M",
       "architecture": "minimax-m3",
       "runtime_requirement": "llama.cpp MiniMax M3 PR 24523 or a descendant with minimax-m3 support",
       "parameter_count_b": 428,
@@ -182,39 +184,39 @@
         "revision": "18039c2c5277fc64109acee91fa3ca3a9da73c57",
         "files": [
           {
-            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00001-of-00007.gguf",
-            "expected_sha256": "sha256:c74465b7a9a24e38a6e762e6b7cbd62dcacd11dd33b6361c55bee92657b951be",
+            "filename": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf",
+            "expected_sha256": "sha256:e8e16c72310bd397e88e3ae5dc12d68dba4bf4d10e74825f91a9558e88f622a7",
             "size_bytes": 8243104
           },
           {
-            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00002-of-00007.gguf",
-            "expected_sha256": "sha256:72dad74b69adfec3ceaef07b360f62893f1b23a5925d36d0ca0f0f417ef390d7",
-            "size_bytes": 49518313504
+            "filename": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00002-of-00007.gguf",
+            "expected_sha256": "sha256:b12d8b535a0c780fe8e8997848f605b80d8116bf213754b7a0d6b6148a231d7b",
+            "size_bytes": 49049569184
           },
           {
-            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00003-of-00007.gguf",
-            "expected_sha256": "sha256:7b8eaf23c24ea2f4b8c1704b4bf577ff5f33e91c3b698b4cc466fbd8615f1753",
-            "size_bytes": 49760112416
+            "filename": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00003-of-00007.gguf",
+            "expected_sha256": "sha256:5df24493ea4bac7f20fcef4d6eb9df38a4274046d9e84f6c4d2a393f022aaa6c",
+            "size_bytes": 49980655104
           },
           {
-            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00004-of-00007.gguf",
-            "expected_sha256": "sha256:5ae0b69e2baaf378d987fbc544695fe560cfdfd9930dba9824ecb88194bc5c94",
-            "size_bytes": 49870607968
+            "filename": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00004-of-00007.gguf",
+            "expected_sha256": "sha256:6ac1e2a497109869f57467cafda8d1493e2098c60e0912795fbd6a57eb51b35c",
+            "size_bytes": 48755420608
           },
           {
-            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00005-of-00007.gguf",
-            "expected_sha256": "sha256:fbbb37659484c96f8a52d0dd5b7b34b217caaad15fe765eb6ab79be1b2a2c59f",
-            "size_bytes": 48453430784
+            "filename": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00005-of-00007.gguf",
+            "expected_sha256": "sha256:a82fc7c3cee19dbe040ee9135d5b1b2d54d79441b6acfc1e956512af452d6b83",
+            "size_bytes": 48732196096
           },
           {
-            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00006-of-00007.gguf",
-            "expected_sha256": "sha256:cbaf36461f9c72626a6448e324c6f4a2c7e5b979b3ba39a861eb4f29b9162861",
-            "size_bytes": 48774295040
+            "filename": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00006-of-00007.gguf",
+            "expected_sha256": "sha256:8a37df7f6bd59723846b58cd63f891da493340dbb9ec2bbf57e5f36ec617cd75",
+            "size_bytes": 48754240896
           },
           {
-            "filename": "MXFP4_MOE/MiniMax-M3-MXFP4_MOE-00007-of-00007.gguf",
-            "expected_sha256": "sha256:98bfcedebc8b0efc113753d419ae32e2cf1b581d0888a0b5f9e6d1c07b9266c2",
-            "size_bytes": 10092752032
+            "filename": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00007-of-00007.gguf",
+            "expected_sha256": "sha256:b4e372acd5acbf57ad26891a088226ec90b5650a908925f01ae82848d45ca9c3",
+            "size_bytes": 18751471744
           }
         ]
       },
@@ -222,7 +224,7 @@
         {
           "id": "dual-24gb-64k",
           "status": "validated",
-          "evidence": "sha256:2600120699f90d74ec710f207f7225a32419ca4fbd8cb408c0459dc66be6a522",
+          "evidence": "sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b",
           "context": 65536,
           "min_system_ram_mib": 307200,
           "required_available_ram_mib": 262144,
@@ -256,7 +258,7 @@
         {
           "id": "dual-24gb-128k",
           "status": "validated",
-          "evidence": "sha256:a0e0404c3be45fa82e86d9d80d1d940b450afa25f7598db8dd8656c556b0c3e4",
+          "evidence": "sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b",
           "context": 131072,
           "min_system_ram_mib": 327680,
           "required_available_ram_mib": 278528,
@@ -289,8 +291,8 @@
         },
         {
           "id": "dual-24gb-262k",
-          "status": "configured-unmeasured",
-          "evidence": null,
+          "status": "validated",
+          "evidence": "sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b",
           "context": 262144,
           "min_system_ram_mib": 360448,
           "required_available_ram_mib": 294912,
@@ -313,7 +315,7 @@
             "cache_type_v": "q4_0",
             "mlock": false,
             "gpu_layers": 999,
-            "cpu_moe_layers": 56,
+            "cpu_moe_layers": 58,
             "mmap": true,
             "extra_args": [
               "--jinja",
@@ -323,8 +325,8 @@
         },
         {
           "id": "dual-24gb-1m",
-          "status": "configured-unmeasured",
-          "evidence": null,
+          "status": "validated",
+          "evidence": "sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b",
           "context": 1048576,
           "min_system_ram_mib": 409600,
           "required_available_ram_mib": 348160,
@@ -347,11 +349,13 @@
             "cache_type_v": "q4_0",
             "mlock": false,
             "gpu_layers": 999,
-            "cpu_moe_layers": 56,
+            "cpu_moe_layers": 58,
             "mmap": true,
             "extra_args": [
               "--jinja",
-              "--no-kv-offload"
+              "--no-kv-offload",
+              "--main-gpu",
+              "1"
             ]
           }
         }
@@ -379,7 +383,7 @@
         {
           "id": "dual-24gb-64k",
           "status": "validated",
-          "evidence": "sha256:ff9145e381595d7cb5da6bda72af202379c3eb5874b5b4bedb37b2c79b425426",
+          "evidence": "sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b",
           "context": 65536,
           "min_system_ram_mib": 378880,
           "required_available_ram_mib": 262144,
@@ -412,7 +416,9 @@
               "-cram",
               "0",
               "--no-kv-offload",
-              "--jinja"
+              "--jinja",
+              "--numa",
+              "distribute"
             ],
             "environment": {
               "GGML_CUDA_NO_PINNED": "1"
@@ -422,7 +428,7 @@
         {
           "id": "dual-24gb-128k",
           "status": "validated",
-          "evidence": "sha256:01d92667a57198559442a7d4eb258deaf4dc918b8b02d47fbe34a62793dd6ca4",
+          "evidence": "sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b",
           "context": 131072,
           "min_system_ram_mib": 399360,
           "required_available_ram_mib": 286720,
@@ -455,7 +461,9 @@
               "-cram",
               "0",
               "--no-kv-offload",
-              "--jinja"
+              "--jinja",
+              "--numa",
+              "distribute"
             ],
             "environment": {
               "GGML_CUDA_NO_PINNED": "1"
@@ -464,8 +472,8 @@
         },
         {
           "id": "dual-24gb-262k",
-          "status": "configured-unmeasured",
-          "evidence": null,
+          "status": "validated",
+          "evidence": "sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b",
           "context": 262144,
           "min_system_ram_mib": 430080,
           "required_available_ram_mib": 317440,
@@ -498,7 +506,9 @@
               "-cram",
               "0",
               "--no-kv-offload",
-              "--jinja"
+              "--jinja",
+              "--numa",
+              "distribute"
             ],
             "environment": {
               "GGML_CUDA_NO_PINNED": "1"
@@ -507,8 +517,8 @@
         },
         {
           "id": "dual-24gb-1m",
-          "status": "configured-unmeasured",
-          "evidence": null,
+          "status": "validated",
+          "evidence": "sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b",
           "context": 1048576,
           "min_system_ram_mib": 491520,
           "required_available_ram_mib": 368640,
@@ -531,7 +541,7 @@
             "cache_type_v": "f16",
             "mlock": false,
             "gpu_layers": 79,
-            "cpu_moe_layers": "all",
+            "cpu_moe_layers": 72,
             "mmap": true,
             "extra_args": [
               "-mla",

@@ -18,9 +18,12 @@ def test_catalog_defines_large_local_models_without_host_paths() -> None:
 
     assert set(catalog.models) == {
         "laguna-s2-1-q4-k-m",
-        "minimax-m3-mxfp4-moe",
+        "minimax-m3-q4-k-m",
         "glm-5-2-2-788bpw",
     }
+    minimax = catalog.models["minimax-m3-q4-k-m"]
+    assert minimax.name == "MiniMax M3 UD-Q4_K_M"
+    assert minimax.source.files[0].filename.startswith("UD-Q4_K_M/")
     assert all(model.source.revision for model in catalog.models.values())
     assert all(model.source.files for model in catalog.models.values())
     assert all(not item.filename.startswith("/") for model in catalog.models.values() for item in model.source.files)
@@ -29,10 +32,10 @@ def test_catalog_defines_large_local_models_without_host_paths() -> None:
         for model in catalog.models.values()
     }
     assert configurations["laguna-s2-1-q4-k-m"].status == "validated"
-    assert configurations["minimax-m3-mxfp4-moe"].status == "validated"
+    assert configurations["minimax-m3-q4-k-m"].status == "validated"
     assert configurations["glm-5-2-2-788bpw"].status == "validated"
     assert configurations["laguna-s2-1-q4-k-m"].evidence
-    assert configurations["minimax-m3-mxfp4-moe"].evidence
+    assert configurations["minimax-m3-q4-k-m"].evidence
     assert configurations["glm-5-2-2-788bpw"].evidence
 
 
@@ -57,14 +60,9 @@ def test_each_system_ram_model_has_64k_128k_262k_and_1m_configurations() -> None
         for config in model.configurations:
             command = config.command(binary="/opt/llama-server", model_path="/models/model.gguf", port=8080)
             assert "--jinja" in command
-            if config.context > 65_536:
-                if config.id == "dual-24gb-128k":
-                    assert config.status == "validated"
-                    assert config.evidence
-                else:
-                    assert config.status == "configured-unmeasured"
-                    assert config.evidence is None
-                assert "--no-kv-offload" in command
+            assert config.status == "validated"
+            assert config.evidence
+            assert "--no-kv-offload" in command
 
     laguna_1m = catalog.models["laguna-s2-1-q4-k-m"].configuration("dual-24gb-1m")
     laguna_command = laguna_1m.command(binary="/opt/llama-server", model_path="/models/model.gguf", port=8080)
@@ -75,12 +73,30 @@ def test_each_system_ram_model_has_64k_128k_262k_and_1m_configurations() -> None
 def test_laguna_host_kv_profiles_use_measured_maximal_gpu_offload() -> None:
     laguna = HybridCatalog.load(CATALOG).models["laguna-s2-1-q4-k-m"]
 
-    for configuration_id in ("dual-24gb-64k", "dual-24gb-128k", "dual-24gb-262k", "dual-24gb-1m"):
+    expected_cpu_moe = {
+        "dual-24gb-64k": 34,
+        "dual-24gb-128k": 34,
+        "dual-24gb-262k": 40,
+        "dual-24gb-1m": 40,
+    }
+    for configuration_id, cpu_moe_layers in expected_cpu_moe.items():
         configuration = laguna.configuration(configuration_id)
         assert configuration.launch.gpu_layers == 999
-        assert configuration.launch.cpu_moe_layers == 46
-        assert configuration.launch.threads == 10
+        assert configuration.launch.cpu_moe_layers == cpu_moe_layers
         assert "--no-kv-offload" in configuration.launch.extra_args
+    assert laguna.configuration("dual-24gb-64k").launch.extra_args[-2:] == ("--main-gpu", "1")
+
+
+def test_promoted_minimax_and_glm_rungs_encode_measured_placement() -> None:
+    catalog = HybridCatalog.load(CATALOG)
+    minimax = catalog.models["minimax-m3-q4-k-m"]
+    assert [c.launch.cpu_moe_layers for c in minimax.configurations] == [56, 56, 58, 58]
+    assert minimax.configuration("dual-24gb-1m").launch.extra_args[-2:] == ("--main-gpu", "1")
+    glm = catalog.models["glm-5-2-2-788bpw"]
+    for config in glm.configurations[:-1]:
+        assert config.launch.cpu_moe_layers == "all"
+        assert config.launch.extra_args[-2:] == ("--numa", "distribute")
+    assert glm.configuration("dual-24gb-1m").launch.cpu_moe_layers == 72
 
 
 def test_fit_requires_ram_and_every_gpu_budget() -> None:
@@ -97,7 +113,7 @@ def test_fit_requires_ram_and_every_gpu_budget() -> None:
 
 
 def test_command_builder_emits_cpu_moe_and_memory_policy() -> None:
-    config = HybridCatalog.load(CATALOG).models["minimax-m3-mxfp4-moe"].configuration("dual-24gb-64k")
+    config = HybridCatalog.load(CATALOG).models["minimax-m3-q4-k-m"].configuration("dual-24gb-64k")
 
     command = config.command(
         binary="/opt/llama-server",
@@ -147,13 +163,13 @@ def test_hybrid_config_cli_runs_without_external_pythonpath() -> None:
     )
 
     assert "laguna-s2-1-q4-k-m" in result.stdout
-    assert "minimax-m3-mxfp4-moe" in result.stdout
+    assert "minimax-m3-q4-k-m" in result.stdout
     assert "glm-5-2-2-788bpw" in result.stdout
 
 
 def test_catalog_rejects_validated_configuration_without_evidence(tmp_path: Path) -> None:
     text = CATALOG.read_text().replace(
-        '"sha256:1b58f63cb5decbfaaa3b545f7316f6191884628954863328762f88fc7f5883b1"',
+        '"sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b"',
         "null",
         1,
     )

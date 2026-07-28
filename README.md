@@ -236,15 +236,15 @@ Measured claims remain attached to their exact artifact, runtime flags, context,
 
 ## Hybrid large-model bring-up
 
-`runtime-profiles/hybrid-models.json` defines dual-24 GB GPU + system-RAM placements for Laguna S 2.1 Q4_K_M, MiniMax M3 MXFP4_MOE, and GLM 5.2 2.788 bpw. Every artifact is bound to an immutable Hugging Face revision, required SHA-256 identity, and exact file size. A benchmark pass validates only that exact artifact, runtime, flags, context, and host class; it does not automatically add the candidate to the production adaptation ladder.
+`runtime-profiles/hybrid-models.json` defines dual-24 GB GPU + system-RAM placements for Laguna S 2.1 Q4_K_M, MiniMax M3 UD-Q4_K_M, and GLM 5.2 2.788 bpw. Every artifact is bound to an immutable Hugging Face revision, required SHA-256 identity, and exact file size. A benchmark pass validates only that exact artifact, runtime, flags, context, and host class; it does not automatically add the candidate to the production adaptation ladder.
 
-| Candidate / exact placement | Context | Prompt | Server decode | Wall output | Evidence |
+| Validated model placement | 64K | 128K | 262K | 1M | Evidence |
 |---|---:|---:|---:|---:|---|
-| Laguna S 2.1 Q4_K_M · all attention/routing on GPU · 46 CPU-MoE layers · 10 threads | 128K | 4.645 tok/s | **4.632 tok/s** | 4.131 tok/s | `sha256:62d45fb10a03ffbcfe1859195e741e2ee526d68f8e8270ed0b0fb276dbe87338` |
-| MiniMax M3 Q4_K_M · all attention/routing on GPU · 56 CPU-MoE layers · 12 threads | 128K | 4.502 tok/s | **2.033 tok/s** | 1.455 tok/s | `sha256:a0e0404c3be45fa82e86d9d80d1d940b450afa25f7598db8dd8656c556b0c3e4` |
-| GLM 5.2 2.788 bpw · ik_llama.cpp MLA/DSA · all experts on CPU · 14 threads | 128K | 2.471 tok/s | **1.180 tok/s** | 0.868 tok/s | `sha256:01d92667a57198559442a7d4eb258deaf4dc918b8b02d47fbe34a62793dd6ca4` |
+| Laguna S 2.1 Q4_K_M · layer split · host KV · 10 threads | **5.462** | **5.493** | **3.929** | **3.832** | `sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b` |
+| MiniMax M3 UD-Q4_K_M · layer split · host KV · 12 threads | **1.637** | **1.570** | **1.484** | **1.982** | `sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b` |
+| GLM 5.2 2.788 bpw · ik_llama.cpp MLA/DSA · 14 threads | **1.156** | **1.161** | **1.176** | **0.942** | `sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b` |
 
-All three 128K rows are production-style server validations. Laguna and MiniMax use `-ngl 999` so attention and routing stay on both GPUs while only the expert tensors needed to fit are left in system RAM. GLM keeps every expert layer in system RAM and uses `GGML_CUDA_NO_PINNED=1`; this avoids the prior 212.7 GiB pinned-host-memory failure. Row split was rejected by the architecture-specific Laguna and MiniMax runtimes, so the validated topology remains layer split.
+Values are median **server decode tok/s** from two repeated 128-token generations after warm-up. Laguna uses 34 CPU-MoE layers at 64K/128K and 40 at 262K/1M; its 64K placement selects GPU 1 as primary. MiniMax uses 56 CPU-MoE layers at 64K/128K and 58 at 262K/1M, with GPU 1 primary at 1M. GLM uses NUMA-distributed all-CPU experts through 262K and 72 CPU-MoE layers at 1M. Every rung keeps KV in host RAM. Tensor split was rejected because the Laguna fork lacks `llama_params_fit` support for tensor mode, was built without NCCL, and asserts in its internal AllReduce path; the validated topology therefore remains layer split.
 
 The configuration checker reports both static `hardware_fits` and current `launch_ready`, so a machine is not called ready while another resident model still occupies required VRAM:
 
