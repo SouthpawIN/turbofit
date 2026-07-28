@@ -1,0 +1,4 @@
+ggml_cuda_init: found 2 CUDA devices (Total VRAM: 48239 MiB):
+  Device 0: NVIDIA GeForce RTX 3090, compute capability 8.6, VMM: yes, VRAM: 24115 MiB
+  Device 1: NVIDIA GeForce RTX 3090, compute capability 8.6, VMM: yes, VRAM: 24124 MiB
+llama_bench: error: failed to load model '/home/sovthpaw/Models/storage/gguf/MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf'

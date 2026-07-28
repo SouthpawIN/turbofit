@@ -1,0 +1,119 @@
+{
+  "timestamp": "2026-07-27T05:32:27.427535+00:00",
+  "hardware": "2x NVIDIA GeForce RTX 3090 24GB",
+  "context_tokens": 65536,
+  "max_output_tokens": 256,
+  "prompt": "Write a Python merge_sort function with type hints and a docstring, then briefly explain its time and space complexity.",
+  "results": [
+    {
+      "model": "deepseek-v4-flash-local",
+      "launcher": "ds4",
+      "size_gb": 81.0,
+      "status": "failed",
+      "startup_seconds": 6.106,
+      "error": "timed out",
+      "log": "/tmp/turbofit-speed-deepseek-v4-flash-local.log"
+    },
+    {
+      "model": "glm-5.2-local",
+      "launcher": "colibri",
+      "size_gb": 370.0,
+      "status": "failed",
+      "startup_seconds": 1069.859,
+      "error": "HTTP Error 404: Not Found",
+      "log": "/tmp/turbofit-speed-glm-5.2-local.log"
+    },
+    {
+      "model": "glm-5.2-ternary-2788",
+      "launcher": "llama-cpp",
+      "size_gb": 277,
+      "status": "failed",
+      "error": "startup failed or exceeded 1800s; see /tmp/turbofit-speed-glm-5.2-ternary-2788.log",
+      "log": "/tmp/turbofit-speed-glm-5.2-ternary-2788.log"
+    },
+    {
+      "model": "minimax-m3-mxfp4",
+      "launcher": "llama-cpp",
+      "size_gb": 254,
+      "status": "failed",
+      "error": "startup failed or exceeded 1800s; see /tmp/turbofit-speed-minimax-m3-mxfp4.log",
+      "log": "/tmp/turbofit-speed-minimax-m3-mxfp4.log"
+    },
+    {
+      "model": "laguna-s21-f16",
+      "launcher": "llama-cpp",
+      "size_gb": 235,
+      "status": "failed",
+      "error": "[Errno 2] No such file or directory: '/home/sovthpaw/.local/src/llama.cpp/build/bin/llama-server'",
+      "log": "/tmp/turbofit-speed-laguna-s21-f16.log"
+    },
+    {
+      "model": "laguna-s21-q4",
+      "launcher": "llama-cpp",
+      "size_gb": 75.2,
+      "status": "failed",
+      "error": "[Errno 2] No such file or directory: '/home/sovthpaw/.local/src/llama.cpp/build/bin/llama-server'",
+      "log": "/tmp/turbofit-speed-laguna-s21-q4.log"
+    },
+    {
+      "model": "hy3-q4",
+      "launcher": "llama-cpp",
+      "size_gb": 182,
+      "status": "failed",
+      "error": "startup failed or exceeded 900s; see /tmp/turbofit-speed-hy3-q4.log",
+      "log": "/tmp/turbofit-speed-hy3-q4.log"
+    },
+    {
+      "model": "grm-2.6-plus-q4",
+      "launcher": "llama-cpp",
+      "size_gb": 17,
+      "status": "ok",
+      "startup_seconds": 20.813,
+      "completion_tokens": 256,
+      "wall_seconds": 6.067,
+      "wall_output_tok_s": 42.195,
+      "decode_tok_s": 47.603,
+      "prompt_tok_s": 99.347,
+      "metric_source": "server_timings"
+    },
+    {
+      "model": "carwin-moe-nano",
+      "launcher": "llama-cpp",
+      "size_gb": 12.4,
+      "status": "ok",
+      "startup_seconds": 72.077,
+      "completion_tokens": 256,
+      "wall_seconds": 2.273,
+      "wall_output_tok_s": 112.633,
+      "decode_tok_s": 132.959,
+      "prompt_tok_s": 192.242,
+      "metric_source": "server_timings"
+    },
+    {
+      "model": "ternary-bonsai-27b-dspark",
+      "launcher": "prism-bonsai",
+      "size_gb": 9.1,
+      "status": "ok",
+      "startup_seconds": 68.108,
+      "completion_tokens": 256,
+      "wall_seconds": 3.873,
+      "wall_output_tok_s": 66.093,
+      "decode_tok_s": 83.492,
+      "prompt_tok_s": 69.881,
+      "metric_source": "server_timings"
+    },
+    {
+      "model": "bonsai-27b-1bit",
+      "launcher": "llama-cpp",
+      "size_gb": 3.9,
+      "status": "ok",
+      "startup_seconds": 16.021,
+      "completion_tokens": 256,
+      "wall_seconds": 4.715,
+      "wall_output_tok_s": 54.294,
+      "decode_tok_s": 62.726,
+      "prompt_tok_s": 130.498,
+      "metric_source": "server_timings"
+    }
+  ]
+}

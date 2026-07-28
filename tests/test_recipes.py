@@ -160,10 +160,42 @@ def test_catalog_variants_compile_distinct_artifacts_and_features() -> None:
     }).components[0]
 
     assert fp16.model_path.endswith("Ternary-Bonsai-27B-F16.gguf")
+    assert fp16.environment["DRAFT_MODEL"].endswith("Ternary-Bonsai-27B-dspark-bf16.gguf")
     assert fp16.projector_path.endswith("Ternary-Bonsai-27B-mmproj-BF16.gguf")
     assert fp16.method == "dspark"
     assert baseline.model_path.endswith("Ternary-Bonsai-27B-Q2_0.gguf")
     assert baseline.method == "baseline"
+
+
+def test_requested_fp16_and_q4_variants_resolve_real_artifact_names() -> None:
+    book = RecipeBook.load(RECIPES)
+    bonsai = book.resolve_catalog_configuration({
+        "id": "bonsai-27b-fp16-vision-dspark--auto--64k",
+        "main": "bonsai-27b-fp16-vision-dspark",
+        "auxiliary": "auto",
+        "context": 65_536,
+        "status": "candidate",
+    }).components[0]
+    minimax = book.resolve_catalog_configuration({
+        "id": "minimax-m3-q4--auto--64k",
+        "main": "minimax-m3-q4",
+        "auxiliary": "auto",
+        "context": 65_536,
+        "status": "candidate",
+    }).components[0]
+    laguna = book.resolve_catalog_configuration({
+        "id": "laguna-s2-1-fp16--auto--64k",
+        "main": "laguna-s2-1-fp16",
+        "auxiliary": "auto",
+        "context": 65_536,
+        "status": "candidate",
+    }).components[0]
+
+    assert bonsai.model_path.endswith("Bonsai-27B-F16.gguf")
+    assert bonsai.environment["DRAFT_MODEL"].endswith("Bonsai-27B-dspark-bf16.gguf")
+    assert bonsai.projector_path.endswith("Bonsai-27B-mmproj-BF16.gguf")
+    assert minimax.model_path.endswith("MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf")
+    assert laguna.model_path.endswith("laguna-s-2.1-F16.gguf")
 
 
 def test_recipe_compiles_deterministic_profile_name_and_aliases() -> None:

@@ -58,10 +58,7 @@ def test_each_system_ram_model_has_64k_128k_262k_and_1m_configurations() -> None
             command = config.command(binary="/opt/llama-server", model_path="/models/model.gguf", port=8080)
             assert "--jinja" in command
             if config.context > 65_536:
-                if (
-                    model.id == "laguna-s2-1-q4-k-m"
-                    and config.id == "dual-24gb-128k"
-                ):
+                if config.id == "dual-24gb-128k":
                     assert config.status == "validated"
                     assert config.evidence
                 else:
@@ -78,11 +75,12 @@ def test_each_system_ram_model_has_64k_128k_262k_and_1m_configurations() -> None
 def test_laguna_host_kv_profiles_use_measured_maximal_gpu_offload() -> None:
     laguna = HybridCatalog.load(CATALOG).models["laguna-s2-1-q4-k-m"]
 
-    assert laguna.configuration("dual-24gb-64k").launch.gpu_layers == 24
-    for configuration_id in ("dual-24gb-128k", "dual-24gb-262k", "dual-24gb-1m"):
+    for configuration_id in ("dual-24gb-64k", "dual-24gb-128k", "dual-24gb-262k", "dual-24gb-1m"):
         configuration = laguna.configuration(configuration_id)
-        assert configuration.launch.gpu_layers == 28
-        assert configuration.min_vram_mb_per_card == (23_552, 23_552)
+        assert configuration.launch.gpu_layers == 999
+        assert configuration.launch.cpu_moe_layers == 46
+        assert configuration.launch.threads == 10
+        assert "--no-kv-offload" in configuration.launch.extra_args
 
 
 def test_fit_requires_ram_and_every_gpu_budget() -> None:
@@ -109,6 +107,8 @@ def test_command_builder_emits_cpu_moe_and_memory_policy() -> None:
 
     assert command[:4] == ("/opt/llama-server", "-m", "/models/MiniMax-M3-00001-of-00007.gguf", "--port")
     assert command[command.index("--n-cpu-moe") + 1] == "56"
+    assert command[command.index("-ngl") + 1] == "999"
+    assert command[command.index("--threads") + 1] == "12"
     assert command[command.index("--tensor-split") + 1] == "1,1"
     assert "--no-mmap" not in command
     assert "--mlock" not in command
@@ -121,11 +121,15 @@ def test_glm_command_contains_required_dsa_cpu_moe_flags() -> None:
         binary="/engines/ik/llama-server", model_path="/models/glm.gguf", port=11600
     )
 
+    assert command[command.index("--threads") + 1] == "14"
     assert "--cpu-moe" in command
     assert "-dsa" in command
     assert "-fidx" in command
     assert command[command.index("--split-mode") + 1] == "layer"
     assert "--fit" not in command
+    assert command[:3] == ("env", "GGML_CUDA_NO_PINNED=1", "/engines/ik/llama-server")
+    assert command[command.index("-ngl") + 1] == "79"
+    assert "--no-mmap" not in command
 
 
 def test_hybrid_config_cli_runs_without_external_pythonpath() -> None:
@@ -149,7 +153,7 @@ def test_hybrid_config_cli_runs_without_external_pythonpath() -> None:
 
 def test_catalog_rejects_validated_configuration_without_evidence(tmp_path: Path) -> None:
     text = CATALOG.read_text().replace(
-        '"sha256:a332e44a601c129b90262c877ad1f62e0d8fd54780dba5f566ee010d51225ec5"',
+        '"sha256:1b58f63cb5decbfaaa3b545f7316f6191884628954863328762f88fc7f5883b1"',
         "null",
         1,
     )

@@ -1,0 +1,148 @@
+{
+  "timestamp": "2026-07-27T07:16:25.951068+00:00",
+  "hardware": "2x NVIDIA GeForce RTX 3090 24GB",
+  "context_tokens": 65536,
+  "max_output_tokens": 256,
+  "prompt": "Write a Python merge_sort function with type hints and a docstring, then briefly explain its time and space complexity.",
+  "results": [
+    {
+      "model": "glm-5-2-2-788bpw",
+      "launcher": "llama-cpp",
+      "size_gb": 244.5,
+      "status": "failed",
+      "error": "startup failed or exceeded 1800s; see /tmp/turbofit-speed-glm-5-2-2-788bpw.log",
+      "log": "/tmp/turbofit-speed-glm-5-2-2-788bpw.log"
+    },
+    {
+      "model": "minimax-m3-q4",
+      "launcher": "llama-cpp",
+      "size_gb": 245.9,
+      "status": "failed",
+      "startup_seconds": 1603.87,
+      "error": "timed out",
+      "log": "/tmp/turbofit-speed-minimax-m3-q4.log"
+    },
+    {
+      "model": "laguna-s2-1-fp16",
+      "launcher": "llama-cpp",
+      "size_gb": 219.0,
+      "status": "failed",
+      "error": "startup failed or exceeded 1800s; see /tmp/turbofit-speed-laguna-s2-1-fp16.log",
+      "log": "/tmp/turbofit-speed-laguna-s2-1-fp16.log"
+    },
+    {
+      "model": "laguna-s2-1-q4",
+      "launcher": "llama-cpp",
+      "size_gb": 70.0,
+      "status": "ok",
+      "startup_seconds": 416.604,
+      "completion_tokens": 256,
+      "wall_seconds": 499.485,
+      "wall_output_tok_s": 0.513,
+      "decode_tok_s": 0.539,
+      "prompt_tok_s": 1.272,
+      "metric_source": "server_timings",
+      "requested_output_tokens": 256
+    },
+    {
+      "model": "grm-2-6-27b",
+      "launcher": "llama-cpp",
+      "size_gb": 15.7,
+      "status": "ok",
+      "startup_seconds": 160.221,
+      "completion_tokens": 256,
+      "wall_seconds": 5.319,
+      "wall_output_tok_s": 48.128,
+      "decode_tok_s": 57.089,
+      "prompt_tok_s": 72.733,
+      "metric_source": "server_timings",
+      "requested_output_tokens": 256
+    },
+    {
+      "model": "carwin-nano",
+      "launcher": "llama-cpp",
+      "size_gb": 11.5,
+      "status": "ok",
+      "startup_seconds": 18.022,
+      "completion_tokens": 256,
+      "wall_seconds": 2.601,
+      "wall_output_tok_s": 98.435,
+      "decode_tok_s": 120.805,
+      "prompt_tok_s": 115.525,
+      "metric_source": "server_timings",
+      "requested_output_tokens": 256
+    },
+    {
+      "model": "ternary-bonsai-27b-fp16-vision-dspark",
+      "launcher": "prism-bonsai",
+      "size_gb": 55.0,
+      "status": "failed",
+      "error": "startup failed or exceeded 900s; see /tmp/turbofit-speed-ternary-bonsai-27b-fp16-vision-dspark.log",
+      "log": "/tmp/turbofit-speed-ternary-bonsai-27b-fp16-vision-dspark.log"
+    },
+    {
+      "model": "ternary-bonsai-27b-dspark",
+      "launcher": "prism-bonsai",
+      "size_gb": 9.1,
+      "status": "ok",
+      "startup_seconds": 64.144,
+      "completion_tokens": 256,
+      "wall_seconds": 3.981,
+      "wall_output_tok_s": 64.299,
+      "decode_tok_s": 81.473,
+      "prompt_tok_s": 66.627,
+      "metric_source": "server_timings",
+      "requested_output_tokens": 256
+    },
+    {
+      "model": "ternary-bonsai-27b",
+      "launcher": "prism-bonsai",
+      "size_gb": 6.7,
+      "status": "ok",
+      "startup_seconds": 10.028,
+      "completion_tokens": 256,
+      "wall_seconds": 5.478,
+      "wall_output_tok_s": 46.735,
+      "decode_tok_s": 54.66,
+      "prompt_tok_s": 74.888,
+      "metric_source": "server_timings",
+      "requested_output_tokens": 256
+    },
+    {
+      "model": "bonsai-27b-fp16-vision-dspark",
+      "launcher": "prism-bonsai",
+      "size_gb": 55.0,
+      "status": "failed",
+      "error": "startup failed or exceeded 900s; see /tmp/turbofit-speed-bonsai-27b-fp16-vision-dspark.log",
+      "log": "/tmp/turbofit-speed-bonsai-27b-fp16-vision-dspark.log"
+    },
+    {
+      "model": "bonsai-27b-dspark",
+      "launcher": "prism-bonsai",
+      "size_gb": 5.7,
+      "status": "ok",
+      "startup_seconds": 32.097,
+      "completion_tokens": 256,
+      "wall_seconds": 4.787,
+      "wall_output_tok_s": 53.479,
+      "decode_tok_s": 60.9,
+      "prompt_tok_s": 132.311,
+      "metric_source": "server_timings",
+      "requested_output_tokens": 256
+    },
+    {
+      "model": "bonsai-27b",
+      "launcher": "prism-bonsai",
+      "size_gb": 3.5,
+      "status": "ok",
+      "startup_seconds": 12.02,
+      "completion_tokens": 256,
+      "wall_seconds": 4.747,
+      "wall_output_tok_s": 53.931,
+      "decode_tok_s": 61.066,
+      "prompt_tok_s": 144.586,
+      "metric_source": "server_timings",
+      "requested_output_tokens": 256
+    }
+  ]
+}

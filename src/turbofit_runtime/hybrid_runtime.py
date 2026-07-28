@@ -75,6 +75,7 @@ class LaunchPolicy:
     mmap: bool
     extra_args: tuple[str, ...]
     mlock: bool
+    environment: Mapping[str, str]
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> "LaunchPolicy":
@@ -83,7 +84,8 @@ class LaunchPolicy:
             "threads", "threads_batch", "batch_size", "ubatch_size",
             "cache_type_k", "cache_type_v", "mmap", "extra_args", "mlock",
         }
-        _exact(value, fields, "launch policy")
+        if set(value) not in {frozenset(fields), frozenset(fields | {"environment"})}:
+            raise ValueError("launch policy fields do not match schema")
         raw_split = value["tensor_split"]
         if not isinstance(raw_split, list) or not raw_split:
             raise ValueError("tensor_split must be a non-empty list")
@@ -104,6 +106,7 @@ class LaunchPolicy:
             mmap=value["mmap"],
             extra_args=tuple(raw_extra),
             mlock=value["mlock"],
+            environment=dict(value.get("environment", {})),
         )
         for name in ("gpu_layers", "threads", "threads_batch", "batch_size", "ubatch_size"):
             _positive_int(getattr(policy, name), name)
@@ -123,6 +126,11 @@ class LaunchPolicy:
                 raise ValueError("extra_args cannot override identity, network, or secret arguments")
         if not isinstance(policy.mmap, bool) or not isinstance(policy.mlock, bool):
             raise ValueError("mmap and mlock must be booleans")
+        if not isinstance(policy.environment, Mapping):
+            raise ValueError("environment must be an object")
+        for name, setting in policy.environment.items():
+            if name not in {"GGML_CUDA_NO_PINNED"} or not isinstance(setting, str) or not setting:
+                raise ValueError("unsupported or invalid launch environment setting")
         if policy.mlock and policy.mmap:
             raise ValueError("hybrid configurations cannot mlock a memory-mapped large model")
         return policy
@@ -224,6 +232,9 @@ class HybridConfiguration:
         if self.launch.mlock:
             command.append("--mlock")
         command.extend(self.launch.extra_args)
+        if self.launch.environment:
+            prefix = ["env", *(f"{name}={value}" for name, value in sorted(self.launch.environment.items()))]
+            command = [*prefix, *command]
         return tuple(command)
 
 

@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-07-27T20:10:20.399080+00:00",
+  "hardware": "2x NVIDIA GeForce RTX 3090 24GB",
+  "context_tokens": 131072,
+  "max_output_tokens": 256,
+  "prompt": "Write a Python merge_sort function with type hints and a docstring, then briefly explain its time and space complexity.",
+  "results": [
+    {
+      "model": "minimax-m3-q4",
+      "launcher": "llama-cpp",
+      "size_gb": 245.9,
+      "status": "ok",
+      "startup_seconds": 39.889,
+      "completion_tokens": 32,
+      "wall_seconds": 21.989,
+      "wall_output_tok_s": 1.455,
+      "decode_tok_s": 2.033,
+      "prompt_tok_s": 4.502,
+      "metric_source": "server_timings",
+      "requested_output_tokens": 32
+    }
+  ]
+}

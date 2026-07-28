@@ -23,7 +23,7 @@
         {
           "id": "dual-24gb-64k",
           "status": "validated",
-          "evidence": "sha256:a332e44a601c129b90262c877ad1f62e0d8fd54780dba5f566ee010d51225ec5",
+          "evidence": "sha256:1b58f63cb5decbfaaa3b545f7316f6191884628954863328762f88fc7f5883b1",
           "context": 65536,
           "min_system_ram_mib": 98304,
           "required_available_ram_mib": 65536,
@@ -38,25 +38,26 @@
               1,
               1
             ],
-            "threads": 16,
+            "threads": 10,
             "threads_batch": 32,
             "batch_size": 512,
             "ubatch_size": 256,
             "cache_type_k": "q4_0",
             "cache_type_v": "q4_0",
             "mlock": false,
-            "gpu_layers": 24,
-            "cpu_moe_layers": null,
+            "gpu_layers": 999,
+            "cpu_moe_layers": 46,
             "mmap": true,
             "extra_args": [
-              "--jinja"
+              "--jinja",
+              "--no-kv-offload"
             ]
           }
         },
         {
           "id": "dual-24gb-128k",
           "status": "validated",
-          "evidence": "sha256:801cd8ce4b11005bc4e39dc3e3957b2619c3d1d1720edd245efcdb2ce8830cac",
+          "evidence": "sha256:62d45fb10a03ffbcfe1859195e741e2ee526d68f8e8270ed0b0fb276dbe87338",
           "context": 131072,
           "min_system_ram_mib": 114688,
           "required_available_ram_mib": 81920,
@@ -71,15 +72,15 @@
               1,
               1
             ],
-            "threads": 16,
+            "threads": 10,
             "threads_batch": 32,
             "batch_size": 512,
             "ubatch_size": 256,
             "cache_type_k": "q4_0",
             "cache_type_v": "q4_0",
             "mlock": false,
-            "gpu_layers": 28,
-            "cpu_moe_layers": null,
+            "gpu_layers": 999,
+            "cpu_moe_layers": 46,
             "mmap": true,
             "extra_args": [
               "--jinja",
@@ -105,15 +106,15 @@
               1,
               1
             ],
-            "threads": 16,
+            "threads": 10,
             "threads_batch": 32,
             "batch_size": 512,
             "ubatch_size": 256,
             "cache_type_k": "q4_0",
             "cache_type_v": "q4_0",
             "mlock": false,
-            "gpu_layers": 28,
-            "cpu_moe_layers": null,
+            "gpu_layers": 999,
+            "cpu_moe_layers": 46,
             "mmap": true,
             "extra_args": [
               "--jinja",
@@ -139,15 +140,15 @@
               1,
               1
             ],
-            "threads": 16,
+            "threads": 10,
             "threads_batch": 32,
             "batch_size": 512,
             "ubatch_size": 256,
             "cache_type_k": "q4_0",
             "cache_type_v": "q4_0",
             "mlock": false,
-            "gpu_layers": 28,
-            "cpu_moe_layers": null,
+            "gpu_layers": 999,
+            "cpu_moe_layers": 46,
             "mmap": true,
             "extra_args": [
               "--jinja",
@@ -221,7 +222,7 @@
         {
           "id": "dual-24gb-64k",
           "status": "validated",
-          "evidence": "sha256:2edf1976c39a661de1b8aa49fcd726602d7763923ecb3760723f7990e33ecabc",
+          "evidence": "sha256:2600120699f90d74ec710f207f7225a32419ca4fbd8cb408c0459dc66be6a522",
           "context": 65536,
           "min_system_ram_mib": 307200,
           "required_available_ram_mib": 262144,
@@ -236,25 +237,26 @@
               1,
               1
             ],
-            "threads": 16,
+            "threads": 12,
             "threads_batch": 32,
             "batch_size": 512,
             "ubatch_size": 256,
             "cache_type_k": "q4_0",
             "cache_type_v": "q4_0",
             "mlock": false,
-            "gpu_layers": 40,
+            "gpu_layers": 999,
             "cpu_moe_layers": 56,
             "mmap": true,
             "extra_args": [
-              "--jinja"
+              "--jinja",
+              "--no-kv-offload"
             ]
           }
         },
         {
           "id": "dual-24gb-128k",
-          "status": "configured-unmeasured",
-          "evidence": null,
+          "status": "validated",
+          "evidence": "sha256:a0e0404c3be45fa82e86d9d80d1d940b450afa25f7598db8dd8656c556b0c3e4",
           "context": 131072,
           "min_system_ram_mib": 327680,
           "required_available_ram_mib": 278528,
@@ -269,14 +271,14 @@
               1,
               1
             ],
-            "threads": 16,
+            "threads": 12,
             "threads_batch": 32,
             "batch_size": 512,
             "ubatch_size": 256,
             "cache_type_k": "q4_0",
             "cache_type_v": "q4_0",
             "mlock": false,
-            "gpu_layers": 40,
+            "gpu_layers": 999,
             "cpu_moe_layers": 56,
             "mmap": true,
             "extra_args": [
@@ -303,14 +305,14 @@
               1,
               1
             ],
-            "threads": 16,
+            "threads": 12,
             "threads_batch": 32,
             "batch_size": 512,
             "ubatch_size": 256,
             "cache_type_k": "q4_0",
             "cache_type_v": "q4_0",
             "mlock": false,
-            "gpu_layers": 40,
+            "gpu_layers": 999,
             "cpu_moe_layers": 56,
             "mmap": true,
             "extra_args": [
@@ -337,14 +339,14 @@
               1,
               1
             ],
-            "threads": 16,
+            "threads": 12,
             "threads_batch": 32,
             "batch_size": 512,
             "ubatch_size": 256,
             "cache_type_k": "q4_0",
             "cache_type_v": "q4_0",
             "mlock": false,
-            "gpu_layers": 40,
+            "gpu_layers": 999,
             "cpu_moe_layers": 56,
             "mmap": true,
             "extra_args": [
@@ -377,7 +379,7 @@
         {
           "id": "dual-24gb-64k",
           "status": "validated",
-          "evidence": "sha256:02ab108a18e2a264c61472f7c98da0ee10bb70be4acf87436ec7066bed51c49e",
+          "evidence": "sha256:ff9145e381595d7cb5da6bda72af202379c3eb5874b5b4bedb37b2c79b425426",
           "context": 65536,
           "min_system_ram_mib": 378880,
           "required_available_ram_mib": 262144,
@@ -392,16 +394,16 @@
               1,
               1
             ],
-            "threads": 16,
+            "threads": 14,
             "threads_batch": 32,
             "batch_size": 512,
             "ubatch_size": 256,
             "cache_type_k": "f16",
             "cache_type_v": "f16",
             "mlock": false,
-            "gpu_layers": 99,
+            "gpu_layers": 79,
             "cpu_moe_layers": "all",
-            "mmap": false,
+            "mmap": true,
             "extra_args": [
               "-mla",
               "1",
@@ -409,18 +411,18 @@
               "-fidx",
               "-cram",
               "0",
-              "-muge",
-              "-cuda",
-              "graphs=1",
-              "--jinja",
-              "--parallel-tool-calls"
-            ]
+              "--no-kv-offload",
+              "--jinja"
+            ],
+            "environment": {
+              "GGML_CUDA_NO_PINNED": "1"
+            }
           }
         },
         {
           "id": "dual-24gb-128k",
-          "status": "configured-unmeasured",
-          "evidence": null,
+          "status": "validated",
+          "evidence": "sha256:01d92667a57198559442a7d4eb258deaf4dc918b8b02d47fbe34a62793dd6ca4",
           "context": 131072,
           "min_system_ram_mib": 399360,
           "required_available_ram_mib": 286720,
@@ -435,16 +437,16 @@
               1,
               1
             ],
-            "threads": 16,
+            "threads": 14,
             "threads_batch": 32,
             "batch_size": 512,
             "ubatch_size": 256,
             "cache_type_k": "f16",
             "cache_type_v": "f16",
             "mlock": false,
-            "gpu_layers": 99,
+            "gpu_layers": 79,
             "cpu_moe_layers": "all",
-            "mmap": false,
+            "mmap": true,
             "extra_args": [
               "-mla",
               "1",
@@ -452,13 +454,12 @@
               "-fidx",
               "-cram",
               "0",
-              "-muge",
-              "-cuda",
-              "graphs=1",
-              "--jinja",
-              "--parallel-tool-calls",
-              "--no-kv-offload"
-            ]
+              "--no-kv-offload",
+              "--jinja"
+            ],
+            "environment": {
+              "GGML_CUDA_NO_PINNED": "1"
+            }
           }
         },
         {
@@ -479,16 +480,16 @@
               1,
               1
             ],
-            "threads": 16,
+            "threads": 14,
             "threads_batch": 32,
             "batch_size": 512,
             "ubatch_size": 256,
             "cache_type_k": "f16",
             "cache_type_v": "f16",
             "mlock": false,
-            "gpu_layers": 99,
+            "gpu_layers": 79,
             "cpu_moe_layers": "all",
-            "mmap": false,
+            "mmap": true,
             "extra_args": [
               "-mla",
               "1",
@@ -496,13 +497,12 @@
               "-fidx",
               "-cram",
               "0",
-              "-muge",
-              "-cuda",
-              "graphs=1",
-              "--jinja",
-              "--parallel-tool-calls",
-              "--no-kv-offload"
-            ]
+              "--no-kv-offload",
+              "--jinja"
+            ],
+            "environment": {
+              "GGML_CUDA_NO_PINNED": "1"
+            }
           }
         },
         {
@@ -523,16 +523,16 @@
               1,
               1
             ],
-            "threads": 16,
+            "threads": 14,
             "threads_batch": 32,
             "batch_size": 512,
             "ubatch_size": 256,
             "cache_type_k": "f16",
             "cache_type_v": "f16",
             "mlock": false,
-            "gpu_layers": 99,
+            "gpu_layers": 79,
             "cpu_moe_layers": "all",
-            "mmap": false,
+            "mmap": true,
             "extra_args": [
               "-mla",
               "1",
@@ -540,13 +540,12 @@
               "-fidx",
               "-cram",
               "0",
-              "-muge",
-              "-cuda",
-              "graphs=1",
-              "--jinja",
-              "--parallel-tool-calls",
-              "--no-kv-offload"
-            ]
+              "--no-kv-offload",
+              "--jinja"
+            ],
+            "environment": {
+              "GGML_CUDA_NO_PINNED": "1"
+            }
           }
         }
       ]
