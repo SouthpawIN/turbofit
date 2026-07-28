@@ -6,10 +6,13 @@ from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Iterator
 
+import pytest
+
 from turbofit_runtime.turbohaul_client import (
     TurbohaulClient,
     TurbohaulClientError,
     TurbohaulHTTPError,
+    _model_is_resident,
 )
 
 
@@ -252,3 +255,29 @@ def test_unload_model_fails_if_status_still_reports_resident() -> None:
             assert "did not unload" in str(error)
         else:
             raise AssertionError("expected unload verification failure")
+
+
+@pytest.mark.parametrize(
+    "status",
+    [
+        pytest.param({}, id="empty-status"),
+        pytest.param({"residents": {"0": {"model_tag": "main"}}}, id="residents-not-a-list"),
+        pytest.param({"loaded": [{"model_tag": "main"}]}, id="residents-key-renamed"),
+        pytest.param({"residents": [{"id": "main"}]}, id="entry-key-unrecognised"),
+        pytest.param({"data": {"active": {"model_tag": "main"}}}, id="active-nested"),
+    ],
+)
+def test_unreadable_status_is_not_a_proven_unload(status: dict[str, Any]) -> None:
+    """A status we cannot read must not be reported as "the model is gone".
+
+    `unload_model` returns as soon as `_model_is_resident` is False, so answering False for an
+    unrecognised shape reports a false unload and makes the "did not unload" timeout unreachable.
+    """
+    assert _model_is_resident(status, "main") is True
+
+
+def test_absent_model_is_still_recognised() -> None:
+    """The fail-closed rule must not swallow a genuine unload: an empty or non-matching
+    `residents` list is a proven absence and must stay False."""
+    assert _model_is_resident({"active": None, "residents": []}, "main") is False
+    assert _model_is_resident({"residents": [{"model_tag": "other"}]}, "main") is False

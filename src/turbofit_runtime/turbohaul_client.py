@@ -222,7 +222,25 @@ def _model_is_resident(status: dict[str, Any], model: str) -> bool:
             return any(value.get(key) == model for key in ("model_tag", "model", "name", "tag"))
         return False
 
+    def readable(value: Any) -> bool:
+        """Can this entry be compared to a model name at all?"""
+        return isinstance(value, str) or (
+            isinstance(value, dict)
+            and any(key in value for key in ("model_tag", "model", "name", "tag"))
+        )
+
     if matches(status.get("active")) or matches(status.get("idle_hot")):
         return True
     residents = status.get("residents")
-    return isinstance(residents, list) and any(matches(item) for item in residents)
+    if isinstance(residents, list):
+        if any(matches(item) for item in residents):
+            return True
+        # An empty list, or a list of entries we can read and did not match, is a proven
+        # absence. A list whose entries we cannot read is not.
+        if not residents or all(readable(item) for item in residents):
+            return False
+    # A status we cannot read is not a model we have proven absent. `unload_model` treats
+    # False as "the model is gone" and returns, so answering False for an unrecognised shape
+    # reports a false unload and makes its own timeout unreachable. Stay resident instead and
+    # let the caller time out.
+    return True
