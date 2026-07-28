@@ -69,6 +69,7 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
     profile = body.get("profile")
     base_url = body.get("base_url")
     publish_tailnet_routes = body.get("publish_tailnet", False)
+    install_sirvir = body.get("install_sirvir", False)
     port_defaults = {
         "dashboard_local_port": 9127,
         "provider_local_port": 8091,
@@ -80,8 +81,9 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
         not isinstance(primary, bool)
         or (fallback is not None and not isinstance(fallback, bool))
         or not isinstance(publish_tailnet_routes, bool)
+        or not isinstance(install_sirvir, bool)
     ):
-        raise HTTPException(status_code=422, detail="primary, fallback, and publish_tailnet must be booleans")
+        raise HTTPException(status_code=422, detail="primary, fallback, publish_tailnet, and install_sirvir must be booleans")
     if profile is not None and not isinstance(profile, str):
         raise HTTPException(status_code=422, detail="profile must be a string")
     if base_url is not None and not isinstance(base_url, str):
@@ -96,6 +98,7 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
             profile=profile,
             base_url=base_url,
             publish_tailnet_routes=publish_tailnet_routes,
+            install_sirvir=install_sirvir,
             **ports,
         )
     except Exception as exc:

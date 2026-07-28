@@ -28,6 +28,7 @@ distribution_owned:
   - benchmarks/
   - docs/
   - research/
+  - profiles/sirvir/
   - runtime-profiles/
   - src/turbofit_runtime/
   - scripts/turbofit-runtime

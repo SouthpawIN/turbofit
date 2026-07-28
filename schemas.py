@@ -41,6 +41,10 @@ TURBOFIT_CONFIGURE = {
                 "type": "boolean",
                 "description": "Publish the provider and Hermes dashboard privately with Tailscale Serve and use the resulting HTTPS provider URL.",
             },
+            "install_sirvir": {
+                "type": "boolean",
+                "description": "Install or update the bundled Sirvir Turbofit customer-service profile while preserving its user data.",
+            },
             "dashboard_local_port": {"type": "integer", "minimum": 1, "maximum": 65535},
             "provider_local_port": {"type": "integer", "minimum": 1, "maximum": 65535},
             "dashboard_https_port": {"type": "integer", "minimum": 1, "maximum": 65535},

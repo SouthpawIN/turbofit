@@ -148,6 +148,64 @@ def test_apply_configuration_can_publish_tailnet_and_use_remote_provider_url(mon
     assert saved[0]["fallback_providers"][0]["base_url"] == "https://host.example.ts.net:9443/v1"
 
 
+def test_install_sirvir_profile_copies_bundled_customer_service_profile(tmp_path: Path) -> None:
+    from plugin_tools import install_sirvir_profile
+
+    result = install_sirvir_profile(hermes_home=tmp_path)
+    profile = tmp_path / "profiles" / "sirvir"
+
+    assert result == {
+        "installed": True,
+        "updated": False,
+        "profile": "sirvir",
+        "path": str(profile),
+    }
+    assert "customer service" in (profile / "SOUL.md").read_text().lower()
+    assert "pull request" in (profile / "AGENTS.md").read_text().lower()
+    assert (profile / "config.yaml").is_file()
+
+
+def test_install_sirvir_profile_updates_only_distribution_owned_files(tmp_path: Path) -> None:
+    from plugin_tools import install_sirvir_profile
+
+    install_sirvir_profile(hermes_home=tmp_path)
+    profile = tmp_path / "profiles" / "sirvir"
+    user_memory = profile / "memories" / "USER.md"
+    user_memory.parent.mkdir()
+    user_memory.write_text("keep me")
+
+    result = install_sirvir_profile(hermes_home=tmp_path)
+
+    assert result["installed"] is True
+    assert result["updated"] is True
+    assert user_memory.read_text() == "keep me"
+
+
+def test_apply_configuration_can_install_bundled_sirvir(monkeypatch) -> None:
+    import types
+    import plugin_tools
+
+    hermes_package = types.ModuleType("hermes_cli")
+    hermes_config = types.ModuleType("hermes_cli.config")
+    setattr(hermes_config, "load_config", lambda: {})
+    setattr(hermes_config, "save_config", lambda *_args, **_kwargs: None)
+    monkeypatch.setitem(sys.modules, "hermes_cli", hermes_package)
+    monkeypatch.setitem(sys.modules, "hermes_cli.config", hermes_config)
+    monkeypatch.setattr(plugin_tools, "install_sirvir_profile", lambda: {
+        "installed": True, "updated": False, "profile": "sirvir", "path": "/profiles/sirvir"
+    })
+
+    result = plugin_tools.apply_configuration(
+        primary=False,
+        fallback=None,
+        profile=None,
+        base_url=None,
+        install_sirvir=True,
+    )
+
+    assert result["sirvir"]["installed"] is True
+
+
 def test_handle_configure_rejects_string_booleans_before_side_effects(monkeypatch) -> None:
     import plugin_tools
 
@@ -203,6 +261,24 @@ def test_dashboard_contract_is_installable() -> None:
     assert manifest["api"] == "plugin_api.py"
     assert (ROOT / "dashboard" / manifest["entry"]).is_file()
     assert (ROOT / "dashboard" / manifest["css"]).is_file()
+
+
+def test_sirvir_sources_are_customer_service_not_autonomous_manager() -> None:
+    for path in (
+        ROOT / "profiles" / "sirvir" / "SOUL.md",
+        ROOT / "references" / "SOUL.md",
+        ROOT / "skills" / "turbofit" / "references" / "SOUL.md",
+    ):
+        text = path.read_text().lower()
+        assert "customer service" in text
+        assert "autonomous model lifecycle manager" not in text
+
+
+def test_dashboard_exposes_bundled_sirvir_install_option() -> None:
+    bundle = (ROOT / "dashboard" / "dist" / "index.js").read_text()
+
+    assert 'install_sirvir: installSirvir' in bundle
+    assert "Install Sirvir customer service profile" in bundle
 
 
 def test_plugin_manifest_declares_registered_tools() -> None:

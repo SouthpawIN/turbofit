@@ -136,6 +136,13 @@ privately with Tailscale Serve. Tailnet publishing defaults to separate HTTPS
 ports and never exposes a public Funnel route. It also registers `/turbofit`,
 `turbofit_status`, and `turbofit_configure` for CLI and gateway sessions.
 
+The setup screen installs **Sirvir** by default as a separate Hermes customer-
+service profile. Sirvir helps users install, configure, use, and troubleshoot
+Turbofit, and turns recurring support cases into evidence-backed pull request
+suggestions. Updates replace only Sirvir's distribution-owned `SOUL.md`,
+`AGENTS.md`, `config.yaml`, and manifest; profile memories and user state are
+preserved. Disable the checkbox if the profile is not wanted.
+
 Linux/WSL2 NVIDIA launches use CUDA. Apple Silicon is detected as one unified
 Metal device; the portable 8/16/24 GB profiles compile Docker-only Bonsai
 recipes to native `llama-server` processes with Metal enabled. Every generated

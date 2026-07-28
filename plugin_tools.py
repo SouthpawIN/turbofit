@@ -5,6 +5,7 @@ import copy
 import ipaddress
 import json
 import os
+import shutil
 import subprocess
 import sys
 import threading
@@ -33,6 +34,28 @@ RUNTIME_STATE_PATH = Path(
     )
 )
 _CONFIG_LOCK = threading.RLock()
+
+
+def install_sirvir_profile(*, hermes_home: Path | None = None) -> dict[str, Any]:
+    """Install or update Sirvir while preserving profile-owned user state."""
+    source = PLUGIN_ROOT / "profiles" / "sirvir"
+    if not source.is_dir():
+        raise FileNotFoundError(f"missing bundled Sirvir profile: {source}")
+    root = Path(hermes_home or os.getenv("HERMES_HOME") or Path.home() / ".hermes")
+    target = root / "profiles" / "sirvir"
+    updated = target.exists()
+    target.mkdir(parents=True, exist_ok=True)
+    for name in ("SOUL.md", "AGENTS.md", "config.yaml", "distribution.yaml"):
+        source_file = source / name
+        if not source_file.is_file():
+            raise FileNotFoundError(f"incomplete bundled Sirvir profile: {source_file}")
+        shutil.copyfile(source_file, target / name)
+    return {
+        "installed": True,
+        "updated": updated,
+        "profile": "sirvir",
+        "path": str(target),
+    }
 
 
 def _is_local_or_tailnet(hostname: str) -> bool:
@@ -216,6 +239,7 @@ def apply_configuration(
     fallback: bool | None,
     profile: str | None,
     base_url: str | None,
+    install_sirvir: bool = False,
     publish_tailnet_routes: bool = False,
     dashboard_local_port: int = 9127,
     provider_local_port: int = 8091,
@@ -225,6 +249,7 @@ def apply_configuration(
     from hermes_cli.config import load_config, save_config
 
     with _CONFIG_LOCK:
+        sirvir = install_sirvir_profile() if install_sirvir else None
         selected = select_profile(profile) if profile else None
         publication = (
             publish_tailnet(
@@ -249,6 +274,7 @@ def apply_configuration(
         "configured": True,
         "selection": selected,
         "tailnet": publication,
+        "sirvir": sirvir,
         "restart_required": True,
     }
 
@@ -267,12 +293,14 @@ def handle_configure(args: dict[str, Any], **_: Any) -> str:
         primary = args.get("primary", False)
         fallback = args.get("fallback") if "fallback" in args else None
         publish_routes = args.get("publish_tailnet", False)
+        install_sirvir = args.get("install_sirvir", False)
         if (
             not isinstance(primary, bool)
             or (fallback is not None and not isinstance(fallback, bool))
             or not isinstance(publish_routes, bool)
+            or not isinstance(install_sirvir, bool)
         ):
-            raise ValueError("primary, fallback, and publish_tailnet must be booleans")
+            raise ValueError("primary, fallback, publish_tailnet, and install_sirvir must be booleans")
         profile = args.get("profile")
         base_url = args.get("base_url")
         if profile is not None and not isinstance(profile, str):
@@ -296,6 +324,7 @@ def handle_configure(args: dict[str, Any], **_: Any) -> str:
             profile=profile,
             base_url=base_url,
             publish_tailnet_routes=publish_routes,
+            install_sirvir=install_sirvir,
             **ports,
         )
         return json.dumps(result)

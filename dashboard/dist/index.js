@@ -52,6 +52,7 @@
     const [profile, setProfile] = useState("auto");
     const [baseUrl, setBaseUrl] = useState("http://127.0.0.1:8091/v1");
     const [publishTailnet, setPublishTailnet] = useState(false);
+    const [installSirvir, setInstallSirvir] = useState(true);
     const [dashboardLocalPort, setDashboardLocalPort] = useState("9127");
     const [providerLocalPort, setProviderLocalPort] = useState("8091");
     const [dashboardHttpsPort, setDashboardHttpsPort] = useState("9444");
@@ -93,6 +94,7 @@
           body: JSON.stringify({
             primary, fallback, profile, base_url: baseUrl,
             publish_tailnet: publishTailnet,
+            install_sirvir: installSirvir,
             dashboard_local_port: Number(dashboardLocalPort),
             provider_local_port: Number(providerLocalPort),
             dashboard_https_port: Number(dashboardHttpsPort),
@@ -187,6 +189,7 @@
             h("div", { className: "tf-toggles" },
               h(Toggle, { checked: primary, onChange: setPrimary, label: "Use Turbofit as primary provider (model: auto)" }),
               h(Toggle, { checked: fallback, onChange: setFallback, label: "Add Turbofit to Hermes fallback providers" }),
+              h(Toggle, { checked: installSirvir, onChange: setInstallSirvir, label: "Install Sirvir customer service profile" }),
             ),
             h("div", { className: "tf-actions" },
               h(Button, { onClick: save, disabled: busy }, busy ? "Applying…" : "Apply configuration"),
