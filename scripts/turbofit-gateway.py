@@ -60,6 +60,7 @@ STALL_POLL_S = float(os.environ.get("TURBOFIT_STALL_POLL", "2"))  # poll interva
 PROXY_BACKEND_TIMEOUT_S = float(os.environ.get("TURBOFIT_BACKEND_TIMEOUT", "300"))  # per-request upstream timeout
 AUX_MAX_TOKENS = int(os.environ.get("TURBOFIT_AUX_MAX_TOKENS", "4096"))  # bound aux work to lifecycle deadlines
 AUX_ENABLE_THINKING = os.environ.get("TURBOFIT_AUX_ENABLE_THINKING", "0").lower() in ("1", "true", "yes")
+MAIN_ENABLE_THINKING = os.environ.get("TURBOFIT_MAIN_ENABLE_THINKING", "1").lower() in ("1", "true", "yes")
 PORT_PROBE_TIMEOUT_S = float(os.environ.get("TURBOFIT_PORT_PROBE", "1.5"))  # TCP connect check
 
 
@@ -839,6 +840,16 @@ class GatewayHandler(BaseHTTPRequestHandler):
             try:
                 payload = json.loads(body)
                 stream_requested = payload.get("stream") is True
+                if role == "main" and not MAIN_ENABLE_THINKING:
+                    template_kwargs = payload.get("chat_template_kwargs")
+                    if not isinstance(template_kwargs, dict):
+                        template_kwargs = {}
+                    else:
+                        template_kwargs = dict(template_kwargs)
+                    template_kwargs["enable_thinking"] = False
+                    template_kwargs["thinking_mode"] = "disabled"
+                    payload["chat_template_kwargs"] = template_kwargs
+                    payload["reasoning_format"] = "none"
                 if role == "aux" and AUX_MAX_TOKENS > 0:
                     requested = payload.get("max_tokens")
                     if isinstance(requested, bool) or not isinstance(requested, int) or requested <= 0:

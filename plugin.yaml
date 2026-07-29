@@ -1,5 +1,5 @@
 name: turbofit
-version: "3.0.0"
+version: "3.0.0+hermes-macos.1"
 description: Adaptive local-model provider and setup dashboard for Hermes Agent
 author: SouthpawIN
 license: MIT

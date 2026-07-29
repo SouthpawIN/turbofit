@@ -154,6 +154,25 @@ Current requirements:
 
 CUDA on Linux/WSL2 and Metal on Apple Silicon are implemented. NVIDIA remains the primary measured backend; Metal launch compilation is portable but still requires host-specific benchmark promotion before claiming equivalent performance. AMD/Intel backends remain discovery-only.
 
+### Native Apple Silicon test runtime
+
+Turbohaul Manager's published runtime is CUDA-only. On Apple Silicon, a local
+test installation can instead preserve Turbofit's stable provider IDs while
+running the verified Bonsai floor through Homebrew's Metal-enabled
+`llama-server`:
+
+```bash
+scripts/install-macos-native-service install
+scripts/install-macos-native-service status
+# Stops/removes the services and route state, but preserves the model:
+scripts/install-macos-native-service uninstall
+```
+
+This native path binds both services to loopback, shares the main model for
+auxiliary work, disables hidden thinking and API fallback, and does not change
+Hermes's active model. It is a fixed safe floor rather than the NVIDIA adaptive
+controller.
+
 ## Adaptive behavior
 
 <p align="center">

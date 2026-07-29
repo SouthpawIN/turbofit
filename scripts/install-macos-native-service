@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+"""Install a native Metal Turbofit test runtime for Apple Silicon.
+
+This intentionally bypasses Turbohaul Manager, whose published runtime is
+NVIDIA/CUDA-only, while preserving Turbofit's existing local gateway and
+stable model IDs.  It never changes Hermes's primary or fallback model.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import platform
+import plistlib
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from urllib.request import urlopen
+
+
+ROOT = Path(__file__).resolve().parents[1]
+MODEL = Path.home() / ".local" / "share" / "turbofit" / "models" / "Bonsai-27B-Q1_0.gguf"
+MODEL_SHA256 = "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0"
+MODEL_ALIAS = "bonsai-27b-1bit-64k-main"
+STATE_DIR = Path.home() / ".local" / "state" / "turbofit"
+ROUTES = STATE_DIR / "runtime-state.json"
+LOG_DIR = Path.home() / ".local" / "share" / "turbofit" / "logs"
+AGENTS_DIR = Path.home() / "Library" / "LaunchAgents"
+MODEL_PLIST = AGENTS_DIR / "com.hermes.turbofit-model.plist"
+GATEWAY_PLIST = AGENTS_DIR / "com.hermes.turbofit-gateway.plist"
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _llama_server() -> str:
+    executable = shutil.which("llama-server")
+    if not executable:
+        candidate = Path("/opt/homebrew/bin/llama-server")
+        if candidate.is_file():
+            executable = str(candidate)
+    if not executable:
+        raise RuntimeError("llama-server is missing; install Homebrew formula llama.cpp")
+    return executable
+
+
+def _route_state() -> dict:
+    return {
+        "schema": "turbofit.runtime-routes/v1",
+        "active": "hardware-8gb-macos-native",
+        "rung_id": "local-bonsai-65536",
+        "rung_index": 0,
+        "routes": {
+            "main": {"kind": "local", "alias": MODEL_ALIAS, "port": 8092},
+            "aux": {"kind": "shared-main"},
+        },
+    }
+
+
+def _plist(label: str, arguments: list[str], stdout: Path, env: dict[str, str] | None = None) -> dict:
+    value = {
+        "Label": label,
+        "ProgramArguments": arguments,
+        "RunAtLoad": True,
+        "KeepAlive": True,
+        "WorkingDirectory": str(ROOT),
+        "StandardOutPath": str(stdout),
+        "StandardErrorPath": str(stdout),
+        "ProcessType": "Background",
+    }
+    if env:
+        value["EnvironmentVariables"] = env
+    return value
+
+
+def _write_plist(path: Path, value: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    with temporary.open("wb") as handle:
+        plistlib.dump(value, handle, sort_keys=True)
+    os.replace(temporary, path)
+
+
+def _launch(path: Path) -> None:
+    domain = f"gui/{os.getuid()}"
+    subprocess.run(["launchctl", "bootout", domain, str(path)], check=False, capture_output=True)
+    subprocess.run(["launchctl", "bootstrap", domain, str(path)], check=True)
+
+
+def install() -> None:
+    if platform.system() != "Darwin" or platform.machine().lower() not in {"arm64", "aarch64"}:
+        raise RuntimeError("the native Metal service is only for Apple Silicon")
+    if not MODEL.is_file():
+        raise RuntimeError(f"model is missing: {MODEL}")
+    actual = _sha256(MODEL)
+    if actual != MODEL_SHA256:
+        raise RuntimeError(f"model SHA-256 mismatch: expected {MODEL_SHA256}, got {actual}")
+
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    ROUTES.write_text(json.dumps(_route_state(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    model_args = [
+        _llama_server(),
+        "--model", str(MODEL),
+        "--alias", MODEL_ALIAS,
+        "--host", "127.0.0.1",
+        "--port", "8092",
+        "--ctx-size", "65536",
+        "--gpu-layers", "999",
+        "--flash-attn", "on",
+        "--cache-type-k", "q4_0",
+        "--cache-type-v", "q4_0",
+        "--parallel", "1",
+        "--jinja",
+        "--no-perf",
+    ]
+    _write_plist(
+        MODEL_PLIST,
+        _plist("com.hermes.turbofit-model", model_args, LOG_DIR / "model.log"),
+    )
+    _write_plist(
+        GATEWAY_PLIST,
+        _plist(
+            "com.hermes.turbofit-gateway",
+            [sys.executable, str(ROOT / "scripts" / "turbofit-gateway.py")],
+            LOG_DIR / "gateway.log",
+            {
+                "TURBOFIT_RUNTIME_STATE": str(ROUTES),
+                "TURBOFIT_GATEWAY_PORT": "8091",
+                "TURBOFIT_ALLOW_API": "0",
+                "TURBOFIT_MAIN_ENABLE_THINKING": "0",
+            },
+        ),
+    )
+    _launch(MODEL_PLIST)
+    _launch(GATEWAY_PLIST)
+    print(json.dumps({"installed": True, "model": str(MODEL), "routes": str(ROUTES)}, indent=2))
+
+
+def status() -> None:
+    result: dict[str, object] = {
+        "model_file": MODEL.is_file(),
+        "model_service": MODEL_PLIST.is_file(),
+        "gateway_service": GATEWAY_PLIST.is_file(),
+    }
+    for name, url in (
+        ("model_health", "http://127.0.0.1:8092/health"),
+        ("gateway_health", "http://127.0.0.1:8091/health"),
+    ):
+        try:
+            with urlopen(url, timeout=2) as response:
+                result[name] = {"status": response.status, "body": response.read().decode("utf-8")}
+        except Exception as exc:
+            result[name] = {"error": str(exc)}
+    print(json.dumps(result, indent=2))
+
+
+def uninstall() -> None:
+    """Stop and remove launch services while preserving the downloaded model."""
+    domain = f"gui/{os.getuid()}"
+    removed: list[str] = []
+    for path in (GATEWAY_PLIST, MODEL_PLIST):
+        subprocess.run(["launchctl", "bootout", domain, str(path)], check=False, capture_output=True)
+        if path.exists():
+            path.unlink()
+            removed.append(str(path))
+    if ROUTES.exists():
+        ROUTES.unlink()
+        removed.append(str(ROUTES))
+    print(
+        json.dumps(
+            {
+                "uninstalled": True,
+                "removed": removed,
+                "preserved_model": str(MODEL) if MODEL.exists() else None,
+            },
+            indent=2,
+        )
+    )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=("install", "status", "uninstall"))
+    args = parser.parse_args()
+    try:
+        if args.action == "install":
+            install()
+        elif args.action == "uninstall":
+            uninstall()
+        else:
+            status()
+    except Exception as exc:
+        print(json.dumps({"error": str(exc)}, indent=2), file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
