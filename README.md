@@ -156,10 +156,15 @@ CUDA on Linux/WSL2 and Metal on Apple Silicon are implemented. NVIDIA remains th
 
 ### Native Apple Silicon test runtime
 
-Turbohaul Manager's published runtime is CUDA-only. On Apple Silicon, a local
-test installation can instead preserve Turbofit's stable provider IDs while
-running the verified Bonsai floor through Homebrew's Metal-enabled
-`llama-server`:
+Turbohaul Manager's published runtime is CUDA-only. On Apple Silicon with at
+least 16 GB of unified memory, a local test installation can instead preserve
+Turbofit's stable provider IDs while running the verified Bonsai floor through
+the checksum-pinned official Metal-enabled `llama-server`.
+
+Before installation, place `Bonsai-27B-Q1_0.gguf` at
+`~/.local/share/turbofit/models/Bonsai-27B-Q1_0.gguf`. The installer verifies
+SHA-256 `17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0`
+and refuses to launch a different artifact.
 
 ```bash
 scripts/install-macos-native-service install

@@ -129,7 +129,7 @@ def _install_llama_runtime() -> str:
 def _route_state() -> dict:
     return {
         "schema": "turbofit.runtime-routes/v1",
-        "active": "hardware-8gb-macos-native",
+        "active": "hardware-16gb-macos-native",
         "rung_id": "local-bonsai-65536",
         "rung_index": 0,
         "routes": {

@@ -60,6 +60,11 @@ _inflight_requests: dict[str, float] = {}
 _cache = {"main": None, "aux": None, "ts": 0}
 CACHE_TTL = 10
 
+
+def _peek_flags():
+    """Return non-blocking socket peek flags available on the host platform."""
+    return socket.MSG_PEEK | getattr(socket, "MSG_DONTWAIT", 0)
+
 # Graceful-degradation tunables (overridable via env)
 STALL_TIMEOUT_S = float(os.environ.get("TURBOFIT_STALL_TIMEOUT", "90"))  # max wait while local loads
 STALL_POLL_S = float(os.environ.get("TURBOFIT_STALL_POLL", "2"))  # poll interval while waiting
@@ -1141,7 +1146,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 readable, _, _ = select.select([self.connection], [], [], 0)
                 if not readable:
                     continue
-                data = self.connection.recv(1, socket.MSG_PEEK | socket.MSG_DONTWAIT)
+                data = self.connection.recv(1, _peek_flags())
                 if data:
                     continue
                 disconnected.set()

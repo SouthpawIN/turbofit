@@ -197,6 +197,12 @@ def test_provider_metadata_reports_active_runtime_context(tmp_path, monkeypatch)
     assert {model["context_length"] for model in GATEWAY.provider_models()} == {65536}
 
 
+def test_socket_peek_flags_do_not_require_msg_dontwait(monkeypatch):
+    monkeypatch.delattr(GATEWAY.socket, "MSG_DONTWAIT", raising=False)
+
+    assert GATEWAY._peek_flags() == socket.MSG_PEEK
+
+
 def test_v1_props_adapts_llama_props_for_hermes(monkeypatch):
     class PropsUpstream(BaseHTTPRequestHandler):
         def do_GET(self):

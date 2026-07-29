@@ -52,3 +52,7 @@ def test_native_launch_enables_bounded_prompt_cache() -> None:
     assert arguments[arguments.index("--checkpoint-min-step") + 1] == "2048"
     assert arguments[arguments.index("--batch-size") + 1] == "256"
     assert arguments[arguments.index("--ubatch-size") + 1] == "128"
+
+
+def test_native_route_requires_the_16gb_hardware_class() -> None:
+    assert MODULE._route_state()["active"] == "hardware-16gb-macos-native"
