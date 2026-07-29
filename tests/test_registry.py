@@ -37,11 +37,35 @@ def row(main: str, aux: str, context: int) -> MatrixRow:
     )
 
 
+def recipe_book(tmp_path: Path) -> RecipeBook:
+    data = json.loads((ROOT / "references/model-recipes.json").read_text())
+    model_dir = tmp_path / "models"
+    model_dir.mkdir()
+    for spec in data["models"].values():
+        model_name = Path(spec["model"]).name
+        model_path = model_dir / model_name
+        model_path.write_bytes(b"test-model")
+        if spec["kind"] == "docker":
+            spec["model_root"] = str(model_dir)
+            spec["model"] = model_name
+        else:
+            spec["model"] = str(model_path)
+        if spec.get("projector"):
+            projector_name = Path(spec["projector"]).name
+            (model_dir / projector_name).write_bytes(b"test-projector")
+            spec["projector"] = (
+                projector_name
+                if spec["kind"] == "docker"
+                else str(model_dir / projector_name)
+            )
+    return RecipeBook(data, platform_name="linux")
+
+
 def test_register_mtp_profile_and_turbohaul_manifests(tmp_path: Path) -> None:
     item = row("GRM 2.6 Plus", "Carwin Nano", 65_536)
     profiles = tmp_path / "profiles.json"
     registry = ProfileRegistry(
-        recipes=RecipeBook.load(ROOT / "references/model-recipes.json"),
+        recipes=recipe_book(tmp_path),
         profiles_path=profiles,
         turbohaul_dir=tmp_path / "turbohaul",
         compiler=TurbohaulCompiler(hash_fn=lambda path: "a" * 64),
@@ -61,7 +85,7 @@ def test_register_dspark_profile_as_hybrid_launcher(tmp_path: Path) -> None:
     item = row("Ternary Bonsai", "1 Bit Bonsai", 65_536)
     profiles = tmp_path / "profiles.json"
     registry = ProfileRegistry(
-        recipes=RecipeBook.load(ROOT / "references/model-recipes.json"),
+        recipes=recipe_book(tmp_path),
         profiles_path=profiles,
         turbohaul_dir=tmp_path / "turbohaul",
         compiler=TurbohaulCompiler(hash_fn=lambda path: "b" * 64),
@@ -80,7 +104,7 @@ def test_register_multigpu_layer_split_as_hybrid_launcher(tmp_path: Path) -> Non
     item = row("GRM 2.6 Plus", "Carwin Nano", 262_144)
     profiles = tmp_path / "profiles.json"
     registry = ProfileRegistry(
-        recipes=RecipeBook.load(ROOT / "references/model-recipes.json"),
+        recipes=recipe_book(tmp_path),
         profiles_path=profiles,
         turbohaul_dir=tmp_path / "turbohaul",
         compiler=TurbohaulCompiler(hash_fn=lambda path: "c" * 64),
@@ -101,7 +125,7 @@ def test_register_docker_profile_preserves_entrypoint_arguments(tmp_path: Path) 
     item = row("1 Bit Bonsai", "auto", 1_048_576)
     profiles = tmp_path / "profiles.json"
     registry = ProfileRegistry(
-        recipes=RecipeBook.load(ROOT / "references/model-recipes.json"),
+        recipes=recipe_book(tmp_path),
         profiles_path=profiles,
         turbohaul_dir=tmp_path / "turbohaul",
         compiler=TurbohaulCompiler(hash_fn=lambda path: "d" * 64),
