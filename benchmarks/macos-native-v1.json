@@ -1,0 +1,27 @@
+{
+  "schema": "turbofit.benchmark-stage/v1",
+  "name": "macos-native-metal-v1",
+  "cases": [
+    {
+      "id": "quality-instruction",
+      "category": "quality",
+      "prompt": "Return exactly this text and nothing else: TURBOFIT_METAL_OK",
+      "max_tokens": 64,
+      "validator": {"kind": "exact", "value": "TURBOFIT_METAL_OK"}
+    },
+    {
+      "id": "context-passkey-1k",
+      "category": "context",
+      "prompt": {"kind": "passkey", "target_words": 1024, "passkey": "739184"},
+      "max_tokens": 64,
+      "validator": {"kind": "exact", "value": "739184"}
+    },
+    {
+      "id": "throughput-64",
+      "category": "throughput",
+      "prompt": "List practical safeguards for a local inference reverse proxy in concise bullet points.",
+      "max_tokens": 64,
+      "validator": null
+    }
+  ]
+}

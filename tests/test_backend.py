@@ -20,6 +20,7 @@ def test_process_environment_adds_loaded_kernel_compatibility_libraries() -> Non
         ("/opt/llama-server",),
         gpu="0,1",
         base={"LD_LIBRARY_PATH": "/stock/lib"},
+        platform_name="linux",
         compatibility_library_dir=lambda: "/compat/nvidia-580.159.03",
     )
 
@@ -38,6 +39,7 @@ def test_process_environment_prefers_libraries_next_to_binary(tmp_path: Path) ->
         (str(binary), "-m", "/models/model.gguf"),
         gpu="1",
         base={"LD_LIBRARY_PATH": "/stock/lib", "KEEP": "yes"},
+        platform_name="linux",
         compatibility_library_dir=lambda: None,
     )
 

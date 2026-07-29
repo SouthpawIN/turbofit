@@ -174,18 +174,20 @@ def run_benchmark(
                 elapsed = time.monotonic() - started
                 content = _response_content(response)
                 usage = _usage(response)
+                timings = _timings(response)
                 passed = evaluate(content, case.validator) if case.validator is not None else None
                 cases.append({
                     "id": case.id, "category": case.category, "passed": passed,
                     "elapsed_seconds": round(elapsed, 6), "usage": usage,
-                    "response_content": content, "error": None,
+                    "timings": timings, "response_content": content, "error": None,
                 })
             except Exception as exc:
                 elapsed = time.monotonic() - started
                 cases.append({
                     "id": case.id, "category": case.category, "passed": False,
                     "elapsed_seconds": round(elapsed, 6), "usage": None,
-                    "response_content": None, "error": f"{type(exc).__name__}: {exc}",
+                    "timings": None, "response_content": None,
+                    "error": f"{type(exc).__name__}: {exc}",
                 })
         all_samples.extend(monitor.samples)
 
@@ -282,10 +284,16 @@ def summarize(cases: Sequence[Mapping[str, Any]], samples: Sequence[ResourceSamp
     output_seconds = sum(case["elapsed_seconds"] for case in throughput)
     gpu_count = max((len(sample.gpu_memory_used_mib) for sample in samples), default=0)
     process_values = [sample.process_rss_mib for sample in samples if sample.process_rss_mib is not None]
+    ttft_values = [
+        case["timings"]["ttft_ms"]
+        for case in cases
+        if case.get("timings") and case["timings"].get("ttft_ms") is not None
+    ]
     return {
         "quality_pass_rate": pass_rate("quality"),
         "context_pass_rate": pass_rate("context"),
         "effective_output_tokens_per_second": None if not output_seconds else round(output_tokens / output_seconds, 6),
+        "mean_ttft_ms": None if not ttft_values else round(sum(ttft_values) / len(ttft_values), 6),
         "measured_prompt_tokens": sum(case["usage"]["prompt_tokens"] for case in cases if case.get("usage")),
         "measured_completion_tokens": sum(case["usage"]["completion_tokens"] for case in cases if case.get("usage")),
         "peak_system_ram_used_mib": max((sample.system_ram_used_mib for sample in samples), default=None),
@@ -312,6 +320,11 @@ def hardware_snapshot() -> dict[str, Any]:
             gpu_totals.append(int(total.strip()))
     except (OSError, ValueError, subprocess.SubprocessError):
         pass
+    accelerator_memory_kind = "dedicated"
+    if not gpu_names and platform.system() == "Darwin" and platform.machine().lower() in {"arm64", "aarch64"}:
+        gpu_names = ["Apple Silicon Metal (unified memory)"]
+        gpu_totals = [meminfo.get("MemTotal", 0) // 1024]
+        accelerator_memory_kind = "unified"
     return {
         "platform": platform.platform(),
         "machine": platform.machine(),
@@ -319,6 +332,7 @@ def hardware_snapshot() -> dict[str, Any]:
         "system_ram_total_mib": meminfo.get("MemTotal", 0) // 1024,
         "gpu_names": gpu_names,
         "gpu_memory_total_mib": gpu_totals,
+        "accelerator_memory_kind": accelerator_memory_kind,
     }
 
 
@@ -376,6 +390,31 @@ def _usage(response: Mapping[str, Any]) -> dict[str, int]:
     return {"prompt_tokens": prompt, "completion_tokens": completion, "total_tokens": prompt + completion}
 
 
+def _timings(response: Mapping[str, Any]) -> dict[str, float] | None:
+    timings = response.get("timings")
+    if not isinstance(timings, Mapping):
+        return None
+    result: dict[str, float] = {}
+    for key in (
+        "cache_n",
+        "prompt_n",
+        "prompt_ms",
+        "prompt_per_second",
+        "predicted_n",
+        "predicted_ms",
+        "predicted_per_second",
+        "predicted_per_token_ms",
+    ):
+        value = timings.get(key)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            result[key] = float(value)
+    prompt_ms = result.get("prompt_ms")
+    token_ms = result.get("predicted_per_token_ms")
+    if prompt_ms is not None:
+        result["ttft_ms"] = prompt_ms + (token_ms or 0.0)
+    return result or None
+
+
 def _validate_validator(value: Mapping[str, Any]) -> None:
     if not isinstance(value, Mapping) or set(value) != {"kind", "value"} or value.get("kind") != "exact":
         raise ValueError("unsupported benchmark validator")
@@ -396,6 +435,35 @@ def _meminfo() -> dict[str, int]:
             values[name] = int(rest.strip().split()[0])
     except (OSError, ValueError):
         pass
+    if values or platform.system() != "Darwin":
+        return values
+    try:
+        total_bytes = int(subprocess.run(
+            ["sysctl", "-n", "hw.memsize"],
+            check=True, capture_output=True, text=True, timeout=5,
+        ).stdout.strip())
+        vm_output = subprocess.run(
+            ["vm_stat"],
+            check=True, capture_output=True, text=True, timeout=5,
+        ).stdout
+        page_size = 4096
+        first_line = vm_output.splitlines()[0] if vm_output else ""
+        if "page size of" in first_line:
+            page_size = int(first_line.split("page size of", 1)[1].split("bytes", 1)[0].strip())
+        pages: dict[str, int] = {}
+        for line in vm_output.splitlines()[1:]:
+            if ":" not in line:
+                continue
+            name, raw = line.split(":", 1)
+            pages[name.strip()] = int(raw.strip().rstrip("."))
+        available_pages = sum(
+            pages.get(name, 0)
+            for name in ("Pages free", "Pages inactive", "Pages speculative", "Pages purgeable")
+        )
+        values["MemTotal"] = total_bytes // 1024
+        values["MemAvailable"] = available_pages * page_size // 1024
+    except (OSError, ValueError, IndexError, subprocess.SubprocessError):
+        pass
     return values
 
 
@@ -407,6 +475,8 @@ def _gpu_memory_used_mib() -> tuple[int, ...]:
         ).stdout
         return tuple(int(line.strip()) for line in output.splitlines() if line.strip())
     except (OSError, ValueError, subprocess.SubprocessError):
+        if platform.system() == "Darwin" and platform.machine().lower() in {"arm64", "aarch64"}:
+            return (_system_ram_used_mib(),)
         return ()
 
 
@@ -418,7 +488,15 @@ def _process_rss_mib(process_id: int | None) -> int | None:
             if line.startswith("VmRSS:"):
                 return int(line.split()[1]) // 1024
     except (OSError, ValueError):
-        return None
+        if platform.system() == "Darwin":
+            try:
+                output = subprocess.run(
+                    ["ps", "-o", "rss=", "-p", str(process_id)],
+                    check=True, capture_output=True, text=True, timeout=5,
+                ).stdout.strip()
+                return int(output) // 1024
+            except (OSError, ValueError, subprocess.SubprocessError):
+                return None
     return None
 
 

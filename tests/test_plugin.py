@@ -214,3 +214,40 @@ def test_plugin_manifest_declares_registered_tools() -> None:
         "turbofit_status",
         "turbofit_configure",
     }
+
+
+def test_plugin_loads_without_developer_pythonpath(monkeypatch) -> None:
+    """The installed Hermes plugin must bootstrap its own src-layout."""
+    for entry in tuple(sys.path):
+        if Path(entry or ".").resolve() == (ROOT / "src").resolve():
+            monkeypatch.setattr(
+                sys,
+                "path",
+                [item for item in sys.path if Path(item or ".").resolve() != (ROOT / "src").resolve()],
+            )
+            break
+    sys.modules.pop("turbofit_runtime", None)
+
+    plugin = _load_plugin_module()
+
+    assert plugin.check_available() is True
+
+
+def test_select_profile_uses_running_hermes_python(monkeypatch) -> None:
+    import plugin_tools
+
+    seen: list[list[str]] = []
+
+    class Result:
+        returncode = 0
+        stdout = '{"configured": true}'
+        stderr = ""
+
+    def run(command, **_kwargs):
+        seen.append(command)
+        return Result()
+
+    monkeypatch.setattr(plugin_tools.subprocess, "run", run)
+
+    assert plugin_tools.select_profile("auto")["configured"] is True
+    assert seen == [[sys.executable, str(ROOT / "scripts" / "turbofit-runtime"), "set", "auto"]]

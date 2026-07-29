@@ -13,11 +13,18 @@ from typing import Any, Mapping
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
+# Hermes loads directory plugins as packages without installing their Python
+# projects.  Make the repository's src-layout importable from that real load
+# path instead of relying on a developer-set PYTHONPATH.
+PLUGIN_ROOT = Path(__file__).resolve().parent
+SRC_ROOT = PLUGIN_ROOT / "src"
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
 from turbofit_runtime.tailnet import publish_tailnet, tailnet_status
 
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8091/v1"
-PLUGIN_ROOT = Path(__file__).resolve().parent
 SELECTION_PATH = Path(
     os.getenv(
         "TURBOFIT_SELECTION_STATE",
@@ -195,7 +202,7 @@ def select_profile(profile: str) -> dict[str, Any]:
     if not script.is_file():
         raise FileNotFoundError(f"missing runtime selector: {script}")
     result = subprocess.run(
-        [str(script), "set", requested],
+        [sys.executable, str(script), "set", requested],
         text=True,
         capture_output=True,
         timeout=90,

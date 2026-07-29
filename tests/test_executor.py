@@ -51,7 +51,9 @@ class FakeBackend:
 def test_executor_starts_aux_before_main_and_stops_reverse(tmp_path: Path) -> None:
     backend = FakeBackend()
     executor = LocalPairExecutor(
-        recipes=RecipeBook.load(ROOT / "references/model-recipes.json"),
+        recipes=RecipeBook.load(
+            ROOT / "references/model-recipes.json", platform_name="linux"
+        ),
         backend=backend,
         result_dir=tmp_path,
     )
@@ -74,7 +76,9 @@ def test_executor_starts_aux_before_main_and_stops_reverse(tmp_path: Path) -> No
 def test_executor_runs_catalog_variant_configuration(tmp_path: Path) -> None:
     backend = FakeBackend()
     executor = LocalPairExecutor(
-        recipes=RecipeBook.load(ROOT / "references/model-recipes.json"),
+        recipes=RecipeBook.load(
+            ROOT / "references/model-recipes.json", platform_name="linux"
+        ),
         backend=backend,
         result_dir=tmp_path,
     )
@@ -103,7 +107,9 @@ def test_executor_stops_started_component_when_second_start_fails(tmp_path: Path
 
     backend = FailingBackend()
     executor = LocalPairExecutor(
-        recipes=RecipeBook.load(ROOT / "references/model-recipes.json"),
+        recipes=RecipeBook.load(
+            ROOT / "references/model-recipes.json", platform_name="linux"
+        ),
         backend=backend,
         result_dir=tmp_path,
     )

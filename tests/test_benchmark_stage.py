@@ -10,6 +10,10 @@ from turbofit_runtime.benchmark_stage import (
     BenchmarkSuite,
     ResourceSample,
     _chat_completion,
+    _gpu_memory_used_mib,
+    _meminfo,
+    _process_rss_mib,
+    _timings,
     build_prompt,
     compact_samples,
     evaluate,
@@ -109,6 +113,62 @@ def test_chat_completion_forwards_recorded_request_options(monkeypatch) -> None:
     )
 
     assert seen["chat_template_kwargs"] == {"enable_thinking": False}
+
+
+def test_llama_timings_produce_measured_ttft() -> None:
+    timings = _timings({
+        "timings": {
+            "cache_n": 0,
+            "prompt_n": 15,
+            "prompt_ms": 1200.0,
+            "predicted_n": 1,
+            "predicted_per_token_ms": 80.0,
+            "predicted_per_second": 12.5,
+        }
+    })
+
+    assert timings == {
+        "cache_n": 0.0,
+        "prompt_n": 15.0,
+        "prompt_ms": 1200.0,
+        "predicted_n": 1.0,
+        "predicted_per_second": 12.5,
+        "predicted_per_token_ms": 80.0,
+        "ttft_ms": 1280.0,
+    }
+
+
+def test_macos_resource_sampling_uses_unified_memory_and_ps(monkeypatch) -> None:
+    import turbofit_runtime.benchmark_stage as stage
+
+    monkeypatch.setattr(stage.platform, "system", lambda: "Darwin")
+    monkeypatch.setattr(stage.platform, "machine", lambda: "arm64")
+
+    class Result:
+        def __init__(self, stdout):
+            self.stdout = stdout
+
+    def run(command, **_kwargs):
+        if command[:3] == ["sysctl", "-n", "hw.memsize"]:
+            return Result("17179869184\n")
+        if command == ["vm_stat"]:
+            return Result(
+                "Mach Virtual Memory Statistics: (page size of 16384 bytes)\n"
+                "Pages free: 100.\nPages inactive: 200.\n"
+                "Pages speculative: 50.\nPages purgeable: 10.\n"
+            )
+        if command[:4] == ["ps", "-o", "rss=", "-p"]:
+            return Result("5074544\n")
+        raise FileNotFoundError(command[0])
+
+    monkeypatch.setattr(stage.subprocess, "run", run)
+
+    memory = _meminfo()
+    assert memory["MemTotal"] == 16 * 1024 * 1024
+    assert _gpu_memory_used_mib() == (
+        (memory["MemTotal"] - memory["MemAvailable"]) // 1024,
+    )
+    assert _process_rss_mib(123) == 4955
 
 
 def test_recorded_smoke_evidence_hash_is_reproducible() -> None:
