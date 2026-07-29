@@ -10,7 +10,11 @@ code is disabled unless TURBOFIT_ALLOW_API=true is explicitly set.
 Runs on :8091
 """
 
+import hashlib
+import http.client
 import json
+import math
+import select
 import socket
 import subprocess
 import os
@@ -20,8 +24,8 @@ import logging
 import threading
 from pathlib import Path
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
-from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
+from urllib.parse import urlsplit
+from urllib.request import urlopen
 
 logging.basicConfig(
     level=logging.INFO,
@@ -50,6 +54,8 @@ SELF_PORT = int(os.environ.get("TURBOFIT_GATEWAY_PORT", "8091"))  # never pick a
 ALLOW_API = os.environ.get("TURBOFIT_ALLOW_API", "").strip().lower() in {"1", "true", "yes"}
 
 _activation_lock = threading.Lock()
+_inflight_lock = threading.Lock()
+_inflight_requests: dict[str, float] = {}
 
 _cache = {"main": None, "aux": None, "ts": 0}
 CACHE_TTL = 10
@@ -86,27 +92,47 @@ def runtime_profiles():
 
 def provider_models():
     """OpenAI-compatible catalog exposed by the single Turbofit provider."""
+    context_length = active_context_length()
     models: list[dict] = [
         {
             "id": "auto",
             "object": "model",
             "owned_by": "turbofit",
             "description": "Hardware-matched tested main + auxiliary configuration",
+            "context_length": context_length,
         },
         {
             "id": "active:main",
             "object": "model",
             "owned_by": "turbofit",
             "description": "Stable route to the currently reconciled main role",
+            "context_length": context_length,
         },
         {
             "id": "active:aux",
             "object": "model",
             "owned_by": "turbofit",
             "description": "Stable route to the currently reconciled auxiliary role",
+            "context_length": context_length,
         },
     ]
     return models
+
+
+def active_context_length(default=65536):
+    """Return the active route's configured context, not the model's trained maximum."""
+    try:
+        with open(RUNTIME_STATE) as f:
+            state = json.load(f)
+        route = (state.get("routes") or {}).get("main") or {}
+        value = route.get("context_length") or state.get("context_length")
+        if value is None:
+            profile = runtime_profiles().get(state.get("active")) or {}
+            value = profile.get("context")
+        value = int(value)
+        return value if value > 0 else default
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return default
 
 
 def parse_provider_model(model):
@@ -371,6 +397,10 @@ def _runtime_policy_route(state, role):
             "runtime_profile": state.get("active"),
             "runtime_rung": state.get("rung_id"),
         }
+        if route.get("context_length"):
+            result["context_length"] = route["context_length"]
+        if isinstance(route.get("request_policy"), dict):
+            result["request_policy"] = dict(route["request_policy"])
         if role == "aux":
             result["mode"] = "api"
         return result
@@ -393,6 +423,10 @@ def _runtime_policy_route(state, role):
             "runtime_profile": state.get("active"),
             "runtime_rung": state.get("rung_id"),
         }
+        if route.get("context_length"):
+            result["context_length"] = route["context_length"]
+        if isinstance(route.get("request_policy"), dict):
+            result["request_policy"] = dict(route["request_policy"])
         if role == "aux":
             result["mode"] = str(route.get("mode") or "dedicated")
         return result
@@ -707,6 +741,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
         if path == "/v1/models":
             self._send_provider_models()
+        elif path == "/v1/props":
+            self._send_provider_props()
+        elif path.startswith("/v1/models/") and "/" not in path[len("/v1/models/"):]:
+            self._send_provider_model(path[len("/v1/models/"):])
         elif path.startswith("/v1/"):
             self._handle_unified(path)
         elif path.startswith("/main/"):
@@ -721,13 +759,39 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self.send_error(404, f"Unknown path: {path}")
 
     def _send_provider_models(self):
-        body = json.dumps({"object": "list", "data": provider_models()}).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.end_headers()
-        self.wfile.write(body)
+        self._send_json(200, {"object": "list", "data": provider_models()})
+
+    def _send_provider_model(self, model_id):
+        model = next((item for item in provider_models() if item["id"] == model_id), None)
+        if model is None:
+            self._send_json(404, {"error": {"message": f"Unknown model: {model_id}"}})
+            return
+        self._send_json(200, model)
+
+    def _send_provider_props(self):
+        """Adapt llama.cpp's /props endpoint to the /v1/props probe Hermes uses."""
+        backend = resolve_main()
+        props = None
+        if backend and not backend.get("is_api"):
+            try:
+                with urlopen(f"{backend['base_url']}/props", timeout=3) as response:
+                    candidate = json.load(response)
+                    if isinstance(candidate, dict):
+                        props = candidate
+            except Exception:
+                props = None
+        if props is None:
+            props = {
+                "model_alias": (backend or {}).get("alias", "auto"),
+                "default_generation_settings": {"n_ctx": active_context_length()},
+            }
+        props["provider_model"] = "auto"
+        props["context_length"] = int(
+            (props.get("default_generation_settings") or {}).get("n_ctx")
+            or (backend or {}).get("context_length")
+            or active_context_length()
+        )
+        self._send_json(200, props)
 
     def _handle_unified(self, path):
         content_length = int(self.headers.get("Content-Length", 0))
@@ -792,6 +856,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
         tried = [backend.get("alias") or backend.get("source") or "?"]
         result = self._proxy_to(backend, upstream_path, body=body, role="main")
         status = result["status"]
+        if result.get("response_sent"):
+            return
 
         # API fallback is disabled by default; explicit opt-in preserves legacy behavior.
         if status >= 400 and not backend.get("is_api") and ALLOW_API:
@@ -801,6 +867,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 log.warning(f"Local {backend.get('alias')} returned {status} — falling back to API ({api.get('source')})")
                 result = self._proxy_to({**api, "state": "ready"}, upstream_path, body=body, role="main")
                 status = result["status"]
+                if result.get("response_sent"):
+                    return
 
         if status >= 400:
             self._send_503(f"All backends failed (last status {status})", tried=" → ".join(tried))
@@ -811,18 +879,20 @@ class GatewayHandler(BaseHTTPRequestHandler):
         if not backend:
             # Aux failures are non-fatal — return 200 with a structured "no aux" marker
             # so the main path's request still completes
-            self.send_response(204)
-            self.send_header("Content-Length", "0")
-            self.send_header("X-Turbofit-Aux", "unavailable")
-            self.end_headers()
+            self._send_empty(204, {"X-Turbofit-Aux": "unavailable"})
             return
         result = self._proxy_to(backend, upstream_path, body=body, role="aux")
+        if result.get("response_sent"):
+            return
         if result["status"] >= 400 and not backend.get("is_api") and ALLOW_API:
             api = _find_api_fallback_in_profiles()
             if api:
                 result = self._proxy_to({**api, "state": "ready"}, upstream_path, body=body, role="aux")
+                if result.get("response_sent"):
+                    return
         # If even the aux fallback failed, the main path still got its response
-        # above (we proxied main first), so we just return 204 here
+        # above (we proxied main first), so we just return 204 here.
+        self._send_empty(204, {"X-Turbofit-Aux": "unavailable"})
 
     def _proxy_to(self, backend, upstream_path, body=None, role=None):
         target = f"{backend['base_url']}/{upstream_path.lstrip('/')}"
@@ -885,82 +955,226 @@ class GatewayHandler(BaseHTTPRequestHandler):
             if api_key:
                 headers["Authorization"] = f"Bearer {api_key}"
 
-        req = Request(target, data=body, headers=headers, method=self.command)
+        request_key = self._request_key(target, body)
+        if request_key and not self._claim_request(request_key):
+            self._send_json(
+                409,
+                {
+                    "error": "request_in_progress",
+                    "message": "An identical request is already running",
+                    "retryable": True,
+                },
+                {"Retry-After": "1", "X-Turbofit-Deduplicated": "true"},
+            )
+            return {"status": 409, "ms": 0, "response_sent": True, "deduplicated": True}
+
+        timeout_s = self._backend_timeout(backend, body)
+        parsed = urlsplit(target)
+        connection_class = (
+            http.client.HTTPSConnection
+            if parsed.scheme == "https"
+            else http.client.HTTPConnection
+        )
+        connection = connection_class(parsed.hostname, parsed.port, timeout=timeout_s)
+        target_path = parsed.path or "/"
+        if parsed.query:
+            target_path += f"?{parsed.query}"
+        disconnected = threading.Event()
+        monitor_stop = threading.Event()
+        monitor = threading.Thread(
+            target=self._monitor_disconnect,
+            args=(connection, disconnected, monitor_stop),
+            daemon=True,
+        )
         start = time.time()
         try:
-            with urlopen(req, timeout=PROXY_BACKEND_TIMEOUT_S) as resp:
-                content_type = resp.headers.get("Content-Type", "")
+            connection.request(self.command, target_path, body=body, headers=headers)
+            monitor.start()
+            response = connection.getresponse()
+            try:
+                content_type = response.headers.get("Content-Type", "")
                 streaming = stream_requested or content_type.lower().startswith("text/event-stream")
-                self.send_response(resp.status)
+                if response.status >= 400:
+                    return {
+                        "status": response.status,
+                        "ms": int((time.time() - start) * 1000),
+                        "error_body": response.read(),
+                    }
+
+                self.send_response(response.status)
                 sent_headers = set()
-                for k, v in resp.headers.items():
-                    kl = k.lower()
-                    if kl in ("transfer-encoding", "connection", "content-length", "content-encoding"):
+                for key, value in response.headers.items():
+                    normalized = key.lower()
+                    if normalized in (
+                        "transfer-encoding",
+                        "connection",
+                        "content-length",
+                        "content-encoding",
+                    ):
                         continue
-                    if kl in sent_headers:
+                    if normalized in sent_headers:
                         continue
-                    sent_headers.add(kl)
-                    self.send_header(k, v)
-                self.send_header("X-Turbofit-Backend", str(backend.get("alias") or backend.get("source") or "api"))
-                self.send_header("X-Turbofit-Latency-Ms", str(int((time.time() - start) * 1000)))
+                    sent_headers.add(normalized)
+                    self.send_header(key, value)
+                self.send_header(
+                    "X-Turbofit-Backend",
+                    str(backend.get("alias") or backend.get("source") or "api"),
+                )
+                self.send_header(
+                    "X-Turbofit-Latency-Ms",
+                    str(int((time.time() - start) * 1000)),
+                )
+                self.send_header("X-Turbofit-Timeout-S", str(round(timeout_s, 3)))
                 if streaming:
                     self.send_header("Cache-Control", "no-cache")
                     self.send_header("X-Accel-Buffering", "no")
                     self.end_headers()
                     try:
                         while True:
-                            chunk = resp.read1(65536)
+                            chunk = response.read1(65536)
                             if not chunk:
                                 break
                             self.wfile.write(chunk)
                             self.wfile.flush()
                     except (BrokenPipeError, ConnectionResetError):
                         log.info(f"Client disconnected from streaming proxy for {target}")
+                        disconnected.set()
+                        self._close_upstream(connection)
                         return {
-                            "status": 200,
+                            "status": 499,
                             "ms": int((time.time() - start) * 1000),
                             "client_disconnected": True,
+                            "response_sent": True,
                         }
-                    return {"status": resp.status, "ms": int((time.time() - start) * 1000)}
+                    return {
+                        "status": response.status,
+                        "ms": int((time.time() - start) * 1000),
+                        "response_sent": True,
+                    }
 
-                resp_body = resp.read()
-                self.send_header("Content-Length", str(len(resp_body)))
+                response_body = response.read()
+                self.send_header("Content-Length", str(len(response_body)))
                 self.end_headers()
-                self.wfile.write(resp_body)
-                return {"status": resp.status, "ms": int((time.time() - start) * 1000)}
-        except HTTPError as e:
-            # Read the upstream error body so we can forward it verbatim
+                self._write_body(response_body)
+                return {
+                    "status": response.status,
+                    "ms": int((time.time() - start) * 1000),
+                    "response_sent": True,
+                }
+            finally:
+                try:
+                    response.close()
+                except Exception:
+                    pass
+        except (TimeoutError, socket.timeout, http.client.HTTPException, OSError) as exc:
+            if disconnected.is_set():
+                log.info(f"Cancelled upstream request after client disconnect: {target}")
+                return {
+                    "status": 499,
+                    "ms": int((time.time() - start) * 1000),
+                    "client_disconnected": True,
+                    "response_sent": True,
+                }
+            log.error(f"Proxy error for {target}: {exc}")
+            return {
+                "status": 502,
+                "ms": int((time.time() - start) * 1000),
+                "error": str(exc),
+            }
+        except Exception as exc:
+            if disconnected.is_set():
+                log.info(f"Cancelled upstream request after client disconnect: {target}")
+                return {
+                    "status": 499,
+                    "ms": int((time.time() - start) * 1000),
+                    "client_disconnected": True,
+                    "response_sent": True,
+                }
+            log.error(f"Unexpected error for {target}: {exc}")
+            return {
+                "status": 500,
+                "ms": int((time.time() - start) * 1000),
+                "error": str(exc),
+            }
+        finally:
+            monitor_stop.set()
+            self._close_upstream(connection)
+            if request_key:
+                with _inflight_lock:
+                    _inflight_requests.pop(request_key, None)
+
+    def _request_key(self, target, body):
+        if self.command != "POST" or not target.endswith("/v1/chat/completions") or not body:
+            return None
+        return hashlib.sha256(target.encode() + b"\0" + body).hexdigest()
+
+    def _claim_request(self, key):
+        with _inflight_lock:
+            if key in _inflight_requests:
+                return False
+            _inflight_requests[key] = time.time()
+            return True
+
+    def _backend_timeout(self, backend, body):
+        policy = backend.get("request_policy")
+        if not isinstance(policy, dict):
+            return PROXY_BACKEND_TIMEOUT_S
+        base = float(policy.get("initial_response_timeout_s") or PROXY_BACKEND_TIMEOUT_S)
+        floor = float(policy.get("prefill_tokens_per_second_floor") or 0)
+        maximum = float(policy.get("maximum_timeout_s") or max(base, PROXY_BACKEND_TIMEOUT_S))
+        grace = float(policy.get("generation_grace_s") or 120)
+        if floor <= 0 or not body:
+            return min(base, maximum)
+        try:
+            payload = json.loads(body)
+            prompt_chars = len(json.dumps(payload.get("messages") or [], ensure_ascii=False))
+            prompt_chars += len(json.dumps(payload.get("tools") or [], ensure_ascii=False))
+            chars_per_token = float(policy.get("estimated_chars_per_token") or 3.0)
+            estimated_tokens = max(1, math.ceil(prompt_chars / chars_per_token))
+            return min(maximum, max(base, grace + estimated_tokens / floor))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return min(base, maximum)
+
+    def _monitor_disconnect(self, upstream, disconnected, stop):
+        while not stop.wait(0.1):
             try:
-                err_body = e.read()
-            except Exception:
-                err_body = str(e).encode()
-            self.send_response(e.code)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(err_body)))
-            self.send_header("X-Turbofit-Backend", str(backend.get("alias") or backend.get("source") or "api"))
-            self.end_headers()
-            self.wfile.write(err_body)
-            return {"status": e.code, "ms": int((time.time() - start) * 1000)}
-        except (URLError, OSError) as e:
-            log.error(f"Proxy error for {target}: {e}")
-            return {"status": 502, "ms": int((time.time() - start) * 1000), "error": str(e)}
-        except Exception as e:
-            log.error(f"Unexpected error for {target}: {e}")
-            return {"status": 500, "ms": int((time.time() - start) * 1000), "error": str(e)}
+                readable, _, _ = select.select([self.connection], [], [], 0)
+                if not readable:
+                    continue
+                data = self.connection.recv(1, socket.MSG_PEEK | socket.MSG_DONTWAIT)
+                if data:
+                    continue
+                disconnected.set()
+                self._close_upstream(upstream)
+                return
+            except (BlockingIOError, InterruptedError):
+                continue
+            except OSError:
+                disconnected.set()
+                self._close_upstream(upstream)
+                return
+
+    @staticmethod
+    def _close_upstream(connection):
+        upstream_socket = getattr(connection, "sock", None)
+        if upstream_socket is not None:
+            try:
+                upstream_socket.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+        try:
+            connection.close()
+        except Exception:
+            pass
 
     def _send_503(self, reason, tried=None):
-        body = json.dumps({
+        log.error(f"503: {reason} (tried={tried})")
+        self._send_json(503, {
             "error": "no_backend",
             "message": reason,
             "tried": tried,
             "hint": "If this persists, run `serve status` and check `serve vram`.",
-        }, indent=2).encode()
-        log.error(f"503: {reason} (tried={tried})")
-        self.send_response(503)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        })
 
     def _send_status(self):
         main = resolve_main()
@@ -972,24 +1186,50 @@ class GatewayHandler(BaseHTTPRequestHandler):
             "backend_timeout_s": PROXY_BACKEND_TIMEOUT_S,
             "gateway": "turbofit-gateway/2.0",
         }
-        data = json.dumps(response, indent=2).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.end_headers()
-        self.wfile.write(data)
+        self._send_json(200, response)
 
     def _send_health(self):
         main = resolve_main()
         aux = resolve_aux()
         ok = (main is not None) or (aux is not None)
-        body = json.dumps({"ok": ok, "main": (main or {}).get("state", "down"),
-                           "aux": (aux or {}).get("state", "down")}).encode()
-        self.send_response(200 if ok else 503)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        self._send_json(200 if ok else 503, {
+            "ok": ok,
+            "main": (main or {}).get("state", "down"),
+            "aux": (aux or {}).get("state", "down"),
+        })
+
+    def _send_json(self, status, payload, extra_headers=None):
+        body = json.dumps(payload, indent=2).encode()
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            for key, value in (extra_headers or {}).items():
+                self.send_header(key, value)
+            self.end_headers()
+            return self._write_body(body)
+        except (BrokenPipeError, ConnectionResetError):
+            return False
+
+    def _send_empty(self, status, extra_headers=None):
+        try:
+            self.send_response(status)
+            self.send_header("Content-Length", "0")
+            for key, value in (extra_headers or {}).items():
+                self.send_header(key, value)
+            self.end_headers()
+            return True
+        except (BrokenPipeError, ConnectionResetError):
+            return False
+
+    def _write_body(self, body):
+        try:
+            self.wfile.write(body)
+            self.wfile.flush()
+            return True
+        except (BrokenPipeError, ConnectionResetError):
+            return False
 
     def log_message(self, format, *args):
         try:

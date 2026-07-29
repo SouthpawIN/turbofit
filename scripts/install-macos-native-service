@@ -16,6 +16,7 @@ import plistlib
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 from urllib.request import urlopen
 
@@ -58,7 +59,19 @@ def _route_state() -> dict:
         "rung_id": "local-bonsai-65536",
         "rung_index": 0,
         "routes": {
-            "main": {"kind": "local", "alias": MODEL_ALIAS, "port": 8092},
+            "main": {
+                "kind": "local",
+                "alias": MODEL_ALIAS,
+                "port": 8092,
+                "context_length": 65536,
+                "request_policy": {
+                    "initial_response_timeout_s": 600,
+                    "maximum_timeout_s": 3600,
+                    "prefill_tokens_per_second_floor": 8,
+                    "estimated_chars_per_token": 3,
+                    "generation_grace_s": 180,
+                },
+            },
             "aux": {"kind": "shared-main"},
         },
     }
@@ -94,6 +107,20 @@ def _launch(path: Path) -> None:
     subprocess.run(["launchctl", "bootstrap", domain, str(path)], check=True)
 
 
+def _wait_ready(url: str, timeout: float = 30.0) -> None:
+    deadline = time.monotonic() + timeout
+    last_error: Exception | None = None
+    while time.monotonic() < deadline:
+        try:
+            with urlopen(url, timeout=2) as response:
+                if response.status == 200:
+                    return
+        except Exception as exc:
+            last_error = exc
+        time.sleep(0.25)
+    raise RuntimeError(f"service did not become ready at {url}: {last_error}")
+
+
 def install() -> None:
     if platform.system() != "Darwin" or platform.machine().lower() not in {"arm64", "aarch64"}:
         raise RuntimeError("the native Metal service is only for Apple Silicon")
@@ -119,6 +146,8 @@ def install() -> None:
         "--cache-type-k", "q4_0",
         "--cache-type-v", "q4_0",
         "--parallel", "1",
+        "--batch-size", "256",
+        "--ubatch-size", "128",
         "--jinja",
         "--no-perf",
     ]
@@ -142,6 +171,8 @@ def install() -> None:
     )
     _launch(MODEL_PLIST)
     _launch(GATEWAY_PLIST)
+    _wait_ready("http://127.0.0.1:8092/health")
+    _wait_ready("http://127.0.0.1:8091/health")
     print(json.dumps({"installed": True, "model": str(MODEL), "routes": str(ROUTES)}, indent=2))
 
 

@@ -3,7 +3,10 @@ from __future__ import annotations
 import http.client
 import importlib.util
 import json
+import select
+import socket
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -173,3 +176,205 @@ def test_aux_auto_follows_active_pair_without_rerunning_recommendation(monkeypat
     monkeypatch.setattr(GATEWAY, "active_profile", lambda: "grm-carwin-262k")
     monkeypatch.setattr(GATEWAY, "recommend_profile", lambda: (_ for _ in ()).throw(AssertionError("must not recommend")))
     assert GATEWAY.resolve_requested_profile("auto:aux") == "grm-carwin-262k"
+
+
+def test_provider_metadata_reports_active_runtime_context(tmp_path, monkeypatch):
+    state = tmp_path / "runtime-state.json"
+    state.write_text(json.dumps({
+        "active": "mac-native",
+        "routes": {
+            "main": {
+                "kind": "local",
+                "alias": "bonsai",
+                "port": 8092,
+                "context_length": 65536,
+            }
+        },
+    }))
+    monkeypatch.setattr(GATEWAY, "RUNTIME_STATE", str(state))
+
+    assert GATEWAY.active_context_length() == 65536
+    assert {model["context_length"] for model in GATEWAY.provider_models()} == {65536}
+
+
+def test_v1_props_adapts_llama_props_for_hermes(monkeypatch):
+    class PropsUpstream(BaseHTTPRequestHandler):
+        def do_GET(self):
+            assert self.path == "/props"
+            body = json.dumps({
+                "model_alias": "bonsai",
+                "default_generation_settings": {"n_ctx": 65536},
+            }).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format, *args):
+            pass
+
+    upstream = ThreadingHTTPServer(("127.0.0.1", 0), PropsUpstream)
+    gateway = ThreadingHTTPServer(("127.0.0.1", 0), GATEWAY.GatewayHandler)
+    monkeypatch.setattr(
+        GATEWAY,
+        "resolve_main",
+        lambda: {
+            "base_url": f"http://127.0.0.1:{upstream.server_port}",
+            "alias": "bonsai",
+            "state": "ready",
+            "context_length": 65536,
+        },
+    )
+    threading.Thread(target=upstream.serve_forever, daemon=True).start()
+    threading.Thread(target=gateway.serve_forever, daemon=True).start()
+    client = http.client.HTTPConnection("127.0.0.1", gateway.server_port, timeout=2)
+    try:
+        client.request("GET", "/v1/props")
+        response = client.getresponse()
+        props = json.loads(response.read())
+        assert response.status == 200
+        assert props["context_length"] == 65536
+        assert props["provider_model"] == "auto"
+    finally:
+        client.close()
+        gateway.shutdown()
+        upstream.shutdown()
+        gateway.server_close()
+        upstream.server_close()
+
+
+def test_duplicate_inflight_request_is_rejected_without_queueing(monkeypatch):
+    request_started = threading.Event()
+    release_request = threading.Event()
+
+    class SlowUpstream(BaseHTTPRequestHandler):
+        def do_POST(self):
+            self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            request_started.set()
+            release_request.wait(timeout=3)
+            body = b'{"choices":[{"message":{"content":"ok"}}]}'
+            try:
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+
+        def log_message(self, format, *args):
+            pass
+
+    upstream = ThreadingHTTPServer(("127.0.0.1", 0), SlowUpstream)
+    gateway = ThreadingHTTPServer(("127.0.0.1", 0), GATEWAY.GatewayHandler)
+    backend = {
+        "base_url": f"http://127.0.0.1:{upstream.server_port}",
+        "alias": "test-main",
+        "state": "ready",
+    }
+    monkeypatch.setattr(GATEWAY, "resolve_requested_profile", lambda _model: "active")
+    monkeypatch.setattr(GATEWAY, "resolve_main", lambda: backend)
+    GATEWAY._inflight_requests.clear()
+    threading.Thread(target=upstream.serve_forever, daemon=True).start()
+    threading.Thread(target=gateway.serve_forever, daemon=True).start()
+    payload = json.dumps({
+        "model": "auto",
+        "messages": [{"role": "user", "content": "same"}],
+        "stream": True,
+    })
+    first = http.client.HTTPConnection("127.0.0.1", gateway.server_port, timeout=2)
+    second = http.client.HTTPConnection("127.0.0.1", gateway.server_port, timeout=2)
+    try:
+        first.request("POST", "/v1/chat/completions", payload, {"Content-Type": "application/json"})
+        assert request_started.wait(timeout=1)
+        started = time.monotonic()
+        second.request("POST", "/v1/chat/completions", payload, {"Content-Type": "application/json"})
+        response = second.getresponse()
+        body = json.loads(response.read())
+        assert response.status == 409
+        assert response.getheader("X-Turbofit-Deduplicated") == "true"
+        assert body["error"] == "request_in_progress"
+        assert time.monotonic() - started < 1
+    finally:
+        first.close()
+        second.close()
+        release_request.set()
+        gateway.shutdown()
+        upstream.shutdown()
+        gateway.server_close()
+        upstream.server_close()
+
+
+def test_disconnect_before_first_upstream_byte_cancels_request(monkeypatch):
+    request_started = threading.Event()
+    release_request = threading.Event()
+    upstream_disconnected = threading.Event()
+
+    class PrefillUpstream(BaseHTTPRequestHandler):
+        def do_POST(self):
+            self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            request_started.set()
+            while not release_request.wait(timeout=0.05):
+                readable, _, _ = select.select([self.connection], [], [], 0)
+                if readable and not self.connection.recv(
+                    1, socket.MSG_PEEK | socket.MSG_DONTWAIT
+                ):
+                    upstream_disconnected.set()
+                    return
+            try:
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b"late")
+                self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError):
+                upstream_disconnected.set()
+
+        def log_message(self, format, *args):
+            pass
+
+    upstream = ThreadingHTTPServer(("127.0.0.1", 0), PrefillUpstream)
+    gateway = ThreadingHTTPServer(("127.0.0.1", 0), GATEWAY.GatewayHandler)
+    monkeypatch.setattr(GATEWAY, "resolve_requested_profile", lambda _model: "active")
+    monkeypatch.setattr(
+        GATEWAY,
+        "resolve_main",
+        lambda: {
+            "base_url": f"http://127.0.0.1:{upstream.server_port}",
+            "alias": "test-main",
+            "state": "ready",
+        },
+    )
+    GATEWAY._inflight_requests.clear()
+    threading.Thread(target=upstream.serve_forever, daemon=True).start()
+    threading.Thread(target=gateway.serve_forever, daemon=True).start()
+    client = http.client.HTTPConnection("127.0.0.1", gateway.server_port, timeout=2)
+    payload = json.dumps({
+        "model": "auto",
+        "messages": [{"role": "user", "content": "long prefill"}],
+        "stream": True,
+    })
+    try:
+        client.request("POST", "/v1/chat/completions", payload, {"Content-Type": "application/json"})
+        assert request_started.wait(timeout=1)
+        client.close()
+        assert not GATEWAY._inflight_requests or _wait_until(
+            lambda: not GATEWAY._inflight_requests, timeout=2
+        )
+        assert upstream_disconnected.wait(timeout=2)
+    finally:
+        release_request.set()
+        client.close()
+        gateway.shutdown()
+        upstream.shutdown()
+        gateway.server_close()
+        upstream.server_close()
+
+
+def _wait_until(predicate, timeout):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if predicate():
+            return True
+        time.sleep(0.02)
+    return predicate()
