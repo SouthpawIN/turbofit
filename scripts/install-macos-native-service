@@ -16,6 +16,8 @@ import plistlib
 import shutil
 import subprocess
 import sys
+import tarfile
+import tempfile
 import time
 from pathlib import Path
 from urllib.request import urlopen
@@ -25,9 +27,18 @@ ROOT = Path(__file__).resolve().parents[1]
 MODEL = Path.home() / ".local" / "share" / "turbofit" / "models" / "Bonsai-27B-Q1_0.gguf"
 MODEL_SHA256 = "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0"
 MODEL_ALIAS = "bonsai-27b-1bit-64k-main"
+LLAMA_RELEASE = "b10173"
+LLAMA_ARCHIVE_SHA256 = "fcbe78bae047bd36a5c87f36a456b437ab0e8ba32336fb75583127e6013f8809"
+LLAMA_RELEASE_URL = (
+    "https://github.com/ggml-org/llama.cpp/releases/download/"
+    f"{LLAMA_RELEASE}/llama-{LLAMA_RELEASE}-bin-macos-arm64.tar.gz"
+)
 STATE_DIR = Path.home() / ".local" / "state" / "turbofit"
 ROUTES = STATE_DIR / "runtime-state.json"
 LOG_DIR = Path.home() / ".local" / "share" / "turbofit" / "logs"
+RUNTIME_DIR = Path.home() / ".local" / "share" / "turbofit" / "runtimes"
+LLAMA_RUNTIME_DIR = RUNTIME_DIR / f"llama-{LLAMA_RELEASE}"
+LLAMA_RUNTIME_BINARY = LLAMA_RUNTIME_DIR / "llama-server"
 AGENTS_DIR = Path.home() / "Library" / "LaunchAgents"
 MODEL_PLIST = AGENTS_DIR / "com.hermes.turbofit-model.plist"
 GATEWAY_PLIST = AGENTS_DIR / "com.hermes.turbofit-gateway.plist"
@@ -41,7 +52,20 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _llama_version(executable: Path | str) -> str:
+    result = subprocess.run(
+        [str(executable), "--version"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    return (result.stdout or result.stderr).splitlines()[0]
+
+
 def _llama_server() -> str:
+    if LLAMA_RUNTIME_BINARY.is_file():
+        return str(LLAMA_RUNTIME_BINARY)
     executable = shutil.which("llama-server")
     if not executable:
         candidate = Path("/opt/homebrew/bin/llama-server")
@@ -50,6 +74,56 @@ def _llama_server() -> str:
     if not executable:
         raise RuntimeError("llama-server is missing; install Homebrew formula llama.cpp")
     return executable
+
+
+def _install_llama_runtime() -> str:
+    if LLAMA_RUNTIME_BINARY.is_file():
+        if LLAMA_RELEASE.removeprefix("b") not in _llama_version(LLAMA_RUNTIME_BINARY):
+            raise RuntimeError(f"unexpected llama.cpp runtime at {LLAMA_RUNTIME_BINARY}")
+        return str(LLAMA_RUNTIME_BINARY)
+
+    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="turbofit-llama-") as temporary:
+        temporary_root = Path(temporary)
+        archive_path = temporary_root / "llama.tar.gz"
+        with urlopen(LLAMA_RELEASE_URL, timeout=60) as response:
+            with archive_path.open("wb") as output:
+                shutil.copyfileobj(response, output)
+        actual = _sha256(archive_path)
+        if actual != LLAMA_ARCHIVE_SHA256:
+            raise RuntimeError(
+                f"llama.cpp SHA-256 mismatch: expected {LLAMA_ARCHIVE_SHA256}, got {actual}"
+            )
+
+        extracted_root = temporary_root / "extracted"
+        extracted_root.mkdir()
+        with tarfile.open(archive_path, "r:gz") as archive:
+            for member in archive.getmembers():
+                destination = (extracted_root / member.name).resolve()
+                if os.path.commonpath((extracted_root.resolve(), destination)) != str(
+                    extracted_root.resolve()
+                ):
+                    raise RuntimeError(f"unsafe path in llama.cpp archive: {member.name}")
+                if member.issym() or member.islnk():
+                    link = (destination.parent / member.linkname).resolve()
+                    if os.path.commonpath((extracted_root.resolve(), link)) != str(
+                        extracted_root.resolve()
+                    ):
+                        raise RuntimeError(
+                            f"unsafe link in llama.cpp archive: {member.name}"
+                        )
+            archive.extractall(extracted_root)
+
+        extracted_runtime = extracted_root / f"llama-{LLAMA_RELEASE}"
+        extracted_binary = extracted_runtime / "llama-server"
+        if not extracted_binary.is_file():
+            raise RuntimeError("llama.cpp archive did not contain llama-server")
+        if LLAMA_RELEASE.removeprefix("b") not in _llama_version(extracted_binary):
+            raise RuntimeError("llama.cpp archive version does not match the pinned release")
+        staging = RUNTIME_DIR / f".llama-{LLAMA_RELEASE}-{os.getpid()}"
+        shutil.copytree(extracted_runtime, staging)
+        os.replace(staging, LLAMA_RUNTIME_DIR)
+    return str(LLAMA_RUNTIME_BINARY)
 
 
 def _route_state() -> dict:
@@ -121,6 +195,31 @@ def _wait_ready(url: str, timeout: float = 30.0) -> None:
     raise RuntimeError(f"service did not become ready at {url}: {last_error}")
 
 
+def _model_args(llama_server: str) -> list[str]:
+    return [
+        llama_server,
+        "--model", str(MODEL),
+        "--alias", MODEL_ALIAS,
+        "--host", "127.0.0.1",
+        "--port", "8092",
+        "--ctx-size", "65536",
+        "--gpu-layers", "999",
+        "--flash-attn", "on",
+        "--cache-type-k", "q4_0",
+        "--cache-type-v", "q4_0",
+        "--parallel", "1",
+        "--batch-size", "256",
+        "--ubatch-size", "128",
+        "--cache-prompt",
+        "--cache-reuse", "256",
+        "--cache-ram", "1024",
+        "--ctx-checkpoints", "32",
+        "--checkpoint-min-step", "2048",
+        "--jinja",
+        "--no-perf",
+    ]
+
+
 def install() -> None:
     if platform.system() != "Darwin" or platform.machine().lower() not in {"arm64", "aarch64"}:
         raise RuntimeError("the native Metal service is only for Apple Silicon")
@@ -134,23 +233,8 @@ def install() -> None:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     ROUTES.write_text(json.dumps(_route_state(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
-    model_args = [
-        _llama_server(),
-        "--model", str(MODEL),
-        "--alias", MODEL_ALIAS,
-        "--host", "127.0.0.1",
-        "--port", "8092",
-        "--ctx-size", "65536",
-        "--gpu-layers", "999",
-        "--flash-attn", "on",
-        "--cache-type-k", "q4_0",
-        "--cache-type-v", "q4_0",
-        "--parallel", "1",
-        "--batch-size", "256",
-        "--ubatch-size", "128",
-        "--jinja",
-        "--no-perf",
-    ]
+    llama_server = _install_llama_runtime()
+    model_args = _model_args(llama_server)
     _write_plist(
         MODEL_PLIST,
         _plist("com.hermes.turbofit-model", model_args, LOG_DIR / "model.log"),
@@ -171,9 +255,15 @@ def install() -> None:
     )
     _launch(MODEL_PLIST)
     _launch(GATEWAY_PLIST)
-    _wait_ready("http://127.0.0.1:8092/health")
+    _wait_ready("http://127.0.0.1:8092/health", timeout=120)
     _wait_ready("http://127.0.0.1:8091/health")
-    print(json.dumps({"installed": True, "model": str(MODEL), "routes": str(ROUTES)}, indent=2))
+    print(json.dumps({
+        "installed": True,
+        "llama_server": llama_server,
+        "llama_version": _llama_version(llama_server),
+        "model": str(MODEL),
+        "routes": str(ROUTES),
+    }, indent=2))
 
 
 def status() -> None:
@@ -182,6 +272,12 @@ def status() -> None:
         "model_service": MODEL_PLIST.is_file(),
         "gateway_service": GATEWAY_PLIST.is_file(),
     }
+    try:
+        llama_server = _llama_server()
+        result["llama_server"] = llama_server
+        result["llama_version"] = _llama_version(llama_server)
+    except Exception as exc:
+        result["llama_runtime_error"] = str(exc)
     for name, url in (
         ("model_health", "http://127.0.0.1:8092/health"),
         ("gateway_health", "http://127.0.0.1:8091/health"),

@@ -46,6 +46,11 @@ def _props(base_url: str) -> dict:
     return value
 
 
+def _configuration(props: dict) -> str:
+    build_info = str(props.get("build_info") or "unknown")
+    return f"metal/native/{build_info}/64k/q4-kv"
+
+
 def _promotion_record(evidence: dict, props: dict, artifact_hash: str) -> BenchmarkRecord:
     summary = evidence["summary"]
     timing_values = [
@@ -132,12 +137,14 @@ def main() -> int:
         parser.error(f"model not found: {args.model_path}")
 
     artifact_hash = _sha256(args.model_path)
+    props = _props(args.base_url)
+    build_info = str(props.get("build_info") or "unknown")
     evidence = run_benchmark(
         suite=BenchmarkSuite.load(args.suite),
         base_url=args.base_url,
         model=args.model,
         candidate=args.alias,
-        configuration="metal/native/64k/q4-kv",
+        configuration=_configuration(props),
         output_path=args.output,
         process_id=_server_pid(args.alias),
         timeout_seconds=args.timeout,
@@ -151,7 +158,7 @@ def main() -> int:
             "reasoning_format": "none",
         },
     )
-    promotion = _promotion_record(evidence, _props(args.base_url), artifact_hash)
+    promotion = _promotion_record(evidence, props, artifact_hash)
     decision = require_promotion(promotion, load_suite(args.promotion_suite))
     promotion_path = args.promotion_output or args.output.with_suffix(".promotion.json")
     promotion_path.parent.mkdir(parents=True, exist_ok=True)
@@ -163,6 +170,7 @@ def main() -> int:
         "benchmark": str(args.output),
         "promotion_record": str(promotion_path),
         "promotion_eligible": decision.promoted,
+        "llama_build": build_info,
         "evidence_sha256": evidence["evidence_sha256"],
     }, indent=2))
     return 0

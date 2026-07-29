@@ -61,3 +61,12 @@ def test_metal_evidence_compiles_to_a_promotion_record_without_power() -> None:
     assert record.observed_context == 65536
     assert record.power_w_by_card == ()
     assert record.per_card_vram_mb == (9000,)
+
+
+def test_gateway_props_supply_runtime_build_identity() -> None:
+    props = {
+        "build_info": "b10173-e9fa0781f",
+        "context_length": 65536,
+    }
+
+    assert MODULE._configuration(props) == "metal/native/b10173-e9fa0781f/64k/q4-kv"
