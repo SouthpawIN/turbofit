@@ -326,17 +326,7 @@ A simulated pass is not represented as real pressure evidence. The latest machin
 - Credentials and machine-local paths never enter portable profiles.
 - Research candidates never become production recommendations automatically.
 
-## Remaining development
-
-The following items remain outside the verified release boundary:
-
-- host-specific Metal performance evidence and AMD/Intel runtime backends
-- promotion evidence for every one of the 192 compiled model configurations
-- Mixture-of-Agents presets
-- pricing-aware opt-in API routing
-- richer daemon/service management outside systemd
-
-Model-source intelligence is refreshed daily by `.github/workflows/model-intel.yml`; discovery never bypasses the benchmark promotion gates.
+## Thank You 🙏
 
 ## License
 
