@@ -228,3 +228,22 @@ def test_probe_subprocess_failures_return_no_accelerator(error: Exception) -> No
         system_ram_mb=32768,
     )
     assert fingerprint.topology_key == "no-accelerator"
+
+
+def test_parse_nvidia_inventory_gb10_unified_memory_falls_back_to_system_ram(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # DGX Spark (GB10) reports memory.total as "[N/A]" via nvidia-smi because
+    # the GPU shares unified memory with the CPU. The parser must fall back to
+    # system RAM instead of raising "invalid NVIDIA numeric field".
+    import turbofit_runtime.hardware as hw
+
+    monkeypatch.setattr(hw, "_system_ram_mb", lambda: 131072)
+    raw = "0, GPU-gb10, NVIDIA GB10, [N/A], 12.1, 00000000:01:00.0\n"
+
+    devices = parse_nvidia_inventory_csv(raw)
+
+    assert len(devices) == 1
+    assert devices[0].name == "NVIDIA GB10"
+    assert devices[0].memory_total_mb == 131072
+    assert devices[0].compute_capability == "12.1"

@@ -123,9 +123,21 @@ def parse_nvidia_inventory_csv(raw: str) -> tuple[AcceleratorDevice, ...]:
         )
         try:
             parsed_index = int(index)
-            parsed_memory = int(memory_total)
         except ValueError as exc:
             raise ValueError(f"invalid NVIDIA numeric field on row {row_number}") from exc
+        # DGX Spark (GB10) and other unified-memory parts report memory.total
+        # as "[N/A]" via nvidia-smi -- the GPU shares system RAM, so fall back
+        # to that. Mirrors the existing [N/A] handling for compute_capability
+        # and bus_id just below.
+        if memory_total in {"", "N/A", "[N/A]"}:
+            parsed_memory = _system_ram_mb()
+        else:
+            try:
+                parsed_memory = int(memory_total)
+            except ValueError as exc:
+                raise ValueError(
+                    f"invalid NVIDIA numeric field on row {row_number}"
+                ) from exc
         devices.append(
             AcceleratorDevice(
                 index=parsed_index,
