@@ -243,12 +243,13 @@ At the minimum local floor, Turbofit does not route to an API model. If no lower
 | `benchmarks/suite.yaml` | promotion gates |
 | `references/results/` | measured machine-readable evidence |
 
-The matrix contains the requested 12 main variants × 4 auxiliary modes × 4 contexts: **192 research configurations**. Every row now compiles to a concrete, `--jinja`-enabled launch recipe; FP16, quantized, vision-projector, and DSpark artifacts resolve independently. A compilable row is not automatically a production recommendation. Production promotion requires artifact, runtime, performance, quality, and pressure/self-heal evidence.
+The matrix contains 13 main variants × 4 auxiliary modes × 4 contexts: **208 research configurations**. This includes DeepSeek V4 Flash 0731 UD-Q8_K_XL with its Q8 DSpark draft module at 64K, 128K, 262K, and 1M. Every row compiles to a concrete, `--jinja`-enabled launch recipe; FP16, quantized, vision-projector, and DSpark artifacts resolve independently. A compilable row is not automatically a production recommendation. Production promotion requires artifact, runtime, performance, quality, and pressure/self-heal evidence. The DeepSeek DSpark candidate requires a llama.cpp build whose `--spec-type` includes `draft-dspark`; older atomic builds must be rebuilt before this recipe can run.
 
 The hybrid system-RAM catalog separately defines executable 64K, 128K, 262K, and 1M candidates for Laguna, MiniMax M3, and GLM 5.2. Higher-context rows are explicitly `configured-unmeasured`, use CPU/system-RAM policies (including MoE expert offload where supported), and cannot be promoted until real evidence exists.
 
 The current source list includes:
 
+- [DeepSeek V4 Flash 0731 GGUF](https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF)
 - [GLM/GRM 5.2 2.788 bpw](https://huggingface.co/sokann/GLM-5.2-GGUF-2.788bpw)
 - [MiniMax M3 GGUF](https://huggingface.co/unsloth/MiniMax-M3-GGUF)
 - [Laguna S 2.1](https://huggingface.co/poolside/Laguna-S-2.1)
@@ -332,6 +333,16 @@ A simulated pass is not represented as real pressure evidence. The latest machin
 - New routes are not published before local verification.
 - Credentials and machine-local paths never enter portable profiles.
 - Research candidates never become production recommendations automatically.
+
+## Remaining development
+
+The following items remain outside the verified release boundary:
+
+- production ROCm and Lemonade launch/control backends (ROCm is currently discovery/recommendation only; Lemonade is not integrated)
+- a rebuilt `draft-dspark`-capable llama.cpp runtime plus downloaded DeepSeek V4 artifacts and live benchmark evidence
+- promotion evidence for every one of the 208 compiled model configurations
+- automated DeepSWE/external benchmark ingestion and a verified repository publishing cadence
+- Mixture-of-Agents presets and pricing-aware opt-in API routing
 
 ## Thank You 🙏
 

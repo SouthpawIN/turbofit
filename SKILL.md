@@ -1,7 +1,7 @@
 ---
 name: turbofit
 description: "Operate the Turbofit adaptive local inference plugin."
-version: 3.0.0
+version: 3.1.0
 author: SouthpawIN + Nous Girl
 license: MIT
 tags: [hermes-agent, plugin, turbohaul, adaptive-runtime]

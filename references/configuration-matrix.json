@@ -2,6 +2,118 @@
   "schema": "turbofit.configuration-matrix/v1",
   "rows": [
     {
+      "id": "deepseek-v4-flash-0731-q8-dspark--carwin-nano--64k",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--carwin-nano--128k",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--carwin-nano--262k",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--carwin-nano--1m",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--ternary-bonsai-27b--64k",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--ternary-bonsai-27b--128k",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--ternary-bonsai-27b--262k",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--ternary-bonsai-27b--1m",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "ternary-bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--bonsai-27b--64k",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--bonsai-27b--128k",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--bonsai-27b--262k",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--bonsai-27b--1m",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "bonsai-27b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--auto--64k",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--auto--128k",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--auto--262k",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8-dspark--auto--1m",
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "glm-5-2-2-788bpw--carwin-nano--64k",
       "main": "glm-5-2-2-788bpw",
       "auxiliary": "carwin-nano",

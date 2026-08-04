@@ -429,13 +429,13 @@ def _system_ram_used_mib() -> int:
 
 def _meminfo() -> dict[str, int]:
     values: dict[str, int] = {}
-    try:
-        for line in Path("/proc/meminfo").read_text().splitlines():
-            name, rest = line.split(":", 1)
-            values[name] = int(rest.strip().split()[0])
-    except (OSError, ValueError):
-        pass
-    if values or platform.system() != "Darwin":
+    if platform.system() != "Darwin":
+        try:
+            for line in Path("/proc/meminfo").read_text().splitlines():
+                name, rest = line.split(":", 1)
+                values[name] = int(rest.strip().split()[0])
+        except (OSError, ValueError):
+            pass
         return values
     try:
         total_bytes = int(subprocess.run(

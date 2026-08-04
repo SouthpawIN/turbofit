@@ -104,6 +104,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--pressure-mb", type=int, default=DEFAULT_PRESSURE_MB)
     parser.add_argument("--pressure-device", type=int, default=0)
     parser.add_argument("--manager-status", default=DEFAULT_MANAGER_STATUS)
+    parser.add_argument(
+        "--contraction-timeout",
+        type=float,
+        default=900,
+        help="seconds allowed for a bounded unload/load/verify contraction",
+    )
     parser.add_argument("--heal-timeout", type=float, default=900)
     return parser
 
@@ -178,7 +184,7 @@ def main() -> int:
                 profile_id=profile_id,
                 ceiling_rung=initial_rung,
             ),
-            120,
+            args.contraction_timeout,
         )
         if pressure.poll() is not None:
             raise RuntimeError("acceptance pressure process did not survive contraction")

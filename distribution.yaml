@@ -1,6 +1,6 @@
 # Turbofit Hermes plugin distribution
 name: turbofit
-version: "3.0.0"
+version: "3.1.0"
 description: >-
   Hermes plugin and setup dashboard for hardware-aware adaptive local inference,
   portable Turbofiles, Turbohaul Manager v0.7 residency, stable auto/active role

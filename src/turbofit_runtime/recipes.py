@@ -92,7 +92,7 @@ class RecipeBook:
                 environment.update({
                     "DRAFT_MODEL": f"/models/{spec['draft']}",
                     "DRAFT_NGL": "99",
-                    "SPEC_DRAFT_N_MAX": "4",
+                    "SPEC_DRAFT_N_MAX": str(spec.get("draft_n_max", 4)),
                 })
             command: list[str] = ["--jinja"]
             if context_override.get("split_mode"):
@@ -115,7 +115,12 @@ class RecipeBook:
                     *command,
                 ]
                 if method == "dspark":
-                    native_command.extend(["--model-draft", str(root / str(spec["draft"]))])
+                    native_command.extend([
+                        "--model-draft", str(root / str(spec["draft"])),
+                        "--spec-type", "draft-dspark",
+                        "--spec-draft-n-max", str(spec.get("draft_n_max", 4)),
+                        "-ngld", "99",
+                    ])
                 if projector:
                     native_command.extend(["--mmproj", str(root / projector)])
                 return ResolvedComponent(
@@ -162,6 +167,16 @@ class RecipeBook:
             ])
         if method == "mtp":
             command.extend(["--spec-type", "draft-mtp"])
+        if method == "dspark":
+            draft = str(spec.get("draft", ""))
+            if not draft:
+                raise ValueError(f"DSpark recipe for {family} requires a draft model")
+            command.extend([
+                "--model-draft", draft,
+                "--spec-type", "draft-dspark",
+                "--spec-draft-n-max", str(spec.get("draft_n_max", 4)),
+                "-ngld", "99",
+            ])
         if projector:
             command.extend(["--mmproj", projector])
         return ResolvedComponent(

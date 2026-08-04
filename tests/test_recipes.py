@@ -142,6 +142,9 @@ def test_macos_compiles_docker_only_bonsai_recipe_to_native_metal_process() -> N
     assert component.command[0] == data["atomic_binary"]
     assert "--jinja" in component.command
     assert "--model-draft" in component.command
+    assert component.command[component.command.index("--spec-type") + 1] == "draft-dspark"
+    assert component.command[component.command.index("--spec-draft-n-max") + 1] == "4"
+    assert component.command[component.command.index("-ngld") + 1] == "99"
     assert component.model_path.endswith("Bonsai-27B-Q1_0.gguf")
 
 
@@ -151,9 +154,29 @@ def test_every_catalog_configuration_compiles_to_an_actual_jinja_launch_recipe()
 
     resolved = [book.resolve_catalog_configuration(item) for item in matrix["rows"]]
 
-    assert len(resolved) == 192
-    assert len({item.row_id for item in resolved}) == 192
+    assert len(resolved) == 208
+    assert len({item.row_id for item in resolved}) == 208
     assert all(component.command and "--jinja" in component.command for item in resolved for component in item.components)
+
+
+def test_deepseek_v4_flash_q8_compiles_with_dspark_and_auto_fit() -> None:
+    component = RecipeBook.load(RECIPES).resolve_catalog_configuration({
+        "id": "deepseek-v4-flash-0731-q8-dspark--auto--1m",
+        "main": "deepseek-v4-flash-0731-q8-dspark",
+        "auxiliary": "auto",
+        "context": 1_048_576,
+        "status": "candidate",
+    }).components[0]
+
+    assert component.model_path.endswith("DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf")
+    draft_index = component.command.index("--model-draft")
+    assert component.command[draft_index + 1].endswith("dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf")
+    assert component.method == "dspark"
+    assert "--jinja" in component.command
+    assert component.command[component.command.index("--spec-type") + 1] == "draft-dspark"
+    assert component.command[component.command.index("--spec-draft-n-max") + 1] == "3"
+    assert component.command[component.command.index("-ngld") + 1] == "99"
+    assert component.command[component.command.index("--fit") + 1] == "on"
 
 
 def test_catalog_variants_compile_distinct_artifacts_and_features() -> None:

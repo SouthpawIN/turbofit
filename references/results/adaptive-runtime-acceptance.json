@@ -3,7 +3,7 @@
   "checks": {
     "controlled_pressure": {
       "exit_code": 0,
-      "output": "{\n  \"checks\": {\n    \"contracted_to_local_rung\": \"local-grm-131072\",\n    \"external_process_survived\": true,\n    \"healed_to_selected_ceiling\": true,\n    \"initial_local\": true,\n    \"pressure_allocated\": {\n      \"device\": 0,\n      \"mb\": 9710,\n      \"pid\": 125015\n    }\n  },\n  \"recorded_at\": \"2026-07-26T11:59:02.194272+00:00\",\n  \"safety\": {\n    \"acceptance_owned_processes_terminated\": 1,\n    \"external_processes_signaled\": 0\n  },\n  \"schema\": \"turbofit.controlled-pressure-acceptance/v1\",\n  \"status\": \"pass\"\n}\n",
+      "output": "{\n  \"checks\": {\n    \"contracted_to_local_rung\": \"local-grm-131072\",\n    \"external_process_survived\": true,\n    \"healed_to_selected_ceiling\": true,\n    \"initial_local\": true,\n    \"pressure_allocated\": {\n      \"device\": 0,\n      \"mb\": 9329,\n      \"pid\": 904773\n    }\n  },\n  \"recorded_at\": \"2026-08-04T20:20:11.300832+00:00\",\n  \"safety\": {\n    \"acceptance_owned_processes_terminated\": 1,\n    \"external_processes_signaled\": 0\n  },\n  \"schema\": \"turbofit.controlled-pressure-acceptance/v1\",\n  \"status\": \"pass\"\n}\n",
       "passed": true
     },
     "controller_service": {
@@ -40,12 +40,12 @@
     },
     "nvml": {
       "exit_code": 0,
-      "output": "0, GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1, 24576, 12359, 11758\n1, GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1, 24576, 15421, 8704\n",
+      "output": "0, GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1, 24576, 12739, 11377\n1, GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1, 24576, 15462, 8663\n",
       "passed": true
     },
     "simulated_transitions": {
       "exit_code": 0,
-      "output": "..........................                                               [100%]\n26 passed in 1.66s\n",
+      "output": "..........................                                               [100%]\n26 passed in 1.32s\n",
       "passed": true
     },
     "turbohaul_status": {
@@ -53,7 +53,7 @@
       "payload": {
         "active": null,
         "background_sweeper": {
-          "last_sweep_iso": "2026-07-26T11:58:06+00:00",
+          "last_sweep_iso": "2026-08-04T20:19:35+00:00",
           "slots_finalized_lifetime": 0
         },
         "engine_stall": null,
@@ -65,7 +65,7 @@
           "eta_s": null,
           "generation_id": null,
           "max_tokens": null,
-          "measured_at_iso": "2026-07-26T11:59:01+00:00",
+          "measured_at_iso": "2026-08-04T20:20:10+00:00",
           "n_ctx": null,
           "n_decoded": 0,
           "n_prompt_cache": null,
@@ -86,7 +86,7 @@
         "idle_hot": null,
         "kv_classifier": {
           "events": {
-            "sub-agent": 9
+            "sub-agent": 108
           },
           "forced_clean_restores": 0,
           "last": {
@@ -135,7 +135,7 @@
               "eta_s": null,
               "generation_id": null,
               "max_tokens": null,
-              "measured_at_iso": "2026-07-26T11:59:01+00:00",
+              "measured_at_iso": "2026-08-04T20:20:10+00:00",
               "n_ctx": null,
               "n_decoded": 0,
               "n_prompt_cache": null,
@@ -152,17 +152,17 @@
               "tok_s": null,
               "tok_s_instant": 0.0
             },
-            "idle_expires_in_s": null,
+            "idle_expires_in_s": 455,
             "inflight": 0,
             "main_gpu": 1,
             "model_tag": "grm-2-6-plus-262k-split-main",
             "parallel": 1,
-            "pid": 4192707,
+            "pid": 823804,
             "port": 11900,
             "reserved_need_mib": 30517,
             "spawn_seq": 1,
             "split_mode": "layer",
-            "state": "ACTIVE"
+            "state": "IDLE_EVICTABLE"
           }
         ],
         "shadow_bytematch": {},
@@ -180,10 +180,10 @@
             "protected_bytes": 0,
             "protected_threads": {},
             "total_bytes": 0,
-            "ts": 1785066966.862908
+            "ts": 1785874535.8255424
           },
           "restores": {
-            "fresh": 9
+            "fresh": 108
           },
           "saves": {}
         },
@@ -191,8 +191,8 @@
         "shadow_restore_prefer": {},
         "tooltail_restore_skip": {},
         "vram": [
-          11758,
-          8704
+          11377,
+          8663
         ],
         "vram_total_mib": null
       },
@@ -200,7 +200,7 @@
     }
   },
   "real_requested": true,
-  "recorded_at": "2026-07-26T12:03:15.047564+00:00",
+  "recorded_at": "2026-08-04T20:29:52.687417+00:00",
   "safety": {
     "direct_process_signals_sent": 0,
     "external_processes_modified": 0,

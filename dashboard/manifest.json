@@ -3,7 +3,7 @@
   "label": "Turbofit",
   "description": "Adaptive local inference setup, routes, and provider controls",
   "icon": "Activity",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "tab": {
     "path": "/turbofit",
     "position": "before:config"

@@ -19,7 +19,11 @@ MATRIX_PATH = ROOT / "references" / "configuration-matrix.json"
 
 def test_catalog_has_every_requested_main_and_auxiliary_variant() -> None:
     catalog = ModelCatalog.load(CATALOG_PATH)
-    assert len(catalog.main_models) == 12
+    assert len(catalog.main_models) == 13
+    deepseek = next(item for item in catalog.main_models if item.id == "deepseek-v4-flash-0731-q8-dspark")
+    assert deepseek.source == "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF"
+    assert deepseek.quantization == "UD-Q8_K_XL"
+    assert deepseek.runtime_features == ("dspark", "expert-offload")
     assert catalog.contexts == CONTEXTS
     assert catalog.auxiliary_options == (
         "carwin-nano", "ternary-bonsai-27b", "bonsai-27b", "auto"
@@ -31,8 +35,8 @@ def test_complete_matrix_is_generated_not_hand_maintained() -> None:
     catalog = ModelCatalog.load(CATALOG_PATH)
     matrix = json.loads(MATRIX_PATH.read_text())
     validate_configuration_matrix(matrix, catalog)
-    assert len(matrix["rows"]) == 12 * 4 * 4
-    assert len({item["id"] for item in matrix["rows"]}) == 192
+    assert len(matrix["rows"]) == 13 * 4 * 4
+    assert len({item["id"] for item in matrix["rows"]}) == 208
     assert {item["context"] for item in matrix["rows"]} == set(CONTEXTS)
 
 

@@ -62,6 +62,11 @@ def test_acceptance_default_pressure_fits_allocator_bound() -> None:
     assert 128 <= args.pressure_mb <= PRESSURE_MODULE.MAX_PRESSURE_MB
 
 
+def test_acceptance_allows_a_full_bounded_model_transition() -> None:
+    args = MODULE.build_parser().parse_args([])
+    assert args.contraction_timeout >= 600
+
+
 def test_pressure_is_capped_to_leave_allocator_safety_headroom() -> None:
     assert MODULE.safe_pressure_mb(12_544, 11_485) == 9_437
     assert MODULE.safe_pressure_mb(8_000, 11_485) == 8_000

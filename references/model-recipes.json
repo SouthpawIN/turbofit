@@ -2,6 +2,10 @@
   "schema_version": 1,
   "atomic_binary": "/home/sovthpaw/projects/LLM-Infra/llama.cpp-atomic/build/bin/llama-server",
   "variants": {
+    "deepseek-v4-flash-0731-q8-dspark": {
+      "family": "DeepSeek V4 Flash 0731",
+      "alias": "deepseek-v4-flash-0731-q8-dspark"
+    },
     "glm-5-2-2-788bpw": {"family": "GLM 5.2", "alias": "glm-5-2-2-788bpw"},
     "minimax-m3-q4": {
       "family": "MiniMax M3",
@@ -54,6 +58,18 @@
     }
   },
   "models": {
+    "DeepSeek V4 Flash 0731": {
+      "alias": "deepseek-v4-flash-0731",
+      "kind": "process",
+      "model": "/home/sovthpaw/Models/storage/gguf/DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
+      "draft": "/home/sovthpaw/Models/storage/gguf/DeepSeek-V4-Flash-0731/dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
+      "port": 11608,
+      "large": true,
+      "draft_n_max": 3,
+      "native_context": 1048576,
+      "max_context": 1048576,
+      "methods": {"65536": "dspark", "131072": "dspark", "262144": "dspark", "1048576": "dspark"}
+    },
     "1 Bit Bonsai": {
       "alias": "bonsai-27b-1bit",
       "kind": "docker",

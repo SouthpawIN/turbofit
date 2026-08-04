@@ -3,6 +3,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
+
+_PLUGIN_SRC = Path(__file__).resolve().parent / "src"
+if str(_PLUGIN_SRC) not in sys.path:
+    sys.path.insert(0, str(_PLUGIN_SRC))
 
 from . import schemas
 from .plugin_tools import handle_configure, handle_status

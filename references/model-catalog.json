@@ -9,6 +9,18 @@
   ],
   "models": [
     {
+      "id": "deepseek-v4-flash-0731-q8-dspark",
+      "name": "DeepSeek V4 Flash 0731 Q8 with DSpark",
+      "family": "DeepSeek V4 Flash 0731",
+      "source": "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "artifact": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf + dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
+      "quantization": "UD-Q8_K_XL",
+      "vision": false,
+      "moe": true,
+      "runtime_features": ["dspark", "expert-offload"],
+      "roles": ["main"]
+    },
+    {
       "id": "glm-5-2-2-788bpw",
       "name": "GLM 5.2 2.788 bpw",
       "family": "GLM 5.2",
