@@ -19,7 +19,9 @@ def row(main: str, aux: str, context: int) -> MatrixRow:
 
 
 def test_auto_profile_launches_only_main_component() -> None:
-    resolved = RecipeBook.load(RECIPES).resolve(row("Carwin Nano", "auto", 131_072))
+    resolved = RecipeBook.load(RECIPES, platform_name="linux").resolve(
+        row("Carwin Nano", "auto", 131_072)
+    )
 
     assert len(resolved.components) == 1
     component = resolved.components[0]
@@ -31,7 +33,9 @@ def test_auto_profile_launches_only_main_component() -> None:
 
 
 def test_small_dedicated_pair_pins_aux_gpu0_and_main_gpu1() -> None:
-    resolved = RecipeBook.load(RECIPES).resolve(row("Ternary Bonsai", "1 Bit Bonsai", 65_536))
+    resolved = RecipeBook.load(RECIPES, platform_name="linux").resolve(
+        row("Ternary Bonsai", "1 Bit Bonsai", 65_536)
+    )
 
     assert [(item.role, item.gpu) for item in resolved.components] == [("aux", "0"), ("main", "1")]
     assert all(item.method == "dspark" for item in resolved.components)
@@ -39,14 +43,18 @@ def test_small_dedicated_pair_pins_aux_gpu0_and_main_gpu1() -> None:
 
 
 def test_bonsai_262k_uses_baseline_not_dspark() -> None:
-    resolved = RecipeBook.load(RECIPES).resolve(row("Ternary Bonsai", "1 Bit Bonsai", 262_144))
+    resolved = RecipeBook.load(RECIPES, platform_name="linux").resolve(
+        row("Ternary Bonsai", "1 Bit Bonsai", 262_144)
+    )
 
     assert all(item.method == "baseline" for item in resolved.components)
     assert all("DRAFT_MODEL" not in item.environment for item in resolved.components)
 
 
 def test_one_bit_bonsai_one_million_uses_four_x_yarn_across_both_gpus() -> None:
-    resolved = RecipeBook.load(RECIPES).resolve(row("1 Bit Bonsai", "auto", 1_048_576))
+    resolved = RecipeBook.load(RECIPES, platform_name="linux").resolve(
+        row("1 Bit Bonsai", "auto", 1_048_576)
+    )
 
     component = resolved.components[0]
     assert component.kind == "docker"
@@ -63,7 +71,9 @@ def test_one_bit_bonsai_one_million_uses_four_x_yarn_across_both_gpus() -> None:
 
 
 def test_large_main_reserves_aux_gpu_then_fits_across_visible_cards() -> None:
-    resolved = RecipeBook.load(RECIPES).resolve(row("GLM 5.2", "Carwin Nano", 65_536))
+    resolved = RecipeBook.load(RECIPES, platform_name="linux").resolve(
+        row("GLM 5.2", "Carwin Nano", 65_536)
+    )
 
     aux, main = resolved.components
     assert aux.role == "aux" and aux.gpu == "0"
@@ -74,7 +84,9 @@ def test_large_main_reserves_aux_gpu_then_fits_across_visible_cards() -> None:
 
 
 def test_grm_262k_uses_measured_seven_layer_split_across_both_gpus() -> None:
-    resolved = RecipeBook.load(RECIPES).resolve(row("GRM 2.6 Plus", "Carwin Nano", 262_144))
+    resolved = RecipeBook.load(RECIPES, platform_name="linux").resolve(
+        row("GRM 2.6 Plus", "Carwin Nano", 262_144)
+    )
 
     aux, main = resolved.components
     assert aux.gpu == "0"
@@ -86,7 +98,9 @@ def test_grm_262k_uses_measured_seven_layer_split_across_both_gpus() -> None:
 
 
 def test_one_million_context_applies_matching_four_x_yarn_to_both_models() -> None:
-    resolved = RecipeBook.load(RECIPES).resolve(row("GRM 2.6 Plus", "Carwin Nano", 1_048_576))
+    resolved = RecipeBook.load(RECIPES, platform_name="linux").resolve(
+        row("GRM 2.6 Plus", "Carwin Nano", 1_048_576)
+    )
 
     assert len(resolved.components) == 2
     aux, main = resolved.components
@@ -106,7 +120,7 @@ def test_one_million_context_applies_matching_four_x_yarn_to_both_models() -> No
 
 
 def test_every_resolved_component_enables_jinja_tool_calling() -> None:
-    book = RecipeBook.load(RECIPES)
+    book = RecipeBook.load(RECIPES, platform_name="linux")
     cases = (
         row("Carwin Nano", "auto", 131_072),
         row("GRM 2.6 Plus", "Carwin Nano", 131_072),
@@ -132,7 +146,7 @@ def test_macos_compiles_docker_only_bonsai_recipe_to_native_metal_process() -> N
 
 
 def test_every_catalog_configuration_compiles_to_an_actual_jinja_launch_recipe() -> None:
-    book = RecipeBook.load(RECIPES)
+    book = RecipeBook.load(RECIPES, platform_name="linux")
     matrix = json.loads((ROOT / "references" / "configuration-matrix.json").read_text())
 
     resolved = [book.resolve_catalog_configuration(item) for item in matrix["rows"]]
@@ -143,7 +157,7 @@ def test_every_catalog_configuration_compiles_to_an_actual_jinja_launch_recipe()
 
 
 def test_catalog_variants_compile_distinct_artifacts_and_features() -> None:
-    book = RecipeBook.load(RECIPES)
+    book = RecipeBook.load(RECIPES, platform_name="linux")
     fp16 = book.resolve_catalog_configuration({
         "id": "ternary-bonsai-27b-fp16-vision-dspark--auto--64k",
         "main": "ternary-bonsai-27b-fp16-vision-dspark",
@@ -199,7 +213,9 @@ def test_requested_fp16_and_q4_variants_resolve_real_artifact_names() -> None:
 
 
 def test_recipe_compiles_deterministic_profile_name_and_aliases() -> None:
-    resolved = RecipeBook.load(RECIPES).resolve(row("GRM 2.6 Plus", "Carwin Nano", 131_072))
+    resolved = RecipeBook.load(RECIPES, platform_name="linux").resolve(
+        row("GRM 2.6 Plus", "Carwin Nano", 131_072)
+    )
 
     assert resolved.profile_name == "grm-2-6-plus-carwin-nano-128k"
     assert resolved.main_alias == "grm-2-6-plus"

@@ -57,6 +57,17 @@ def test_complete_record_passes_every_promotion_gate() -> None:
     assert decision.failures == ()
 
 
+def test_metal_suite_allows_unified_memory_without_privileged_power_sampling() -> None:
+    mapping = valid_record().to_mapping()
+    mapping["power_w_by_card"] = []
+    record = BenchmarkRecord.from_mapping(mapping)
+    suite = load_suite(ROOT / "benchmarks" / "suite-metal.json")
+
+    decision = require_promotion(record, suite)
+
+    assert decision.promoted is True
+
+
 def test_failed_or_missing_stage_cannot_promote() -> None:
     suite = load_suite(ROOT / "benchmarks" / "suite.yaml")
     record = valid_record()
@@ -89,7 +100,7 @@ def test_failed_or_missing_stage_cannot_promote() -> None:
         ("throughput_tps", 0),
         ("ttft_ms", -1),
         ("per_card_vram_mb", ()),
-        ("power_w_by_card", (0.0,)),
+        ("power_w_by_card", (0.0, 0.0)),
         ("quality_score", -0.1),
         ("raw_result_identity", "result.json"),
     ],

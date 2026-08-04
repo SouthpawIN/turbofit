@@ -131,11 +131,9 @@ class BenchmarkRecord:
             raise ValueError("per_card_vram_mb must be non-empty")
         for value in self.per_card_vram_mb:
             _positive_int(value, "per_card_vram_mb")
-        if not self.power_w_by_card:
-            raise ValueError("power_w_by_card must be non-empty")
         for value in self.power_w_by_card:
             _positive_number(value, "power_w_by_card")
-        if len(self.power_w_by_card) != len(self.per_card_vram_mb):
+        if self.power_w_by_card and len(self.power_w_by_card) != len(self.per_card_vram_mb):
             raise ValueError("power_w_by_card must align with per_card_vram_mb")
         if isinstance(self.quality_score, bool) or not isinstance(self.quality_score, (int, float)):
             raise ValueError("quality_score must be numeric")
@@ -225,11 +223,18 @@ def require_promotion(record: BenchmarkRecord, suite: BenchmarkSuite) -> Promoti
 
 
 def load_suite(path: str | Path) -> BenchmarkSuite:
-    try:
-        import yaml
-    except ImportError as exc:
-        raise RuntimeError("PyYAML is required to load benchmark suite YAML") from exc
-    mapping = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    path = Path(path)
+    content = path.read_text(encoding="utf-8")
+    if path.suffix.lower() == ".json":
+        import json
+
+        mapping = json.loads(content)
+    else:
+        try:
+            import yaml
+        except ImportError as exc:
+            raise RuntimeError("PyYAML is required to load benchmark suite YAML") from exc
+        mapping = yaml.safe_load(content)
     if not isinstance(mapping, Mapping):
         raise ValueError("benchmark suite root must be a mapping")
     return BenchmarkSuite.from_mapping(mapping)

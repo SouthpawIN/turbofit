@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+"""Record benchmark and promotion evidence for the native Apple Silicon runtime."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import platform
+import subprocess
+import sys
+from pathlib import Path
+from urllib.request import urlopen
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from turbofit_runtime.benchmark_schema import BenchmarkRecord, load_suite, require_promotion
+from turbofit_runtime.benchmark_stage import BenchmarkSuite, run_benchmark
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _server_pid(alias: str) -> int | None:
+    result = subprocess.run(
+        ["pgrep", "-f", f"llama-server.*{alias}"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    values = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    return int(values[0]) if values else None
+
+
+def _props(base_url: str) -> dict:
+    root = base_url.rstrip("/").removesuffix("/v1")
+    with urlopen(f"{root}/v1/props", timeout=5) as response:
+        value = json.load(response)
+    if not isinstance(value, dict):
+        raise ValueError("gateway props response must be an object")
+    return value
+
+
+def _configuration(props: dict) -> str:
+    build_info = str(props.get("build_info") or "unknown")
+    return f"metal/native/{build_info}/64k/q4-kv"
+
+
+def _promotion_record(evidence: dict, props: dict, artifact_hash: str) -> BenchmarkRecord:
+    summary = evidence["summary"]
+    timing_values = [
+        case["timings"]["predicted_per_second"]
+        for case in evidence["cases"]
+        if case.get("category") == "throughput"
+        and case.get("timings")
+        and case["timings"].get("predicted_per_second")
+    ]
+    throughput = (
+        sum(timing_values) / len(timing_values)
+        if timing_values
+        else summary["effective_output_tokens_per_second"]
+    )
+    ttft_ms = summary.get("mean_ttft_ms")
+    memory = tuple(
+        int(value)
+        for value in summary.get("peak_gpu_memory_used_mib") or ()
+        if value is not None and int(value) > 0
+    )
+    context = int(
+        props.get("context_length")
+        or (props.get("default_generation_settings") or {}).get("n_ctx")
+        or 0
+    )
+    hardware_canonical = json.dumps(
+        evidence["hardware"], sort_keys=True, separators=(",", ":")
+    ).encode()
+    host_fingerprint = "sha256:" + hashlib.sha256(hardware_canonical).hexdigest()
+    evidence_identity = evidence["evidence_sha256"]
+    quality_values = [
+        value
+        for value in (
+            summary.get("quality_pass_rate"),
+            summary.get("context_pass_rate"),
+        )
+        if value is not None
+    ]
+    quality_score = min(quality_values) if quality_values else 0.0
+    stage_pass = evidence["status"] == "pass"
+    mapping = {
+        "candidate_id": evidence["candidate"],
+        "artifact_hashes": [f"sha256:{artifact_hash}"],
+        "host_fingerprint": host_fingerprint,
+        "observed_context": context,
+        "throughput_tps": throughput,
+        "ttft_ms": ttft_ms,
+        "per_card_vram_mb": list(memory),
+        "power_w_by_card": [],
+        "quality_score": quality_score,
+        "raw_result_identity": evidence_identity,
+        "stages": [
+            {"stage": stage, "passed": stage_pass, "evidence_identity": evidence_identity}
+            for stage in ("artifact", "runtime", "performance", "quality")
+        ],
+    }
+    return BenchmarkRecord.from_mapping(mapping)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--base-url", default="http://127.0.0.1:8091/v1")
+    parser.add_argument("--model", default="auto")
+    parser.add_argument("--alias", default="bonsai-27b-1bit-64k-main")
+    parser.add_argument(
+        "--model-path",
+        type=Path,
+        default=Path.home() / ".local/share/turbofit/models/Bonsai-27B-Q1_0.gguf",
+    )
+    parser.add_argument("--suite", default=str(ROOT / "benchmarks/macos-native-v1.json"))
+    parser.add_argument("--promotion-suite", default=str(ROOT / "benchmarks/suite-metal.json"))
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path.home() / ".local/state/turbofit/benchmarks/macos-native.json",
+    )
+    parser.add_argument("--promotion-output", type=Path)
+    parser.add_argument("--timeout", type=float, default=3600)
+    args = parser.parse_args()
+
+    if platform.system() != "Darwin" or platform.machine().lower() not in {"arm64", "aarch64"}:
+        parser.error("this benchmark path is only valid on Apple Silicon")
+    if not args.model_path.is_file():
+        parser.error(f"model not found: {args.model_path}")
+
+    artifact_hash = _sha256(args.model_path)
+    props = _props(args.base_url)
+    build_info = str(props.get("build_info") or "unknown")
+    evidence = run_benchmark(
+        suite=BenchmarkSuite.load(args.suite),
+        base_url=args.base_url,
+        model=args.model,
+        candidate=args.alias,
+        configuration=_configuration(props),
+        output_path=args.output,
+        process_id=_server_pid(args.alias),
+        timeout_seconds=args.timeout,
+        artifact_sha256=artifact_hash,
+        request_options={
+            "cache_prompt": False,
+            "chat_template_kwargs": {
+                "enable_thinking": False,
+                "thinking_mode": "disabled",
+            },
+            "reasoning_format": "none",
+        },
+    )
+    promotion = _promotion_record(evidence, props, artifact_hash)
+    decision = require_promotion(promotion, load_suite(args.promotion_suite))
+    promotion_path = args.promotion_output or args.output.with_suffix(".promotion.json")
+    promotion_path.parent.mkdir(parents=True, exist_ok=True)
+    promotion_path.write_text(
+        json.dumps(promotion.to_mapping(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps({
+        "benchmark": str(args.output),
+        "promotion_record": str(promotion_path),
+        "promotion_eligible": decision.promoted,
+        "llama_build": build_info,
+        "evidence_sha256": evidence["evidence_sha256"],
+    }, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

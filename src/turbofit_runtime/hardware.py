@@ -123,9 +123,21 @@ def parse_nvidia_inventory_csv(raw: str) -> tuple[AcceleratorDevice, ...]:
         )
         try:
             parsed_index = int(index)
-            parsed_memory = int(memory_total)
         except ValueError as exc:
             raise ValueError(f"invalid NVIDIA numeric field on row {row_number}") from exc
+        # DGX Spark (GB10) and other unified-memory parts report memory.total
+        # as "[N/A]" via nvidia-smi -- the GPU shares system RAM, so fall back
+        # to that. Mirrors the existing [N/A] handling for compute_capability
+        # and bus_id just below.
+        if memory_total in {"", "N/A", "[N/A]"}:
+            parsed_memory = _system_ram_mb()
+        else:
+            try:
+                parsed_memory = int(memory_total)
+            except ValueError as exc:
+                raise ValueError(
+                    f"invalid NVIDIA numeric field on row {row_number}"
+                ) from exc
         devices.append(
             AcceleratorDevice(
                 index=parsed_index,
@@ -240,6 +252,27 @@ def _nvidia_compatibility_library_dir() -> str | None:
 
 
 def _system_ram_mb() -> int:
-    page_size = os.sysconf("SC_PAGE_SIZE")
-    page_count = os.sysconf("SC_PHYS_PAGES")
-    return int(page_size * page_count // (1024 * 1024))
+    if hasattr(os, "sysconf"):
+        page_size = os.sysconf("SC_PAGE_SIZE")
+        page_count = os.sysconf("SC_PHYS_PAGES")
+        return int(page_size * page_count // (1024 * 1024))
+    # Windows fallback via ctypes GlobalMemoryStatusEx
+    import ctypes
+
+    class MEMORYSTATUSEX(ctypes.Structure):
+        _fields_ = [
+            ("dwLength", ctypes.c_ulong),
+            ("dwMemoryLoad", ctypes.c_ulong),
+            ("ullTotalPhys", ctypes.c_ulonglong),
+            ("ullAvailPhys", ctypes.c_ulonglong),
+            ("ullTotalPageFile", ctypes.c_ulonglong),
+            ("ullAvailPageFile", ctypes.c_ulonglong),
+            ("ullTotalVirtual", ctypes.c_ulonglong),
+            ("ullAvailVirtual", ctypes.c_ulonglong),
+            ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+        ]
+
+    stat = MEMORYSTATUSEX()
+    stat.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+    ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
+    return int(stat.ullTotalPhys // (1024 * 1024))
