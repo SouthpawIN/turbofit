@@ -1,11 +1,13 @@
 model:
   provider: custom:turbofit
   default: auto
-custom_providers:
-  - name: turbofit
-    base_url: http://127.0.0.1:8091/v1
+providers:
+  turbofit:
+    name: TurboFit
+    api: http://127.0.0.1:8091/v1
     api_key: not-needed
-    api_mode: chat_completions
+    transport: chat_completions
+    default_model: auto
     models:
       auto: {}
       active:main: {}

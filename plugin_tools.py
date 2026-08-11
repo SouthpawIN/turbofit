@@ -52,7 +52,7 @@ def install_sirvir_profile(*, hermes_home: Path | None = None) -> dict[str, Any]
     target = root / "profiles" / "sirvir"
     updated = target.exists()
     target.mkdir(parents=True, exist_ok=True)
-    for name in ("SOUL.md", "AGENTS.md", "config.yaml", "distribution.yaml"):
+    for name in ("README.md", "SOUL.md", "AGENTS.md", "config.yaml", "distribution.yaml"):
         source_file = source / name
         if not source_file.is_file():
             raise FileNotFoundError(f"incomplete bundled Sirvir profile: {source_file}")

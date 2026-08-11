@@ -1,9 +1,10 @@
 name: sirvir
-description: Turbofit installation, usage, and troubleshooting customer service
-version: "1"
+description: Turbofit installation, configuration, usage, troubleshooting, and PR-suggestion customer service
+version: "2"
 author: SouthpawIN
 license: MIT
 distribution_owned:
+  - README.md
   - SOUL.md
   - AGENTS.md
   - config.yaml
