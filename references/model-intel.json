@@ -1,19 +1,19 @@
 {
   "schema": "turbofit.model-intel/v1",
-  "generated_at": "2026-07-27T03:58:21.753105+00:00",
+  "generated_at": "2026-08-14T16:55:23.535149+00:00",
   "sources": [
     "https://huggingface.co/api/models",
     "https://huggingface.co/api/models?filter=gguf&sort=lastModified&direction=-1&limit=50&full=true"
   ],
   "tracked": [
     {
-      "repo_id": "bartowski/OrionLLM_GRM-2.6-Plus-0628-GGUF",
-      "live_revision": "61ae44061bff534f7ce5924cd9b023e2baa2485e",
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "live_revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
       "pinned_revision": null,
       "revision_changed": false,
-      "last_modified": "2026-07-21T00:10:36.000Z",
-      "downloads": 1866,
-      "likes": 3
+      "last_modified": "2026-08-14T15:26:34.000Z",
+      "downloads": 0,
+      "likes": 5
     },
     {
       "repo_id": "isneezekittens/Carwin-MoE-Nano-GGUF",
@@ -21,26 +21,17 @@
       "pinned_revision": null,
       "revision_changed": false,
       "last_modified": "2026-06-14T01:26:17.000Z",
-      "downloads": 73,
+      "downloads": 69,
       "likes": 5
     },
     {
-      "repo_id": "poolside/Laguna-S-2.1",
-      "live_revision": "b0a9fd7c850eea9d68cf3ffc5bd5d3c5dced43c0",
+      "repo_id": "poolside/Laguna-S-2.1-GGUF",
+      "live_revision": "19036076775e9ba6758595f78af99cb976ef8ff0",
       "pinned_revision": null,
       "revision_changed": false,
-      "last_modified": "2026-07-24T10:38:47.000Z",
-      "downloads": 56445,
-      "likes": 704
-    },
-    {
-      "repo_id": "poolside/Laguna-S-2.1-GGUF",
-      "live_revision": "edd093522473dc7313b0738d8b4116b7f8b9745f",
-      "pinned_revision": "e08e1fe855bb2d43f96ad78e24495283f3426c67",
-      "revision_changed": true,
-      "last_modified": "2026-07-24T10:53:02.000Z",
-      "downloads": 82187,
-      "likes": 144
+      "last_modified": "2026-08-06T11:56:36.000Z",
+      "downloads": 279492,
+      "likes": 169
     },
     {
       "repo_id": "prism-ml/Bonsai-27B-gguf",
@@ -48,8 +39,8 @@
       "pinned_revision": null,
       "revision_changed": false,
       "last_modified": "2026-07-17T16:05:42.000Z",
-      "downloads": 2187304,
-      "likes": 652
+      "downloads": 2039441,
+      "likes": 774
     },
     {
       "repo_id": "prism-ml/Ternary-Bonsai-27B-gguf",
@@ -57,8 +48,8 @@
       "pinned_revision": null,
       "revision_changed": false,
       "last_modified": "2026-07-18T06:05:31.000Z",
-      "downloads": 631970,
-      "likes": 1052
+      "downloads": 821968,
+      "likes": 1209
     },
     {
       "repo_id": "sokann/GLM-5.2-GGUF-2.788bpw",
@@ -66,469 +57,478 @@
       "pinned_revision": null,
       "revision_changed": false,
       "last_modified": "2026-07-19T02:45:13.000Z",
-      "downloads": 2383,
+      "downloads": 2627,
       "likes": 4
     },
     {
-      "repo_id": "unsloth/Laguna-S-2.1-GGUF",
-      "live_revision": "750f92f90cf54159c4d7a610cb7b3e74498e75c6",
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "live_revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
       "pinned_revision": null,
       "revision_changed": false,
-      "last_modified": "2026-07-27T00:15:55.000Z",
-      "downloads": 102684,
-      "likes": 203
+      "last_modified": "2026-08-06T14:54:45.000Z",
+      "downloads": 289560,
+      "likes": 674
     },
     {
       "repo_id": "unsloth/MiniMax-M3-GGUF",
-      "live_revision": "18039c2c5277fc64109acee91fa3ca3a9da73c57",
+      "live_revision": "a31ac6425155f773fdde697421c3b8cf42083ecf",
       "pinned_revision": null,
       "revision_changed": false,
-      "last_modified": "2026-06-15T01:57:42.000Z",
-      "downloads": 15866,
-      "likes": 143
+      "last_modified": "2026-08-05T14:14:15.000Z",
+      "downloads": 11454,
+      "likes": 151
     }
   ],
   "discoveries": [
     {
-      "repo_id": "michaelu0826/sniffer_model",
-      "live_revision": "799c57f86f682ad65c839f3334133ac14adc38a2",
+      "repo_id": "mradermacher/Goetia-26B-A4B-v1.4-SOMPOA-heresy-i1-GGUF",
+      "live_revision": "e62ac1ce761aed476c804313d34da21a3db15144",
       "pinned_revision": null,
       "revision_changed": false,
-      "last_modified": "2026-07-27T03:57:19.000Z",
+      "last_modified": "2026-08-14T16:54:09.000Z",
       "downloads": 0,
       "likes": 0
     },
     {
-      "repo_id": "76836-HW/Akari1.3-Falcon",
-      "live_revision": "8a47434de2ca6290796263f5716fbf512bc005e5",
+      "repo_id": "mradermacher/ClinicalCamel-70B-i1-GGUF",
+      "live_revision": "8897ab088770917589a78e3ac4536a03a4d0de06",
       "pinned_revision": null,
       "revision_changed": false,
-      "last_modified": "2026-07-27T03:47:47.000Z",
+      "last_modified": "2026-08-14T16:53:59.000Z",
       "downloads": 0,
       "likes": 0
     },
     {
-      "repo_id": "Hhiieepp/Qwen3.6-27B-Fable-Fusion-711-Uncensored-Heretic-NM-DAU-NEO-MAX-MTP-GGUF",
-      "live_revision": "6ea764dc16b9b1628c78570cbcbda1767de9906f",
+      "repo_id": "Terathox-Coder/Qwen3.8-27B-MTP-GGUF",
+      "live_revision": "b13370a523ce7c41ec872da948ae2f5a772cbfb9",
       "pinned_revision": null,
       "revision_changed": false,
-      "last_modified": "2026-07-27T03:41:45.000Z",
+      "last_modified": "2026-08-14T16:53:26.000Z",
       "downloads": 0,
       "likes": 0
     },
     {
-      "repo_id": "Arx12/AREX-Base-GGUF",
-      "live_revision": "6d5543456b5db98b204d4b40e68af060d8a18406",
+      "repo_id": "AaryanK/Qwen3.5-9B-GGUF",
+      "live_revision": "ad88fa9f306689e445e513fef8e65706c8c31522",
       "pinned_revision": null,
       "revision_changed": false,
-      "last_modified": "2026-07-27T03:38:41.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "ewinregirgojr/MiniCPM5-1B-Agentic-Tooluse-GGUF",
-      "live_revision": "42cabea62f2af203e3efd62d9a14de6f5268b4a7",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T03:36:42.000Z",
-      "downloads": 16574,
-      "likes": 68
-    },
-    {
-      "repo_id": "Geovana0/mini_neville_ia",
-      "live_revision": "7ca90a2cb2136b3c3b7788297a3d172080beed2b",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T03:29:16.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "QuixiAI/GLM-5.2-Vision-GGUF",
-      "live_revision": "81af0db2a42e3a9a14f3005547d68305dacb2aa9",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T03:28:52.000Z",
+      "last_modified": "2026-08-14T16:53:10.000Z",
       "downloads": 0,
       "likes": 3
     },
     {
-      "repo_id": "Zynerji/Ektome-Llama-3.1-8B-PristinelyUncensored",
-      "live_revision": "0519d8153c3c3057ddf908b5397806dcb350386d",
+      "repo_id": "mradermacher/rp-glm-4.7-flash-i1-GGUF",
+      "live_revision": "6949caad7d7af419cdd97976a2c66a18af2b7f43",
       "pinned_revision": null,
       "revision_changed": false,
-      "last_modified": "2026-07-27T03:26:59.000Z",
-      "downloads": 2956,
-      "likes": 2
-    },
-    {
-      "repo_id": "nerkyor/Qwen3.5-122B-A10B-44GB-GPT5.6Sol-SFT-LynnStyle-GGUF",
-      "live_revision": "990e7c3c25101413d47164cbc7d01ca1a975a084",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T03:26:34.000Z",
+      "last_modified": "2026-08-14T16:52:02.000Z",
       "downloads": 0,
       "likes": 0
     },
     {
-      "repo_id": "gguf-org/mageflow-gguf",
-      "live_revision": "836b76bb94e97c6d79b4bc59f79238e7334833ac",
+      "repo_id": "leeroy-jankins/jimi",
+      "live_revision": "8f9181635df926d5626c7771548f597145b69bb9",
       "pinned_revision": null,
       "revision_changed": false,
-      "last_modified": "2026-07-27T03:14:50.000Z",
-      "downloads": 593,
-      "likes": 5
-    },
-    {
-      "repo_id": "Darlanio/MicroLM-002-Q4_K_M-GGUF",
-      "live_revision": "85834b46b2cfb8674cf18a0250210a1ea7d036f1",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T03:12:40.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "AesSedai/MiniMax-M3-GGUF",
-      "live_revision": "f516695ad2cc746a3ca3ed478c929437d44d718f",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T03:12:15.000Z",
-      "downloads": 0,
-      "likes": 5
-    },
-    {
-      "repo_id": "sokann/Macaron-V1-Coding-Venti-GGUF-2.244bpw",
-      "live_revision": "c2ec3af6a225d42aa82fb8924af35063a53f8e0c",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T03:06:03.000Z",
-      "downloads": 0,
-      "likes": 1
-    },
-    {
-      "repo_id": "rgcodeai/gemma-4-e2b-it-q3_k_m",
-      "live_revision": "fe7ac625d763cc6bfc824e4486a827f8edb12c97",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T03:05:47.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "prometheusAIR/Solar-Open2-250B-GGUF",
-      "live_revision": "aa6f16f8e95df43b6d7a4160d530552fe4384518",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:56:16.000Z",
-      "downloads": 3658,
-      "likes": 5
-    },
-    {
-      "repo_id": "Zynerji/Ektome-Qwen2.5-Coder-14B-Instruct-PristinelyUncensored",
-      "live_revision": "2714be1f5e4704039f5da42e835b640a0be0cd49",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:52:42.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "Zynerji/Ektome-Mistral-7B-Instruct-v0.2-PristinelyUncensored",
-      "live_revision": "4833d4edd735094c14212741131da7e766f26aad",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:52:29.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "Zynerji/Ektome-Qwen2.5-Coder-7B-Instruct-PristinelyUncensored",
-      "live_revision": "d331eb244b9184c31fcf93b578c5e3968e2aaf57",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:52:16.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "Zynerji/Ektome-granite-3.0-8b-instruct-PristinelyUncensored",
-      "live_revision": "95e695e9b8b2d352054937440aee71bfc8909029",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:52:05.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "Zynerji/Ektome-Qwen3-30B-A3B-PristinelyUncensored",
-      "live_revision": "9c7253a1b95f43c1701fb56e1abc25c4f7d23d82",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:50:32.000Z",
-      "downloads": 385,
-      "likes": 1
-    },
-    {
-      "repo_id": "Zynerji/Ektome-Qwen3-8B-PristinelyUncensored",
-      "live_revision": "62e7ae607acca3137a288edcfb2bc09bc658f77b",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:49:01.000Z",
-      "downloads": 515,
-      "likes": 1
-    },
-    {
-      "repo_id": "Zynerji/Ektome-Nemotron-Nano-8B-PristinelyUncensored",
-      "live_revision": "693a5fd0e3cb972574027fea6c9cea80540af88a",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:48:41.000Z",
-      "downloads": 536,
-      "likes": 1
-    },
-    {
-      "repo_id": "Zynerji/Ektome-Qwen3.6-27B-PristinelyUncensored",
-      "live_revision": "755c8c21de593e9e46e907615e2f794be6ed02e7",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:48:18.000Z",
-      "downloads": 2508,
-      "likes": 1
-    },
-    {
-      "repo_id": "specific-AI/email-agent-phishing-detection",
-      "live_revision": "aef4ff72dec2382d64a54959f63a67ee8c94891d",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:43:11.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "specific-AI/email-agent-triage",
-      "live_revision": "26dfb379325dd109ee9cc785a32a5565fb017385",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:38:14.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "rgcodeai/gemma-4-e2b-it-Q4_K_M-unsloth-studio-omni",
-      "live_revision": "0509aa67ac9954f117323bfd05d290ec79852a18",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:29:10.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "kingjones777/Leanstral-1.5-119B-A6B-Q4_0_ROCMFP4_STRIX_LEAN-GGUF",
-      "live_revision": "951bdc7716e0cc4ef8f13a3882ecfa5e38bac6d2",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:26:33.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "CyberNative-AI/Colibri_8b_v0.1_q5_gguf",
-      "live_revision": "e36caf198817e0d25bbe267cd395467515909679",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:19:18.000Z",
-      "downloads": 127,
-      "likes": 1
-    },
-    {
-      "repo_id": "ToastyPigeon/Gemma4-Test-GGUFs",
-      "live_revision": "220fe2210704253ac4d4423ff63345e5cc8bf28f",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:13:07.000Z",
-      "downloads": 52190,
-      "likes": 2
-    },
-    {
-      "repo_id": "enosislabs/AETHER-Mythos-1-1.2B-gguf",
-      "live_revision": "b61aab3a394428e6dc1422f8b0670d42f3fc1dba",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:11:44.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "hydraliskfly/Qwopus3.6-27B-Coder-MTP-GGUF",
-      "live_revision": "ae6e1a951ce4b3f4f255440ab871dbab1a8f6419",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T02:08:36.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "nerkyor/Qwen3.6-35B-A3B-DSV4Pro-SFT-GPT56Sol-RL-Agent-GGUF",
-      "live_revision": "6a503772abdf143de203155b5535a13ef1bb82f0",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T01:56:28.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "akku1139/zenz-v3.2-xsmall-gguf-hack",
-      "live_revision": "5a8af8c31fa96c7f06f3ea998f5df5e3429c798a",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T01:54:38.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "mradermacher/Lambent-Mira-Iris-v2-i1-GGUF",
-      "live_revision": "78946a9e2b37b29697e8089f5e051fc82dac23f0",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T01:50:07.000Z",
-      "downloads": 168,
-      "likes": 0
-    },
-    {
-      "repo_id": "wijan/action-planner-gguf",
-      "live_revision": "1fadccf231f6a0106faeb46d1bb81bbbb755d5dc",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T01:48:17.000Z",
-      "downloads": 124,
-      "likes": 0
-    },
-    {
-      "repo_id": "Kutches/Kr3a",
-      "live_revision": "51d303feb6c6d106ed5a180e8dfdf32fcbf28773",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T01:47:47.000Z",
-      "downloads": 15022,
-      "likes": 52
-    },
-    {
-      "repo_id": "AlexHung29629/grpo_gemma4_26b_simreward_merged_GGUF",
-      "live_revision": "72eb6d86c0b1df97b88f89e5328dc6cac2206d8a",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T01:40:04.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "bradhutchings/Mmojo-Server",
-      "live_revision": "44a0b682247e8179eee2de17bc80365c6a4848f9",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T01:35:10.000Z",
-      "downloads": 165,
-      "likes": 0
-    },
-    {
-      "repo_id": "yzhou79/Qwen3.6-35B-A3B-DFlash",
-      "live_revision": "4c8f2a95f8dc04dc71c8f13bdfa58a418a233097",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T01:19:34.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "lgdevlop/Macaron-V1-Tall-l0-chat",
-      "live_revision": "54418f8e7d8d4e45a34f2859951369ff7121d3ff",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T01:17:39.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "nightmedia/Qwen3.5-9B-Holodeck-Lounge-GGUF",
-      "live_revision": "73769edbce8058858c131db09a4f41a8c4bb9ef2",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T01:00:16.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "Slavik2009/TurkmenChat-3B",
-      "live_revision": "ea53470528954cd40b787e791da089c9ce6f41a9",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T00:49:39.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "t-kawata/Bonsai-27B-gguf",
-      "live_revision": "8f822d989b47b16942ed0cb68685163196f61acc",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T00:42:51.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "Bumoch/Evil-Magical_Vengeance-GGUF",
-      "live_revision": "285d8d9d84cf234259fe5447823c08a5aa348311",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T00:38:40.000Z",
-      "downloads": 241,
-      "likes": 2
-    },
-    {
-      "repo_id": "Bumoch/Evil-Vengeance-24B-V0.98-Alpha-GGUF",
-      "live_revision": "8449e62e84f4e51d88f2f791b08b8d0beadfc8f8",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T00:37:59.000Z",
-      "downloads": 252,
-      "likes": 1
-    },
-    {
-      "repo_id": "Darkhn-Quants-4/Gemma-4-31B-Animus-V15.1-Swa-GGUF",
-      "live_revision": "dc4b39097cc19820716430b03a18522e648be03c",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-27T00:20:19.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "PocketAiHub/LFM2.5-8B-A1B-Abliterated-GGUF",
-      "live_revision": "c3be31235ef6b4f285b239ab923ed30c2fac75b0",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-26T23:58:08.000Z",
-      "downloads": 0,
-      "likes": 0
-    },
-    {
-      "repo_id": "Darkhn/Gemma-4-31B-Animus-V15.0",
-      "live_revision": "ad66be6d9f5fb66686944b90efb5cfab400db4e4",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-26T23:53:24.000Z",
-      "downloads": 11,
-      "likes": 3
-    },
-    {
-      "repo_id": "UlukaDev/saturn-31b-Q4_K_M-GGUF",
-      "live_revision": "e9ee8083f3700519253fd76be2de25a5ce1aeced",
-      "pinned_revision": null,
-      "revision_changed": false,
-      "last_modified": "2026-07-26T23:47:00.000Z",
-      "downloads": 557,
+      "last_modified": "2026-08-14T16:51:48.000Z",
+      "downloads": 77,
       "likes": 4
+    },
+    {
+      "repo_id": "jamesatron1512/Qwen3.8-27B-GGUF",
+      "live_revision": "44f14949fc13acacf75bee72f32e35e30e5930c0",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:51:48.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "ubergarm/Qwen3.8-27B-GGUF",
+      "live_revision": "820e203f0344e26da294f556fd523a28d16727f9",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:51:29.000Z",
+      "downloads": 0,
+      "likes": 2
+    },
+    {
+      "repo_id": "peculiar-ragdoll/Dirk-Qwen3.8-27B-GGUF",
+      "live_revision": "c9f91553bb3a679dcc12885626e09a4825630546",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:50:52.000Z",
+      "downloads": 0,
+      "likes": 1
+    },
+    {
+      "repo_id": "mradermacher/KernelBench-RLVR-120b-GGUF",
+      "live_revision": "72336b7e0e338e8c1694553415abdd95dfa1ef5b",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:50:19.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "nodcai/Visus-450M-RR1",
+      "live_revision": "5bf60bf73ef0798deb47d763d2aeb488e0d45373",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:49:17.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "bartowski/Qwen3.8-27B-GGUF",
+      "live_revision": "f0eec4a4bb4975114a030d048952d83c0a53c034",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:49:01.000Z",
+      "downloads": 0,
+      "likes": 2
+    },
+    {
+      "repo_id": "lm-kit/qwen3.8-27b-lmk",
+      "live_revision": "9b65a55f02e040b9995cd04e0c5caa88a67b1f2c",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:45:28.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "proyeksigila/languagemodel",
+      "live_revision": "2e4c24167609f1334d15f39de841610d2db892c9",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:44:10.000Z",
+      "downloads": 1145,
+      "likes": 0
+    },
+    {
+      "repo_id": "mradermacher/XORTRON-NXTXPRT10PRO-31B-i1-GGUF",
+      "live_revision": "533c2224d326bee904ab309f0446009a0767fd90",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:39:06.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "pedrojlucas/gwen-retuned-literato-Q4_K_M-GGUF",
+      "live_revision": "559e5740e5a6ba2aae396ab9eab4c5ec0f770737",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:38:02.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "bnjlebron/nextlm-au3.5-0.8b-q8_0-caffeine",
+      "live_revision": "9fb3932d8c3b30298e079af5a874a5c2ca6e29b7",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:34:18.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "xCloudinfo/xGemable-12B-coder-v2-fullft-GGUF",
+      "live_revision": "ed9cc14dee9d699505ec8225820241dffbb1a8a0",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:32:52.000Z",
+      "downloads": 1261,
+      "likes": 0
+    },
+    {
+      "repo_id": "abobeba/qwen",
+      "live_revision": "8f2fa259df705c48276ec907f1ad9adbd101b16f",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:27:21.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "mradermacher/GLM-4.7-Flash-REAP-39-i1-GGUF",
+      "live_revision": "1ff1a29a55ffa581bdffcd6c1713bac19e6fc668",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:27:14.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "FoolDev/Janus-35B-HERETIC",
+      "live_revision": "d8ef231029a2e468b275b64f5ed6e81e0a41df90",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:25:29.000Z",
+      "downloads": 365,
+      "likes": 2
+    },
+    {
+      "repo_id": "Lufel6848/Qwen3.5-9B-GGUF",
+      "live_revision": "f3b95078ab99761de4304da2a8ce72042634a19b",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:24:40.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "ReadyArt/Omega-Evolution-31B-v4.0-GGUF",
+      "live_revision": "a97dbefbbfeb1e88d5a2af484a2b345f393e0f97",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:22:23.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "jerkar/Qwen3.8-27B-INT8-W8A16-MTP-Q4_K_S-GGUF",
+      "live_revision": "63bcdf1f16c1681b693fbf1b48b33f982549e2ac",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:21:43.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "Mike0021/Qwen3.8-27B-GGUF",
+      "live_revision": "49095b22a734b965f76c1c7041d47097b1ade6d0",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:20:53.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "leeroy-jankins/boo",
+      "live_revision": "4b99692af106e7fa606b5941f45b9cfd6e1d9795",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:20:34.000Z",
+      "downloads": 30,
+      "likes": 1
+    },
+    {
+      "repo_id": "hellohazime/Qwen3.8-2.4T-A95B-REAP-256GB-GGUF",
+      "live_revision": "aeff440c19ddd1c258d0ebc7539a9c808216d299",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:19:50.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "EnclaveHost/qwen3.8-27b-mtp-gguf",
+      "live_revision": "ac8bf372b42e8a11274cc51771005e418c3fb3d7",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:18:17.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "unsloth/Qwen3.8-27B-GGUF",
+      "live_revision": "fdd03b8bbd279c1694563650e79d85a2373d9934",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:17:17.000Z",
+      "downloads": 0,
+      "likes": 466
+    },
+    {
+      "repo_id": "AuroraSystem/Clary-0.6-0.6B-GGUF",
+      "live_revision": "614889a9d2a4c09f1811284d0921ebac2855a682",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:16:35.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "quimmedes/Qwen3.8-27B-XYZ",
+      "live_revision": "4d6cca45b06acf8163f35be28cee55a1c3875a65",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:16:17.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "Abiray/Qwen3.8-27B-Q4_K_M-GGUF",
+      "live_revision": "f7a1cda580fe828415151042bf9f3dc5bb8b0d76",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:15:10.000Z",
+      "downloads": 0,
+      "likes": 10
+    },
+    {
+      "repo_id": "elsauto/tosilos-128b-GGUF",
+      "live_revision": "96bf5e53cdf459d1cb3e36b6cd105dd02dd2e1c3",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:12:59.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "poppykitu/Vietnamese-poetry",
+      "live_revision": "3060411a4d3126b0c9a0d6297c3aef94a37044dd",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:08:56.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "HaloWang/rwkv-weights",
+      "live_revision": "3ea810c84e311a89e365111713dae513987bac21",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:05:51.000Z",
+      "downloads": 105,
+      "likes": 0
+    },
+    {
+      "repo_id": "mradermacher/rp-glm-4.7-flash-GGUF",
+      "live_revision": "81c7b7a02bbfe7d4254bad0bf1949f919dd734cd",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:02:19.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "mradermacher/GLM-4.7-Flash-REAP-19-i1-GGUF",
+      "live_revision": "330b6dba17cec240c34a173c9cb549138228687a",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:01:57.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "prithivMLmods/Qwen3.8-27B-GGUF",
+      "live_revision": "fccd0116a6958c0029db8efcd2417905e64600ff",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:01:53.000Z",
+      "downloads": 0,
+      "likes": 1
+    },
+    {
+      "repo_id": "mradermacher/Goetia-26B-A4B-v1.4-SOMPOA-heresy-GGUF",
+      "live_revision": "53057848a734b2309d8a8d384a99fa0b9bd6517b",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:01:50.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "mradermacher/Liquid-A1B-8B-PL-Coder-i1-GGUF",
+      "live_revision": "f15e65d531d8797d3d652bba9cad9ecb9053abf3",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:01:33.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "mradermacher/Liquid-A1B-8B-PL-Coder-GGUF",
+      "live_revision": "4886ce3536184003b91529239d707fa699a2cf39",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T16:00:24.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "Doses-AI/Pestle-27B-Ternary-GGUF",
+      "live_revision": "9ebf6d81637df93fde78b7b7a7284a5b71eba4ae",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T15:58:20.000Z",
+      "downloads": 6,
+      "likes": 1
+    },
+    {
+      "repo_id": "leeroy-jankins/buddy",
+      "live_revision": "04268f2c43c0bf73374d936262d93f77c8b4a995",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T15:57:59.000Z",
+      "downloads": 8,
+      "likes": 0
+    },
+    {
+      "repo_id": "vcruz305/Muse-Glimmer-30B-Hermes-Agentic-GGUF",
+      "live_revision": "3376c6904caf3a6fed13feeafb7caf47083b47ac",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T15:54:25.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "hoidhxd/NVIDIA-NemotronLabs-VoiceChat-11B-GGUF",
+      "live_revision": "9c58fe721dba1e0a1eba2d3e144d5357e7de23ba",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T15:50:43.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "1111214WFA/gemma-3-12b-it-heretic-v2",
+      "live_revision": "1f8ce629cfc84fe87cfb1531ec830bbe96fb4ac2",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T15:50:23.000Z",
+      "downloads": 0,
+      "likes": 0
+    },
+    {
+      "repo_id": "mrutkows/granite-4.1-3b-GGUF",
+      "live_revision": "6941aaf125f33b5ac103861820975a9d01a5553c",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T15:50:19.000Z",
+      "downloads": 938,
+      "likes": 0
+    },
+    {
+      "repo_id": "mrutkows/granite-4.1-8b-GGUF",
+      "live_revision": "4eaf4bd7c2176561697668fed11b19b31be22c78",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T15:49:45.000Z",
+      "downloads": 25,
+      "likes": 0
+    },
+    {
+      "repo_id": "vcruz305/Qwen3.8-27B-GGUF",
+      "live_revision": "2cbf93b4266b00875d1d0e2f822381dc6e739b39",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T15:48:57.000Z",
+      "downloads": 0,
+      "likes": 4
+    },
+    {
+      "repo_id": "slothingaway/Qwen3.8-27B-Q8_0-GGUF",
+      "live_revision": "8424e8dd6cfd24341cc636761afa0a273be07333",
+      "pinned_revision": null,
+      "revision_changed": false,
+      "last_modified": "2026-08-14T15:48:13.000Z",
+      "downloads": 0,
+      "likes": 0
     }
   ]
 }

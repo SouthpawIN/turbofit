@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+"""Install the reboot-persistent Turbofit benchmark campaign user service."""
+from __future__ import annotations
+
+import argparse
+import shutil
+import subprocess
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / "packaging/systemd/turbofit-benchmark-campaign.service"
+DESTINATION = Path.home() / ".config/systemd/user/turbofit-benchmark-campaign.service"
+
+
+def systemctl(*arguments: str) -> None:
+    subprocess.run(["systemctl", "--user", *arguments], check=True)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--start", action="store_true", help="start now after enabling")
+    args = parser.parse_args()
+    DESTINATION.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(SOURCE, DESTINATION)
+    systemctl("daemon-reload")
+    systemctl("enable", DESTINATION.name)
+    if args.start:
+        systemctl("start", DESTINATION.name)
+    print(DESTINATION)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

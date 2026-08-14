@@ -1,0 +1,365 @@
+#!/usr/bin/env python3
+"""Report executable completion gates for the current Turbofit 2.1 brief."""
+from __future__ import annotations
+
+import json
+import hashlib
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+HOME = Path.home()
+SRC = ROOT / "src"
+sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.downloads import DownloadCatalog
+from turbofit_runtime.routes import load_runtime_resolutions
+from turbofit_runtime.selection import ProfileCatalog
+from turbofit_runtime.tier_tournament import candidate_ids, load_tournaments
+
+
+def _load(path: Path, default: Any) -> Any:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return default
+
+
+def _sha256(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _command_ok(command: list[str]) -> tuple[bool, str]:
+    try:
+        result = subprocess.run(command, text=True, capture_output=True, timeout=30)
+    except Exception as exc:
+        return False, type(exc).__name__
+    return result.returncode == 0, (result.stdout or result.stderr).strip()[-500:]
+
+
+def _json_command(command: list[str]) -> dict[str, Any]:
+    result = subprocess.run(command, text=True, capture_output=True, timeout=60)
+    if result.returncode:
+        raise RuntimeError((result.stdout or result.stderr).strip())
+    payload = json.loads(result.stdout)
+    if not isinstance(payload, dict):
+        raise ValueError("completion probe did not return a JSON object")
+    return payload
+
+
+def _campaign(path: Path, expected: int) -> dict[str, Any]:
+    rows = _load(path, {"rows": {}}).get("rows") or {}
+    success = sum(value.get("status") == "success" for value in rows.values())
+    failed = sum(value.get("status") == "failed" for value in rows.values())
+    return {"ok": success == expected and failed == 0, "success": success, "failed": failed, "expected": expected}
+
+
+def report() -> dict[str, Any]:
+    configurations = _load(ROOT / "references/configuration-matrix.json", {"rows": []})
+    catalog = _load(ROOT / "references/model-catalog.json", {"models": []})
+    recipes = _load(ROOT / "references/model-recipes.json", {})
+    artifact_manifest = _load(ROOT / "references/artifact-manifest.json", {"artifacts": []})
+    policy = _load(ROOT / "references/catalog-campaign-policy.json", {})
+    tournaments = load_tournaments(ROOT / "references/hardware-tier-tournaments.json", configurations)
+    tier_candidates = candidate_ids(tournaments)
+    external = _load(ROOT / "research/external-benchmarks.json", {})
+    receipt = _load(ROOT / "references/results/deepseek-v4-download-verification.json", {})
+    dspark_live = _load(ROOT / "references/results/deepseek-v4-dspark-live.json", {})
+    lemonade_live = _load(ROOT / "references/results/lemonade-live.json", {})
+    multimodal_catalog = _load(ROOT / "references/multimodal-models.json", {})
+    archived_zoo = _load(ROOT / "references/archived-model-zoo.json", {})
+    promo_evidence = _load(ROOT / "promo/production-evidence.json", {})
+
+    expected_downloads = DownloadCatalog.load(ROOT / "runtime-profiles/downloads.json").files_for_group(
+        "deepseek-v4-flash-0731-q8-dspark"
+    )
+    receipt_files = {item.get("id"): item for item in receipt.get("files", [])}
+    downloads_ok = all(
+        item.id in receipt_files
+        and receipt_files[item.id].get("sha256") == item.sha256
+        and receipt_files[item.id].get("size_bytes") == item.size_bytes
+        for item in expected_downloads
+    )
+    dspark_ok, dspark_detail = _command_ok([
+        str(ROOT / "scripts/install-dspark-runtime"), "check", "--backend", "cuda",
+    ])
+    lemonade_ok, lemonade_detail = _command_ok([
+        sys.executable, str(ROOT / "scripts/install-lemonade-runtime"), "check",
+    ])
+
+    catalog_status = _json_command([str(ROOT / "scripts/turbofit-catalog-campaign"), "status"])
+    intelligence_status = _json_command([str(ROOT / "scripts/turbofit-intelligence-campaign"), "status"])
+    tier_status = _json_command([str(ROOT / "scripts/turbofit-tier-campaign"), "status"])
+    active_catalog = catalog_status.get("current_recipe") or {}
+    matrix_total = int((catalog_status.get("matrix") or {}).get("total", 0))
+    campaign_accounted = sum(
+        int(active_catalog.get(field, 0))
+        for field in ("successful", "terminal_failed", "blocked", "pending", "deferred")
+    )
+    intelligence_unfinished = sum(
+        int(count)
+        for level in (intelligence_status.get("levels") or {}).values()
+        for status, count in (level.get("statuses") or {}).items()
+        if status.startswith("waiting-")
+        or status.startswith("deferred-")
+        or status in {"ready", "running"}
+    )
+
+    deferred_models = {str(item) for item in policy.get("deferred_models", [])}
+    resolutions = load_runtime_resolutions(ROOT / "runtime-profiles/runtime-resolutions.json")
+    auto_catalog = ProfileCatalog.from_paths(sorted((ROOT / "runtime-profiles").glob("*gb.yaml")))
+    filtered_catalog = auto_catalog.without_deferred_models(resolutions, deferred_models)
+    deferred_auto_rungs: list[str] = []
+    for profile in filtered_catalog.profiles:
+        for rung in profile.rungs:
+            roles = resolutions.get(profile.id, {}).get(rung.id, {})
+            routed = {
+                str(role.get(field))
+                for role in roles.values()
+                for field in ("family", "model_tag")
+                if role.get(field) is not None
+            }
+            if routed & deferred_models:
+                deferred_auto_rungs.append(f"{profile.id}/{rung.id}")
+
+    main_count = sum("main" in item.get("roles", []) for item in catalog.get("models", []))
+    expected_matrix = main_count * len(catalog.get("auxiliary_options", [])) * len(catalog.get("contexts", []))
+    artifacts = artifact_manifest.get("artifacts", [])
+    dashboard_js = (ROOT / "dashboard/dist/index.js").read_text(encoding="utf-8")
+    desktop_js = (ROOT / "desktop/plugin.js").read_text(encoding="utf-8")
+    plugin_api = (ROOT / "dashboard/plugin_api.py").read_text(encoding="utf-8")
+    plugin_tools = (ROOT / "plugin_tools.py").read_text(encoding="utf-8")
+    plugin_entry = (ROOT / "__init__.py").read_text(encoding="utf-8")
+    plugin_manifest = (ROOT / "plugin.yaml").read_text(encoding="utf-8")
+    bundled_skill = (ROOT / "skills/turbofit/SKILL.md").read_text(encoding="utf-8")
+    tailnet_source = (ROOT / "src/turbofit_runtime/tailnet.py").read_text(encoding="utf-8")
+    multimodal_source = (ROOT / "src/turbofit_runtime/multimodal.py").read_text(encoding="utf-8")
+    campaign_backend_source = (ROOT / "src/turbofit_runtime/backend.py").read_text(encoding="utf-8")
+    gateway_source = (ROOT / "scripts/turbofit-gateway.py").read_text(encoding="utf-8")
+    external_rows = external.get("benchmarks", [])
+    mapped_external = sum(bool(item.get("turbofit_model")) for item in external_rows)
+    prepared_deepswe = HOME / ".local/share/turbofit/benchmarks/deep-swe-e016041a6ccf8da29906afc9a3f5a8df940a1f78/.git"
+
+    checks: dict[str, dict[str, Any]] = {
+        "canonical_configuration_matrix": {
+            "ok": len(configurations.get("rows", [])) == expected_matrix
+            and expected_matrix == 1_620
+            and len({item.get("id") for item in configurations.get("rows", [])}) == expected_matrix
+            and all(len(item.get("revision", "")) == 40 for item in catalog.get("models", [])),
+            "rows": len(configurations.get("rows", [])),
+            "expected": expected_matrix,
+            "models": len(catalog.get("models", [])),
+        },
+        "portable_artifact_manifest": {
+            "ok": artifact_manifest.get("schema") == "turbofit.artifact-manifest/v1"
+            and bool(artifacts)
+            and len({item.get("destination") for item in artifacts}) == len(artifacts)
+            and all(
+                len(item.get("revision", "")) == 40
+                and len(item.get("sha256", "")) == 64
+                and item.get("size_bytes", 0) > 0
+                for item in artifacts
+            ),
+            "artifacts": len(artifacts),
+        },
+        "native_runtime_only": {
+            "ok": not (ROOT / "container").exists()
+            and isinstance(recipes.get("atomic_binary"), str)
+            and bool(recipes.get("atomic_binary"))
+            and len(recipes.get("variants", {})) == len(catalog.get("models", [])),
+        },
+        "physical_catalog_campaign": {
+            "ok": int(active_catalog.get("pending", 0)) == 0
+            and int(active_catalog.get("blocked", 0)) == 0
+            and int(active_catalog.get("deferred", 0)) == 0
+            and campaign_accounted == matrix_total,
+            **active_catalog,
+            "accounted": campaign_accounted,
+            "total": matrix_total,
+        },
+        "physical_intelligence_campaign": {
+            "ok": intelligence_unfinished == 0,
+            "unfinished": intelligence_unfinished,
+            "levels": intelligence_status.get("levels"),
+        },
+        "deferred_models_absent_from_auto": {
+            "ok": not deferred_auto_rungs,
+            "deferred_models": sorted(deferred_models),
+            "violations": deferred_auto_rungs,
+        },
+        "hardware_tier_campaign": {
+            "ok": all(
+                int(tier.get("pending", 0)) == 0
+                and int(tier.get("failed", 0)) == 0
+                and int(tier.get("deferred", 0)) == 0
+                and int(tier.get("success", 0)) == int(tier.get("total", 0))
+                for tier in tier_status.get("tiers", [])
+            ) and len(tier_status.get("tiers", [])) == 8,
+            "tiers": tier_status.get("tiers"),
+            "expected_candidates": len(tier_candidates),
+        },
+        "hardware_tier_winners": {
+            "ok": len(tournaments["tiers"]) == 8 and all(item.get("winner") for item in tournaments["tiers"]),
+            "promoted": sum(bool(item.get("winner")) for item in tournaments["tiers"]),
+            "expected": 8,
+        },
+        "deepseek_artifacts": {
+            "ok": downloads_ok,
+            "verified": len(receipt_files),
+            "expected": len(expected_downloads),
+        },
+        "qwen38_day_zero_lane": {
+            "ok": (ROOT / "scripts/turbofit-model-onboard").exists()
+            and (ROOT / "scripts/watch-qwen38-release").exists()
+            and (ROOT / "scripts/install-qwen38-watcher").exists()
+            and (ROOT / "references/model-onboarding/README.md").exists()
+            and policy.get("replacement_candidate") == "qwen3-8-27b"
+            and not deferred_models,
+            "replacement_candidate": policy.get("replacement_candidate"),
+            "retiring_variants": len(deferred_models),
+        },
+        "dspark_runtime": {"ok": dspark_ok, "detail": dspark_detail},
+        "dspark_live_tool_call": {
+            "ok": dspark_live.get("schema") == "turbofit.dspark-live/v1"
+            and (dspark_live.get("tool_call") or {}).get("function", {}).get("name") == "get_weather",
+            "backend": dspark_live.get("backend"),
+        },
+        "lemonade_runtime": {
+            "ok": lemonade_ok
+            and lemonade_live.get("schema") == "turbofit.lemonade-live/v1"
+            and (((lemonade_live.get("chat") or {}).get("choices") or [{}])[0].get("message") or {}).get("content") == "OK",
+            "detail": lemonade_detail,
+        },
+        "rocm_backend": {
+            "ok": "parse_rocm_smi_json" in (ROOT / "src/turbofit_runtime/hardware.py").read_text(encoding="utf-8")
+            and "-DGGML_HIP=ON" in (ROOT / "scripts/install-dspark-runtime").read_text(encoding="utf-8"),
+        },
+        "external_benchmarks": {
+            "ok": external.get("schema") == "turbofit.external-benchmarks/v1" and mapped_external > 0,
+            "rows": len(external_rows),
+            "mapped": mapped_external,
+        },
+        "deepswe_runner": {
+            "ok": prepared_deepswe.is_dir()
+            and shutil.which("pier") is not None
+            and (ROOT / "scripts/turbofit-deepswe").exists(),
+        },
+        "scheduled_model_intelligence": {
+            "ok": (ROOT / ".github/workflows/model-intelligence.yml").exists()
+            and (ROOT / "references/external-benchmarks.md").exists(),
+        },
+        "setup_dashboard": {
+            "ok": "/api/plugins/turbofit/backends" in dashboard_js
+            and '@router.get("/backends")' in plugin_api
+            and "publish_tailnet" in plugin_api
+            and "install_sirvir" in plugin_api,
+        },
+        "hermes_plugin_and_setup_command": {
+            "ok": 'version: "2.1.0"' in plugin_manifest
+            and "version: 2.1.0" in bundled_skill
+            and "provides_commands:" in plugin_manifest
+            and "  - turbofit" in plugin_manifest
+            and "ctx.register_command" in plugin_entry
+            and '"setup", "configure"' in plugin_entry
+            and '"", "scan", "rescan", "recommend"' in plugin_entry,
+            "version": "2.1.0" if 'version: "2.1.0"' in plugin_manifest else None,
+        },
+        "exact_combination_settings": {
+            "ok": "/api/plugins/turbofit/combinations" in dashboard_js
+            and "api.rest('/combinations')" in desktop_js
+            and '@router.get("/combinations")' in plugin_api
+            and all(label in dashboard_js and label in desktop_js for label in ("Main model", "Auxiliary model", "Context length"))
+            and "prepare_manual_profile" in plugin_tools,
+        },
+        "platform_installers": {
+            "ok": (ROOT / "scripts/install-windows-native-service.ps1").exists()
+            and (ROOT / "scripts/install-macos-native-service").exists()
+            and len(list((ROOT / "runtime-profiles").glob("*gb.yaml"))) == 8,
+        },
+        "campaign_provider_continuity": {
+            "ok": "services = (self.production_controller_service,)" in campaign_backend_source
+            and "turbofit.campaign-lease/v1" in campaign_backend_source
+            and "api-fallback-only" in gateway_source
+            and "campaign_lease_active" in gateway_source
+            and "TURBOFIT_CAMPAIGN_GATEWAY" in gateway_source
+            and "TURBOFIT_CAMPAIGN_GATEWAY" in campaign_backend_source
+            and "resolve_nous_runtime_credentials" in gateway_source
+            and "Required auxiliary backend is unavailable" in gateway_source,
+        },
+        "desktop_dashboard_setup_parity": {
+            "ok": all(
+                token in dashboard_js and token in desktop_js
+                for token in (
+                    "fallback_chain", "multimodal", "publish_tailnet", "install_sirvir",
+                    "install_native", "install_lemonade", "dashboard_https_port",
+                    "provider_https_port",
+                )
+            ),
+        },
+        "private_tailnet_serving": {
+            "ok": "tailscale\", \"serve\"" in tailnet_source
+            and "tailscale\", \"funnel\"" not in tailnet_source
+            and "refusing to overwrite" in tailnet_source
+            and "publish_tailnet" in plugin_tools,
+        },
+        "bundled_sirvir_customer_service": {
+            "ok": all(
+                (ROOT / "profiles/sirvir" / name).is_file()
+                for name in ("SOUL.md", "AGENTS.md", "config.yaml", "distribution.yaml")
+            )
+            and "install_sirvir_profile" in plugin_tools
+            and "pull request suggestion" in (ROOT / "profiles/sirvir/AGENTS.md").read_text(encoding="utf-8").lower(),
+        },
+        "multimodal_setup_and_fit": {
+            "ok": multimodal_catalog.get("schema") == "turbofit.multimodal-catalog/v1"
+            and {
+                "minimax-h3", "acestep-1-5-2b", "acestep-1-5-4b", "hermes-edge-tts",
+                "soprano-tts", "darwin-tts-1-7b", "hermes-local-stt",
+                "parakeet-tdt-0-6b-v3", "nemotron-3-5-asr-0-6b",
+            } <= {item.get("id") for item in multimodal_catalog.get("models", [])}
+            and all(
+                len(item.get("revision", "")) == 40
+                for item in multimodal_catalog.get("models", [])
+                if item.get("source") != "builtin:hermes"
+            )
+            and all(modality in multimodal_source for modality in ("image", "video", "music", "tts", "stt"))
+            and "total_usable_memory_mb" in multimodal_source
+            and "multimodalSelections" in dashboard_js
+            and "multimodalSelections" in desktop_js,
+            "models": len(multimodal_catalog.get("models", [])),
+        },
+        "archived_model_zoo": {
+            "ok": archived_zoo.get("promotion_eligible") is False
+            and {"glm-5-2-2-788bpw", "minimax-m3-q4", "laguna-s2-1-fp16", "laguna-s2-1-q4"}
+            == {item.get("id") for item in archived_zoo.get("models", [])},
+        },
+        "h3_promo_and_senter_delivery": {
+            "ok": promo_evidence.get("schema") == "turbofit.h3-promo-production/v1"
+            and _sha256(ROOT / "promo/turbofit-2.1-promo.mp4") == (promo_evidence.get("final") or {}).get("sha256")
+            and _sha256(ROOT / "promo/turbofit-2.1-h3-local-promo-discord.mp4") == (promo_evidence.get("delivery") or {}).get("attachment_sha256")
+            and (promo_evidence.get("delivery") or {}).get("via_profile") == "senter"
+            and bool((promo_evidence.get("delivery") or {}).get("message_id"))
+            and (promo_evidence.get("verification") or {}).get("every_required_style_visually_checked") is True,
+            "message_id": (promo_evidence.get("delivery") or {}).get("message_id"),
+        },
+    }
+    return {"complete": all(item["ok"] for item in checks.values()), "checks": checks}
+
+
+def main() -> int:
+    payload = report()
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0 if payload["complete"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

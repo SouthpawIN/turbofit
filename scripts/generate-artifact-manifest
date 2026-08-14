@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+"""Generate a revision- and SHA-pinned manifest for every executable matrix artifact."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from collections import defaultdict
+from datetime import datetime, timezone
+from pathlib import Path
+
+from huggingface_hub import HfApi
+from huggingface_hub.hf_api import RepoFile
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.model_catalog import ModelCatalog
+from turbofit_runtime.recipes import RecipeBook
+
+CATALOG = ROOT / "references/model-catalog.json"
+MATRIX = ROOT / "references/configuration-matrix.json"
+RECIPES = ROOT / "references/model-recipes.json"
+OUTPUT = ROOT / "references/artifact-manifest.json"
+
+
+def repo_id(source: str) -> str:
+    prefix = "https://huggingface.co/"
+    if not source.startswith(prefix):
+        raise ValueError(f"unsupported artifact source: {source}")
+    return source.removeprefix(prefix).strip("/")
+
+
+def executable_artifacts() -> dict[str, set[str]]:
+    book = RecipeBook.load(RECIPES, backend_name="cpu")
+    rows = json.loads(MATRIX.read_text(encoding="utf-8"))["rows"]
+    artifacts: dict[str, set[str]] = defaultdict(set)
+    for row in rows:
+        for component in book.resolve_catalog_configuration(row).components:
+            paths = [component.model_path, component.projector_path]
+            command = list(component.command)
+            if "--model-draft" in command:
+                paths.append(command[command.index("--model-draft") + 1])
+            for path in paths:
+                if path:
+                    artifacts[path].add(component.family)
+    return artifacts
+
+
+def pinned_repositories(catalog: ModelCatalog) -> dict[str, str]:
+    repositories: dict[str, str] = {}
+    for model in catalog.models:
+        current = repositories.get(repo_id(model.source))
+        if current is not None and current != model.revision:
+            raise ValueError(f"conflicting source revisions for {model.source}")
+        repositories[repo_id(model.source)] = model.revision
+    return repositories
+
+
+def remote_files(api: HfApi, repositories: dict[str, str]) -> dict[str, list[dict]]:
+    by_name: dict[str, list[dict]] = defaultdict(list)
+    for repository, revision in repositories.items():
+        for item in api.list_repo_tree(repository, revision=revision, recursive=True, expand=True):
+            if not isinstance(item, RepoFile) or item.lfs is None:
+                continue
+            by_name[Path(item.path).name].append({
+                "repo_id": repository,
+                "revision": revision,
+                "path": item.path,
+                "sha256": item.lfs.sha256,
+                "size_bytes": item.size,
+            })
+    return by_name
+
+
+def generate(api: HfApi | None = None) -> dict:
+    catalog = ModelCatalog.load(CATALOG)
+    by_model = {model.id: model for model in catalog.models}
+    repositories = pinned_repositories(catalog)
+    remote = remote_files(api or HfApi(), repositories)
+    output = []
+    model_root = Path(os.environ.get("TURBOFIT_MODEL_ROOT", "~/Models/storage/gguf")).expanduser()
+    for local_path, families in sorted(executable_artifacts().items()):
+        name = Path(local_path).name
+        candidates = remote.get(name, [])
+        preferred = {
+            repo_id(by_model[family].source)
+            for family in families
+            if family in by_model
+        }
+        matches = [item for item in candidates if item["repo_id"] in preferred] or candidates
+        unique = {(item["repo_id"], item["revision"], item["path"]): item for item in matches}
+        if len(unique) != 1:
+            choices = sorted(f"{item['repo_id']}:{item['path']}" for item in unique.values())
+            raise RuntimeError(f"artifact {name} did not resolve uniquely: {choices}")
+        resolved = next(iter(unique.values()))
+        try:
+            destination = str(Path(local_path).relative_to(model_root))
+        except ValueError as exc:
+            raise RuntimeError(f"artifact is outside the portable model root: {local_path}") from exc
+        output.append({
+            "destination": destination,
+            "families": sorted(families),
+            **resolved,
+        })
+    return {
+        "schema": "turbofit.artifact-manifest/v1",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "artifacts": output,
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, default=OUTPUT)
+    args = parser.parse_args()
+    payload = generate()
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"output": str(args.output), "artifacts": len(payload["artifacts"])}, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

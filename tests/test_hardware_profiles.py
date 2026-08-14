@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 
 from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
-from turbofit_runtime.profile_io import load_yaml_profile
+from turbofit_runtime.profile_io import load_profile as load_yaml_profile
+from turbofit_runtime.recipes import RecipeBook
 from turbofit_runtime.recommend import hardware_satisfies
 
 
@@ -48,6 +49,7 @@ def test_all_hardware_classes_are_valid_profiles() -> None:
         profile = load_yaml_profile(ROOT / "runtime-profiles" / f"{class_gb}gb.yaml")
         assert profile.id == f"hardware-{class_gb}gb"
         assert profile.hardware.class_vram_gb == class_gb
+        assert profile.hardware.accelerator == "llama.cpp-local"
         assert profile.hardware.topology == TOPOLOGIES[class_gb]
         assert all(rung.aux_mode.value != "api" for rung in profile.rungs)
         assert all(rung.main_api_policy is None for rung in profile.rungs)
@@ -59,22 +61,24 @@ def test_every_hardware_class_publishes_a_local_recommendation_ladder() -> None:
         profile = load_yaml_profile(ROOT / "runtime-profiles" / f"{class_gb}gb.yaml")
         assert profile.rungs
         assert all(rung.aux_mode.value in {"shared-main", "dedicated"} for rung in profile.rungs)
-        assert profile.policy.recommendation in {"measured-winner", "portable-local-floor"}
+        assert profile.policy.recommendation == "evidence-gated"
 
 
 def test_every_resolved_role_matches_its_rung_context() -> None:
     resolutions = json.loads(
         (ROOT / "runtime-profiles" / "runtime-resolutions.json").read_text()
     )["profiles"]
-    acquisitions = json.loads(
-        (ROOT / "runtime-profiles" / "acquisitions.json").read_text()
-    )["tags"]
+    recipes = RecipeBook.load(ROOT / "references/model-recipes.json", backend_name="cpu")
 
     for class_gb in CLASSES:
         profile = load_yaml_profile(ROOT / "runtime-profiles" / f"{class_gb}gb.yaml")
         for rung in profile.rungs:
-            for target in resolutions[profile.id][rung.id].values():
-                assert acquisitions[target["model_tag"]]["context_size"] == rung.context
+            for role, target in resolutions[profile.id][rung.id].items():
+                component = recipes.resolve_component(
+                    target["family"], role=role, context=rung.context,
+                    gpu=target["gpu"], port=int(target["port"]), alias=target["model_tag"],
+                )
+                assert component.command[component.command.index("-c") + 1] == str(rung.context)
 
 
 def test_48gb_ceiling_routes_main_and_aux_at_262k() -> None:
@@ -119,3 +123,27 @@ def test_hardware_envelopes_match_their_canonical_topologies() -> None:
             sizes.extend([size] * count)
         profile = load_yaml_profile(ROOT / "runtime-profiles" / f"{class_gb}gb.yaml")
         assert hardware_satisfies(fingerprint(tuple(sizes)), profile.hardware)
+
+
+def test_large_shared_memory_pools_are_not_rejected_by_discrete_card_topology() -> None:
+    profile = load_yaml_profile(ROOT / "runtime-profiles" / "96gb.yaml")
+    cpu = HardwareFingerprint("linux", "x86_64", 131_072)
+    apple = HardwareFingerprint(
+        "darwin", "arm64", 131_072,
+        devices=(AcceleratorDevice(
+            0, "apple-unified-memory", "Apple Silicon Unified Memory",
+            "apple", "metal", 122_880, None, None,
+        ),),
+    )
+
+    assert hardware_satisfies(cpu, profile.hardware)
+    assert hardware_satisfies(apple, profile.hardware)
+
+
+def test_tournament_ranking_uses_current_30_and_50_tps_milestones() -> None:
+    ranking = json.loads((ROOT / "references/hardware-tier-tournaments.json").read_text())["ranking"]
+
+    assert ranking == [
+        "quality", "context_128k", "server_decode_30_tps",
+        "context_262k", "server_decode_50_tps", "context_1m",
+    ]

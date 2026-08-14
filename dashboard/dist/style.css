@@ -19,6 +19,8 @@
 .tf-toggle { display: flex; align-items: center; gap: .65rem; cursor: pointer; font-size: .9rem; }
 .tf-toggle input { accent-color: #56ffc4; width: 1rem; height: 1rem; }
 .tf-actions { display: flex; gap: .6rem; }
+.tf-fallback-chain { width: 100%; box-sizing: border-box; resize: vertical; padding: .7rem; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-background); color: var(--color-foreground); font: .78rem/1.45 var(--font-mono, ui-monospace, monospace); }
+.tf-fallback-chain:focus { outline: 2px solid var(--color-ring); outline-offset: 1px; }
 .tf-stats { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin: 0; }
 .tf-stats div { padding: .75rem; border: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-card) 88%, transparent); }
 .tf-stats dt { color: var(--color-muted-foreground); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }

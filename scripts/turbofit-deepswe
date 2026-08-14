@@ -1,0 +1,251 @@
+#!/usr/bin/env python3
+"""Prepare and run pinned DeepSWE evaluations against a Turbofit endpoint."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import socket
+import shutil
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
+
+
+DEEPSWE_REPOSITORY = "https://github.com/datacurve-ai/deep-swe.git"
+DEEPSWE_REVISION = "435ee89ec2f2e2289f33b0da4f992f0b7b7266b9"
+PIER_VERSION = "0.3.0"
+DEFAULT_ROOT = Path.home() / ".local" / "share" / "turbofit" / "benchmarks"
+PROJECT_SRC = Path(__file__).resolve().parents[1] / "src"
+
+
+def host_route_address() -> str:
+    """Return a host address reachable from arbitrary Compose bridge networks."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.connect(("1.1.1.1", 53))
+        address = str(sock.getsockname()[0])
+    finally:
+        sock.close()
+    if not address or address.startswith("127."):
+        raise RuntimeError("could not determine a non-loopback host route for Pier containers")
+    return address
+
+
+def container_base_url(base_url: str) -> str:
+    """Translate host loopback to a route visible from any Pier bridge network."""
+    parsed = urlsplit(base_url)
+    if parsed.hostname not in {"127.0.0.1", "localhost", "::1"}:
+        return base_url.rstrip("/")
+    hostname = os.environ.get("TURBOFIT_DOCKER_HOST_GATEWAY") or host_route_address()
+    port = f":{parsed.port}" if parsed.port else ""
+    return urlunsplit((parsed.scheme, hostname + port, parsed.path.rstrip("/"), parsed.query, parsed.fragment))
+
+
+def prepare(root: Path = DEFAULT_ROOT) -> Path:
+    root.mkdir(parents=True, exist_ok=True)
+    dataset = root / f"deep-swe-{DEEPSWE_REVISION}"
+    if not (dataset / ".git").is_dir():
+        subprocess.run(
+            ["git", "clone", "--filter=blob:none", DEEPSWE_REPOSITORY, str(dataset)],
+            check=True,
+        )
+    subprocess.run(["git", "-C", str(dataset), "fetch", "origin", DEEPSWE_REVISION], check=True)
+    subprocess.run(["git", "-C", str(dataset), "checkout", "--detach", DEEPSWE_REVISION], check=True)
+    if shutil.which("pier") is None:
+        subprocess.run(["uv", "tool", "install", f"datacurve-pier=={PIER_VERSION}"], check=True)
+    tasks = dataset / "tasks"
+    if not tasks.is_dir():
+        raise RuntimeError(
+            "DeepSWE tasks are not present; obtain the gated dataset and place its tasks directory at "
+            + str(tasks)
+        )
+    return tasks
+
+
+def pier_command(
+    *,
+    dataset: Path,
+    model: str,
+    base_url: str,
+    jobs_dir: Path,
+    n_tasks: int,
+    sample_seed: int,
+) -> tuple[list[str], dict[str, str]]:
+    if n_tasks <= 0:
+        raise ValueError("n_tasks must be positive")
+    if sample_seed < 0:
+        raise ValueError("sample_seed must be non-negative")
+    if not model or any(character.isspace() for character in model):
+        raise ValueError("model must be a non-empty token")
+    if not base_url.startswith(("http://", "https://")):
+        raise ValueError("base_url must use http or https")
+    agent_environment = {
+        "OPENAI_BASE_URL": container_base_url(base_url),
+        "OPENAI_API_BASE": container_base_url(base_url),
+        "OPENAI_API_KEY": "turbofit-local",
+    }
+    command = [
+        "pier", "run", "-p", str(dataset),
+        "--agent-import-path", "turbofit_runtime.pier_agent:TurbofitMiniSWEAgent",
+        "--model", f"openai/{model}",
+        "--agent-kwarg", 'model_kwargs={"num_retries":0,"timeout":300}',
+    ]
+    for key, value in agent_environment.items():
+        # Pier's --env-file affects host-side resolution only. The mini-swe-agent
+        # container receives provider routing exclusively through --agent-env.
+        command.extend(("--agent-env", f"{key}={value}"))
+    command.extend([
+        "--n-tasks", str(n_tasks),
+        "--sample-seed", str(sample_seed),
+        "--n-concurrent", "1",
+        "--jobs-dir", str(jobs_dir),
+        "--yes",
+    ])
+    environment = dict(os.environ)
+    environment.update(agent_environment)
+    environment["PYTHONPATH"] = str(PROJECT_SRC) + os.pathsep + environment.get("PYTHONPATH", "")
+    return command, environment
+
+
+def summarize_job(
+    *, jobs_dir: Path, configuration_id: str,
+    production_recipe_sha256: str, output: Path,
+) -> dict:
+    """Normalize Pier trial rewards without replacing or hiding raw results."""
+    if not production_recipe_sha256.startswith("sha256:") or len(production_recipe_sha256) != 71:
+        raise ValueError("production recipe must be SHA-256 bound")
+    trials = []
+    for path in sorted(jobs_dir.rglob("result.json")):
+        raw = path.read_bytes()
+        try:
+            payload = json.loads(raw)
+        except ValueError:
+            continue
+        # Pier writes a job-level result.json beside trial-level result.json
+        # files. The job summary has stats but is not a benchmark task.
+        if "n_total_trials" in payload and "stats" in payload:
+            continue
+        verifier = payload.get("verifier_result") or {}
+        rewards = verifier.get("rewards") or {}
+        reward = rewards.get("reward", 0.0)
+        agent_result = payload.get("agent_result") or {}
+        agent_steps = int(agent_result.get("n_agent_steps") or payload.get("n_agent_steps") or 0)
+        input_tokens = int(agent_result.get("n_input_tokens") or 0)
+        output_tokens = int(agent_result.get("n_output_tokens") or 0)
+        token_execution_valid = agent_steps > 0 and input_tokens + output_tokens > 0
+        route_path = path.parent / "agent" / "turbofit-route.json"
+        route_evidence = None
+        if route_path.is_file():
+            route_raw = route_path.read_bytes()
+            route_evidence = {
+                "path": str(route_path),
+                "sha256": "sha256:" + hashlib.sha256(route_raw).hexdigest(),
+                "route": json.loads(route_raw),
+            }
+        execution_valid = token_execution_valid and route_evidence is not None
+        passed = execution_valid and reward == 1.0 and payload.get("exception_info") is None
+        trials.append({
+            "path": str(path),
+            "sha256": "sha256:" + hashlib.sha256(raw).hexdigest(),
+            "reward": float(reward) if isinstance(reward, (int, float)) else 0.0,
+            "passed": passed,
+            "execution_valid": execution_valid,
+            "agent_steps": agent_steps,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "exception": payload.get("exception_info"),
+            "route_evidence": route_evidence,
+        })
+    if not trials:
+        raise RuntimeError(f"no Pier trial results found under {jobs_dir}")
+    passed = sum(item["passed"] for item in trials)
+    invalid = sum(not item["execution_valid"] for item in trials)
+    evidence = {
+        "schema": "turbofit.deepswe-evidence/v1",
+        "status": "invalid" if invalid else "measured",
+        "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "suite": {
+            "name": "deep-swe",
+            "revision": DEEPSWE_REVISION,
+            "pier_version": PIER_VERSION,
+        },
+        "configuration_id": configuration_id,
+        "production_recipe_sha256": production_recipe_sha256,
+        "jobs_dir": str(jobs_dir),
+        "summary": {
+            "tasks_total": len(trials),
+            "tasks_passed": passed,
+            "score": passed / len(trials),
+            "infrastructure_failures": invalid,
+        },
+        "trials": trials,
+    }
+    canonical = json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode()
+    evidence["evidence_sha256"] = "sha256:" + hashlib.sha256(canonical).hexdigest()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if invalid:
+        raise RuntimeError(
+            f"DeepSWE produced {invalid}/{len(trials)} tasks without model execution; "
+            f"invalid evidence preserved at {output}"
+        )
+    return evidence
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=("prepare", "run", "summarize"), nargs="?", default="run")
+    parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
+    parser.add_argument("--dataset", type=Path)
+    parser.add_argument("--model", default="auto")
+    parser.add_argument("--base-url", default="http://127.0.0.1:8091/v1")
+    parser.add_argument("--jobs-dir", type=Path, default=Path("references/results/deepswe"))
+    parser.add_argument("--n-tasks", type=int, default=10)
+    parser.add_argument("--sample-seed", type=int, default=0)
+    parser.add_argument("--configuration-id")
+    parser.add_argument("--production-recipe-sha256")
+    parser.add_argument("--summary-output", type=Path)
+    args = parser.parse_args()
+
+    if args.action == "prepare":
+        tasks = prepare(args.root)
+        print(json.dumps({"status": "ready", "tasks": str(tasks), "pier": PIER_VERSION}, indent=2))
+        return 0
+    if args.action == "summarize":
+        if not args.configuration_id or not args.production_recipe_sha256 or not args.summary_output:
+            parser.error("summarize requires --configuration-id, --production-recipe-sha256, and --summary-output")
+        print(json.dumps(summarize_job(
+            jobs_dir=args.jobs_dir,
+            configuration_id=args.configuration_id,
+            production_recipe_sha256=args.production_recipe_sha256,
+            output=args.summary_output,
+        ), indent=2))
+        return 0
+    dataset = args.dataset or prepare(args.root)
+    args.jobs_dir.mkdir(parents=True, exist_ok=True)
+    command, environment = pier_command(
+        dataset=dataset,
+        model=args.model,
+        base_url=args.base_url,
+        jobs_dir=args.jobs_dir,
+        n_tasks=args.n_tasks,
+        sample_seed=args.sample_seed,
+    )
+    result = subprocess.run(command, env=environment, check=False)
+    if result.returncode == 0 and args.summary_output:
+        if not args.configuration_id or not args.production_recipe_sha256:
+            parser.error("--summary-output requires --configuration-id and --production-recipe-sha256")
+        summarize_job(
+            jobs_dir=args.jobs_dir,
+            configuration_id=args.configuration_id,
+            production_recipe_sha256=args.production_recipe_sha256,
+            output=args.summary_output,
+        )
+    return result.returncode
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

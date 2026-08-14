@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from pathlib import Path
 
 import pytest
 
@@ -77,6 +78,13 @@ def catalog() -> ProfileCatalog:
     )
 
 
+def required_tier_catalog() -> ProfileCatalog:
+    root = Path(__file__).resolve().parents[1] / "runtime-profiles"
+    return ProfileCatalog.from_paths(
+        root / f"{tier}gb.yaml" for tier in (8, 16, 24, 48, 64, 96, 200, 300)
+    )
+
+
 @pytest.mark.parametrize(
     ("memory", "expected"),
     [((8192,), "hardware-8gb"), ((16384,), "hardware-16gb"), ((24576,), "hardware-24gb"), ((24576, 24576), "hardware-48gb")],
@@ -90,6 +98,28 @@ def test_auto_selects_canonical_profile_from_physical_topology(
     assert choice.profile.id == expected
     assert choice.initial_rung_index == len(choice.profile.rungs) - 1
     assert choice.target_ceiling_index == 0
+
+
+@pytest.mark.parametrize(
+    ("memory", "expected"),
+    [
+        ((8192,), "hardware-8gb"),
+        ((16384,), "hardware-16gb"),
+        ((24576,), "hardware-24gb"),
+        ((24576, 24576), "hardware-48gb"),
+        ((32768, 32768), "hardware-64gb"),
+        ((24576, 24576, 24576, 24576), "hardware-96gb"),
+        ((102400, 102400), "hardware-200gb"),
+        ((102400, 102400, 102400), "hardware-300gb"),
+        ((102400, 102400, 102400, 102400), "hardware-300gb"),
+    ],
+)
+def test_all_required_tiers_select_exact_topology_and_300_plus_caps_at_300(
+    memory: tuple[int, ...], expected: str,
+) -> None:
+    choice = required_tier_catalog().select(hardware(*memory), requested="auto")
+
+    assert choice.profile.id == expected
 
 
 def test_auto_uses_api_only_lower_class_for_unmeasured_topology() -> None:
@@ -110,6 +140,28 @@ def test_manual_api_only_profile_is_safe_on_larger_hardware() -> None:
     assert choice.mode is SelectionMode.MANUAL
     assert choice.profile.id == "hardware-16gb"
     assert choice.initial_rung_index == 0
+
+
+def test_deferred_model_is_removed_from_auto_rungs_but_api_fallback_remains() -> None:
+    source = profile(24, "1x24", local=True)
+    local_rung = source.rungs[0]
+    filtered = ProfileCatalog((source,)).without_deferred_models(
+        {
+            source.id: {
+                local_rung.id: {
+                    "main": {
+                        "model_tag": "retiring-27b-alias",
+                        "family": "retiring-27b",
+                        "expected_vram_mb": 12_000,
+                    }
+                }
+            }
+        },
+        {"retiring-27b"},
+    )
+
+    assert [rung.id for rung in filtered.profiles[0].rungs] == ["api"]
+    assert filtered.profiles[0].revision == source.revision + 1
 
 
 def test_catalog_rejects_duplicate_ids_and_accepts_local_terminal_floor() -> None:

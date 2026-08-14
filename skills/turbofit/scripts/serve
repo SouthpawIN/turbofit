@@ -19,7 +19,7 @@ TURBOFIT_CONFIG_DIR="${HOME}/.config/turbofit"
 CATALOG="${TURBOFIT_CONFIG_DIR}/models.yaml"
 CURATED="${TURBOFIT_CONFIG_DIR}/curated.yaml"
 
-# Resolve Hermes config path — works on standard, profile, and Docker installs
+# Resolve Hermes config path — works on standard and profile installs
 if [ -n "${HERMES_HOME:-}" ]; then
     HERMES_CONFIG="${HERMES_HOME}/config.yaml"
 else

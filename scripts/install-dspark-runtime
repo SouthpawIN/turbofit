@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+"""Install Turbofit's pinned native llama.cpp runtime for CUDA, ROCm, Metal, or CPU."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import platform
+import shutil
+import subprocess
+from pathlib import Path
+from typing import Sequence
+
+
+LLAMA_CPP_REPOSITORY = "https://github.com/ggml-org/llama.cpp.git"
+# llama.cpp b10269: first recommended release after the b10259-b10268
+# DeepSeek V4 DSpark loader regression window.
+LLAMA_CPP_REVISION = "1c3c9674de4d455f1e571bed808252af54932767"
+LLAMA_CPP_MINIMUM_BUILD = 10269
+ROOT = Path(__file__).resolve().parents[1]
+PATCHES = (
+    ROOT / "runtime-patches/llama.cpp/yarn-long-context.patch",
+)
+BACKENDS = ("auto", "cuda", "rocm", "metal", "cpu")
+
+
+def runtime_root(base: Path | None = None) -> Path:
+    if base is not None:
+        parent = base
+    elif os.name == "nt" and os.environ.get("LOCALAPPDATA"):
+        parent = Path(os.environ["LOCALAPPDATA"]) / "Turbofit" / "runtimes"
+    else:
+        parent = Path.home() / ".local" / "share" / "turbofit" / "runtimes"
+    return parent / f"llama.cpp-{LLAMA_CPP_REVISION}"
+
+
+def binary_path(build: Path, *, platform_name: str | None = None) -> Path:
+    suffix = ".exe" if (platform_name or platform.system()).lower() == "windows" else ""
+    return build / "bin" / f"llama-server{suffix}"
+
+
+def resolve_backend(requested: str, *, platform_name: str | None = None) -> str:
+    if requested not in BACKENDS:
+        raise ValueError(f"unsupported backend: {requested}")
+    if requested != "auto":
+        return requested
+    host = (platform_name or platform.system()).lower()
+    if host == "darwin":
+        return "metal"
+    if shutil.which("nvidia-smi"):
+        return "cuda"
+    if shutil.which("rocminfo") or shutil.which("amd-smi"):
+        return "rocm"
+    return "cpu"
+
+
+def cmake_arguments(
+    source: Path,
+    build: Path,
+    backend: str,
+    *,
+    amdgpu_targets: str | None = None,
+) -> list[str]:
+    backend_flags = {
+        "cuda": ["-DGGML_CUDA=ON"],
+        "rocm": ["-DGGML_HIP=ON"],
+        "metal": ["-DGGML_METAL=ON"],
+        "cpu": ["-DGGML_CPU=ON"],
+    }
+    if backend not in backend_flags:
+        raise ValueError(f"unsupported resolved backend: {backend}")
+    arguments = [
+        "cmake", "-S", str(source), "-B", str(build), "-G", "Ninja",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DBUILD_SHARED_LIBS=OFF",
+        "-DLLAMA_BUILD_SERVER=ON",
+        "-DLLAMA_BUILD_TESTS=OFF",
+        "-DLLAMA_BUILD_EXAMPLES=OFF",
+        "-DLLAMA_BUILD_UI=OFF",
+        *backend_flags[backend],
+    ]
+    if backend == "rocm" and amdgpu_targets:
+        arguments.append(f"-DAMDGPU_TARGETS={amdgpu_targets}")
+    return arguments
+
+
+def verify_help(text: str) -> None:
+    if "draft-dspark" not in text:
+        raise RuntimeError("installed llama-server does not expose draft-dspark")
+    if "--jinja" not in text:
+        raise RuntimeError("installed llama-server does not expose --jinja")
+
+
+def _run(command: Sequence[str], *, capture: bool = False) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        list(command),
+        check=True,
+        text=True,
+        capture_output=capture,
+    )
+
+
+def apply_patches(source: Path) -> None:
+    for patch in PATCHES:
+        if not patch.is_file():
+            raise FileNotFoundError(patch)
+        _run(["git", "-C", str(source), "apply", "--check", str(patch)])
+        _run(["git", "-C", str(source), "apply", str(patch)])
+
+
+def install(
+    *,
+    base: Path | None = None,
+    backend: str = "auto",
+    jobs: int | None = None,
+    amdgpu_targets: str | None = None,
+) -> dict[str, str]:
+    resolved = resolve_backend(backend)
+    root = runtime_root(base)
+    root.parent.mkdir(parents=True, exist_ok=True)
+    if not (root / ".git").is_dir():
+        _run(["git", "clone", "--filter=blob:none", LLAMA_CPP_REPOSITORY, str(root)])
+    _run(["git", "-C", str(root), "fetch", "origin", LLAMA_CPP_REVISION])
+    _run(["git", "-C", str(root), "checkout", "--detach", LLAMA_CPP_REVISION])
+    _run(["git", "-C", str(root), "reset", "--hard", LLAMA_CPP_REVISION])
+    apply_patches(root)
+    build = root / f"build-{resolved}"
+    _run(cmake_arguments(root, build, resolved, amdgpu_targets=amdgpu_targets))
+    build_command = ["cmake", "--build", str(build), "--target", "llama-server"]
+    build_command.extend(["-j", str(jobs or max(1, min(16, os.cpu_count() or 1)))])
+    _run(build_command)
+    binary = binary_path(build)
+    help_result = _run([str(binary), "--help"], capture=True)
+    verify_help(help_result.stdout + help_result.stderr)
+    return {
+        "backend": resolved,
+        "binary": str(binary),
+        "revision": LLAMA_CPP_REVISION,
+        "status": "verified",
+    }
+
+
+def check(*, base: Path | None = None, backend: str = "auto") -> dict[str, str]:
+    resolved = resolve_backend(backend)
+    binary = binary_path(runtime_root(base) / f"build-{resolved}")
+    if not binary.is_file():
+        raise FileNotFoundError(binary)
+    result = _run([str(binary), "--help"], capture=True)
+    verify_help(result.stdout + result.stderr)
+    return {
+        "backend": resolved,
+        "binary": str(binary),
+        "revision": LLAMA_CPP_REVISION,
+        "status": "verified",
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", nargs="?", choices=("install", "check", "print-binary"), default="install")
+    parser.add_argument("--backend", choices=BACKENDS, default="auto")
+    parser.add_argument("--runtime-dir", type=Path)
+    parser.add_argument("--jobs", type=int)
+    parser.add_argument("--amdgpu-targets")
+    args = parser.parse_args()
+    if args.jobs is not None and args.jobs <= 0:
+        parser.error("--jobs must be positive")
+    if args.action == "install":
+        result = install(
+            base=args.runtime_dir,
+            backend=args.backend,
+            jobs=args.jobs,
+            amdgpu_targets=args.amdgpu_targets,
+        )
+    else:
+        result = check(base=args.runtime_dir, backend=args.backend)
+    if args.action == "print-binary":
+        print(result["binary"])
+    else:
+        print(json.dumps(result, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

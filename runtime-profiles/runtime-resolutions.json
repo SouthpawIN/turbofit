@@ -4,11 +4,17 @@
       "local-262144": {
         "aux": {
           "expected_vram_mb": 11163,
-          "model_tag": "carwin-nano-1-bit-bonsai-262k-aux"
+          "family": "carwin-nano",
+          "gpu": "0",
+          "model_tag": "carwin-nano-1-bit-bonsai-262k-aux",
+          "port": 8093
         },
         "main": {
           "expected_vram_mb": 15284,
-          "model_tag": "carwin-nano-1-bit-bonsai-262k-main"
+          "family": "carwin-nano",
+          "gpu": "1",
+          "model_tag": "carwin-nano-1-bit-bonsai-262k-main",
+          "port": 8092
         }
       }
     },
@@ -16,39 +22,17 @@
       "local-262144": {
         "aux": {
           "expected_vram_mb": 14503,
-          "model_tag": "carwin-nano-ternary-bonsai-262k-aux"
+          "family": "carwin-nano",
+          "gpu": "0",
+          "model_tag": "carwin-nano-ternary-bonsai-262k-aux",
+          "port": 8093
         },
         "main": {
           "expected_vram_mb": 15284,
-          "model_tag": "carwin-nano-ternary-bonsai-262k-main"
-        }
-      }
-    },
-    "grm-2-6-plus-auto-128k": {
-      "local-131072": {
-        "main": {
-          "expected_vram_mb": 21554,
-          "model_tag": "grm-2-6-plus-auto-128k-main"
-        }
-      }
-    },
-    "grm-2-6-plus-auto-64k": {
-      "local-65536": {
-        "main": {
-          "expected_vram_mb": 19762,
-          "model_tag": "grm-2-6-plus-auto-64k-main"
-        }
-      }
-    },
-    "grm-2-6-plus-carwin-nano-1m": {
-      "local-1048576": {
-        "aux": {
-          "expected_vram_mb": 23028,
-          "model_tag": "grm-2-6-plus-carwin-nano-1m-aux"
-        },
-        "main": {
-          "expected_vram_mb": 22768,
-          "model_tag": "grm-2-6-plus-carwin-nano-1m-main"
+          "family": "carwin-nano",
+          "gpu": "1",
+          "model_tag": "carwin-nano-ternary-bonsai-262k-main",
+          "port": 8092
         }
       }
     },
@@ -56,19 +40,28 @@
       "local-bonsai-131072": {
         "main": {
           "expected_vram_mb": 8149,
-          "model_tag": "bonsai-27b-1bit-128k-main"
+          "family": "bonsai-27b",
+          "gpu": "0",
+          "model_tag": "bonsai-27b-1bit-128k-main",
+          "port": 8092
         }
       },
       "local-bonsai-262144": {
         "main": {
           "expected_vram_mb": 11093,
-          "model_tag": "bonsai-27b-1bit-262k-main"
+          "family": "bonsai-27b",
+          "gpu": "0",
+          "model_tag": "bonsai-27b-1bit-262k-main",
+          "port": 8092
         }
       },
       "local-bonsai-65536": {
         "main": {
           "expected_vram_mb": 6677,
-          "model_tag": "bonsai-27b-1bit-64k-main"
+          "family": "bonsai-27b",
+          "gpu": "0",
+          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
         }
       }
     },
@@ -76,35 +69,28 @@
       "local-bonsai-131072": {
         "main": {
           "expected_vram_mb": 8149,
-          "model_tag": "bonsai-27b-1bit-128k-main"
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-128k-main",
+          "port": 8092
         }
       },
       "local-bonsai-262144": {
         "main": {
           "expected_vram_mb": 11093,
-          "model_tag": "bonsai-27b-1bit-262k-main"
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-262k-main",
+          "port": 8092
         }
       },
       "local-bonsai-65536": {
         "main": {
           "expected_vram_mb": 6677,
-          "model_tag": "bonsai-27b-1bit-64k-main"
-        }
-      },
-      "local-dedicated-131072": {
-        "aux": {
-          "expected_vram_mb": 8149,
-          "model_tag": "bonsai-27b-1bit-128k-main"
-        },
-        "main": {
-          "expected_vram_mb": 21554,
-          "model_tag": "grm-2-6-plus-128k-gpu1-main"
-        }
-      },
-      "local-grm-131072": {
-        "main": {
-          "expected_vram_mb": 21554,
-          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
         }
       }
     },
@@ -112,25 +98,28 @@
       "local-bonsai-131072": {
         "main": {
           "expected_vram_mb": 8149,
-          "model_tag": "bonsai-27b-1bit-128k-main"
+          "family": "bonsai-27b",
+          "gpu": "0",
+          "model_tag": "bonsai-27b-1bit-128k-main",
+          "port": 8092
         }
       },
       "local-bonsai-262144": {
         "main": {
           "expected_vram_mb": 11093,
-          "model_tag": "bonsai-27b-1bit-262k-main"
+          "family": "bonsai-27b",
+          "gpu": "0",
+          "model_tag": "bonsai-27b-1bit-262k-main",
+          "port": 8092
         }
       },
       "local-bonsai-65536": {
         "main": {
           "expected_vram_mb": 6677,
-          "model_tag": "bonsai-27b-1bit-64k-main"
-        }
-      },
-      "local-grm-131072": {
-        "main": {
-          "expected_vram_mb": 21554,
-          "model_tag": "grm-2-6-plus-auto-128k-main"
+          "family": "bonsai-27b",
+          "gpu": "0",
+          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
         }
       }
     },
@@ -138,35 +127,28 @@
       "local-bonsai-131072": {
         "main": {
           "expected_vram_mb": 8149,
-          "model_tag": "bonsai-27b-1bit-128k-main"
+          "family": "bonsai-27b",
+          "gpu": "2",
+          "model_tag": "bonsai-27b-1bit-128k-main",
+          "port": 8092
         }
       },
       "local-bonsai-262144": {
         "main": {
           "expected_vram_mb": 11093,
-          "model_tag": "bonsai-27b-1bit-262k-main"
+          "family": "bonsai-27b",
+          "gpu": "2",
+          "model_tag": "bonsai-27b-1bit-262k-main",
+          "port": 8092
         }
       },
       "local-bonsai-65536": {
         "main": {
           "expected_vram_mb": 6677,
-          "model_tag": "bonsai-27b-1bit-64k-main"
-        }
-      },
-      "local-dedicated-131072": {
-        "aux": {
-          "expected_vram_mb": 8149,
-          "model_tag": "bonsai-27b-1bit-128k-main"
-        },
-        "main": {
-          "expected_vram_mb": 21554,
-          "model_tag": "grm-2-6-plus-128k-gpu1-main"
-        }
-      },
-      "local-grm-131072": {
-        "main": {
-          "expected_vram_mb": 21554,
-          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+          "family": "bonsai-27b",
+          "gpu": "2",
+          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
         }
       }
     },
@@ -174,32 +156,28 @@
       "local-bonsai-131072": {
         "main": {
           "expected_vram_mb": 8149,
-          "model_tag": "bonsai-27b-1bit-128k-main"
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-128k-main",
+          "port": 8092
         }
       },
       "local-bonsai-262144": {
         "main": {
           "expected_vram_mb": 11093,
-          "model_tag": "bonsai-27b-1bit-262k-main"
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-262k-main",
+          "port": 8092
         }
       },
       "local-bonsai-65536": {
         "main": {
           "expected_vram_mb": 6677,
-          "model_tag": "bonsai-27b-1bit-64k-main"
-        }
-      },
-      "local-grm-131072": {
-        "main": {
-          "expected_vram_mb": 21554,
-          "model_tag": "grm-2-6-plus-128k-gpu1-main"
-        }
-      },
-      "local-grm-262144": {
-        "main": {
-          "expected_vram_mb": 30518,
-          "model_tag": "grm-2-6-plus-262k-split-main",
-          "split_mode": "layer"
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
         }
       }
     },
@@ -207,35 +185,28 @@
       "local-bonsai-131072": {
         "main": {
           "expected_vram_mb": 8149,
-          "model_tag": "bonsai-27b-1bit-128k-main"
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-128k-main",
+          "port": 8092
         }
       },
       "local-bonsai-262144": {
         "main": {
           "expected_vram_mb": 11093,
-          "model_tag": "bonsai-27b-1bit-262k-main"
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-262k-main",
+          "port": 8092
         }
       },
       "local-bonsai-65536": {
         "main": {
           "expected_vram_mb": 6677,
-          "model_tag": "bonsai-27b-1bit-64k-main"
-        }
-      },
-      "local-dedicated-131072": {
-        "aux": {
-          "expected_vram_mb": 8149,
-          "model_tag": "bonsai-27b-1bit-128k-main"
-        },
-        "main": {
-          "expected_vram_mb": 21554,
-          "model_tag": "grm-2-6-plus-128k-gpu1-main"
-        }
-      },
-      "local-grm-131072": {
-        "main": {
-          "expected_vram_mb": 21554,
-          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
         }
       }
     },
@@ -243,7 +214,10 @@
       "local-bonsai-65536": {
         "main": {
           "expected_vram_mb": 6677,
-          "model_tag": "bonsai-27b-1bit-64k-main"
+          "family": "bonsai-27b",
+          "gpu": "0",
+          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
         }
       }
     },
@@ -251,35 +225,28 @@
       "local-bonsai-131072": {
         "main": {
           "expected_vram_mb": 8149,
-          "model_tag": "bonsai-27b-1bit-128k-main"
+          "family": "bonsai-27b",
+          "gpu": "3",
+          "model_tag": "bonsai-27b-1bit-128k-main",
+          "port": 8092
         }
       },
       "local-bonsai-262144": {
         "main": {
           "expected_vram_mb": 11093,
-          "model_tag": "bonsai-27b-1bit-262k-main"
+          "family": "bonsai-27b",
+          "gpu": "3",
+          "model_tag": "bonsai-27b-1bit-262k-main",
+          "port": 8092
         }
       },
       "local-bonsai-65536": {
         "main": {
           "expected_vram_mb": 6677,
-          "model_tag": "bonsai-27b-1bit-64k-main"
-        }
-      },
-      "local-dedicated-131072": {
-        "aux": {
-          "expected_vram_mb": 8149,
-          "model_tag": "bonsai-27b-1bit-128k-main"
-        },
-        "main": {
-          "expected_vram_mb": 21554,
-          "model_tag": "grm-2-6-plus-128k-gpu1-main"
-        }
-      },
-      "local-grm-131072": {
-        "main": {
-          "expected_vram_mb": 21554,
-          "model_tag": "grm-2-6-plus-128k-gpu1-main"
+          "family": "bonsai-27b",
+          "gpu": "3",
+          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
         }
       }
     }

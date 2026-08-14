@@ -43,6 +43,13 @@ RUNTIME_STATE = os.environ.get(
     "TURBOFIT_RUNTIME_STATE",
     f"{STATE_HOME}/turbofit/runtime-state.json",
 )
+CAMPAIGN_LEASE = os.environ.get(
+    "TURBOFIT_CAMPAIGN_LEASE",
+    f"{STATE_HOME}/turbofit/campaign-lease.json",
+)
+CAMPAIGN_GATEWAY = os.environ.get("TURBOFIT_CAMPAIGN_GATEWAY", "0").lower() in {
+    "1", "true", "yes", "on",
+}
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROFILES = os.environ.get(
     "TURBOFIT_RUNTIME_PROFILES",
@@ -59,6 +66,29 @@ _inflight_requests: dict[str, float] = {}
 
 _cache = {"main": None, "aux": None, "ts": 0}
 CACHE_TTL = 10
+
+
+def campaign_lease_active():
+    """Return true only for a live campaign owner; stale markers fail open."""
+    if CAMPAIGN_GATEWAY:
+        return False
+    try:
+        with open(CAMPAIGN_LEASE) as handle:
+            lease = json.load(handle)
+        if (
+            lease.get("schema") != "turbofit.campaign-lease/v1"
+            or lease.get("gateway_policy") != "api-fallback-only"
+        ):
+            return False
+        owner_pid = int(lease.get("owner_pid") or 0)
+        if owner_pid <= 0:
+            return False
+        os.kill(owner_pid, 0)
+        return True
+    except PermissionError:
+        return True
+    except (FileNotFoundError, ProcessLookupError, OSError, ValueError, TypeError, json.JSONDecodeError):
+        return False
 
 
 def _peek_flags():
@@ -245,45 +275,6 @@ def port_is_open(port, timeout=PORT_PROBE_TIMEOUT_S):
         return False
 
 
-def _contains_model(value, alias):
-    if isinstance(value, str):
-        return value == alias
-    if isinstance(value, list):
-        return any(_contains_model(item, alias) for item in value)
-    if isinstance(value, dict):
-        if any(value.get(key) == alias for key in ("model_tag", "model", "name", "tag")):
-            return True
-        return any(_contains_model(item, alias) for item in value.values())
-    return False
-
-
-def _turbohaul_model_state(port, alias):
-    """Return a model-specific manager state, or None when this is not Turbohaul."""
-    try:
-        response = subprocess.run(
-            ["curl", "-s", "--max-time", "3", f"http://127.0.0.1:{port}/status"],
-            capture_output=True, text=True, timeout=5,
-        )
-        if response.returncode != 0:
-            return None
-        status = json.loads(response.stdout)
-        if not isinstance(status, dict) or not isinstance(status.get("residents"), list):
-            return None
-        if any(
-            _contains_model(status.get(key), alias)
-            for key in ("active", "grace", "idle_hot", "residents")
-        ):
-            return "ready"
-        if any(
-            _contains_model(status.get(key), alias)
-            for key in ("loading", "queue")
-        ):
-            return "loading"
-        return "down"
-    except Exception:
-        return None
-
-
 def check_port(port):
     """Full HTTP health check — model is actually serving completions."""
     try:
@@ -307,17 +298,6 @@ def check_port(port):
         )
         if r2.returncode == 0 and '"data"' in r2.stdout:
             return True
-        # Turbohaul Manager owns model sidecars behind one stable port and
-        # exposes /status instead of pretending the manager itself is a model.
-        r3 = subprocess.run(
-            ["curl", "-s", "--max-time", "3", f"http://127.0.0.1:{port}/status"],
-            capture_output=True, text=True, timeout=5
-        )
-        if r3.returncode == 0:
-            try:
-                return isinstance(json.loads(r3.stdout).get("residents"), list)
-            except (json.JSONDecodeError, AttributeError):
-                pass
         return False
     except Exception:
         return False
@@ -384,8 +364,7 @@ def _runtime_policy_route(state, role):
             return None
         return {
             **main,
-            # Shared auxiliary work is the same concrete Turbohaul resident.
-            # `auto:` is a public Turbofit selector, not a valid manager tag.
+            # Shared auxiliary work uses the same concrete native runtime.
             "alias": main.get("alias", "main"),
             "mode": "shared-main",
             "shared_main_alias": main.get("alias"),
@@ -464,17 +443,12 @@ def backend_state(port, alias=None):
 
     The port-SELF_PORT guard prevents a model registered on the gateway's own
     port from being picked (which would create a recursive proxy loop).
-    Turbohaul's shared manager port is checked against the requested model tag;
-    another resident model cannot make this route appear ready.
+    Native route publication happens only after its exact process verifies.
     """
     if not port or port == SELF_PORT:
         return "down"
     if not port_is_open(port):
         return "down"
-    if alias:
-        manager_state = _turbohaul_model_state(port, alias)
-        if manager_state is not None:
-            return manager_state
     if check_port(port):
         return "ready"
     return "loading"
@@ -483,15 +457,24 @@ def backend_state(port, alias=None):
 # ─── Backend resolvers ────────────────────────────────────────────────────────
 
 def _get_api_key(provider):
-    """Read the API key for a provider from ~/.hermes/auth.json."""
+    """Resolve refresh-aware Hermes credentials, then legacy static tokens."""
     if not provider:
         return None
+    prov_key = provider.replace("custom:", "") if provider.startswith("custom:") else provider
+    if prov_key == "nous":
+        try:
+            from hermes_cli.auth import resolve_nous_runtime_credentials
+
+            credentials = resolve_nous_runtime_credentials(timeout_seconds=15)
+            api_key = str(credentials.get("api_key") or "").strip()
+            if api_key:
+                return api_key
+        except Exception as exc:
+            log.warning("Nous runtime credential resolution failed: %s", exc)
     auth_file = os.path.join(HERMES_HOME, "auth.json")
     try:
         with open(auth_file) as f:
             auth = json.load(f)
-        # Strip "custom:" prefix if present
-        prov_key = provider.replace("custom:", "") if provider.startswith("custom:") else provider
         return auth.get("providers", {}).get(prov_key, {}).get("access_token")
     except Exception:
         return None
@@ -593,6 +576,21 @@ def resolve_main():
     Returns: dict with alias, base_url, port, [is_api, model_id, provider]
              OR None if nothing is reachable.
     """
+    if campaign_lease_active():
+        # Campaign models are measurement subjects, not production capacity.
+        # Never inspect or route to their ports: doing so contaminates evidence
+        # and makes Hermes unavailable whenever the benchmark lease owns GPUs.
+        if ALLOW_API:
+            api = _find_api_fallback_in_profiles()
+            if api and _get_api_key(api.get("provider")):
+                result = {**api, "state": "ready", "campaign_lease": True}
+                _cache["main"] = result
+                _cache["ts"] = time.time()
+                return result
+        _cache["main"] = None
+        _cache["ts"] = time.time()
+        return None
+
     override = runtime_override("main")
     if override:
         return override
@@ -651,6 +649,20 @@ def resolve_main():
 def resolve_aux():
     """Resolve the best available AUX backend (read-only resolution; aux failures
     don't stall the request — they degrade silently so the main path keeps working)."""
+    if campaign_lease_active():
+        main = resolve_main()
+        if main and main.get("state") == "ready":
+            result = {
+                **main,
+                "alias": f"auto:{main.get('alias', 'main')}",
+                "mode": "shared-main",
+                "shared_main_alias": main.get("alias"),
+            }
+            _cache["aux"] = result
+            _cache["ts"] = time.time()
+            return result
+        return None
+
     override = runtime_override("aux")
     if override:
         return override
@@ -816,7 +828,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
         suffix = path[len("/v1/"):]
         routed_path = f"/{role}/v1/{suffix}"
         if role == "aux":
-            self._handle_aux(routed_path, body=body)
+            self._handle_aux(routed_path, body=body, required=True)
         else:
             self._handle_main(routed_path, body=body)
 
@@ -878,10 +890,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
         if status >= 400:
             self._send_503(f"All backends failed (last status {status})", tried=" → ".join(tried))
 
-    def _handle_aux(self, path, body=None):
+    def _handle_aux(self, path, body=None, required=False):
         upstream_path = path[len("/aux/"):] or "/"
         backend = resolve_aux()
         if not backend:
+            if required:
+                self._send_503("Required auxiliary backend is unavailable", tried="active:aux")
+                return
             # Aux failures are non-fatal — return 200 with a structured "no aux" marker
             # so the main path's request still completes
             self._send_empty(204, {"X-Turbofit-Aux": "unavailable"})
@@ -895,9 +910,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 result = self._proxy_to({**api, "state": "ready"}, upstream_path, body=body, role="aux")
                 if result.get("response_sent"):
                     return
-        # If even the aux fallback failed, the main path still got its response
-        # above (we proxied main first), so we just return 204 here.
-        self._send_empty(204, {"X-Turbofit-Aux": "unavailable"})
+        # If even the aux fallback failed, optional internal auxiliary work may
+        # degrade silently. A universal-provider active:aux request is required
+        # work and must return a retryable error instead of a false success.
+        if required:
+            self._send_503("Required auxiliary backend failed", tried=backend.get("alias"))
+        else:
+            self._send_empty(204, {"X-Turbofit-Aux": "unavailable"})
 
     def _proxy_to(self, backend, upstream_path, body=None, role=None):
         target = f"{backend['base_url']}/{upstream_path.lstrip('/')}"
@@ -1178,8 +1197,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
             "error": "no_backend",
             "message": reason,
             "tried": tried,
-            "hint": "If this persists, run `serve status` and check `serve vram`.",
-        })
+            "hint": "If this persists, run `scripts/turbofit-runtime status` and verify the configured API login.",
+        }, {"Retry-After": "5"})
 
     def _send_status(self):
         main = resolve_main()
@@ -1245,7 +1264,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     port = int(os.environ.get("TURBOFIT_GATEWAY_PORT", "8091"))
-    server = ThreadingHTTPServer(("127.0.0.1", port), GatewayHandler)
+    host = os.environ.get("TURBOFIT_GATEWAY_HOST", "127.0.0.1")
+    server = ThreadingHTTPServer((host, port), GatewayHandler)
     log.info(f"turbofit-gateway/2.0 on :{port} — graceful degradation active")
     log.info(f"  /main/ → stall-while-loading ({STALL_TIMEOUT_S:.0f}s) → API fallback")
     log.info(f"  /aux/  → ready-or-skip (no stall)")

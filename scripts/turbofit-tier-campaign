@@ -1,0 +1,230 @@
+#!/usr/bin/env python3
+"""Run the focused hardware-tier ceiling tournaments."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.backend import CampaignBackend
+from turbofit_runtime.campaign import CampaignRunner
+from turbofit_runtime.catalog_campaign import (
+    CatalogExecutorAdapter,
+    CatalogRegistryAdapter,
+    build_configuration_index,
+    build_selected_campaign_matrix,
+)
+from turbofit_runtime.evidence import EvidencePublisher
+from turbofit_runtime.executor import LocalPairExecutor
+from turbofit_runtime.gpu import GPUClearGate
+from turbofit_runtime.hardware import probe_hardware
+from turbofit_runtime.model_catalog import ModelCatalog
+from turbofit_runtime.recipes import RecipeBook
+from turbofit_runtime.registry import ProfileRegistry
+from turbofit_runtime.schema import MatrixRow, load_matrix
+from turbofit_runtime.selection import ProfileCatalog
+from turbofit_runtime.tier_tournament import candidate_ids, load_tournaments
+
+CATALOG = ROOT / "references/model-catalog.json"
+CONFIGURATIONS = ROOT / "references/configuration-matrix.json"
+TOURNAMENTS = ROOT / "references/hardware-tier-tournaments.json"
+POLICY = ROOT / "references/catalog-campaign-policy.json"
+MATRIX = Path.home() / ".local/state/turbofit/tier-campaign-matrix.json"
+RECIPES = ROOT / "references/model-recipes.json"
+STATE = ROOT / "references/catalog-campaign-state.json"
+RESULTS = ROOT / "references/results/catalog-campaign"
+PROFILES = ROOT / "references/successful-runtime-profiles.json"
+WIKI = Path(os.environ.get(
+    "TURBOFIT_TIER_WIKI",
+    str(Path.home() / ".hermes/wiki/topics/turbofit/hardware-tier-tournaments.md"),
+))
+EVIDENCE = WIKI.parent / "evidence"
+
+
+def planned(tier_ids: set[str] | None = None) -> tuple[ModelCatalog, dict, dict, dict[str, str]]:
+    catalog = ModelCatalog.load(CATALOG)
+    configurations = json.loads(CONFIGURATIONS.read_text(encoding="utf-8"))
+    tournaments = load_tournaments(TOURNAMENTS, configurations)
+    selected = {
+        candidate
+        for tier in tournaments["tiers"]
+        if tier_ids is None or tier["id"] in tier_ids
+        for candidate in tier["candidates"]
+    }
+    if tier_ids is not None:
+        known = {tier["id"] for tier in tournaments["tiers"]}
+        if missing := tier_ids - known:
+            raise ValueError(f"unknown hardware tiers: {sorted(missing)}")
+    build_selected_campaign_matrix(configurations, catalog, MATRIX, selected)
+    by_model = {item.id: item for item in catalog.models}
+    display_ids: dict[str, str] = {}
+    for item in configurations["rows"]:
+        if item["id"] not in selected:
+            continue
+        main = by_model[item["main"]]
+        aux_id = item["auxiliary"]
+        aux_name = "auto" if aux_id == "auto" else by_model[aux_id].name
+        display_ids[item["id"]] = MatrixRow.make_id(main.name, aux_name, int(item["context"]))
+    return catalog, configurations, tournaments, display_ids
+
+
+def deferred_display_ids(configurations: dict, display_ids: dict[str, str]) -> frozenset[str]:
+    policy = json.loads(POLICY.read_text(encoding="utf-8")) if POLICY.exists() else {}
+    deferred_models = {str(item) for item in policy.get("deferred_models", [])}
+    return frozenset(
+        display_ids[item["id"]]
+        for item in configurations["rows"]
+        if item["id"] in display_ids
+        and (item["main"] in deferred_models or item["auxiliary"] in deferred_models)
+    )
+
+
+def physical_tier_id() -> str:
+    profiles = ProfileCatalog.from_paths(sorted((ROOT / "runtime-profiles").glob("*gb.yaml")))
+    return profiles.select(probe_hardware(), requested="auto").profile.id
+
+
+def restrict_to_physical_tier(tier_ids: set[str] | None, detected: str) -> set[str]:
+    if tier_ids is not None and tier_ids != {detected}:
+        raise ValueError(
+            f"physical tier campaign requires exact host topology {detected}; requested {sorted(tier_ids)}"
+        )
+    return {detected}
+
+
+def build_runner(tier_ids: set[str] | None = None) -> CampaignRunner:
+    catalog, configurations, _, display_ids = planned(tier_ids)
+    recipes = RecipeBook.load(RECIPES)
+    backend = CampaignBackend(
+        gateway_script=ROOT / "scripts/turbofit-gateway.py",
+        result_dir=RESULTS,
+        runtime_state=Path.home() / ".config/turbofit/tier-campaign-runtime-state.json",
+    )
+    local = LocalPairExecutor(recipes=recipes, backend=backend, result_dir=RESULTS)
+    full_index = build_configuration_index(configurations, catalog)
+    selected_index = {row_id: full_index[row_id] for row_id in display_ids.values()}
+    executor = CatalogExecutorAdapter(local, selected_index)
+    publisher = EvidencePublisher(matrix_path=MATRIX, checklist_path=WIKI, evidence_dir=EVIDENCE)
+    registry = ProfileRegistry(recipes=recipes, profiles_path=PROFILES)
+    registry_adapter = CatalogRegistryAdapter(registry, recipes, selected_index)
+    return CampaignRunner(
+        matrix_path=MATRIX,
+        state_path=STATE,
+        executor=executor,
+        clear_gate=GPUClearGate(),
+        publisher=publisher,
+        registry=registry_adapter,
+        deferred_row_ids=deferred_display_ids(configurations, display_ids),
+    )
+
+
+def status() -> int:
+    _, configurations, tournaments, display_ids = planned()
+    state = json.loads(STATE.read_text(encoding="utf-8")) if STATE.exists() else {"rows": {}}
+    rows = state.get("rows") or {}
+    try:
+        profiles = json.loads(PROFILES.read_text(encoding="utf-8")).get("profiles", {})
+    except (FileNotFoundError, json.JSONDecodeError):
+        profiles = {}
+    runner = build_runner()
+    pending_ids = {row.id for row in runner.pending_rows()}
+    deferred = deferred_display_ids(configurations, display_ids)
+    matrix_rows = {row.id: row for row in load_matrix(MATRIX).rows}
+    tiers = []
+    for tier in tournaments["tiers"]:
+        statuses = []
+        for item in tier["candidates"]:
+            display_id = display_ids[item]
+            if display_id in deferred:
+                statuses.append("deferred")
+                continue
+            record = rows.get(display_id, {})
+            matrix_row = matrix_rows[display_id]
+            current = (
+                record.get("status", "pending")
+                if record.get("recipe_sha256") == runner.executor.recipe_sha256(matrix_row)
+                else "pending"
+            )
+            if display_id in pending_ids:
+                current = "pending"
+            if current == "success":
+                raw_path = Path(str((profiles.get(display_id) or {}).get("raw_result", "")))
+                try:
+                    raw = json.loads(raw_path.read_text(encoding="utf-8"))
+                    memory_mb = int(raw["physical_hardware"]["fingerprint"]["accelerator_memory_mb"])
+                except (FileNotFoundError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+                    memory_mb = 0
+                if memory_mb != int(tier["vram_gb"]) * 1024:
+                    statuses.append("wrong-topology")
+                    continue
+            statuses.append(current)
+        tiers.append({
+            "id": tier["id"],
+            "success": statuses.count("success"),
+            "failed": statuses.count("failed"),
+            "pending": statuses.count("pending") + statuses.count("wrong-topology"),
+            "deferred": statuses.count("deferred"),
+            "wrong_topology": statuses.count("wrong-topology"),
+            "total": len(statuses),
+            "winner": tier["winner"],
+        })
+    print(json.dumps({"physical_tier": physical_tier_id(), "tiers": tiers}, indent=2))
+    return 0
+
+
+def run_campaign(limit: int, tier_ids: set[str] | None = None) -> int:
+    runner = build_runner(tier_ids)
+    outcomes = []
+    for _ in range(limit):
+        outcome = runner.run_one()
+        item = {"row_id": outcome.row_id, "status": outcome.status, "error": outcome.error}
+        outcomes.append(item)
+        print(json.dumps(item), flush=True)
+        if outcome.status == "complete":
+            break
+    failed = sum(item["status"] == "failed" for item in outcomes)
+    print(json.dumps({"runs": len(outcomes), "failed": failed, "state": str(STATE)}, indent=2))
+    return 1 if failed else 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status")
+    dry = sub.add_parser("dry-run")
+    dry.add_argument("--limit", type=int, default=30)
+    dry.add_argument("--tier", action="append", default=[])
+    run_one = sub.add_parser("run-one")
+    run_one.add_argument("--tier", action="append", default=[])
+    run = sub.add_parser("run")
+    run.add_argument("--limit", type=int, default=30)
+    run.add_argument("--tier", action="append", default=[])
+    retry = sub.add_parser("retry-failed")
+    retry.add_argument("--limit", type=int)
+    retry.add_argument("--tier", action="append", default=[])
+    args = parser.parse_args()
+    if args.command == "status":
+        return status()
+    tier_ids = set(getattr(args, "tier", [])) or None
+    detected = physical_tier_id()
+    tier_ids = restrict_to_physical_tier(tier_ids, detected)
+    runner = build_runner(tier_ids)
+    if args.command == "dry-run":
+        print(json.dumps([row.to_dict() for row in runner.pending_rows()[:args.limit]], indent=2))
+        return 0
+    if args.command == "retry-failed":
+        rows = runner.retry_failed(limit=args.limit)
+        print(json.dumps({"requeued": len(rows), "rows": list(rows)}, indent=2))
+        return 0
+    return run_campaign(1 if args.command == "run-one" else args.limit, tier_ids)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

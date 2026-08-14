@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""Install a native Metal Turbofit test runtime for Apple Silicon.
+"""Install the pinned native Metal runtime and stable gateway for Apple Silicon.
 
-This intentionally bypasses Turbohaul Manager, whose published runtime is
-NVIDIA/CUDA-only, while preserving Turbofit's existing local gateway and
-stable model IDs.  It never changes Hermes's primary or fallback model.
+It never changes Hermes's primary or fallback model.
 """
 from __future__ import annotations
 
@@ -16,29 +14,22 @@ import plistlib
 import shutil
 import subprocess
 import sys
-import tarfile
-import tempfile
 import time
 from pathlib import Path
 from urllib.request import urlopen
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MODEL = Path.home() / ".local" / "share" / "turbofit" / "models" / "Bonsai-27B-Q1_0.gguf"
+MODEL = Path(os.environ.get("TURBOFIT_MODEL_ROOT", "~/Models/storage/gguf")).expanduser() / "Bonsai-27B/Bonsai-27B-Q1_0.gguf"
 MODEL_SHA256 = "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0"
 MODEL_ALIAS = "bonsai-27b-1bit-64k-main"
-LLAMA_RELEASE = "b10173"
-LLAMA_ARCHIVE_SHA256 = "fcbe78bae047bd36a5c87f36a456b437ab0e8ba32336fb75583127e6013f8809"
-LLAMA_RELEASE_URL = (
-    "https://github.com/ggml-org/llama.cpp/releases/download/"
-    f"{LLAMA_RELEASE}/llama-{LLAMA_RELEASE}-bin-macos-arm64.tar.gz"
-)
+LLAMA_REVISION = "6ea215d171fd31df943bf1ac8227129f2b963160"
 STATE_DIR = Path.home() / ".local" / "state" / "turbofit"
 ROUTES = STATE_DIR / "runtime-state.json"
 LOG_DIR = Path.home() / ".local" / "share" / "turbofit" / "logs"
 RUNTIME_DIR = Path.home() / ".local" / "share" / "turbofit" / "runtimes"
-LLAMA_RUNTIME_DIR = RUNTIME_DIR / f"llama-{LLAMA_RELEASE}"
-LLAMA_RUNTIME_BINARY = LLAMA_RUNTIME_DIR / "llama-server"
+LLAMA_RUNTIME_DIR = RUNTIME_DIR / f"llama.cpp-{LLAMA_REVISION}"
+LLAMA_RUNTIME_BINARY = LLAMA_RUNTIME_DIR / "build-metal" / "bin" / "llama-server"
 AGENTS_DIR = Path.home() / "Library" / "LaunchAgents"
 MODEL_PLIST = AGENTS_DIR / "com.hermes.turbofit-model.plist"
 GATEWAY_PLIST = AGENTS_DIR / "com.hermes.turbofit-gateway.plist"
@@ -77,52 +68,13 @@ def _llama_server() -> str:
 
 
 def _install_llama_runtime() -> str:
-    if LLAMA_RUNTIME_BINARY.is_file():
-        if LLAMA_RELEASE.removeprefix("b") not in _llama_version(LLAMA_RUNTIME_BINARY):
-            raise RuntimeError(f"unexpected llama.cpp runtime at {LLAMA_RUNTIME_BINARY}")
-        return str(LLAMA_RUNTIME_BINARY)
-
-    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="turbofit-llama-") as temporary:
-        temporary_root = Path(temporary)
-        archive_path = temporary_root / "llama.tar.gz"
-        with urlopen(LLAMA_RELEASE_URL, timeout=60) as response:
-            with archive_path.open("wb") as output:
-                shutil.copyfileobj(response, output)
-        actual = _sha256(archive_path)
-        if actual != LLAMA_ARCHIVE_SHA256:
-            raise RuntimeError(
-                f"llama.cpp SHA-256 mismatch: expected {LLAMA_ARCHIVE_SHA256}, got {actual}"
-            )
-
-        extracted_root = temporary_root / "extracted"
-        extracted_root.mkdir()
-        with tarfile.open(archive_path, "r:gz") as archive:
-            for member in archive.getmembers():
-                destination = (extracted_root / member.name).resolve()
-                if os.path.commonpath((extracted_root.resolve(), destination)) != str(
-                    extracted_root.resolve()
-                ):
-                    raise RuntimeError(f"unsafe path in llama.cpp archive: {member.name}")
-                if member.issym() or member.islnk():
-                    link = (destination.parent / member.linkname).resolve()
-                    if os.path.commonpath((extracted_root.resolve(), link)) != str(
-                        extracted_root.resolve()
-                    ):
-                        raise RuntimeError(
-                            f"unsafe link in llama.cpp archive: {member.name}"
-                        )
-            archive.extractall(extracted_root)
-
-        extracted_runtime = extracted_root / f"llama-{LLAMA_RELEASE}"
-        extracted_binary = extracted_runtime / "llama-server"
-        if not extracted_binary.is_file():
-            raise RuntimeError("llama.cpp archive did not contain llama-server")
-        if LLAMA_RELEASE.removeprefix("b") not in _llama_version(extracted_binary):
-            raise RuntimeError("llama.cpp archive version does not match the pinned release")
-        staging = RUNTIME_DIR / f".llama-{LLAMA_RELEASE}-{os.getpid()}"
-        shutil.copytree(extracted_runtime, staging)
-        os.replace(staging, LLAMA_RUNTIME_DIR)
+    action = "check" if LLAMA_RUNTIME_BINARY.is_file() else "install"
+    subprocess.run(
+        [sys.executable, str(ROOT / "scripts/install-dspark-runtime"), action, "--backend", "metal"],
+        check=True,
+    )
+    if not LLAMA_RUNTIME_BINARY.is_file():
+        raise RuntimeError("pinned Metal llama.cpp installer did not produce llama-server")
     return str(LLAMA_RUNTIME_BINARY)
 
 

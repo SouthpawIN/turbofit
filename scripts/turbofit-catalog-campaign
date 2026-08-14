@@ -1,0 +1,245 @@
+#!/usr/bin/env python3
+"""Run and inspect every canonical model/aux/context configuration."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.backend import CampaignBackend
+from turbofit_runtime.campaign import CampaignRunner
+from turbofit_runtime.catalog_campaign import (
+    CatalogExecutorAdapter,
+    CatalogRegistryAdapter,
+    build_campaign_matrix,
+    build_configuration_index,
+)
+from turbofit_runtime.evidence import EvidencePublisher
+from turbofit_runtime.executor import LocalPairExecutor
+from turbofit_runtime.gpu import GPUClearGate
+from turbofit_runtime.model_catalog import ModelCatalog
+from turbofit_runtime.recipes import RecipeBook
+from turbofit_runtime.registry import ProfileRegistry
+from turbofit_runtime.schema import load_matrix
+
+CATALOG = ROOT / "references/model-catalog.json"
+CONFIGURATIONS = ROOT / "references/configuration-matrix.json"
+MATRIX = Path.home() / ".local/state/turbofit/catalog-campaign-matrix.json"
+RECIPES = ROOT / "references/model-recipes.json"
+ARCHIVED = ROOT / "references/archived-model-zoo.json"
+POLICY = ROOT / "references/catalog-campaign-policy.json"
+QWEN_RELEASE_READY = Path.home() / ".local/state/turbofit/qwen38-release-ready"
+STATE = ROOT / "references/catalog-campaign-state.json"
+RESULTS = ROOT / "references/results/catalog-campaign"
+PROFILES = ROOT / "references/successful-runtime-profiles.json"
+WIKI = Path(os.environ.get(
+    "TURBOFIT_CATALOG_WIKI",
+    str(Path.home() / ".hermes/wiki/topics/turbofit/catalog-configuration-checklist.md"),
+))
+EVIDENCE = WIKI.parent / "evidence"
+
+
+def canonical() -> tuple[ModelCatalog, dict]:
+    catalog = ModelCatalog.load(CATALOG)
+    configurations = json.loads(CONFIGURATIONS.read_text(encoding="utf-8"))
+    build_campaign_matrix(configurations, catalog, MATRIX)
+    return catalog, configurations
+
+
+def deferred_rows(configurations: dict, catalog: ModelCatalog) -> tuple[frozenset[str], dict]:
+    try:
+        policy = json.loads(POLICY.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return frozenset(), {}
+    if policy.get("schema") != "turbofit.catalog-campaign-policy/v1":
+        raise ValueError("unsupported catalog campaign policy")
+    model_ids = policy.get("deferred_models") or []
+    if not isinstance(model_ids, list) or any(not isinstance(item, str) or not item for item in model_ids):
+        raise ValueError("catalog campaign policy deferred_models must be non-empty strings")
+    deferred_models = frozenset(model_ids)
+    configuration_index = build_configuration_index(configurations, catalog)
+    rows = frozenset(
+        row_id
+        for row_id, row in configuration_index.items()
+        if row.get("main") in deferred_models or row.get("auxiliary") in deferred_models
+    )
+    return rows, policy
+
+
+def build_runner() -> CampaignRunner:
+    catalog, configurations = canonical()
+    recipes = RecipeBook.load(RECIPES)
+    backend = CampaignBackend(
+        gateway_script=ROOT / "scripts/turbofit-gateway.py",
+        result_dir=RESULTS,
+        runtime_state=Path.home() / ".config/turbofit/catalog-campaign-runtime-state.json",
+    )
+    local = LocalPairExecutor(recipes=recipes, backend=backend, result_dir=RESULTS)
+    configuration_index = build_configuration_index(configurations, catalog)
+    deferred_row_ids, _ = deferred_rows(configurations, catalog)
+    executor = CatalogExecutorAdapter(local, configuration_index)
+    publisher = EvidencePublisher(matrix_path=MATRIX, checklist_path=WIKI, evidence_dir=EVIDENCE)
+    publisher.ensure_checklist()
+    registry = ProfileRegistry(recipes=recipes, profiles_path=PROFILES)
+    archived = json.loads(ARCHIVED.read_text(encoding="utf-8"))
+    archived_ids = {str(item["id"]) for item in archived.get("models", [])}
+    registry_adapter = CatalogRegistryAdapter(
+        registry,
+        recipes,
+        configuration_index,
+        excluded_main_ids=archived_ids,
+    )
+    return CampaignRunner(
+        matrix_path=MATRIX,
+        state_path=STATE,
+        executor=executor,
+        clear_gate=GPUClearGate(),
+        publisher=publisher,
+        registry=registry_adapter,
+        deferred_row_ids=deferred_row_ids,
+    )
+
+
+def status() -> int:
+    catalog, configurations = canonical()
+    matrix = load_matrix(MATRIX)
+    runner = build_runner()
+    try:
+        campaign = json.loads(STATE.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        campaign = {"rows": {}}
+    valid_ids = {row.id for row in matrix.rows}
+    attempts = {
+        row_id: value
+        for row_id, value in (campaign.get("rows") or {}).items()
+        if row_id in valid_ids
+    }
+    pending_ids = {row.id for row in runner.pending_rows()}
+    unresolved_ids = {row.id for row in runner.unresolved_rows()}
+    deferred_ids, policy = deferred_rows(configurations, catalog)
+    current = {}
+    for row in matrix.rows:
+        record = attempts.get(row.id) or {}
+        if record.get("recipe_sha256") == runner.executor.recipe_sha256(row):
+            current[row.id] = record
+    current_success = sum(
+        row_id not in pending_ids and item.get("status") == "success"
+        for row_id, item in current.items()
+    )
+    current_failed = sum(
+        item.get("status") == "hardware-incompatible"
+        for row_id, item in current.items()
+    )
+    current_blocked = sum(
+        row_id not in pending_ids and item.get("status") == "blocked"
+        for row_id, item in current.items()
+    )
+    print(json.dumps({
+        "matrix": {"total": len(matrix.rows)},
+        "current_recipe": {
+            "attempted": len(current),
+            "successful": current_success,
+            "terminal_failed": current_failed,
+            "blocked": current_blocked,
+            "pending": len(unresolved_ids),
+            "runnable": len(pending_ids),
+            "retry_waiting": len(unresolved_ids - pending_ids),
+            "deferred": len(deferred_ids),
+            "resolved": len(matrix.rows) - len(unresolved_ids) - len(deferred_ids),
+        },
+        "policy": {
+            "deferred": len(deferred_ids),
+            "reason": policy.get("reason"),
+            "replacement_candidate": policy.get("replacement_candidate"),
+        },
+        "historical_attempts": {
+            "rows_attempted": len(attempts),
+            "last_status_success": sum(item.get("status") == "success" for item in attempts.values()),
+            "last_status_failed": sum(item.get("status") == "failed" for item in attempts.values()),
+            "note": "historical statuses may use stale recipes and are not release-eligible",
+        },
+    }, indent=2))
+    return 0
+
+
+def dry_run(limit: int | None) -> int:
+    pending = build_runner().pending_rows()
+    print(json.dumps([row.to_dict() for row in pending[:limit]], indent=2))
+    return 0
+
+
+def run_campaign(limit: int | None) -> int:
+    runner = build_runner()
+    outcomes = []
+    while limit is None or len(outcomes) < limit:
+        outcome = runner.run_one()
+        item = {"row_id": outcome.row_id, "status": outcome.status, "error": outcome.error}
+        outcomes.append(item)
+        print(json.dumps(item), flush=True)
+        if QWEN_RELEASE_READY.exists():
+            print(json.dumps({"status": "paused-for-qwen38-release"}), flush=True)
+            break
+        if outcome.status == "complete":
+            break
+    failed = sum(item["status"] == "failed" for item in outcomes)
+    print(json.dumps({"runs": len(outcomes), "failed": failed, "state": str(STATE)}, indent=2))
+    return 1 if failed else 0
+
+
+def run_id(row_id: str) -> int:
+    runner = build_runner()
+    matches = [row for row in load_matrix(MATRIX).rows if row.id == row_id]
+    if len(matches) != 1:
+        raise ValueError(f"catalog row not found exactly once: {row_id}")
+    outcome = runner.run_row(matches[0])
+    print(json.dumps({"row_id": outcome.row_id, "status": outcome.status, "error": outcome.error}, indent=2))
+    return 0 if outcome.status == "success" else 1
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status")
+    dry = sub.add_parser("dry-run")
+    dry.add_argument("--limit", type=int, default=10)
+    sub.add_parser("run-one")
+    selected = sub.add_parser("run-id")
+    selected.add_argument("row_id")
+    run = sub.add_parser("run")
+    run.add_argument("--limit", type=int)
+    retry = sub.add_parser("retry-failed")
+    retry.add_argument("--limit", type=int)
+    incompatible = sub.add_parser("classify-hardware-incompatible")
+    incompatible.add_argument("row_id")
+    incompatible.add_argument("evidence", type=Path)
+    args = parser.parse_args()
+    if args.command == "status":
+        return status()
+    if args.command == "dry-run":
+        return dry_run(args.limit)
+    if args.command == "retry-failed":
+        rows = build_runner().retry_failed(limit=args.limit)
+        print(json.dumps({"requeued": len(rows), "rows": list(rows)}, indent=2))
+        return 0
+    if args.command == "run-id":
+        return run_id(args.row_id)
+    if args.command == "classify-hardware-incompatible":
+        build_runner().mark_hardware_incompatible(args.row_id, args.evidence)
+        print(json.dumps({
+            "row_id": args.row_id,
+            "status": "hardware-incompatible",
+            "evidence": str(args.evidence),
+        }, indent=2))
+        return 0
+    return run_campaign(1 if args.command == "run-one" else args.limit)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

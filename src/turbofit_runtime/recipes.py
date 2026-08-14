@@ -2,11 +2,39 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 from .schema import MatrixRow
+
+
+def resolve_native_backend(
+    backend_name: str | None = None,
+    *,
+    platform_name: str | None = None,
+    which=shutil.which,
+) -> str:
+    """Select the native accelerator without assuming NVIDIA is present."""
+    explicit = str(
+        backend_name or os.environ.get("TURBOFIT_ACCELERATOR_BACKEND") or ""
+    ).lower()
+    if explicit:
+        if explicit not in {"cuda", "rocm", "metal", "cpu"}:
+            raise ValueError(f"unsupported native backend: {explicit}")
+        return explicit
+    host = str(platform_name or sys.platform).lower()
+    if host == "darwin":
+        return "metal"
+    if which("nvidia-smi"):
+        return "cuda"
+    if host.startswith("linux") and (
+        which("rocm-smi") or which("amd-smi") or which("rocminfo")
+    ):
+        return "rocm"
+    return "cpu"
 
 
 @dataclass(frozen=True)
@@ -19,9 +47,6 @@ class ResolvedComponent:
     gpu: str
     port: int
     command: tuple[str, ...]
-    image: str = ""
-    environment: dict[str, str] | None = None
-    mounts: tuple[str, ...] = ()
     model_path: str = ""
     projector_path: str = ""
 
@@ -37,18 +62,45 @@ class ResolvedRecipe:
 
 
 class RecipeBook:
-    def __init__(self, data: dict, *, platform_name: str | None = None) -> None:
+    def __init__(
+        self,
+        data: dict,
+        *,
+        platform_name: str | None = None,
+        backend_name: str | None = None,
+    ) -> None:
         if data.get("schema_version") != 1:
             raise ValueError(f"unsupported recipe schema: {data.get('schema_version')}")
         self.data = data
         self.models = data.get("models") or {}
         self.variants = data.get("variants") or {}
-        self.atomic_binary = str(data["atomic_binary"])
         self.platform_name = platform_name or sys.platform
+        self.model_root = Path(
+            os.environ.get("TURBOFIT_MODEL_ROOT", "~/Models/storage/gguf")
+        ).expanduser()
+        self.backend_name = resolve_native_backend(
+            backend_name,
+            platform_name=self.platform_name,
+        )
+        binaries = data.get("native_binaries") or {}
+        try:
+            self.atomic_binary = str(binaries[self.backend_name])
+        except KeyError:
+            self.atomic_binary = str(data["atomic_binary"])
 
     @classmethod
-    def load(cls, path: Path | str, *, platform_name: str | None = None) -> "RecipeBook":
-        return cls(json.loads(Path(path).read_text()), platform_name=platform_name)
+    def load(
+        cls,
+        path: Path | str,
+        *,
+        platform_name: str | None = None,
+        backend_name: str | None = None,
+    ) -> "RecipeBook":
+        return cls(
+            json.loads(Path(path).read_text()),
+            platform_name=platform_name,
+            backend_name=backend_name,
+        )
 
     @staticmethod
     def _context_method(spec: dict, context: int) -> str:
@@ -68,85 +120,77 @@ class RecipeBook:
             raise ValueError(f"unknown model family: {name}")
         return name, dict(self.models[name])
 
-    def _component(self, family: str, role: str, context: int, gpu: str) -> ResolvedComponent:
+    def _component(
+        self,
+        family: str,
+        role: str,
+        context: int,
+        gpu: str,
+        *,
+        port_override: int | None = None,
+        alias_override: str | None = None,
+    ) -> ResolvedComponent:
         _, spec = self._spec(family)
         method = self._context_method(spec, context)
         context_override = (spec.get("context_overrides") or {}).get(str(context)) or {}
         kind = str(spec["kind"])
-        alias = str(spec["alias"])
-        port = int(spec["port"])
-        if kind == "docker":
-            root = Path(str(spec["model_root"]))
-            model = str(spec["model"])
-            projector = str(spec.get("projector", ""))
-            environment = {
-                "PORT": str(port),
-                "CTX": str(context),
-                "MODEL": f"/models/{model}",
-                "MAIN_GPU": "0",
-                "NGL": "99",
-            }
-            if projector:
-                environment["MMPROJ"] = f"/models/{projector}"
-            if method == "dspark":
-                environment.update({
-                    "DRAFT_MODEL": f"/models/{spec['draft']}",
-                    "DRAFT_NGL": "99",
-                    "SPEC_DRAFT_N_MAX": str(spec.get("draft_n_max", 4)),
-                })
-            command: list[str] = ["--jinja"]
-            if context_override.get("split_mode"):
-                command.extend(["--split-mode", str(context_override["split_mode"])])
-            if context_override.get("tensor_split"):
-                command.extend(["--tensor-split", str(context_override["tensor_split"])])
-            scaling = spec.get("context_scaling") or {}
-            native_context = int(spec.get("native_context", context))
-            if context > native_context and scaling:
-                command.extend([
-                    "--rope-scaling", str(scaling["method"]),
-                    "--rope-scale", str(scaling["scale"]),
-                    "--yarn-orig-ctx", str(scaling["original_context"]),
-                ])
-            if self.platform_name == "darwin":
-                native_command = [
-                    self.atomic_binary, "-m", str(root / model),
-                    "--host", "127.0.0.1", "--port", str(port),
-                    "-c", str(context), "-ngl", "99", "-fa", "on",
-                    *command,
-                ]
-                if method == "dspark":
-                    native_command.extend([
-                        "--model-draft", str(root / str(spec["draft"])),
-                        "--spec-type", "draft-dspark",
-                        "--spec-draft-n-max", str(spec.get("draft_n_max", 4)),
-                        "-ngld", "99",
-                    ])
-                if projector:
-                    native_command.extend(["--mmproj", str(root / projector)])
-                return ResolvedComponent(
-                    role=role, family=family, alias=alias, kind="process", method=method,
-                    gpu=gpu, port=port, command=tuple(native_command),
-                    model_path=str(root / model),
-                    projector_path=str(root / projector) if projector else "",
-                )
-            return ResolvedComponent(
-                role=role, family=family, alias=alias, kind=kind, method=method,
-                gpu=gpu, port=port, command=tuple(command), image=str(spec["image"]),
-                environment=environment, mounts=(f"{root}:/models:ro",),
-                model_path=str(root / model),
-                projector_path=str(root / projector) if projector else "",
-            )
+        alias = alias_override or str(spec["alias"])
+        port = port_override or int(spec["port"])
+        component_binaries = spec.get("native_binaries") or {}
+        binary_value = component_binaries.get(
+            self.backend_name, spec.get("binary", self.atomic_binary)
+        )
+        binary = str(Path(str(binary_value)).expanduser())
         if kind != "process":
             raise ValueError(f"unsupported recipe kind: {kind}")
-        model = str(spec["model"])
-        projector = str(spec.get("projector", ""))
-        fit = str(context_override.get("fit", "on"))
-        command = [
-            self.atomic_binary, "-m", model,
-            "--host", "127.0.0.1", "--port", str(port),
-            "-c", str(context), "-ngl", str(context_override.get("gpu_layers", 99)), "--fit", fit, "-fa", "on", "--jinja",
-            "--cache-type-k", "q4_0", "--cache-type-v", "q4_0", "--parallel", "1",
-        ]
+        root_value = str(spec.get("model_root", "")).replace(
+            "${TURBOFIT_MODEL_ROOT}", str(self.model_root)
+        )
+        root = Path(root_value).expanduser()
+
+        def artifact(value: str) -> str:
+            path = Path(
+                value.replace("${TURBOFIT_MODEL_ROOT}", str(self.model_root))
+            ).expanduser()
+            return str(path if path.is_absolute() or not root else root / path)
+
+        model = artifact(str(spec["model"]))
+        projector = artifact(str(spec.get("projector", ""))) if spec.get("projector") else ""
+        fit_value = context_override.get("fit", spec.get("fit", "on"))
+        fit = "on" if fit_value is True or str(fit_value).lower() in {"on", "true", "1"} else "off"
+        default_batch = 512 if spec.get("large", False) else 2048
+        default_ubatch = 64 if spec.get("large", False) else 512
+        batch_size = int(context_override.get("batch_size", spec.get("batch_size", default_batch)))
+        ubatch_size = int(context_override.get("ubatch_size", spec.get("ubatch_size", default_ubatch)))
+        if not 1 <= ubatch_size <= batch_size:
+            raise ValueError(f"invalid batch/ubatch recipe for {family}: {batch_size}/{ubatch_size}")
+        runtime_flavor = str(spec.get("runtime_flavor", "mainline"))
+        if runtime_flavor == "ik":
+            command = [
+                binary, "-m", model,
+                "--host", "127.0.0.1", "--port", str(port), "--alias", alias,
+                "-c", str(context), "-ngl", str(context_override.get("gpu_layers", 99)),
+                "-fa", "on", "--jinja", "-b", str(batch_size), "-ub", str(ubatch_size),
+                "--parallel", "1",
+            ]
+            if fit == "on":
+                command.append("--fit")
+            if spec.get("no_mmap"):
+                command.append("--no-mmap")
+            if spec.get("dsa"):
+                command.extend(["-mla", "1", "-dsa", "-fidx"])
+            if spec.get("worst_graph_tokens") is not None:
+                command.extend(["-wgt", str(spec["worst_graph_tokens"])])
+        elif runtime_flavor == "mainline":
+            command = [
+                binary, "-m", model,
+                "--host", "127.0.0.1", "--port", str(port), "--alias", alias,
+                "-c", str(context), "-ngl", str(context_override.get("gpu_layers", "auto")), "--fit", fit, "-fa", "on", "--jinja",
+                "-b", str(batch_size), "-ub", str(ubatch_size),
+                "--cache-type-k", "q4_0", "--cache-type-v", "q4_0", "--parallel", "1",
+            ]
+        else:
+            raise ValueError(f"unsupported runtime flavor for {family}: {runtime_flavor}")
         if context_override.get("split_mode"):
             command.extend(["--split-mode", str(context_override["split_mode"])])
         if context_override.get("tensor_split"):
@@ -155,8 +199,11 @@ class RecipeBook:
             command.extend(["--main-gpu", str(context_override["main_gpu"])])
         if context_override.get("kv_offload") is False:
             command.append("--no-kv-offload")
-        if context_override.get("n_cpu_moe") is not None:
-            command.extend(["--n-cpu-moe", str(context_override["n_cpu_moe"])])
+        n_cpu_moe = context_override.get("n_cpu_moe", spec.get("n_cpu_moe"))
+        if n_cpu_moe is not None:
+            command.extend(["--n-cpu-moe", str(n_cpu_moe)])
+        if context_override.get("cpu_moe", spec.get("cpu_moe")) is True:
+            command.append("--cpu-moe")
         scaling = spec.get("context_scaling") or {}
         native_context = int(spec.get("native_context", context))
         if context > native_context and scaling:
@@ -166,16 +213,22 @@ class RecipeBook:
                 "--yarn-orig-ctx", str(scaling["original_context"]),
             ])
         if method == "mtp":
-            command.extend(["--spec-type", "draft-mtp"])
+            draft = artifact(str(spec.get("draft", ""))) if spec.get("draft") else ""
+            if draft:
+                command.extend(["--model-draft", draft])
+            command.extend([
+                "--spec-type",
+                "mtp:n_max=4,p_min=0.5" if runtime_flavor == "ik" else "draft-mtp",
+            ])
         if method == "dspark":
-            draft = str(spec.get("draft", ""))
+            draft = artifact(str(spec.get("draft", ""))) if spec.get("draft") else ""
             if not draft:
                 raise ValueError(f"DSpark recipe for {family} requires a draft model")
             command.extend([
                 "--model-draft", draft,
                 "--spec-type", "draft-dspark",
                 "--spec-draft-n-max", str(spec.get("draft_n_max", 4)),
-                "-ngld", "99",
+                "-ngld", str(context_override.get("draft_gpu_layers", "auto")),
             ])
         if projector:
             command.extend(["--mmproj", projector])
@@ -183,6 +236,32 @@ class RecipeBook:
             role=role, family=family, alias=alias, kind=kind, method=method,
             gpu=gpu, port=port, command=tuple(command),
             model_path=model, projector_path=projector,
+        )
+
+    def resolve_component(
+        self,
+        family: str,
+        *,
+        role: str,
+        gpu: str,
+        port: int,
+        context: int,
+        alias: str | None = None,
+    ) -> ResolvedComponent:
+        """Resolve one native process without exposing private recipe structure."""
+        if role not in {"main", "aux"}:
+            raise ValueError("role must be main or aux")
+        if not 1 <= port <= 65535:
+            raise ValueError("port must be in 1..65535")
+        if context <= 0:
+            raise ValueError("context must be positive")
+        return self._component(
+            family,
+            role,
+            context,
+            gpu,
+            port_override=port,
+            alias_override=alias,
         )
 
     def resolve(self, row: MatrixRow) -> ResolvedRecipe:
@@ -206,7 +285,7 @@ class RecipeBook:
         override_gpu = str(main_override.get("gpu", ""))
         if aux_name == "auto":
             main_gpu = override_gpu or ("0,1" if main_large else "0")
-            main = self._component(main_name, "main", context, main_gpu)
+            main = self._component(main_name, "main", context, main_gpu, port_override=11605)
             return ResolvedRecipe(
                 row_id=row_id,
                 profile_name=row_id,
@@ -215,8 +294,14 @@ class RecipeBook:
                 aux_mode="shared-main",
                 components=(main,),
             )
-        aux = self._component(aux_name, "aux", context, "0")
-        main = self._component(main_name, "main", context, override_gpu or ("0,1" if main_large else "1"))
+        aux = self._component(aux_name, "aux", context, "0", port_override=11610)
+        main = self._component(
+            main_name,
+            "main",
+            context,
+            override_gpu or ("0,1" if main_large else "1"),
+            port_override=11605,
+        )
         return ResolvedRecipe(
             row_id=row_id,
             profile_name=row_id,

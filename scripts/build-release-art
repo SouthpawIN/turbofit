@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import random
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "assets"
+OUT.mkdir(exist_ok=True)
+W, H = 1600, 900
+BG = "#070908"
+MINT = "#00d6a3"
+AMBER = "#d9aa50"
+CREAM = "#eee1c4"
+DIM = "#163f35"
+random.seed(2200)
+
+
+def particles(n=260):
+    dots=[]
+    for _ in range(n):
+        x=random.randrange(12,W-12); y=random.randrange(12,H-12)
+        r=random.choice([1,1,1,2,2,3]); c=random.choice([MINT,AMBER,AMBER])
+        op=random.choice([.35,.5,.7,.85])
+        dots.append(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{c}" opacity="{op}"/>')
+    return ''.join(dots)
+
+
+def defs():
+    return f'''<defs>
+      <pattern id="grid" width="38" height="38" patternUnits="userSpaceOnUse"><path d="M38 0H0V38" fill="none" stroke="{MINT}" stroke-width=".6" opacity=".08"/></pattern>
+      <pattern id="dots" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="{AMBER}" opacity=".28"/></pattern>
+      <filter id="rough"><feTurbulence baseFrequency=".62" numOctaves="2" seed="22" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.3"/></filter>
+      <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <linearGradient id="fade" x1="0" y1="0" x2="1" y2="1"><stop stop-color="{MINT}" stop-opacity=".20"/><stop offset="1" stop-color="{AMBER}" stop-opacity=".02"/></linearGradient>
+    </defs>'''
+
+
+def frame():
+    return f'''<rect width="{W}" height="{H}" fill="{BG}"/><rect width="{W}" height="{H}" fill="url(#grid)"/>{particles()}
+    <g fill="none" stroke="{AMBER}" stroke-width="2" opacity=".9"><path d="M28 78V28H78 M1522 28h50v50 M28 822v50h50 M1572 822v50h-50"/></g>
+    <path d="M70 90H310" stroke="{MINT}" stroke-width="2"/><path d="M1290 90h240" stroke="{MINT}" stroke-width="2"/>'''
+
+
+def text(x,y,s,size=24,color=CREAM,fam="mono",weight="700",anchor="start",opacity=1):
+    family="DejaVu Sans Mono,monospace" if fam=="mono" else "DejaVu Serif,serif"
+    return f'<text x="{x}" y="{y}" fill="{color}" font-family="{family}" font-size="{size}" font-weight="{weight}" text-anchor="{anchor}" opacity="{opacity}">{s}</text>'
+
+
+def save(name, body):
+    svg=f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">{defs()}{frame()}{body}</svg>'''
+    p=OUT/name
+    p.write_text(svg)
+    print(p)
+
+# 1: Qwen release family
+cards=[]
+coords=[(1010,235),(1250,235),(1490,235),(1010,440),(1250,440),(1490,440)]
+labels=[("Q4_K_M","MTP"),("Q8_0","MTP"),("BF16","MTP"),("Q4_K_M","BASE"),("Q8_0","BASE"),("BF16","BASE")]
+for (x,y),(a,b) in zip(coords,labels):
+    cards.append(f'''<path d="M835 360 Q910 {y} {x-105} {y}" fill="none" stroke="{MINT}" stroke-width="2" opacity=".58"/>
+    <rect x="{x-105}" y="{y-62}" width="210" height="124" rx="4" fill="{BG}" stroke="{AMBER}" stroke-width="2"/>
+    <rect x="{x-95}" y="{y-52}" width="190" height="104" fill="url(#dots)" opacity=".42"/>
+    {text(x,y-5,a,22,MINT,'mono','700','middle')}{text(x,y+30,b,16,AMBER,'mono','700','middle')}''')
+body=f'''{text(72,76,'HERMES-AGENT  //  TURBOFIT 2.2',22,MINT)}
+{text(72,190,'THE NEW',74,AMBER,'serif')}{text(72,274,'LOCAL MIND.',74,AMBER,'serif')}
+{text(76,337,'QWEN 3.8 27B',38,MINT)}
+{text(76,382,'DENSE VISION-LANGUAGE  /  262K NATIVE',19,CREAM)}
+<g transform="translate(760 360)" filter="url(#rough)"><circle r="142" fill="url(#fade)" stroke="{MINT}" stroke-width="5"/><circle r="104" fill="none" stroke="{AMBER}" stroke-width="3"/><circle r="66" fill="url(#dots)" stroke="{MINT}" stroke-width="3"/><path d="M-54-32L0-63 56-27 49 38 0 64-57 31Z M-54-32L49 38 M56-27L-57 31 M0-63V64" fill="none" stroke="{MINT}" stroke-width="2"/></g>
+{''.join(cards)}
+<rect x="70" y="510" width="670" height="245" fill="{BG}" opacity=".78" stroke="{AMBER}"/>
+{text(95,555,'SIX PINNED RUNTIME VARIANTS',22,MINT)}
+{text(95,605,'Q4  /  Q8  /  BF16',32,AMBER)}
+{text(95,650,'WITH OR WITHOUT EXPLICIT MTP SIDECARS',18,CREAM)}
+{text(95,695,'VISION PROJECTORS  //  IMAGE + VIDEO INPUT',18,CREAM)}
+{text(72,828,'SCAN  /  FIT  /  SCALE  /  HEAL',20,MINT)}
+{text(1528,828,'CANDIDATE → PHYSICAL EVIDENCE → PROMOTION',17,AMBER,'mono','700','end')}'''
+save('turbofit-2.2-qwen-lineup.svg',body)
+
+# 2: multimodal
+icons=f'''
+<g transform="translate(380 430)"><circle r="152" fill="url(#fade)" stroke="{AMBER}" stroke-width="3"/><circle r="92" fill="none" stroke="{MINT}" stroke-width="5"/><circle r="26" fill="{AMBER}"/><path d="M-115 0H-62 M62 0H115 M0-115V-62 M0 62V115" stroke="{MINT}" stroke-width="4"/></g>
+<g transform="translate(800 430)"><rect x="-54" y="-130" width="108" height="185" rx="52" fill="url(#dots)" stroke="{MINT}" stroke-width="5"/><path d="M-105 10V45A105 105 0 00105 45V10 M0 150V78 M-72 150H72" fill="none" stroke="{AMBER}" stroke-width="6"/></g>
+<g transform="translate(1220 430)"><path d="M-125-75H-45L45-145V145L-45 75H-125Z" fill="url(#dots)" stroke="{AMBER}" stroke-width="5"/><path d="M85-90Q165 0 85 90 M125-130Q245 0 125 130" fill="none" stroke="{MINT}" stroke-width="7"/></g>'''
+body=f'''{text(72,76,'TURBOFIT  //  MULTIMODAL MODEL MANAGER',22,MINT)}
+{text(72,180,'HEARS. SPEAKS.',64,AMBER,'serif')}{text(72,250,'SINGS.',64,AMBER,'serif')}
+{icons}
+<g fill="none" stroke="{MINT}" stroke-width="2" opacity=".7"><path d="M532 430H692"/><path d="M908 430H1058"/></g>
+{text(380,650,'MINIMAX MUSIC 3',24,MINT,'mono','700','middle')}{text(380,686,'FULL-SONG GENERATION',16,CREAM,'mono','700','middle')}
+{text(800,650,'PARAKEET TDT 0.6B V3',24,MINT,'mono','700','middle')}{text(800,686,'LOCAL SPEECH-TO-TEXT',16,CREAM,'mono','700','middle')}
+{text(1220,650,'SOPRANO TTS',24,MINT,'mono','700','middle')}{text(1220,686,'LOCAL TEXT-TO-SPEECH',16,CREAM,'mono','700','middle')}
+<path d="M110 752H1490" stroke="{AMBER}"/><circle cx="800" cy="752" r="8" fill="{MINT}"/>
+{text(72,828,'PINNED  /  MEMORY-AWARE  /  EVIDENCE-GATED',20,MINT)}
+{text(1528,828,'ONE SETUP SURFACE  //  EVERY MODALITY',18,AMBER,'mono','700','end')}'''
+save('turbofit-2.2-multimodal.svg',body)
+
+# 3: hardware ladder
+rows=[('300+ GB','DEEPSEEK V4 FLASH 0731 Q4',300),('128–256 GB','DEEPSEEK V4 FLASH 0731 Q2 DSPARK',385),('24–128 GB','QWEN 3.8 27B  /  Q4 · Q8 · BF16',470),('16 GB','TERNARY BONSAI 27B',555),('8 GB','BINARY BONSAI 27B',640)]
+parts=[]
+for i,(tier,model,y) in enumerate(rows):
+    parts.append(f'''<circle cx="450" cy="{y-8}" r="{10+i*2}" fill="{MINT}"/><path d="M470 {y-8}H620" stroke="{MINT}" stroke-width="{5-i*.5}"/><rect x="620" y="{y-48}" width="845" height="72" fill="{BG}" opacity=".82" stroke="{AMBER}"/><rect x="620" y="{y-48}" width="{90+i*55}" height="72" fill="url(#dots)"/>{text(95,y,tier,28,MINT)}{text(660,y,model,24,AMBER)}''')
+body=f'''{text(72,76,'TURBOFIT 2.2  //  AUTO-FIT MODEL LADDER',22,MINT)}
+{text(72,155,'ONE PROVIDER.',52,AMBER,'serif')}{text(72,215,'EVERY MACHINE.',52,AMBER,'serif')}
+<path d="M450 280C520 340 385 415 450 470S385 585 450 640" fill="none" stroke="{MINT}" stroke-width="5" filter="url(#glow)"/>
+{''.join(parts)}
+<rect x="88" y="705" width="1377" height="86" fill="{BG}" opacity=".8" stroke="{MINT}"/>
+{text(120,740,'AUXILIARY',17,MINT)}{text(120,770,'CARWIN NANO  /  TERNARY BONSAI  /  BINARY BONSAI  /  AUTO',18,CREAM)}
+{text(72,838,'PRESSURE: AUX → SHARED MAIN → CONTEXT DOWN → MAIN SWAP',16,AMBER)}
+{text(1528,838,'HEAL TOWARD THE EVIDENCE-BACKED CEILING',16,MINT,'mono','700','end')}'''
+save('turbofit-2.2-model-ladder.svg',body)

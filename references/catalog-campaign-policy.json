@@ -1,0 +1,19 @@
+{
+  "schema": "turbofit.catalog-campaign-policy/v1",
+  "updated_at": "2026-08-14T16:42:52.799595+00:00",
+  "deferred_models": [],
+  "reason": "Qwen 3.8 27B is onboarded; all 1,620 active rows are eligible for current-recipe physical validation.",
+  "replacement_candidate": "qwen3-8-27b",
+  "replacement": {
+    "family": "Qwen 3.8 27B",
+    "replaces": [
+      "grm-2-6-27b",
+      "grm-2-6-27b-no-mtp",
+      "grm-2-6-27b-q8",
+      "grm-2-6-27b-q8-no-mtp",
+      "grm-2-6-27b-bf16",
+      "grm-2-6-27b-bf16-no-mtp"
+    ],
+    "status": "onboarded-awaiting-physical-evidence"
+  }
+}

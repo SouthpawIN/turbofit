@@ -14,8 +14,8 @@ from .runtime_profile import HardwareConstraint, Turbofile
 MIN_CONTEXT = 131_072
 WORKING_CONTEXT = 262_144
 MAX_CONTEXT = 1_048_576
-INTERACTIVE_TPS = 20.0
-FAST_TPS = 100.0
+INTERACTIVE_TPS = 30.0
+FAST_TPS = 50.0
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _TOPOLOGY_PART_RE = re.compile(r"^(\d+)x(\d+)(?:gb)?$", re.IGNORECASE)
 
@@ -90,15 +90,16 @@ class RecommendationResult:
 
 def priority_key(
     context: int, min_tps: float, quality_rank: int
-) -> tuple[int, bool, float, bool, float, int]:
-    """Quality → 128K → 20 tok/s → 262K → 100 tok/s → 1M."""
+) -> tuple[int, bool, float, bool, float, bool, float]:
+    """Quality → 128K → 30 tok/s → 262K → 50 tok/s → 1M → speed."""
     return (
         quality_rank,
         context >= MIN_CONTEXT,
         min(min_tps, INTERACTIVE_TPS),
         context >= WORKING_CONTEXT,
         min(min_tps, FAST_TPS),
-        min(context, MAX_CONTEXT),
+        context >= MAX_CONTEXT,
+        min_tps,
     )
 
 
@@ -141,12 +142,18 @@ def hardware_satisfies(
     hardware: HardwareFingerprint, constraint: HardwareConstraint
 ) -> bool:
     devices = hardware.devices
-    if len(devices) < constraint.min_devices:
+    shared_local = hardware.shared_memory_pool and constraint.accelerator.lower() == "llama.cpp-local"
+    effective_device_count = constraint.min_devices if shared_local else len(devices)
+    if effective_device_count < constraint.min_devices:
         return False
-    if hardware.total_vram_mb < _gb_to_mb(constraint.total_vram_gb):
+    if hardware.total_usable_memory_mb < _gb_to_mb(constraint.total_vram_gb):
         return False
     minimum_mb = _gb_to_mb(constraint.per_device_min_gb)
-    if sum(device.memory_total_mb >= minimum_mb for device in devices) < constraint.min_devices:
+    capable_devices = (
+        constraint.min_devices if shared_local and hardware.total_usable_memory_mb >= minimum_mb
+        else sum(device.memory_total_mb >= minimum_mb for device in devices)
+    )
+    if capable_devices < constraint.min_devices:
         return False
     if constraint.system_ram_gb is not None:
         if hardware.system_ram_mb < _gb_to_mb(constraint.system_ram_gb):
@@ -154,6 +161,8 @@ def hardware_satisfies(
     if not _accelerator_matches(hardware, constraint.accelerator):
         return False
     if constraint.compute_capability_min is not None:
+        if shared_local:
+            return False
         required = _capability_tuple(constraint.compute_capability_min)
         if any(
             _capability_tuple(device.compute_capability) < required
@@ -163,7 +172,7 @@ def hardware_satisfies(
             return False
         if any(device.compute_capability is None for device in devices):
             return False
-    if constraint.topology != "any":
+    if constraint.topology != "any" and not shared_local:
         expected = _parse_topology(constraint.topology)
         actual = Counter(round(device.memory_total_mb / 1024) for device in devices)
         if not _topology_satisfies(actual, expected):
@@ -172,19 +181,20 @@ def hardware_satisfies(
 
 
 def _topology_satisfies(actual: Counter[int], expected: Counter[int]) -> bool:
-    """Match the same card count while allowing larger per-card VRAM."""
-    actual_cards = sorted(actual.elements())
-    expected_cards = sorted(expected.elements())
-    return len(actual_cards) == len(expected_cards) and all(
-        actual_size >= expected_size
-        for actual_size, expected_size in zip(actual_cards, expected_cards, strict=True)
-    )
+    """Require the advertised card set while allowing extra/larger cards."""
+    available = sorted(actual.elements())
+    for required in sorted(expected.elements(), reverse=True):
+        candidates = [index for index, size in enumerate(available) if size >= required]
+        if not candidates:
+            return False
+        available.pop(candidates[0])
+    return True
 
 
 def _accelerator_matches(hardware: HardwareFingerprint, expected: str) -> bool:
     normalized = expected.lower()
     if normalized == "llama.cpp-local":
-        return bool(set(hardware.backends) & {"cuda", "metal", "rocm", "vulkan"})
+        return not hardware.devices or bool(set(hardware.backends) & {"cuda", "metal", "rocm", "vulkan"})
     accepted: set[str] = set()
     for device in hardware.devices:
         accepted.update((device.vendor, device.backend, f"{device.vendor}-{device.backend}"))

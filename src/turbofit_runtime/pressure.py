@@ -64,7 +64,7 @@ def measure_pressure(
     cards: Sequence[CardMemory],
     processes: Sequence[GPUProcess] | None,
     managed_pids: set[int] | frozenset[int],
-    turbohaul_pids: set[int] | frozenset[int],
+    runtime_pids: set[int] | frozenset[int],
     managed_resident_mb: Mapping[int, int],
     desktop_baseline_mb: Mapping[int, int],
     safety_reserve_mb: Mapping[int, int],
@@ -81,7 +81,7 @@ def measure_pressure(
     _validate_budget_mapping(safety_reserve_mb, known_gpus, "safety_reserve_mb")
     _validate_budget_mapping(reservations_mb, known_gpus, "reservations_mb")
 
-    owned_pids = set(managed_pids) | set(turbohaul_pids)
+    owned_pids = set(managed_pids) | set(runtime_pids)
     process_data_available = processes is not None
     process_rows = tuple(processes or ())
     for process in process_rows:

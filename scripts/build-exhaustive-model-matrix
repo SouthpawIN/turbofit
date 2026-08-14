@@ -1,0 +1,322 @@
+#!/usr/bin/env python3
+"""Generate every valid main/add-on/aux/context research configuration."""
+from __future__ import annotations
+
+import json
+from pathlib import Path, PurePosixPath
+
+ROOT = Path(__file__).resolve().parents[1]
+REF = ROOT / "references"
+
+
+def load(name: str):
+    return json.loads((REF / name).read_text(encoding="utf-8"))
+
+
+def save(name: str, value) -> None:
+    (REF / name).write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def main() -> None:
+    recipes = load("model-recipes.json")
+    catalog = load("model-catalog.json")
+    manifest = load("artifact-manifest.json")
+    old = {model["id"]: model for model in catalog["models"]}
+    contexts = catalog["contexts"]
+    baseline = {str(context): "baseline" for context in contexts}
+    dspark = {str(context): "dspark" for context in contexts}
+    mtp = {str(context): "mtp" for context in contexts}
+    variants: dict[str, dict] = {}
+    models: list[dict] = []
+
+    def add_variant(variant_id: str, family: str, **overrides) -> None:
+        variants[variant_id] = {"family": family, "alias": variant_id, **overrides}
+
+    def add_model(
+        template: str,
+        variant_id: str,
+        name: str,
+        artifact: str,
+        quantization: str,
+        features: tuple[str, ...],
+        *,
+        roles: tuple[str, ...] = ("main",),
+        vision: bool = False,
+        moe: bool | None = None,
+    ) -> None:
+        item = dict(old[template])
+        item.update(
+            id=variant_id,
+            name=name,
+            artifact=artifact,
+            quantization=quantization,
+            vision=vision,
+            runtime_features=list(features),
+            roles=list(roles),
+        )
+        if moe is not None:
+            item["moe"] = moe
+        models.append(item)
+
+    deep_base = recipes["models"]["DeepSeek V4 Flash 0731"]
+    deep_models = {
+        "q8": deep_base["model"],
+        "q4": "${TURBOFIT_MODEL_ROOT}/DeepSeek-V4-Flash-0731/UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00001-of-00005.gguf",
+        "q2": "${TURBOFIT_MODEL_ROOT}/DeepSeek-V4-Flash-0731/UD-Q2_K_XL/DeepSeek-V4-Flash-0731-UD-Q2_K_XL-00001-of-00003.gguf",
+    }
+    for quantization, model_path in deep_models.items():
+        for with_dspark in ((True,) if quantization == "q2" else (True, False)):
+            if quantization == "q8" and with_dspark:
+                variant_id = "deepseek-v4-flash-0731-q8-dspark"
+            else:
+                variant_id = f"deepseek-v4-flash-0731-{quantization}" + ("-dspark" if with_dspark else "")
+            add_variant(
+                variant_id,
+                "DeepSeek V4 Flash 0731",
+                model=model_path,
+                draft=deep_base["draft"] if with_dspark else "",
+                methods=dspark if with_dspark else baseline,
+            )
+            add_model(
+                "deepseek-v4-flash-0731-q8-dspark",
+                variant_id,
+                f"DeepSeek V4 Flash 0731 {quantization.upper()}" + (" + DSpark" if with_dspark else ""),
+                PurePosixPath(model_path).name,
+                {"q8": "UD-Q8_K_XL", "q4": "UD-Q4_K_XL", "q2": "UD-Q2_K_XL"}[quantization],
+                ("dspark", "expert-offload") if with_dspark else ("expert-offload",),
+                moe=True,
+            )
+
+    qwen_models = {
+        "q4": ("qwen3-8-27b-q4-mtp", "qwen3-8-27b-q4"),
+        "q8": ("qwen3-8-27b-q8-mtp", "qwen3-8-27b-q8"),
+        "bf16": ("qwen3-8-27b-bf16-mtp", "qwen3-8-27b-bf16"),
+    }
+    for quantization, (mtp_id, baseline_id) in qwen_models.items():
+        for with_mtp in (True, False):
+            variant_id = mtp_id if with_mtp else baseline_id
+            variant_recipe = dict(recipes["variants"][variant_id])
+            family = variant_recipe.pop("family")
+            variant_recipe.pop("alias", None)
+            add_variant(variant_id, family, **variant_recipe)
+            models.append(dict(old[variant_id]))
+
+    carwin_model = recipes["models"]["Carwin Nano"]["model"]
+    for with_mtp in (True, False):
+        variant_id = "carwin-nano" if with_mtp else "carwin-nano-no-mtp"
+        add_variant(variant_id, "Carwin Nano", methods=mtp if with_mtp else baseline)
+        add_model(
+            "carwin-nano",
+            variant_id,
+            "Carwin MoE Nano " + ("MTP" if with_mtp else "No MTP"),
+            PurePosixPath(carwin_model).name,
+            "native",
+            ("mtp", "expert-offload") if with_mtp else ("expert-offload",),
+            roles=("aux",),
+            moe=True,
+        )
+
+    def add_bonsai(
+        prefix: str,
+        family: str,
+        template: str,
+        compact_quantization: str,
+        compact_model: str,
+        fp16_model: str,
+        projectors: dict[str, str],
+        drafts: dict[str, str],
+        label: str,
+    ) -> None:
+        for main_key, model_path in (("compact", compact_model), ("fp16", fp16_model)):
+            for vision_key, projector in (("none", ""), *projectors.items()):
+                for draft_key, draft_model in (("none", ""), *drafts.items()):
+                    if (main_key, vision_key, draft_key) == ("compact", "none", "none"):
+                        variant_id = prefix
+                    elif (main_key, vision_key, draft_key) == ("compact", "none", "q4"):
+                        variant_id = f"{prefix}-dspark"
+                    elif (main_key, vision_key, draft_key) == ("compact", "none", "bf16"):
+                        variant_id = f"{prefix}-dspark-bf16"
+                    elif (main_key, vision_key, draft_key) == ("fp16", "bf16", "bf16"):
+                        variant_id = f"{prefix}-fp16-vision-dspark"
+                    else:
+                        parts = [prefix, main_key]
+                        if vision_key != "none":
+                            parts.extend(("vision", vision_key))
+                        if draft_key != "none":
+                            parts.extend(("dspark", draft_key))
+                        variant_id = "-".join(parts)
+                    add_variant(
+                        variant_id,
+                        family,
+                        model=model_path,
+                        projector=projector,
+                        draft=draft_model,
+                        methods=dspark if draft_model else baseline,
+                    )
+                    features = []
+                    if projector:
+                        features.append("vision-projector")
+                    if draft_model:
+                        features.append("dspark")
+                    name = f"{label} {compact_quantization if main_key == 'compact' else 'F16'}"
+                    if projector:
+                        name += f" + {vision_key.upper()} Vision"
+                    if draft_model:
+                        name += f" + {draft_key.upper()} DSpark"
+                    roles = ["main"]
+                    if main_key == "compact" and vision_key == "none":
+                        roles.append("aux")
+                    add_model(
+                        template,
+                        variant_id,
+                        name,
+                        PurePosixPath(model_path).name,
+                        compact_quantization if main_key == "compact" else "F16",
+                        tuple(features),
+                        roles=tuple(roles),
+                        vision=bool(projector),
+                        moe=False,
+                    )
+
+    add_bonsai(
+        "ternary-bonsai-27b",
+        "Ternary Bonsai",
+        "ternary-bonsai-27b",
+        "Q2_0",
+        "Ternary-Bonsai-27B-Q2_0.gguf",
+        "Ternary-Bonsai-27B-F16.gguf",
+        {"bf16": "Ternary-Bonsai-27B-mmproj-BF16.gguf"},
+        {"bf16": "Ternary-Bonsai-27B-dspark-bf16.gguf", "q4": "Ternary-Bonsai-27B-dspark-Q4_1.gguf"},
+        "Ternary Bonsai 27B",
+    )
+    add_bonsai(
+        "bonsai-27b",
+        "1 Bit Bonsai",
+        "bonsai-27b",
+        "Q1_0",
+        "Bonsai-27B-Q1_0.gguf",
+        "Bonsai-27B-F16.gguf",
+        {"bf16": "Bonsai-27B-mmproj-BF16.gguf", "q8": "Bonsai-27B-mmproj-Q8_0.gguf"},
+        {"bf16": "Bonsai-27B-dspark-bf16.gguf", "q4": "Bonsai-27B-dspark-Q4_1.gguf"},
+        "Binary Bonsai 27B",
+    )
+
+    archived_ids = ["glm-5-2-2-788bpw", "minimax-m3-q4", "laguna-s2-1-fp16", "laguna-s2-1-q4"]
+    add_variant("glm-5-2-2-788bpw", "GLM 5.2")
+    add_variant(
+        "minimax-m3-q4",
+        "MiniMax M3",
+        model="${TURBOFIT_MODEL_ROOT}/MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf",
+    )
+    add_variant(
+        "laguna-s2-1-fp16",
+        "Laguna S2.1",
+        model="${TURBOFIT_MODEL_ROOT}/Laguna-S-2.1/laguna-s-2.1-F16.gguf",
+    )
+    add_variant("laguna-s2-1-q4", "Laguna S2.1")
+    for model_id in archived_ids:
+        item = dict(old[model_id])
+        item["roles"] = ["main"]
+        models.append(item)
+
+    auxiliary = [
+        "carwin-nano",
+        "carwin-nano-no-mtp",
+        "ternary-bonsai-27b",
+        "ternary-bonsai-27b-dspark",
+        "ternary-bonsai-27b-dspark-bf16",
+        "bonsai-27b",
+        "bonsai-27b-dspark",
+        "bonsai-27b-dspark-bf16",
+        "auto",
+    ]
+    recipes["variants"] = variants
+    catalog["models"] = models
+    catalog["auxiliary_options"] = auxiliary
+    matrix = {"schema": "turbofit.configuration-matrix/v1", "rows": []}
+    context_slugs = {65536: "64k", 131072: "128k", 262144: "262k", 1048576: "1m"}
+    for main_model in (model for model in models if "main" in model["roles"]):
+        for auxiliary_model in auxiliary:
+            for context in contexts:
+                matrix["rows"].append(
+                    {
+                        "id": f"{main_model['id']}--{auxiliary_model}--{context_slugs[context]}",
+                        "main": main_model["id"],
+                        "auxiliary": auxiliary_model,
+                        "context": context,
+                        "status": "candidate",
+                    }
+                )
+
+    q4_destination = "DeepSeek-V4-Flash-0731/UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00001-of-00005.gguf"
+    if not any(item["destination"] == q4_destination for item in manifest["artifacts"]):
+        manifest["artifacts"].append(
+            {
+                "destination": q4_destination,
+                "families": [],
+                "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+                "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+                "path": "UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00001-of-00005.gguf",
+                "sha256": "d13ce8f90855547bdaebe7312f531a1f2c4f822178d3103951f27fe884395cfa",
+                "size_bytes": 5257408,
+            }
+        )
+    valid_ids = {model["id"] for model in models}
+    for artifact in manifest["artifacts"]:
+        artifact["families"] = [family for family in artifact["families"] if family in valid_ids]
+    by_name = {PurePosixPath(item["destination"]).name: item for item in manifest["artifacts"]}
+    missing: list[tuple[str, str, str]] = []
+    for model in models:
+        variant = variants.get(model["id"])
+        if variant is None:
+            continue
+        spec = dict(recipes["models"][variant["family"]])
+        spec.update({key: value for key, value in variant.items() if key not in {"family", "alias"}})
+        for field in ("model", "draft", "projector"):
+            value = spec.get(field)
+            if not value:
+                continue
+            name = PurePosixPath(str(value)).name
+            artifact = by_name.get(name)
+            if artifact is None:
+                missing.append((model["id"], field, name))
+            elif model["id"] not in artifact["families"]:
+                artifact["families"].append(model["id"])
+    if missing:
+        raise RuntimeError(f"missing immutable artifacts: {missing}")
+    for artifact in manifest["artifacts"]:
+        artifact["families"] = sorted(set(artifact["families"]))
+    manifest["artifacts"].sort(key=lambda item: item["destination"])
+
+    archived = {
+        "schema": "turbofit.archived-model-zoo/v1",
+        "promotion_eligible": False,
+        "models": [
+            {
+                "id": model_id,
+                "reason": "Deprecated primary candidate retained for RAM/offload research and reproducible historical benchmarks.",
+            }
+            for model_id in archived_ids
+        ],
+    }
+    save("model-recipes.json", recipes)
+    save("model-catalog.json", catalog)
+    save("configuration-matrix.json", matrix)
+    save("artifact-manifest.json", manifest)
+    save("archived-model-zoo.json", archived)
+    print(
+        json.dumps(
+            {
+                "models": len(models),
+                "main_models": sum("main" in model["roles"] for model in models),
+                "auxiliary_options": len(auxiliary),
+                "rows": len(matrix["rows"]),
+                "recipe_variants": len(variants),
+            },
+            indent=2,
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()

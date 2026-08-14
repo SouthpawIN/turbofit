@@ -1,0 +1,239 @@
+{
+  "schema": "turbofit.multimodal-catalog/v1",
+  "models": [
+    {
+      "id": "hermes-image",
+      "name": "Hermes configured image generation",
+      "modalities": [
+        "image"
+      ],
+      "source": "builtin:hermes",
+      "revision": "builtin",
+      "runtime": "hermes",
+      "minimum_memory_mb": 0,
+      "recommended_memory_mb": 0,
+      "platforms": [
+        "linux",
+        "windows",
+        "darwin"
+      ],
+      "integration": "builtin"
+    },
+    {
+      "id": "hermes-video",
+      "name": "Hermes configured video generation",
+      "modalities": [
+        "video"
+      ],
+      "source": "builtin:hermes",
+      "revision": "builtin",
+      "runtime": "hermes",
+      "minimum_memory_mb": 0,
+      "recommended_memory_mb": 0,
+      "platforms": [
+        "linux",
+        "windows",
+        "darwin"
+      ],
+      "integration": "builtin"
+    },
+    {
+      "id": "minimax-h3",
+      "name": "MiniMax H3",
+      "modalities": [
+        "video"
+      ],
+      "source": "https://huggingface.co/MiniMaxAI/MiniMax-H3",
+      "revision": "bfc8ed0353f5a9733be73e6b2c98ec0948195b86",
+      "runtime": "diffusers",
+      "minimum_memory_mb": 98304,
+      "recommended_memory_mb": 196608,
+      "minimum_accelerator_memory_mb": 24576,
+      "platforms": [
+        "linux",
+        "windows"
+      ],
+      "integration": "turbofit-local-int8-offload"
+    },
+    {
+      "id": "hermes-music",
+      "name": "Hermes configured music generation",
+      "modalities": [
+        "music"
+      ],
+      "source": "builtin:hermes",
+      "revision": "builtin",
+      "runtime": "hermes",
+      "minimum_memory_mb": 0,
+      "recommended_memory_mb": 0,
+      "platforms": [
+        "linux",
+        "windows",
+        "darwin"
+      ],
+      "integration": "builtin"
+    },
+    {
+      "id": "minimax-music3",
+      "name": "MiniMax Music 3",
+      "modalities": [
+        "music"
+      ],
+      "source": "https://huggingface.co/MiniMaxAI/MiniMax-Music3",
+      "revision": "fbdf52fbaaca799592917417eb05f1899f1255ec",
+      "runtime": "diffusers-modular",
+      "minimum_memory_mb": 8192,
+      "recommended_memory_mb": 24576,
+      "minimum_accelerator_memory_mb": 8192,
+      "platforms": [
+        "linux",
+        "windows"
+      ],
+      "integration": "candidate"
+    },
+    {
+      "id": "acestep-1-5-2b",
+      "name": "ACE-Step 1.5 2B Turbo",
+      "modalities": [
+        "music"
+      ],
+      "source": "https://huggingface.co/ACE-Step/Ace-Step1.5",
+      "revision": "19671f406d603126926c1b7e2adc169acbcade22",
+      "runtime": "ace-step",
+      "minimum_memory_mb": 6144,
+      "recommended_memory_mb": 12288,
+      "platforms": [
+        "linux",
+        "windows",
+        "darwin"
+      ],
+      "integration": "hermes-tool"
+    },
+    {
+      "id": "acestep-1-5-4b",
+      "name": "ACE-Step 1.5 XL 4B",
+      "modalities": [
+        "music"
+      ],
+      "source": "https://huggingface.co/ACE-Step/Ace-Step1.5",
+      "revision": "19671f406d603126926c1b7e2adc169acbcade22",
+      "runtime": "ace-step",
+      "minimum_memory_mb": 16384,
+      "recommended_memory_mb": 24576,
+      "platforms": [
+        "linux",
+        "windows",
+        "darwin"
+      ],
+      "integration": "hermes-tool"
+    },
+    {
+      "id": "hermes-edge-tts",
+      "name": "Hermes Edge TTS",
+      "modalities": [
+        "tts"
+      ],
+      "source": "builtin:hermes",
+      "revision": "builtin",
+      "runtime": "edge",
+      "minimum_memory_mb": 0,
+      "recommended_memory_mb": 0,
+      "platforms": [
+        "linux",
+        "windows",
+        "darwin"
+      ],
+      "integration": "builtin"
+    },
+    {
+      "id": "soprano-tts",
+      "name": "Soprano TTS",
+      "modalities": [
+        "tts"
+      ],
+      "source": "https://huggingface.co/MurrayMacdonald/soprano-tts",
+      "revision": "55651f7b114c8c2a4d98d612e9f13bfa3b6a8123",
+      "runtime": "soprano",
+      "minimum_memory_mb": 2048,
+      "recommended_memory_mb": 4096,
+      "platforms": [
+        "linux",
+        "windows",
+        "darwin"
+      ],
+      "integration": "candidate"
+    },
+    {
+      "id": "darwin-tts-1-7b",
+      "name": "Darwin TTS 1.7B Cross",
+      "modalities": [
+        "tts"
+      ],
+      "source": "https://huggingface.co/FINAL-Bench/Darwin-TTS-1.7B-Cross",
+      "revision": "ffc041e45d478aafdccca1ec261bf571c2c46d39",
+      "runtime": "transformers-command",
+      "minimum_memory_mb": 4096,
+      "recommended_memory_mb": 8192,
+      "platforms": [
+        "linux",
+        "windows",
+        "darwin"
+      ],
+      "integration": "candidate"
+    },
+    {
+      "id": "hermes-local-stt",
+      "name": "Hermes local faster-whisper",
+      "modalities": [
+        "stt"
+      ],
+      "source": "builtin:hermes",
+      "revision": "builtin",
+      "runtime": "faster-whisper",
+      "minimum_memory_mb": 0,
+      "recommended_memory_mb": 2048,
+      "platforms": [
+        "linux",
+        "windows",
+        "darwin"
+      ],
+      "integration": "builtin"
+    },
+    {
+      "id": "parakeet-tdt-0-6b-v3",
+      "name": "NVIDIA Parakeet TDT 0.6B v3",
+      "modalities": [
+        "stt"
+      ],
+      "source": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
+      "revision": "541d1f99c6b0c3cd0b11a95167540bb8edefd82b",
+      "runtime": "local-stt-command",
+      "minimum_memory_mb": 2048,
+      "recommended_memory_mb": 4096,
+      "platforms": [
+        "linux",
+        "windows",
+        "darwin"
+      ],
+      "integration": "candidate"
+    },
+    {
+      "id": "nemotron-3-5-asr-0-6b",
+      "name": "Nemotron 3.5 ASR Streaming 0.6B",
+      "modalities": [
+        "stt"
+      ],
+      "source": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b",
+      "revision": "1c8deaecc64b91f034d73e08dd8b64625eb3395d",
+      "runtime": "local-stt-command",
+      "minimum_memory_mb": 2048,
+      "recommended_memory_mb": 4096,
+      "platforms": [
+        "linux",
+        "windows",
+        "darwin"
+      ],
+      "integration": "candidate"
+    }
+  ]
+}

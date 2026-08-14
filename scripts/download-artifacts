@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""Download SHA-pinned artifacts required by selected Turbofit matrix families."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import shutil
+from pathlib import Path
+from typing import Callable
+
+from huggingface_hub import hf_hub_download
+
+ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = ROOT / "references/artifact-manifest.json"
+
+
+def model_root(value: Path | None = None) -> Path:
+    return Path(value or os.environ.get("TURBOFIT_MODEL_ROOT", "~/Models/storage/gguf")).expanduser()
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        while chunk := handle.read(8 * 1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def safe_destination(root: Path, relative: str) -> Path:
+    if Path(relative).is_absolute():
+        raise ValueError(f"artifact destination must be relative: {relative}")
+    root = root.resolve()
+    destination = Path(os.path.abspath(root / relative))
+    try:
+        destination.relative_to(root)
+    except ValueError:
+        raise ValueError(f"artifact destination escapes model root: {relative}")
+    if destination.is_symlink():
+        blob_root = (root.parent / "blobs").resolve()
+        try:
+            destination.resolve(strict=False).relative_to(blob_root)
+        except ValueError:
+            raise ValueError(f"artifact destination symlink escapes blob store: {relative}")
+    return destination
+
+
+def selected_artifacts(payload: dict, families: set[str] | None) -> list[dict]:
+    if payload.get("schema") != "turbofit.artifact-manifest/v1":
+        raise ValueError("unsupported artifact manifest")
+    rows = payload.get("artifacts")
+    if not isinstance(rows, list):
+        raise ValueError("artifact manifest rows must be a list")
+    if families is None:
+        return rows
+    selected = [row for row in rows if families.intersection(row.get("families") or [])]
+    missing = families - {family for row in selected for family in row.get("families") or []}
+    if missing:
+        raise ValueError(f"unknown matrix families: {sorted(missing)}")
+    return selected
+
+
+def install_artifact(
+    item: dict,
+    *,
+    root: Path,
+    download_fn: Callable[..., str] = hf_hub_download,
+) -> dict:
+    destination = safe_destination(root, str(item["destination"]))
+    expected_size = int(item["size_bytes"])
+    expected_hash = str(item["sha256"])
+    if destination.is_file():
+        if destination.stat().st_size != expected_size or sha256_file(destination) != expected_hash:
+            raise RuntimeError(f"existing artifact does not match manifest: {destination}")
+        return {"destination": str(destination), "downloaded": False, "verified": True}
+    cached = Path(download_fn(
+        repo_id=str(item["repo_id"]),
+        revision=str(item["revision"]),
+        filename=str(item["path"]),
+    )).resolve(strict=True)
+    if cached.stat().st_size != expected_size or sha256_file(cached) != expected_hash:
+        raise RuntimeError(f"downloaded artifact does not match manifest: {cached}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.is_symlink():
+        destination.unlink()
+    try:
+        os.link(cached, destination)
+    except OSError:
+        shutil.copyfile(cached, destination)
+    return {"destination": str(destination), "downloaded": True, "verified": True}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--family", action="append", default=[])
+    parser.add_argument("--all", action="store_true")
+    parser.add_argument("--model-root", type=Path)
+    parser.add_argument("--manifest", type=Path, default=MANIFEST)
+    parser.add_argument("--list", action="store_true")
+    parser.add_argument("--destination", action="append", default=[])
+    args = parser.parse_args()
+    payload = json.loads(args.manifest.read_text(encoding="utf-8"))
+    families = None if args.all else set(args.family)
+    if not args.all and not families and not args.list:
+        parser.error("select at least one --family or use --all")
+    rows = selected_artifacts(payload, families)
+    if args.destination:
+        requested = set(args.destination)
+        rows = [row for row in rows if row.get("destination") in requested]
+        missing_destinations = requested - {str(row.get("destination")) for row in rows}
+        if missing_destinations:
+            raise ValueError(f"unknown artifact destinations: {sorted(missing_destinations)}")
+    if args.list:
+        print(json.dumps(rows, indent=2))
+        return 0
+    results = [install_artifact(item, root=model_root(args.model_root)) for item in rows]
+    print(json.dumps({"artifacts": len(results), "results": results}, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

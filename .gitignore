@@ -15,5 +15,21 @@ references/results/*.partial
 
 # Local environment and editor state.
 .venv/
+.venv-*/
 .pytest_cache/
 .ruff_cache/
+
+# Runtime campaign state and raw machine-local evidence are not release assets.
+references/.*.tmp
+references/.catalog-campaign-state.json.*
+references/catalog-campaign-state.json
+references/intelligence-campaign-state.json
+references/results/catalog-campaign/*
+!references/results/catalog-campaign/README.md
+references/results/intelligence-campaign/*
+!references/results/intelligence-campaign/README.md
+references/results/tier-campaign/
+references/results/*-logs/
+
+# Generated promotional working files; release artwork lives under assets/.
+promo/

@@ -1,6 +1,6 @@
 schema: turbofit.runtime/v1
 id: hardware-8gb
-revision: 2
+revision: 3
 hardware:
   class_vram_gb: 8
   min_devices: 1
@@ -9,7 +9,7 @@ hardware:
   accelerator: llama.cpp-local
   topology: 1x8
 policy:
-  recommendation: portable-local-floor
+  recommendation: evidence-gated
   external_gpu_priority: absolute
   contraction_dwell_s: 5
   expansion_dwell_s: 120

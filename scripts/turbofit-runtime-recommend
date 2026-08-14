@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Rank evidence-backed Turbofit runtime profiles using Turbohaul v0.7 fit ideas."""
+"""Rank evidence-backed Turbofit runtime profiles using native runtime fit evidence."""
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -17,9 +18,17 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from turbofit_runtime.recommend import priority_key  # noqa: E402
+from turbofit_runtime.hardware import HardwareFingerprint, probe_hardware  # noqa: E402
+from turbofit_runtime.catalog_campaign import build_configuration_index  # noqa: E402
+from turbofit_runtime.executor import capture_physical_hardware, production_recipe_sha256  # noqa: E402
+from turbofit_runtime.intelligence import canonical_intelligence_recipe  # noqa: E402
+from turbofit_runtime.model_catalog import ModelCatalog  # noqa: E402
+from turbofit_runtime.recipes import RecipeBook  # noqa: E402
 
-DEFAULT_PROFILES = Path("/home/sovthpaw/projects/turbofit/references/successful-runtime-profiles.json")
+DEFAULT_PROFILES = ROOT / "references/successful-runtime-profiles.json"
 DEFAULT_CATALOG = Path.home() / ".config/turbofit/models.yaml"
+DEFAULT_INTELLIGENCE_SCORES = ROOT / "references/intelligence-scores.json"
+DEFAULT_CAMPAIGN_STATE = ROOT / "references/catalog-campaign-state.json"
 SAFETY_FLOOR_MB = 1024
 
 
@@ -42,6 +51,59 @@ def nvidia_memory() -> dict[int, dict[str, int]]:
     return out
 
 
+def hardware_memory_budgets(hardware: HardwareFingerprint) -> tuple[dict[int, int], bool]:
+    """Return accelerator budgets and whether all model roles share one pool."""
+    if not hardware.devices:
+        return {0: hardware.total_usable_memory_mb}, True
+    unified = any(
+        device.vendor == "apple"
+        or device.uuid == "apple-unified-memory"
+        or "unified memory" in device.name.lower()
+        or "gb10" in device.name.lower()
+        or "dgx spark" in device.name.lower()
+        for device in hardware.devices
+    )
+    if unified:
+        return {0: hardware.total_usable_memory_mb}, True
+    return {device.index: device.memory_total_mb for device in hardware.devices}, False
+
+
+def fit_requirements(
+    *,
+    hardware: HardwareFingerprint,
+    requirements: dict[int, int],
+    available_budgets: dict[int, int],
+    shared_memory: bool,
+    safety_floor_mb: int,
+) -> tuple[bool, list[str]]:
+    """Fit model residency using accelerator memory plus safe host spill capacity."""
+    if shared_memory:
+        need = sum(requirements.values())
+        budget = max(0, available_budgets[0] - safety_floor_mb)
+        fit = need <= budget
+        operator = ">" if not fit else "/"
+        return fit, [
+            f"shared memory needs {need} MiB {operator} {budget} MiB budget"
+            if not fit else f"shared memory {need}/{budget} MiB"
+        ]
+
+    spill_mb = 0
+    reasons: list[str] = []
+    for device, need in requirements.items():
+        budget = max(0, available_budgets.get(device, 0) - safety_floor_mb)
+        resident = min(need, budget)
+        spill = max(0, need - resident)
+        spill_mb += spill
+        reasons.append(
+            f"device {device} resident {resident}/{budget} MiB"
+            + (f", host spill {spill} MiB" if spill else "")
+        )
+    safe_host_mb = max(0, hardware.total_usable_memory_mb - hardware.total_vram_mb)
+    fit = spill_mb <= safe_host_mb
+    reasons.append(f"safe host spill {spill_mb}/{safe_host_mb} MiB")
+    return fit, reasons
+
+
 def load_tiers(path: Path) -> dict[str, str]:
     try:
         import yaml
@@ -59,6 +121,37 @@ def load_tiers(path: Path) -> dict[str, str]:
         return {}
 
 
+def load_intelligence_scores(
+    path: Path, valid_recipes: dict[tuple[str, str, int], str] | None = None,
+) -> dict[tuple[str, str, int], dict[str, Any]]:
+    """Load measured scores for exact main/aux/context production records."""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    level_rank = {"screening": 0, "promotion": 1, "release": 2}
+    result: dict[tuple[str, str, int], dict[str, Any]] = {}
+    for record in payload.get("records") or []:
+        if not isinstance(record, dict):
+            continue
+        try:
+            key = (str(record["main"]), str(record["auxiliary"]), int(record["context"]))
+            score = float(record["intelligence_score"])
+            level = str(record["benchmark_level"])
+            recipe = str(record["production_recipe_sha256"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if not 0 <= score <= 100 or level not in level_rank or re.fullmatch(r"sha256:[0-9a-f]{64}", recipe) is None:
+            continue
+        if valid_recipes is not None and valid_recipes.get(key) != recipe:
+            continue
+        candidate = {"score": score, "level": level, "recipe": recipe}
+        current = result.get(key)
+        if current is None or level_rank[level] > level_rank[current["level"]]:
+            result[key] = candidate
+    return result
+
+
 def gpu_index(component: dict[str, Any]) -> int:
     raw = str(component.get("gpu", "0"))
     match = re.search(r"(\d+)$", raw)
@@ -66,33 +159,19 @@ def gpu_index(component: dict[str, Any]) -> int:
 
 
 def model_path(component: dict[str, Any]) -> Path | None:
-    if component.get("kind") == "process":
-        command = [str(item) for item in component.get("command", [])]
-        for flag in ("-m", "--model"):
-            if flag in command and command.index(flag) + 1 < len(command):
-                return Path(command[command.index(flag) + 1])
-    if component.get("kind") == "docker":
-        model = str((component.get("environment") or {}).get("MODEL", ""))
-        for mount in component.get("mounts", []):
-            host, container, *_ = str(mount).split(":")
-            if model == container or model.startswith(container.rstrip("/") + "/"):
-                relative = model[len(container):].lstrip("/")
-                return Path(host) / relative
+    command = [str(item) for item in component.get("command", [])]
+    for flag in ("-m", "--model"):
+        if flag in command and command.index(flag) + 1 < len(command):
+            return Path(command[command.index(flag) + 1])
     return None
 
 
 def is_vision(component: dict[str, Any]) -> bool:
-    env = component.get("environment") or {}
-    if env.get("MMPROJ"):
-        return True
     command = [str(item) for item in component.get("command", [])]
     return "--mmproj" in command
 
 
 def speculative_method(component: dict[str, Any]) -> str:
-    env = component.get("environment") or {}
-    if env.get("DRAFT_MODEL"):
-        return "dspark"
     command = [str(item) for item in component.get("command", [])]
     if "--spec-type" in command:
         index = command.index("--spec-type")
@@ -121,6 +200,67 @@ def evidence_metrics(path: Path) -> dict[str, Any]:
         "gpu_memory_mb": gpu_memory,
         "role_memory_mb": role_memory,
     }
+
+
+def current_validated_profiles(path: Path | None) -> set[str] | None:
+    if path is None:
+        return None
+    try:
+        state = json.loads(path.read_text(encoding="utf-8")).get("rows") or {}
+        configurations = json.loads((ROOT / "references/configuration-matrix.json").read_text(encoding="utf-8"))
+        catalog = ModelCatalog.load(ROOT / "references/model-catalog.json")
+        recipes = RecipeBook.load(ROOT / "references/model-recipes.json")
+        index = build_configuration_index(configurations, catalog)
+        profiles = json.loads(DEFAULT_PROFILES.read_text(encoding="utf-8")).get("profiles") or {}
+    except (OSError, ValueError):
+        return set()
+    current = set()
+    live_fingerprint: str | None = None
+    for profile_name, configuration in index.items():
+        record = state.get(profile_name) or {}
+        expected = production_recipe_sha256(
+            recipes.resolve_catalog_configuration(configuration), configuration,
+        )
+        if record.get("status") != "success" or record.get("recipe_sha256") != expected:
+            continue
+        profile = profiles.get(profile_name) or {}
+        raw_path = Path(str(profile.get("raw_result", "")))
+        if not raw_path.is_absolute():
+            raw_path = ROOT / raw_path
+        try:
+            raw_bytes = raw_path.read_bytes()
+            raw = json.loads(raw_bytes)
+        except (OSError, ValueError):
+            continue
+        checksum = "sha256:" + hashlib.sha256(raw_bytes).hexdigest()
+        if checksum != profile.get("raw_result_sha256"):
+            continue
+        bound = str((raw.get("physical_hardware") or {}).get("fingerprint_sha256", ""))
+        if bound != profile.get("physical_fingerprint"):
+            continue
+        if live_fingerprint is None:
+            try:
+                live_fingerprint = str(capture_physical_hardware()["fingerprint_sha256"])
+            except Exception:
+                return set()
+        if bound != live_fingerprint:
+            continue
+        current.add(profile_name)
+    return current
+
+
+def current_intelligence_recipes() -> dict[tuple[str, str, int], str]:
+    configurations = json.loads(
+        (ROOT / "references/configuration-matrix.json").read_text(encoding="utf-8")
+    )
+    recipes = RecipeBook.load(ROOT / "references/model-recipes.json")
+    result = {}
+    for configuration in configurations.get("rows") or []:
+        recipe = recipes.resolve_catalog_configuration(configuration)
+        digest, _ = canonical_intelligence_recipe(configuration, recipe)
+        key = (recipe.main_alias, recipe.aux_alias, int(configuration["context"]))
+        result[key] = digest
+    return result
 
 
 def estimate_requirements(profile: dict[str, Any], metrics: dict[str, Any]) -> tuple[dict[int, int], str]:
@@ -168,15 +308,45 @@ class Recommendation:
     confidence: str
     command: str
     evidence: str
+    intelligence_score: float | None = None
+    intelligence_level: str | None = None
+    intelligence_evidence: str | None = None
+
+
+def recommendation_sort_key(item: Recommendation, preference: str) -> tuple[Any, ...]:
+    if preference == "speed":
+        return (item.fit, item.min_tps, item.quality_points, item.context, item.score)
+    if preference == "intelligence":
+        return (
+            item.fit,
+            item.quality_points,
+            priority_key(item.context, item.min_tps, item.quality_points),
+            item.score,
+        )
+    return (
+        item.fit,
+        priority_key(item.context, item.min_tps, item.quality_points),
+        item.score,
+    )
 
 
 def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
     payload = json.loads(args.profiles.read_text())
-    tiers = load_tiers(args.catalog)
-    live = nvidia_memory()
-    tier_points = {"s": 50, "sf": 40, "sd": 30, "f": 20, "c": 10}
+    intelligence_scores = load_intelligence_scores(
+        args.intelligence_scores, current_intelligence_recipes(),
+    )
+    current_profiles = current_validated_profiles(getattr(args, "campaign_state", None))
+    hardware = probe_hardware()
+    physical_budgets, shared_memory = hardware_memory_budgets(hardware)
+    live_nvidia = nvidia_memory() if args.live and "cuda" in hardware.backends else {}
+    available_budgets = {
+        index: (live_nvidia.get(index) or {}).get("free_mb", total)
+        for index, total in physical_budgets.items()
+    }
     ranked = []
     for name, profile in payload.get("profiles", {}).items():
+        if current_profiles is not None and name not in current_profiles:
+            continue
         context = int(profile.get("context", 0))
         if context < args.context:
             continue
@@ -191,16 +361,13 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
         if stored_gpu:
             metrics["gpu_memory_mb"] = {int(gpu): int(value) for gpu, value in stored_gpu.items()}
         requirements, confidence = estimate_requirements(profile, metrics)
-        fit = True
-        reasons = []
-        for gpu, need in requirements.items():
-            available = (live.get(gpu) or {}).get("free_mb" if args.live else "total_mb", 0)
-            budget = max(0, available - args.safety_floor_mb)
-            if need > budget:
-                fit = False
-                reasons.append(f"GPU{gpu} needs {need} MiB > {budget} MiB budget")
-            else:
-                reasons.append(f"GPU{gpu} {need}/{budget} MiB")
+        fit, reasons = fit_requirements(
+            hardware=hardware,
+            requirements=requirements,
+            available_budgets=available_budgets,
+            shared_memory=shared_memory,
+            safety_floor_mb=args.safety_floor_mb,
+        )
         if args.fit_only and not fit:
             continue
         expected = profile.get("expected") or {}
@@ -215,8 +382,9 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
             min_tps = min(tps_values[:2]) if len(tps_values) >= 2 else (tps_values[0] if tps_values else 0.0)
         methods = sorted(set(speculative_method(component) for component in components))
         context_surplus = max(0.0, (context - args.context) / max(args.context, 1))
-        tier_score = tier_points.get(tiers.get(main, tiers.get(normalize_alias(main), "c")), 10)
-        score = tier_score + min_tps
+        intelligence = intelligence_scores.get((main, aux, context))
+        measured_score = float(intelligence["score"]) if intelligence else 0.0
+        score = measured_score + min_tps
         score += 12 if aux_mode == "dedicated" else 4
         score += 8 if vision else 0
         score += 6 if any(method != "baseline" for method in methods) else 0
@@ -226,19 +394,24 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
             score -= 1000
         if args.prefer == "speed":
             score += min_tps * 1.5
+        elif args.prefer == "intelligence":
+            score += measured_score * 2
         elif args.prefer == "context":
             score += min(context / 65536, 16) * 4
         ranked.append(Recommendation(
-            profile=name, score=round(score, 2), quality_points=tier_score, context=context,
+            profile=name, score=round(score, 2), quality_points=measured_score, context=context,
             main=main, aux=aux, aux_mode=aux_mode, min_tps=round(min_tps, 2),
             vision=vision, methods=methods, gpu_requirements_mb=requirements,
             fit=fit, fit_reason="; ".join(reasons), confidence=confidence,
             command=f"turbofit-runtime use {name}", evidence=str(evidence),
+            intelligence_score=(measured_score if intelligence else None),
+            intelligence_level=(str(intelligence["level"]) if intelligence else None),
+            intelligence_evidence=(str(intelligence["recipe"]) if intelligence else None),
         ))
     ranked.sort(key=lambda item: item.profile)
     return sorted(
         ranked,
-        key=lambda item: (item.fit, priority_key(item.context, item.min_tps, item.quality_points), item.score),
+        key=lambda item: recommendation_sort_key(item, args.prefer),
         reverse=True,
     )
 
@@ -247,11 +420,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profiles", type=Path, default=DEFAULT_PROFILES)
     parser.add_argument("--catalog", type=Path, default=DEFAULT_CATALOG)
+    parser.add_argument("--intelligence-scores", type=Path, default=DEFAULT_INTELLIGENCE_SCORES)
+    parser.add_argument("--campaign-state", type=Path, default=DEFAULT_CAMPAIGN_STATE)
     parser.add_argument("--context", type=int, default=65536)
     parser.add_argument("--vision", action="store_true")
     parser.add_argument("--live", action="store_true", help="fit against current free VRAM instead of clear-card total")
     parser.add_argument("--fit-only", action="store_true")
-    parser.add_argument("--prefer", choices=("balanced", "speed", "context"), default="balanced")
+    parser.add_argument("--prefer", choices=("intelligence", "balanced", "speed", "context"), default="balanced")
     parser.add_argument("--safety-floor-mb", type=int, default=SAFETY_FLOOR_MB)
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--limit", type=int, default=20)
@@ -261,13 +436,14 @@ def main() -> int:
         print(json.dumps([asdict(item) for item in ranked], indent=2))
         return 0 if ranked else 1
     print(f"Evidence-backed runtime recommendations — context >= {args.context:,}")
-    print("Priority: quality tier -> 128K -> 30 tok/s -> 262K -> 100 tok/s -> 1M")
-    print(f"Fit basis: {'current free VRAM' if args.live else 'clear-card total VRAM'}; safety floor {args.safety_floor_mb} MiB/card")
-    print(f"{'#':<3} {'PROFILE':<30} {'CTX':>8} {'TPS':>7} {'FIT':>5} {'AUX':<11} {'METHOD':<12}")
-    print("-" * 88)
+    print("Priority: measured intelligence -> 128K -> 30 tok/s -> 262K -> 50 tok/s -> 1M")
+    print(f"Fit basis: {'current free accelerator memory plus safe host spill' if args.live else 'physical accelerator memory plus safe host spill'}; safety floor {args.safety_floor_mb} MiB/device")
+    print(f"{'#':<3} {'PROFILE':<30} {'CTX':>8} {'TPS':>7} {'INTEL':>7} {'FIT':>5} {'AUX':<11} {'METHOD':<12}")
+    print("-" * 98)
     for index, item in enumerate(ranked, 1):
         methods = "+".join(item.methods)
-        print(f"{index:<3} {item.profile:<30} {item.context:>8,} {item.min_tps:>7.2f} {('yes' if item.fit else 'NO'):>5} {item.aux_mode:<11} {methods:<12}")
+        intelligence = "pending" if item.intelligence_score is None else f"{item.intelligence_score:.1f}"
+        print(f"{index:<3} {item.profile:<30} {item.context:>8,} {item.min_tps:>7.2f} {intelligence:>7} {('yes' if item.fit else 'NO'):>5} {item.aux_mode:<11} {methods:<12}")
         print(f"    {item.fit_reason} | {item.command}")
     if ranked:
         best = next((item for item in ranked if item.fit), ranked[0])

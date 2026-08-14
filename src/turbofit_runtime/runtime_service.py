@@ -9,7 +9,7 @@ from .controller import (
     ControllerResult,
     ControllerState,
     load_controller_state,
-    load_rung_requirements,
+    load_rung_requirements_any,
     save_controller_state,
 )
 from .hardware import HardwareFingerprint
@@ -29,7 +29,7 @@ class RuntimeService:
         *,
         catalog: ProfileCatalog,
         resolutions: RuntimeResolutions,
-        requirements_path: str | Path,
+        requirements_path: str | Path | tuple[str | Path, ...],
         controller_state_path: str | Path,
         route_state_path: str | Path,
         manager_port: int,
@@ -37,7 +37,8 @@ class RuntimeService:
     ) -> None:
         self.catalog = catalog
         self.resolutions = resolutions
-        self.requirements_path = Path(requirements_path)
+        raw_requirements = requirements_path if isinstance(requirements_path, tuple) else (requirements_path,)
+        self.requirements_paths = tuple(Path(path) for path in raw_requirements)
         self.controller_state_path = Path(controller_state_path)
         self.route_state_path = Path(route_state_path)
         self.manager_port = manager_port
@@ -113,7 +114,7 @@ class RuntimeService:
 
         self.controller = AdaptiveController(
             profile=choice.profile,
-            requirements=load_rung_requirements(self.requirements_path, choice.profile),
+            requirements=load_rung_requirements_any(self.requirements_paths, choice.profile),
             backend=backend,
             state=state,
         )

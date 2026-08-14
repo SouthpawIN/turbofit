@@ -1,0 +1,178 @@
+{
+  "generated_at": "2026-08-10T00:05:04.672005+00:00",
+  "records": [
+    {
+      "aux_mode": "shared-main",
+      "auxiliary": "auto:bonsai-27b",
+      "balanced_score": 0.0,
+      "benchmark_level": "screening",
+      "catalog_auxiliary": "auto",
+      "catalog_main": "bonsai-27b",
+      "configuration_id": "bonsai-27b--auto--64k",
+      "context": 65536,
+      "hardware_tier_gb": 48,
+      "host_process_rss_peak_mb": 17890.04296875,
+      "intelligence_score": 0.0,
+      "main": "bonsai-27b",
+      "measurements": [
+        {
+          "name": "deep-swe",
+          "raw_result": "/home/sovthpaw/projects/turbofit/references/results/intelligence-campaign/bonsai-27b--auto--64k/screening/attempts/20260809T095418.384480Z/raw-aggregate.json",
+          "raw_result_sha256": "sha256:0a6acac254254080380ec90078c15ee7122277f26c569f1372bb3cbb320fdf78",
+          "revision": "435ee89ec2f2e2289f33b0da4f992f0b7b7266b9",
+          "score": 0.0,
+          "tasks_passed": 0,
+          "tasks_total": 3
+        },
+        {
+          "name": "agentic-pair",
+          "raw_result": "/home/sovthpaw/projects/turbofit/references/results/intelligence-campaign/bonsai-27b--auto--64k/screening/attempts/20260809T095418.384480Z/raw-aggregate.json",
+          "raw_result_sha256": "sha256:0a6acac254254080380ec90078c15ee7122277f26c569f1372bb3cbb320fdf78",
+          "revision": "agentic-pair-v1",
+          "score": 0.8125,
+          "tasks_passed": 13,
+          "tasks_total": 16
+        }
+      ],
+      "production_recipe_sha256": "sha256:b49bf1b1f69b1da875ede867d37d4e5372d5c8b35e20ff73e565893d3a59b073",
+      "quantizations": [
+        "Q1_0",
+        "route-to-main"
+      ],
+      "recorded_at": "2026-08-09T10:35:30.876194+00:00",
+      "schema": "turbofit.configuration-intelligence/v1",
+      "throughput_tps": 56.81286972415444
+    },
+    {
+      "aux_mode": "dedicated",
+      "auxiliary": "bonsai-27b",
+      "balanced_score": 0.0,
+      "benchmark_level": "screening",
+      "catalog_auxiliary": "bonsai-27b",
+      "catalog_main": "bonsai-27b",
+      "configuration_id": "bonsai-27b--bonsai-27b--64k",
+      "context": 65536,
+      "hardware_tier_gb": 48,
+      "host_process_rss_peak_mb": 18588.57421875,
+      "intelligence_score": 0.0,
+      "main": "bonsai-27b",
+      "measurements": [
+        {
+          "name": "deep-swe",
+          "raw_result": "/home/sovthpaw/projects/turbofit/references/results/intelligence-campaign/bonsai-27b--bonsai-27b--64k/screening/attempts/20260809T205845.536320Z/raw-aggregate.json",
+          "raw_result_sha256": "sha256:cd7e01bcca433ecdbc7ac68905120fbd8dcedce6e360852e583aa7cba6d86966",
+          "revision": "435ee89ec2f2e2289f33b0da4f992f0b7b7266b9",
+          "score": 0.0,
+          "tasks_passed": 0,
+          "tasks_total": 3
+        },
+        {
+          "name": "agentic-pair",
+          "raw_result": "/home/sovthpaw/projects/turbofit/references/results/intelligence-campaign/bonsai-27b--bonsai-27b--64k/screening/attempts/20260809T205845.536320Z/raw-aggregate.json",
+          "raw_result_sha256": "sha256:cd7e01bcca433ecdbc7ac68905120fbd8dcedce6e360852e583aa7cba6d86966",
+          "revision": "agentic-pair-v1",
+          "score": 0.8125,
+          "tasks_passed": 13,
+          "tasks_total": 16
+        }
+      ],
+      "production_recipe_sha256": "sha256:9f2e22505092a84fe56bd75a534277f674ce9368bb852d667ce0a486ef5ee05e",
+      "quantizations": [
+        "Q1_0",
+        "Q1_0"
+      ],
+      "recorded_at": "2026-08-09T22:07:38.624173+00:00",
+      "schema": "turbofit.configuration-intelligence/v1",
+      "throughput_tps": 58.09849772729787
+    },
+    {
+      "aux_mode": "dedicated",
+      "auxiliary": "bonsai-27b-dspark",
+      "balanced_score": 0.0,
+      "benchmark_level": "screening",
+      "catalog_auxiliary": "bonsai-27b-dspark",
+      "catalog_main": "bonsai-27b",
+      "configuration_id": "bonsai-27b--bonsai-27b-dspark--64k",
+      "context": 65536,
+      "hardware_tier_gb": 48,
+      "host_process_rss_peak_mb": 18575.26171875,
+      "intelligence_score": 0.0,
+      "main": "bonsai-27b",
+      "measurements": [
+        {
+          "name": "deep-swe",
+          "raw_result": "/home/sovthpaw/projects/turbofit/references/results/intelligence-campaign/bonsai-27b--bonsai-27b-dspark--64k/screening/attempts/20260809T230900.603287Z/raw-aggregate.json",
+          "raw_result_sha256": "sha256:68cca0989572118b5b5daabc6e60e80b5ecba195419db9cf88843cfcc5e3aee3",
+          "revision": "435ee89ec2f2e2289f33b0da4f992f0b7b7266b9",
+          "score": 0.0,
+          "tasks_passed": 0,
+          "tasks_total": 3
+        },
+        {
+          "name": "agentic-pair",
+          "raw_result": "/home/sovthpaw/projects/turbofit/references/results/intelligence-campaign/bonsai-27b--bonsai-27b-dspark--64k/screening/attempts/20260809T230900.603287Z/raw-aggregate.json",
+          "raw_result_sha256": "sha256:68cca0989572118b5b5daabc6e60e80b5ecba195419db9cf88843cfcc5e3aee3",
+          "revision": "agentic-pair-v1",
+          "score": 0.8125,
+          "tasks_passed": 13,
+          "tasks_total": 16
+        }
+      ],
+      "production_recipe_sha256": "sha256:4a661dbc13af04400bad78256c63377a0f10c5d7b18702e8159f91d7526708e6",
+      "quantizations": [
+        "Q1_0",
+        "Q1_0"
+      ],
+      "recorded_at": "2026-08-10T00:05:02.864710+00:00",
+      "schema": "turbofit.configuration-intelligence/v1",
+      "throughput_tps": 53.76808156320968
+    },
+    {
+      "aux_mode": "shared-main",
+      "auxiliary": "auto:bonsai-27b-fp16",
+      "balanced_score": 0.0,
+      "benchmark_level": "screening",
+      "catalog_auxiliary": "auto",
+      "catalog_main": "bonsai-27b-fp16",
+      "configuration_id": "bonsai-27b-fp16--auto--64k",
+      "context": 65536,
+      "hardware_tier_gb": 48,
+      "host_process_rss_peak_mb": 66780.06640625,
+      "intelligence_score": 0.0,
+      "main": "bonsai-27b-fp16",
+      "measurements": [
+        {
+          "name": "deep-swe",
+          "raw_result": "/home/sovthpaw/projects/turbofit/references/results/intelligence-campaign/bonsai-27b-fp16--auto--64k/screening/attempts/20260809T135220.387612Z/raw-aggregate.json",
+          "raw_result_sha256": "sha256:473158976913df66d13fe2cdb58df92bdf3edb5dc2f4734e06d7306a8c4d62d2",
+          "revision": "435ee89ec2f2e2289f33b0da4f992f0b7b7266b9",
+          "score": 0.0,
+          "tasks_passed": 0,
+          "tasks_total": 3
+        },
+        {
+          "name": "agentic-pair",
+          "raw_result": "/home/sovthpaw/projects/turbofit/references/results/intelligence-campaign/bonsai-27b-fp16--auto--64k/screening/attempts/20260809T135220.387612Z/raw-aggregate.json",
+          "raw_result_sha256": "sha256:473158976913df66d13fe2cdb58df92bdf3edb5dc2f4734e06d7306a8c4d62d2",
+          "revision": "agentic-pair-v1",
+          "score": 0.8125,
+          "tasks_passed": 13,
+          "tasks_total": 16
+        }
+      ],
+      "production_recipe_sha256": "sha256:2e8cef648c13c75d96161525ef867cac2fe24482e0a7e5ee76fd148a0784eafe",
+      "quantizations": [
+        "F16",
+        "route-to-main"
+      ],
+      "recorded_at": "2026-08-09T18:35:54.525242+00:00",
+      "schema": "turbofit.configuration-intelligence/v1",
+      "throughput_tps": 1.2084993548365475
+    }
+  ],
+  "required_benchmarks": [
+    "deep-swe",
+    "agentic-pair"
+  ],
+  "schema": "turbofit.intelligence-scores/v1"
+}

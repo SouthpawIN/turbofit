@@ -551,7 +551,7 @@ def main():
             # Use TOTAL free VRAM for contraction decisions.
             # BUT: subtract the VRAM used by turbofit's own daemons — their usage
             # is expected, not external pressure. We only contract when
-            # EXTERNAL processes (ACE Step, ComfyUI, turbohaul, etc) eat VRAM.
+            # EXTERNAL processes (ACE Step, ComfyUI, renderers, etc) eat VRAM.
             total_free = sum(g[1] for g in gpus)
 
             # Calculate how much VRAM turbofit daemons are ACTUALLY using

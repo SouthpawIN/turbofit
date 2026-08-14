@@ -76,7 +76,7 @@ def test_status_is_read_only_and_reports_missing_selection(tmp_path: Path) -> No
     assert json.loads(output.getvalue())["configured"] is False
 
 
-def test_runtime_entrypoint_has_no_direct_process_or_container_authority() -> None:
+def test_runtime_entrypoint_has_no_direct_process_authority() -> None:
     script = (Path(__file__).resolve().parents[1] / "scripts" / "turbofit-runtime").read_text()
-    for forbidden in ("os.kill", "os.killpg", "SIGKILL", '"docker", "rm"', "subprocess.Popen"):
+    for forbidden in ("os.kill", "os.killpg", "SIGKILL", "subprocess.Popen"):
         assert forbidden not in script

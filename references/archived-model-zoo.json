@@ -1,0 +1,22 @@
+{
+  "schema": "turbofit.archived-model-zoo/v1",
+  "promotion_eligible": false,
+  "models": [
+    {
+      "id": "glm-5-2-2-788bpw",
+      "reason": "Deprecated primary candidate retained for RAM/offload research and reproducible historical benchmarks."
+    },
+    {
+      "id": "minimax-m3-q4",
+      "reason": "Deprecated primary candidate retained for RAM/offload research and reproducible historical benchmarks."
+    },
+    {
+      "id": "laguna-s2-1-fp16",
+      "reason": "Deprecated primary candidate retained for RAM/offload research and reproducible historical benchmarks."
+    },
+    {
+      "id": "laguna-s2-1-q4",
+      "reason": "Deprecated primary candidate retained for RAM/offload research and reproducible historical benchmarks."
+    }
+  ]
+}

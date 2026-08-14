@@ -1,4 +1,4 @@
-"""Resolve portable rungs to Turbohaul tags and atomically publish gateway routes."""
+"""Resolve portable rungs to native process targets and atomically publish gateway routes."""
 from __future__ import annotations
 
 import json
@@ -36,7 +36,9 @@ def load_runtime_resolutions(path: str | Path) -> RuntimeResolutions:
                 if (
                     not isinstance(value, Mapping)
                     or not {"model_tag", "expected_vram_mb"} <= set(value)
-                    or not set(value) <= {"model_tag", "expected_vram_mb", "split_mode"}
+                    or not set(value) <= {
+                        "model_tag", "expected_vram_mb", "split_mode", "family", "gpu", "port"
+                    }
                 ):
                     raise ValueError("invalid runtime resolution role")
                 tag = value["model_tag"]
@@ -48,13 +50,46 @@ def load_runtime_resolutions(path: str | Path) -> RuntimeResolutions:
                     raise ValueError("expected_vram_mb must be a positive integer")
                 if split_mode not in {"none", "layer", "row"}:
                     raise ValueError("split_mode must be none, layer, or row")
-                parsed_roles[role] = {
+                family = value.get("family")
+                gpu = value.get("gpu")
+                port = value.get("port")
+                if family is not None and (not isinstance(family, str) or not family):
+                    raise ValueError("runtime family must be a non-empty string")
+                if gpu is not None and (not isinstance(gpu, str) or not gpu):
+                    raise ValueError("runtime gpu must be a non-empty string")
+                if port is not None and (
+                    isinstance(port, bool) or not isinstance(port, int) or not 1 <= port <= 65535
+                ):
+                    raise ValueError("runtime port must be in 1..65535")
+                parsed: dict[str, int | str] = {
                     "model_tag": tag,
                     "expected_vram_mb": expected,
                     "split_mode": split_mode,
                 }
+                if family is not None:
+                    parsed["family"] = family
+                if gpu is not None:
+                    parsed["gpu"] = gpu
+                if port is not None:
+                    parsed["port"] = port
+                parsed_roles[role] = parsed
             result[profile_id][rung_id] = parsed_roles
     return result
+
+
+def load_runtime_resolutions_many(paths: tuple[str | Path, ...]) -> RuntimeResolutions:
+    """Merge canonical and generated manual resolution stores without shadowing."""
+    merged: RuntimeResolutions = {}
+    for path in paths:
+        try:
+            selected = load_runtime_resolutions(path)
+        except FileNotFoundError:
+            continue
+        overlap = set(merged) & set(selected)
+        if overlap:
+            raise ValueError(f"duplicate runtime resolution profiles: {sorted(overlap)}")
+        merged.update(selected)
+    return merged
 
 
 def build_route_state(
@@ -87,7 +122,7 @@ def build_route_state(
             "main": {
                 "kind": "local",
                 "alias": main["model_tag"],
-                "port": manager_port,
+                "port": int(main.get("port", manager_port)),
             }
         }
         if rung.aux_mode is AuxMode.SHARED_MAIN:
@@ -99,7 +134,7 @@ def build_route_state(
             routes["aux"] = {
                 "kind": "local",
                 "alias": aux["model_tag"],
-                "port": manager_port,
+                "port": int(aux.get("port", manager_port)),
                 "mode": "dedicated",
             }
     return {

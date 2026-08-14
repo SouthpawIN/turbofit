@@ -1,0 +1,571 @@
+{
+  "schema": "turbofit.artifact-manifest/v1",
+  "generated_at": "2026-08-14T16:42:52.799436+00:00",
+  "artifacts": [
+    {
+      "destination": "Bonsai-27B/Bonsai-27B-F16.gguf",
+      "families": [
+        "bonsai-27b-fp16",
+        "bonsai-27b-fp16-dspark-bf16",
+        "bonsai-27b-fp16-dspark-q4",
+        "bonsai-27b-fp16-vision-bf16",
+        "bonsai-27b-fp16-vision-bf16-dspark-q4",
+        "bonsai-27b-fp16-vision-dspark",
+        "bonsai-27b-fp16-vision-q8",
+        "bonsai-27b-fp16-vision-q8-dspark-bf16",
+        "bonsai-27b-fp16-vision-q8-dspark-q4"
+      ],
+      "repo_id": "prism-ml/Bonsai-27B-gguf",
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292",
+      "path": "Bonsai-27B-F16.gguf",
+      "sha256": "d4a381a6d07131c34af888607bdbda49fc885c97673a0d22aa3e0f0284bba566",
+      "size_bytes": 53808280640
+    },
+    {
+      "destination": "Bonsai-27B/Bonsai-27B-Q1_0.gguf",
+      "families": [
+        "bonsai-27b",
+        "bonsai-27b-compact-vision-bf16",
+        "bonsai-27b-compact-vision-bf16-dspark-bf16",
+        "bonsai-27b-compact-vision-bf16-dspark-q4",
+        "bonsai-27b-compact-vision-q8",
+        "bonsai-27b-compact-vision-q8-dspark-bf16",
+        "bonsai-27b-compact-vision-q8-dspark-q4",
+        "bonsai-27b-dspark",
+        "bonsai-27b-dspark-bf16"
+      ],
+      "repo_id": "prism-ml/Bonsai-27B-gguf",
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292",
+      "path": "Bonsai-27B-Q1_0.gguf",
+      "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+      "size_bytes": 3803452480
+    },
+    {
+      "destination": "Bonsai-27B/Bonsai-27B-dspark-Q4_1.gguf",
+      "families": [
+        "bonsai-27b-compact-vision-bf16-dspark-q4",
+        "bonsai-27b-compact-vision-q8-dspark-q4",
+        "bonsai-27b-dspark",
+        "bonsai-27b-fp16-dspark-q4",
+        "bonsai-27b-fp16-vision-bf16-dspark-q4",
+        "bonsai-27b-fp16-vision-q8-dspark-q4"
+      ],
+      "repo_id": "prism-ml/Bonsai-27B-gguf",
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292",
+      "path": "Bonsai-27B-dspark-Q4_1.gguf",
+      "sha256": "25e73f9f7ab5d1f7f1336711496dbc12da674e639ec88d579dc8683045befb1b",
+      "size_bytes": 1787468768
+    },
+    {
+      "destination": "Bonsai-27B/Bonsai-27B-dspark-bf16.gguf",
+      "families": [
+        "bonsai-27b-compact-vision-bf16-dspark-bf16",
+        "bonsai-27b-compact-vision-q8-dspark-bf16",
+        "bonsai-27b-dspark-bf16",
+        "bonsai-27b-fp16-dspark-bf16",
+        "bonsai-27b-fp16-vision-dspark",
+        "bonsai-27b-fp16-vision-q8-dspark-bf16"
+      ],
+      "repo_id": "prism-ml/Bonsai-27B-gguf",
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292",
+      "path": "Bonsai-27B-dspark-bf16.gguf",
+      "sha256": "93bd7f0326bcb39982051dd7742e5a2c9031358f94293a9c91f6aa98dcb6573b",
+      "size_bytes": 7291885792
+    },
+    {
+      "destination": "Bonsai-27B/Bonsai-27B-mmproj-BF16.gguf",
+      "families": [
+        "bonsai-27b-compact-vision-bf16",
+        "bonsai-27b-compact-vision-bf16-dspark-bf16",
+        "bonsai-27b-compact-vision-bf16-dspark-q4",
+        "bonsai-27b-fp16-vision-bf16",
+        "bonsai-27b-fp16-vision-bf16-dspark-q4",
+        "bonsai-27b-fp16-vision-dspark"
+      ],
+      "repo_id": "prism-ml/Bonsai-27B-gguf",
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292",
+      "path": "Bonsai-27B-mmproj-BF16.gguf",
+      "sha256": "acaf5b55d24ebd38c71fa220dc58c9a36776ec543b17728a4b322fc8d92f1de4",
+      "size_bytes": 931145760
+    },
+    {
+      "destination": "Bonsai-27B/Bonsai-27B-mmproj-Q8_0.gguf",
+      "families": [
+        "bonsai-27b",
+        "bonsai-27b-compact-vision-q8",
+        "bonsai-27b-compact-vision-q8-dspark-bf16",
+        "bonsai-27b-compact-vision-q8-dspark-q4",
+        "bonsai-27b-dspark",
+        "bonsai-27b-fp16-vision-q8",
+        "bonsai-27b-fp16-vision-q8-dspark-bf16",
+        "bonsai-27b-fp16-vision-q8-dspark-q4"
+      ],
+      "repo_id": "prism-ml/Bonsai-27B-gguf",
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292",
+      "path": "Bonsai-27B-mmproj-Q8_0.gguf",
+      "sha256": "eb561d41a7bbeb0fcf04883c8af11078ef6cae0a66862a0b68443cfca495269d",
+      "size_bytes": 629246880
+    },
+    {
+      "destination": "Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+      "families": [
+        "carwin-nano",
+        "carwin-nano-no-mtp"
+      ],
+      "repo_id": "isneezekittens/Carwin-MoE-Nano-GGUF",
+      "revision": "ae4705a9b6c6051fa59615665eb2d2d1e2884557",
+      "path": "carwin-moe-Nano.gguf",
+      "sha256": "5c6ddebfa5669d3f0dca4b569cbd3e06aa7fa781d2198ab1ec67b6d05e63636b",
+      "size_bytes": 12335504896
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/UD-Q2_K_XL/DeepSeek-V4-Flash-0731-UD-Q2_K_XL-00001-of-00003.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q2-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "UD-Q2_K_XL/DeepSeek-V4-Flash-0731-UD-Q2_K_XL-00001-of-00003.gguf",
+      "sha256": "de65c5bb660817b95cc281bf54935f9d1bcc3b22535f2eae63b35a14c7c5724b",
+      "size_bytes": 5257664
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/UD-Q2_K_XL/DeepSeek-V4-Flash-0731-UD-Q2_K_XL-00002-of-00003.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q2-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "UD-Q2_K_XL/DeepSeek-V4-Flash-0731-UD-Q2_K_XL-00002-of-00003.gguf",
+      "sha256": "c8728a298862cd8736782e2e4056e5e3e03c415ba552a38173264494e41ef327",
+      "size_bytes": 49437013568
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/UD-Q2_K_XL/DeepSeek-V4-Flash-0731-UD-Q2_K_XL-00003-of-00003.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q2-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "UD-Q2_K_XL/DeepSeek-V4-Flash-0731-UD-Q2_K_XL-00003-of-00003.gguf",
+      "sha256": "a4bae0788c025c1b2388754592c98fefa1372981748ac9875039bf6a30e6eeb4",
+      "size_bytes": 47390237120
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00001-of-00005.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q4",
+        "deepseek-v4-flash-0731-q4-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00001-of-00005.gguf",
+      "sha256": "d13ce8f90855547bdaebe7312f531a1f2c4f822178d3103951f27fe884395cfa",
+      "size_bytes": 5257408
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00002-of-00005.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q4",
+        "deepseek-v4-flash-0731-q4-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00002-of-00005.gguf",
+      "sha256": "d5b61668950f4743aacd677675d7fcf7507dbe1db6d304e8ff97ed1f00827bee",
+      "size_bytes": 48935523072
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00003-of-00005.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q4",
+        "deepseek-v4-flash-0731-q4-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00003-of-00005.gguf",
+      "sha256": "9705db7e589f360685ca7bd48100b270d78d228d4f5aa980508f3b2778af5494",
+      "size_bytes": 48980787136
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00004-of-00005.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q4",
+        "deepseek-v4-flash-0731-q4-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00004-of-00005.gguf",
+      "sha256": "7f13a68e3ca64208454c4ba32cc2757c0cbe78e3e5576c3142bf7007ca97da42",
+      "size_bytes": 49999168416
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00005-of-00005.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q4",
+        "deepseek-v4-flash-0731-q4-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00005-of-00005.gguf",
+      "sha256": "ed0d93164d3784968d6ce40d6d201ba98337f16e7db1b31fe495b2b0f334cc09",
+      "size_bytes": 7174505088
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q8",
+        "deepseek-v4-flash-0731-q8-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
+      "sha256": "d13ce8f90855547bdaebe7312f531a1f2c4f822178d3103951f27fe884395cfa",
+      "size_bytes": 5257408
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00002-of-00005.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q8",
+        "deepseek-v4-flash-0731-q8-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00002-of-00005.gguf",
+      "sha256": "3da2f2443063f83635986f9b67fa7e8e3d03c53b81a9a08d2007936612423610",
+      "size_bytes": 49215492960
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00003-of-00005.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q8",
+        "deepseek-v4-flash-0731-q8-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00003-of-00005.gguf",
+      "sha256": "7d622a7760d359ec9257b3493ad531e3bf0bfbe6f6533267e16e6dde8153ddce",
+      "size_bytes": 49700372160
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00004-of-00005.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q8",
+        "deepseek-v4-flash-0731-q8-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00004-of-00005.gguf",
+      "sha256": "6ed2bce452214f156b85e7c5f7d4fc242a3052f409d1b90a61422f60669c2de3",
+      "size_bytes": 49466495968
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00005-of-00005.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q8",
+        "deepseek-v4-flash-0731-q8-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00005-of-00005.gguf",
+      "sha256": "ea4727af4888fdca0fff796ec81ac2f3ebb43c310b2feb4798f41d82744b42ea",
+      "size_bytes": 13481997024
+    },
+    {
+      "destination": "DeepSeek-V4-Flash-0731/dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
+      "families": [
+        "deepseek-v4-flash-0731-q2-dspark",
+        "deepseek-v4-flash-0731-q4-dspark",
+        "deepseek-v4-flash-0731-q8-dspark"
+      ],
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "path": "dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
+      "sha256": "2c7ac54b0b64a99df1f139a9f1371a00198265e1d6a614b77597d20a655a4249",
+      "size_bytes": 10896057440
+    },
+    {
+      "destination": "GLM-5.2-2.788bpw/GLM-5.2-GGUF-2.788bpw-muzzy-imatrix.gguf",
+      "families": [
+        "glm-5-2-2-788bpw"
+      ],
+      "repo_id": "sokann/GLM-5.2-GGUF-2.788bpw",
+      "revision": "f7c4ef0107a861ac4007e67543ec4eb12c4248c5",
+      "path": "GLM-5.2-GGUF-2.788bpw-muzzy-imatrix.gguf",
+      "sha256": "ab7c20106e1a84540f8151062db1c2d6fab71fbc119d8d44af68552ccfa0bd19",
+      "size_bytes": 262521465440
+    },
+    {
+      "destination": "Laguna-S-2.1/laguna-s-2.1-F16.gguf",
+      "families": [
+        "laguna-s2-1-fp16"
+      ],
+      "repo_id": "poolside/Laguna-S-2.1-GGUF",
+      "revision": "e08e1fe855bb2d43f96ad78e24495283f3426c67",
+      "path": "laguna-s-2.1-F16.gguf",
+      "sha256": "2036c9dcf70f59738d480d1da2a2a59c0a3a3c5bd4ab8c43a61d77fba031e1f8",
+      "size_bytes": 235202258240
+    },
+    {
+      "destination": "Laguna-S-2.1/laguna-s-2.1-Q4_K_M.gguf",
+      "families": [
+        "laguna-s2-1-q4"
+      ],
+      "repo_id": "poolside/Laguna-S-2.1-GGUF",
+      "revision": "e08e1fe855bb2d43f96ad78e24495283f3426c67",
+      "path": "laguna-s-2.1-Q4_K_M.gguf",
+      "sha256": "7da520c5f44bc3c79d4eeebfd1151ba7114c5d7568e72a995638417093c5753f",
+      "size_bytes": 75173103200
+    },
+    {
+      "destination": "MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf",
+      "families": [
+        "minimax-m3-q4"
+      ],
+      "repo_id": "unsloth/MiniMax-M3-GGUF",
+      "revision": "18039c2c5277fc64109acee91fa3ca3a9da73c57",
+      "path": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf",
+      "sha256": "e8e16c72310bd397e88e3ae5dc12d68dba4bf4d10e74825f91a9558e88f622a7",
+      "size_bytes": 8243104
+    },
+    {
+      "destination": "MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00002-of-00007.gguf",
+      "families": [
+        "minimax-m3-q4"
+      ],
+      "repo_id": "unsloth/MiniMax-M3-GGUF",
+      "revision": "18039c2c5277fc64109acee91fa3ca3a9da73c57",
+      "path": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00002-of-00007.gguf",
+      "sha256": "b12d8b535a0c780fe8e8997848f605b80d8116bf213754b7a0d6b6148a231d7b",
+      "size_bytes": 49049569184
+    },
+    {
+      "destination": "MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00003-of-00007.gguf",
+      "families": [
+        "minimax-m3-q4"
+      ],
+      "repo_id": "unsloth/MiniMax-M3-GGUF",
+      "revision": "18039c2c5277fc64109acee91fa3ca3a9da73c57",
+      "path": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00003-of-00007.gguf",
+      "sha256": "5df24493ea4bac7f20fcef4d6eb9df38a4274046d9e84f6c4d2a393f022aaa6c",
+      "size_bytes": 49980655104
+    },
+    {
+      "destination": "MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00004-of-00007.gguf",
+      "families": [
+        "minimax-m3-q4"
+      ],
+      "repo_id": "unsloth/MiniMax-M3-GGUF",
+      "revision": "18039c2c5277fc64109acee91fa3ca3a9da73c57",
+      "path": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00004-of-00007.gguf",
+      "sha256": "6ac1e2a497109869f57467cafda8d1493e2098c60e0912795fbd6a57eb51b35c",
+      "size_bytes": 48755420608
+    },
+    {
+      "destination": "MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00005-of-00007.gguf",
+      "families": [
+        "minimax-m3-q4"
+      ],
+      "repo_id": "unsloth/MiniMax-M3-GGUF",
+      "revision": "18039c2c5277fc64109acee91fa3ca3a9da73c57",
+      "path": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00005-of-00007.gguf",
+      "sha256": "a82fc7c3cee19dbe040ee9135d5b1b2d54d79441b6acfc1e956512af452d6b83",
+      "size_bytes": 48732196096
+    },
+    {
+      "destination": "MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00006-of-00007.gguf",
+      "families": [
+        "minimax-m3-q4"
+      ],
+      "repo_id": "unsloth/MiniMax-M3-GGUF",
+      "revision": "18039c2c5277fc64109acee91fa3ca3a9da73c57",
+      "path": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00006-of-00007.gguf",
+      "sha256": "8a37df7f6bd59723846b58cd63f891da493340dbb9ec2bbf57e5f36ec617cd75",
+      "size_bytes": 48754240896
+    },
+    {
+      "destination": "MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00007-of-00007.gguf",
+      "families": [
+        "minimax-m3-q4"
+      ],
+      "repo_id": "unsloth/MiniMax-M3-GGUF",
+      "revision": "18039c2c5277fc64109acee91fa3ca3a9da73c57",
+      "path": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00007-of-00007.gguf",
+      "sha256": "b4e372acd5acbf57ad26891a088226ec90b5650a908925f01ae82848d45ca9c3",
+      "size_bytes": 18751471744
+    },
+    {
+      "destination": "Qwen3.8-27B/Qwen3.8-27B-BF16.gguf",
+      "families": [
+        "qwen3-8-27b-bf16",
+        "qwen3-8-27b-bf16-mtp"
+      ],
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "Qwen3.8-27B-BF16.gguf",
+      "sha256": "5a3eedc837bcbd1365cdbf5b71e698df3122e76586ba872f07ce3ed4a9bfa97e",
+      "size_bytes": 53808281952
+    },
+    {
+      "destination": "Qwen3.8-27B/Qwen3.8-27B-Q4_K_M.gguf",
+      "families": [
+        "qwen3-8-27b-q4",
+        "qwen3-8-27b-q4-mtp"
+      ],
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "Qwen3.8-27B-Q4_K_M.gguf",
+      "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+      "size_bytes": 18973870432
+    },
+    {
+      "destination": "Qwen3.8-27B/Qwen3.8-27B-Q8_0.gguf",
+      "families": [
+        "qwen3-8-27b-q8",
+        "qwen3-8-27b-q8-mtp"
+      ],
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "Qwen3.8-27B-Q8_0.gguf",
+      "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+      "size_bytes": 28595763552
+    },
+    {
+      "destination": "Qwen3.8-27B/mmproj-Qwen3.8-27B-BF16.gguf",
+      "families": [
+        "qwen3-8-27b-bf16",
+        "qwen3-8-27b-bf16-mtp"
+      ],
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "mmproj-Qwen3.8-27B-BF16.gguf",
+      "sha256": "de2a49866988ea272c43dc2a43ee2662c25725a717ca5b9059ea420a97f53fe8",
+      "size_bytes": 931145888
+    },
+    {
+      "destination": "Qwen3.8-27B/mmproj-Qwen3.8-27B-Q8_0.gguf",
+      "families": [
+        "qwen3-8-27b-q4",
+        "qwen3-8-27b-q4-mtp",
+        "qwen3-8-27b-q8",
+        "qwen3-8-27b-q8-mtp"
+      ],
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "mmproj-Qwen3.8-27B-Q8_0.gguf",
+      "sha256": "2e968a6af97ce35d8971890b257b9b7edabf20ad91450501fa53162a19ee33eb",
+      "size_bytes": 629247008
+    },
+    {
+      "destination": "Qwen3.8-27B/mtp-Qwen3.8-27B-BF16.gguf",
+      "families": [
+        "qwen3-8-27b-bf16-mtp"
+      ],
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "mtp-Qwen3.8-27B-BF16.gguf",
+      "sha256": "5723e551c4ee2b8c11933d687f445800521047edc39769bee6e3c78c4e141ace",
+      "size_bytes": 5946009888
+    },
+    {
+      "destination": "Qwen3.8-27B/mtp-Qwen3.8-27B-Q4_0.gguf",
+      "families": [
+        "qwen3-8-27b-q4-mtp"
+      ],
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "mtp-Qwen3.8-27B-Q4_0.gguf",
+      "sha256": "051a1764cff8c4f3ee6ae8b00593a0364c7539c67fa50ffc58f3f96509fca38e",
+      "size_bytes": 1680271648
+    },
+    {
+      "destination": "Qwen3.8-27B/mtp-Qwen3.8-27B-Q8_0.gguf",
+      "families": [
+        "qwen3-8-27b-q8-mtp"
+      ],
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "mtp-Qwen3.8-27B-Q8_0.gguf",
+      "sha256": "cbf60a0c48b431bb61f1d49b8948dc88ac29c398d6dbdbbb2e6e89ef77eacc9a",
+      "size_bytes": 3164006688
+    },
+    {
+      "destination": "Ternary-Bonsai-27B/Ternary-Bonsai-27B-F16.gguf",
+      "families": [
+        "ternary-bonsai-27b-fp16",
+        "ternary-bonsai-27b-fp16-dspark-bf16",
+        "ternary-bonsai-27b-fp16-dspark-q4",
+        "ternary-bonsai-27b-fp16-vision-bf16",
+        "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
+        "ternary-bonsai-27b-fp16-vision-dspark"
+      ],
+      "repo_id": "prism-ml/Ternary-Bonsai-27B-gguf",
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22",
+      "path": "Ternary-Bonsai-27B-F16.gguf",
+      "sha256": "f659ca3dd7e28ada5d8b5f3637862d0d51ef433bde032ec4c8990ed27c91a385",
+      "size_bytes": 53808280640
+    },
+    {
+      "destination": "Ternary-Bonsai-27B/Ternary-Bonsai-27B-Q2_0.gguf",
+      "families": [
+        "ternary-bonsai-27b",
+        "ternary-bonsai-27b-compact-vision-bf16",
+        "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16",
+        "ternary-bonsai-27b-compact-vision-bf16-dspark-q4",
+        "ternary-bonsai-27b-dspark",
+        "ternary-bonsai-27b-dspark-bf16"
+      ],
+      "repo_id": "prism-ml/Ternary-Bonsai-27B-gguf",
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22",
+      "path": "Ternary-Bonsai-27B-Q2_0.gguf",
+      "sha256": "868c11714cf8fe47f5ec9eeb2be0ab1a337112886f92ee0ede6b855c4fa31757",
+      "size_bytes": 7165121600
+    },
+    {
+      "destination": "Ternary-Bonsai-27B/Ternary-Bonsai-27B-dspark-Q4_1.gguf",
+      "families": [
+        "ternary-bonsai-27b-compact-vision-bf16-dspark-q4",
+        "ternary-bonsai-27b-dspark",
+        "ternary-bonsai-27b-fp16-dspark-q4",
+        "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4"
+      ],
+      "repo_id": "prism-ml/Ternary-Bonsai-27B-gguf",
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22",
+      "path": "Ternary-Bonsai-27B-dspark-Q4_1.gguf",
+      "sha256": "c4810091d244eddc61a0cc4966e584b0959f141e3c66c0d371a6652d9f647da9",
+      "size_bytes": 1946393568
+    },
+    {
+      "destination": "Ternary-Bonsai-27B/Ternary-Bonsai-27B-dspark-bf16.gguf",
+      "families": [
+        "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16",
+        "ternary-bonsai-27b-dspark-bf16",
+        "ternary-bonsai-27b-fp16-dspark-bf16",
+        "ternary-bonsai-27b-fp16-vision-dspark"
+      ],
+      "repo_id": "prism-ml/Ternary-Bonsai-27B-gguf",
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22",
+      "path": "Ternary-Bonsai-27B-dspark-bf16.gguf",
+      "sha256": "d5ce05b0e7e23804279fb0b451e330e71c06d977657802a0e22d71433f30dbad",
+      "size_bytes": 7291885792
+    },
+    {
+      "destination": "Ternary-Bonsai-27B/Ternary-Bonsai-27B-mmproj-BF16.gguf",
+      "families": [
+        "ternary-bonsai-27b",
+        "ternary-bonsai-27b-compact-vision-bf16",
+        "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16",
+        "ternary-bonsai-27b-compact-vision-bf16-dspark-q4",
+        "ternary-bonsai-27b-dspark",
+        "ternary-bonsai-27b-fp16-vision-bf16",
+        "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
+        "ternary-bonsai-27b-fp16-vision-dspark"
+      ],
+      "repo_id": "prism-ml/Ternary-Bonsai-27B-gguf",
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22",
+      "path": "Ternary-Bonsai-27B-mmproj-BF16.gguf",
+      "sha256": "acaf5b55d24ebd38c71fa220dc58c9a36776ec543b17728a4b322fc8d92f1de4",
+      "size_bytes": 931145760
+    }
+  ]
+}

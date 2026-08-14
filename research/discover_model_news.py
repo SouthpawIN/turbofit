@@ -15,13 +15,13 @@ from research.candidate_utils import update_candidates
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def collect_model_news(feed: str, source_url: str) -> list[dict[str, Any]]:
+def collect_model_news(feed: str, source_url: str, *, limit: int = 100) -> list[dict[str, Any]]:
     root = ET.fromstring(feed)
     items = list(root.findall(".//item"))
     if not items:
         items = list(root.findall(".//{*}entry"))
     result = []
-    for item in items:
+    for item in items[:limit]:
         title = _text(item, "title") or "Untitled model news"
         link = _text(item, "link")
         if not link:
@@ -55,11 +55,18 @@ def _text(node: ET.Element, name: str) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", required=True)
+    parser.add_argument("--limit", type=int, default=100)
     parser.add_argument("--output", type=Path, default=ROOT / "research" / "candidates.json")
     args = parser.parse_args()
     with urllib.request.urlopen(args.url, timeout=30) as response:
         feed = response.read().decode("utf-8", errors="replace")
-    diff = update_candidates(args.output, collect_model_news(feed, args.url), replace_kind="news")
+    if args.limit <= 0:
+        parser.error("--limit must be positive")
+    diff = update_candidates(
+        args.output,
+        collect_model_news(feed, args.url, limit=args.limit),
+        replace_kind="news",
+    )
     print(json.dumps(diff.__dict__, sort_keys=True))
     return 0
 

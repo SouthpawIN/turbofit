@@ -9,8 +9,10 @@ python3 -m pytest -q -o 'addopts='
 
 python3 - <<'PY'
 import json
+import os
 import re
 from pathlib import Path
+import yaml
 from turbofit_runtime.profile_io import load_profile
 from turbofit_runtime.model_catalog import ModelCatalog, validate_configuration_matrix
 from turbofit_runtime.wiki import WikiPublisher
@@ -34,6 +36,17 @@ queue=json.loads((root/'research/candidates.json').read_text())
 assert queue['schema']=='turbofit.research-candidates/v1'
 assert all(item.get('status')=='candidate' for item in queue['candidates'])
 
+distribution=yaml.safe_load((root/'distribution.yaml').read_text()) or {}
+non_executable=[]
+for relative in distribution.get('distribution_owned', []):
+    path=root/relative
+    if not str(relative).startswith('scripts/') or not path.is_file():
+        continue
+    if path.read_bytes().startswith(b'#!') and not os.access(path, os.X_OK):
+        non_executable.append(str(relative))
+if non_executable:
+    raise SystemExit('distribution scripts are not executable:\n'+'\n'.join(non_executable))
+
 broken=[]
 pattern=re.compile(r'!?\[[^]]*\]\(([^)]+)\)')
 for doc in [root/'README.md',root/'SKILL.md',root/'skills/turbofit/SKILL.md']+list((root/'docs').rglob('*.md')):
@@ -55,6 +68,7 @@ python3 scripts/adaptive-acceptance --output /tmp/turbofit-simulated-acceptance.
 
 if [[ "${1:-}" == "--real" ]]; then
   python3 scripts/adaptive-acceptance --real
+  python3 scripts/turbofit-completion-check
 fi
 
 echo "release-check=pass real=$([[ "${1:-}" == "--real" ]] && echo yes || echo no)"

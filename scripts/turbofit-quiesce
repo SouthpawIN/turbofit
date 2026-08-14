@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""Safely quiesce Turbofit-owned native model processes for benchmarks."""
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.controller import load_controller_state
+from turbofit_runtime.native_backend import NativeRuntimeBackend
+from turbofit_runtime.recipes import RecipeBook
+from turbofit_runtime.routes import build_route_state, load_runtime_resolutions, publish_route_state
+from turbofit_runtime.selection import ProfileCatalog
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--state", type=Path, default=Path.home() / ".local/state/turbofit/controller.json")
+    parser.add_argument("--routes", type=Path, default=Path.home() / ".local/state/turbofit/runtime-state.json")
+    parser.add_argument("--runtime-state-dir", type=Path, default=Path.home() / ".local/state/turbofit/native")
+    args = parser.parse_args()
+
+    state = load_controller_state(args.state)
+    catalog = ProfileCatalog.from_paths(sorted((ROOT / "runtime-profiles").glob("*gb.yaml")))
+    profile = next((item for item in catalog.profiles if item.id == state.profile_id), None)
+    if profile is None:
+        raise RuntimeError(f"unknown active profile: {state.profile_id}")
+    resolutions = load_runtime_resolutions(ROOT / "runtime-profiles/runtime-resolutions.json")
+    recipes = RecipeBook.load(ROOT / "references/model-recipes.json")
+    backend = NativeRuntimeBackend(
+        profile=profile,
+        resolutions=resolutions,
+        recipe_book=recipes,
+        route_state_path=args.routes,
+        state_dir=args.runtime_state_dir,
+        manager_port=8092,
+        current_state=state.reconciler,
+        accelerator_backend=recipes.backend_name,
+    )
+    backend.reset_managed()
+    terminal = len(profile.rungs) - 1
+    publish_route_state(args.routes, build_route_state(profile, terminal, resolutions, manager_port=8092))
+    print(f"quiesced profile={profile.id} owned_processes=0 route={profile.rungs[terminal].id}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +16,14 @@ for candidate in (PLUGIN_ROOT, PLUGIN_ROOT / "src"):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
-from plugin_tools import apply_configuration, status_snapshot  # noqa: E402
+from plugin_tools import (  # noqa: E402
+    apply_configuration,
+    combination_snapshot,
+    hardware_tier_snapshot,
+    multimodal_snapshot,
+    recommendation_snapshot,
+    status_snapshot,
+)
 
 
 router = APIRouter()
@@ -49,6 +57,99 @@ def _profile_rows() -> list[dict[str, Any]]:
     return payload
 
 
+def _backend_status() -> dict[str, Any]:
+    from turbofit_runtime.hardware import probe_hardware
+    from turbofit_runtime.runtime_backends import LemonadeClient
+
+    try:
+        fingerprint = probe_hardware()
+        hardware = asdict(fingerprint)
+        local_backend = fingerprint.devices[0].backend if fingerprint.devices else "cpu"
+        hardware_error = None
+    except Exception as exc:
+        hardware = None
+        local_backend = "unknown"
+        hardware_error = type(exc).__name__
+    try:
+        lemonade = {"available": True, "health": LemonadeClient().health()}
+    except Exception as exc:
+        lemonade = {"available": False, "error": type(exc).__name__}
+    return {
+        "hardware": hardware,
+        "hardware_error": hardware_error,
+        "local_backend": local_backend,
+        "lemonade": lemonade,
+        "supported": ["cuda", "rocm", "metal", "cpu", "lemonade"],
+    }
+
+
+def _tournament_rows() -> dict[str, Any]:
+    from turbofit_runtime.executor import production_recipe_sha256
+    from turbofit_runtime.model_catalog import ModelCatalog
+    from turbofit_runtime.recipes import RecipeBook
+    from turbofit_runtime.schema import MatrixRow
+    from turbofit_runtime.tier_tournament import load_tournaments
+
+    configurations = json.loads((PLUGIN_ROOT / "references/configuration-matrix.json").read_text(encoding="utf-8"))
+    tournaments = load_tournaments(PLUGIN_ROOT / "references/hardware-tier-tournaments.json", configurations)
+    catalog = ModelCatalog.load(PLUGIN_ROOT / "references/model-catalog.json")
+    recipes = RecipeBook.load(PLUGIN_ROOT / "references/model-recipes.json")
+    by_model = {item.id: item for item in catalog.models}
+    display_ids = {}
+    current_recipe = {}
+    for item in configurations["rows"]:
+        main = by_model[item["main"]]
+        aux_id = item["auxiliary"]
+        aux_name = "auto" if aux_id == "auto" else by_model[aux_id].name
+        display_id = MatrixRow.make_id(main.name, aux_name, int(item["context"]))
+        display_ids[item["id"]] = display_id
+        catalog_item = dict(item)
+        catalog_item["id"] = display_id
+        current_recipe[item["id"]] = production_recipe_sha256(
+            recipes.resolve_catalog_configuration(catalog_item), catalog_item,
+        )
+    state_path = PLUGIN_ROOT / "references/catalog-campaign-state.json"
+    state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {"rows": {}}
+    campaign_rows = state.get("rows") or {}
+    report = hardware_tier_snapshot()
+    report_by_capacity = {item["capacity_gb"]: item for item in report["tiers"]}
+    tiers = []
+    for tier in tournaments["tiers"]:
+        candidates = []
+        for item in tier["candidates"]:
+            record = campaign_rows.get(display_ids[item], {})
+            current = record.get("recipe_sha256") == current_recipe[item]
+            candidates.append({
+                "configuration": item,
+                "status": record.get("status", "pending") if current else "pending",
+                "current_recipe": current,
+            })
+        reported = report_by_capacity[tier["vram_gb"]]
+        measured = reported["recommendations"]["measured_winner"]
+        winner = None if measured is None else {
+            "configuration": measured["configuration_id"],
+            "evidence": measured["fit"]["evidence"],
+            "measured_tps": measured["measured_tps"],
+            "intelligence_score": measured["intelligence_score"],
+        }
+        tiers.append({
+            **tier,
+            "candidate_ranking_winner": tier["winner"],
+            "winner": winner,
+            "status": reported["status"],
+            "evidence_policy": "current-recipe-and-exact-topology-only",
+            "candidates": candidates,
+        })
+    return {"ok": True, "ranking": tournaments["ranking"], "tiers": tiers}
+
+
+def _auxiliary_tiers() -> dict[str, Any]:
+    payload = json.loads(
+        (PLUGIN_ROOT / "references/auxiliary-tier-recommendations.json").read_text(encoding="utf-8")
+    )
+    return {"ok": True, **payload}
+
+
 @router.get("/status")
 async def get_status() -> dict[str, Any]:
     return await asyncio.to_thread(status_snapshot, _config())
@@ -62,14 +163,75 @@ async def get_profiles() -> dict[str, Any]:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
+@router.get("/combinations")
+async def get_combinations() -> dict[str, Any]:
+    try:
+        return await asyncio.to_thread(combination_snapshot)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.get("/backends")
+async def get_backends() -> dict[str, Any]:
+    return await asyncio.to_thread(_backend_status)
+
+
+@router.get("/tournaments")
+async def get_tournaments() -> dict[str, Any]:
+    try:
+        return await asyncio.to_thread(_tournament_rows)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.get("/hardware-tiers")
+async def get_hardware_tiers() -> dict[str, Any]:
+    try:
+        return await asyncio.to_thread(hardware_tier_snapshot)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.get("/auxiliary-tiers")
+async def get_auxiliary_tiers() -> dict[str, Any]:
+    try:
+        return await asyncio.to_thread(_auxiliary_tiers)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.get("/recommendations")
+async def get_recommendations(preference: str | None = None) -> dict[str, Any]:
+    try:
+        return await asyncio.to_thread(recommendation_snapshot, preference)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.get("/multimodal")
+async def get_multimodal() -> dict[str, Any]:
+    try:
+        from hermes_cli.config import load_config
+
+        config = await asyncio.to_thread(load_config)
+        return await asyncio.to_thread(multimodal_snapshot, config)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
 @router.post("/configure")
 async def configure(body: dict[str, Any]) -> dict[str, Any]:
     primary = body.get("primary", False)
     fallback = body.get("fallback") if "fallback" in body else None
+    fallback_chain = body.get("fallback_chain")
+    multimodal = body.get("multimodal")
     profile = body.get("profile")
     base_url = body.get("base_url")
     publish_tailnet_routes = body.get("publish_tailnet", False)
     install_sirvir = body.get("install_sirvir", False)
+    install_desktop = body.get("install_desktop", False)
+    install_lemonade = body.get("install_lemonade", False)
+    install_native = body.get("install_native", False)
     port_defaults = {
         "dashboard_local_port": 9127,
         "provider_local_port": 8091,
@@ -82,12 +244,19 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
         or (fallback is not None and not isinstance(fallback, bool))
         or not isinstance(publish_tailnet_routes, bool)
         or not isinstance(install_sirvir, bool)
+        or not isinstance(install_desktop, bool)
+        or not isinstance(install_lemonade, bool)
+        or not isinstance(install_native, bool)
     ):
-        raise HTTPException(status_code=422, detail="primary, fallback, publish_tailnet, and install_sirvir must be booleans")
+        raise HTTPException(status_code=422, detail="setup switches must be booleans")
     if profile is not None and not isinstance(profile, str):
         raise HTTPException(status_code=422, detail="profile must be a string")
     if base_url is not None and not isinstance(base_url, str):
         raise HTTPException(status_code=422, detail="base_url must be a string")
+    if fallback_chain is not None and not isinstance(fallback_chain, list):
+        raise HTTPException(status_code=422, detail="fallback_chain must be a list")
+    if multimodal is not None and not isinstance(multimodal, dict):
+        raise HTTPException(status_code=422, detail="multimodal must be an object")
     if any(isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 65535 for value in ports.values()):
         raise HTTPException(status_code=422, detail="Tailscale ports must be integers from 1 to 65535")
     try:
@@ -95,10 +264,15 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
             apply_configuration,
             primary=primary,
             fallback=fallback,
+            fallback_chain=fallback_chain,
+            multimodal=multimodal,
             profile=profile,
             base_url=base_url,
             publish_tailnet_routes=publish_tailnet_routes,
             install_sirvir=install_sirvir,
+            install_desktop=install_desktop,
+            install_lemonade=install_lemonade,
+            install_native=install_native,
             **ports,
         )
     except Exception as exc:

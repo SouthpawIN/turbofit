@@ -20,6 +20,13 @@
     "source": "runtime-profiles/class-status/36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853.json",
     "status": "composed-measured-isolated-components"
   },
+  "sha256:3eb4d3db1691716c56ebded71ce55f5c2416920fee8718c2eb58761f2bb36677": {
+    "profiles": [
+      "hardware-48gb"
+    ],
+    "source": "references/results/hardware-tier-winner-48gb.json",
+    "status": "validated-native-tournament"
+  },
   "sha256:5cc6da74575061f4dd85e43e95ebcc69162771e6fa74f5554de08a2d7ba65c63": {
     "profiles": [
       "hardware-200gb"

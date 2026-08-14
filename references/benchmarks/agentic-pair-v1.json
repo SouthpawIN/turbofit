@@ -1,0 +1,79 @@
+{
+  "schema": "turbofit.agentic-pair-suite/v1",
+  "name": "Turbofit Agentic Production Pair",
+  "revision": "agentic-pair-v1",
+  "cases": [
+    {
+      "id": "weather-lisbon",
+      "request": "What is the current temperature in Lisbon? Use the weather tool.",
+      "tools": [{"type": "function", "function": {"name": "get_weather", "description": "Return current weather for a city", "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}}}],
+      "expected_tool": {"name": "get_weather", "arguments": {"city": "Lisbon"}},
+      "tool_result": {"temperature_c": 22, "condition": "clear"},
+      "final_instruction": "Return only the temperature as an integer followed by C.",
+      "final_validator": {"kind": "exact", "value": "22C"}
+    },
+    {
+      "id": "calculator-product",
+      "request": "Calculate 17 multiplied by 23 using the calculator tool.",
+      "tools": [{"type": "function", "function": {"name": "calculator", "description": "Evaluate an arithmetic expression", "parameters": {"type": "object", "properties": {"expression": {"type": "string"}}, "required": ["expression"]}}}],
+      "expected_tool": {"name": "calculator", "arguments": {"expression": "17*23"}},
+      "tool_result": {"result": 391},
+      "final_instruction": "Return only the integer result.",
+      "final_validator": {"kind": "exact", "value": "391"}
+    },
+    {
+      "id": "currency-conversion",
+      "request": "Convert 20 USD to EUR using the currency tool.",
+      "tools": [{"type": "function", "function": {"name": "convert_currency", "description": "Convert between currencies", "parameters": {"type": "object", "properties": {"amount": {"type": "number"}, "from": {"type": "string"}, "to": {"type": "string"}}, "required": ["amount", "from", "to"]}}}],
+      "expected_tool": {"name": "convert_currency", "arguments": {"amount": 20, "from": "USD", "to": "EUR"}},
+      "tool_result": {"converted_amount": 18.4, "rate": 0.92},
+      "final_instruction": "Return only the converted amount with two decimal places followed by EUR.",
+      "final_validator": {"kind": "exact", "value": "18.40 EUR"}
+    },
+    {
+      "id": "calendar-slot",
+      "request": "Find the first free meeting slot for Ada on 2026-08-10 using the calendar tool.",
+      "tools": [{"type": "function", "function": {"name": "calendar_availability", "description": "Find free calendar slots", "parameters": {"type": "object", "properties": {"person": {"type": "string"}, "date": {"type": "string"}}, "required": ["person", "date"]}}}],
+      "expected_tool": {"name": "calendar_availability", "arguments": {"person": "Ada", "date": "2026-08-10"}},
+      "tool_result": {"free_slots": ["09:30", "14:00"]},
+      "final_instruction": "Return only the first free time in HH:MM form.",
+      "final_validator": {"kind": "exact", "value": "09:30"}
+    },
+    {
+      "id": "file-search",
+      "request": "Find files containing the exact phrase adaptive contraction using the file search tool.",
+      "tools": [{"type": "function", "function": {"name": "search_files", "description": "Search file contents", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}}],
+      "expected_tool": {"name": "search_files", "arguments": {"query": "adaptive contraction"}},
+      "tool_result": {"matches": ["docs/runtime.md", "src/policy.py"]},
+      "final_instruction": "Return only the matching paths, comma-separated in the supplied order.",
+      "final_validator": {"kind": "exact", "value": "docs/runtime.md, src/policy.py"}
+    },
+    {
+      "id": "database-count",
+      "request": "Count active benchmark jobs in project Turbofit using the database query tool.",
+      "tools": [{"type": "function", "function": {"name": "query_jobs", "description": "Query benchmark jobs", "parameters": {"type": "object", "properties": {"project": {"type": "string"}, "status": {"type": "string"}}, "required": ["project", "status"]}}}],
+      "expected_tool": {"name": "query_jobs", "arguments": {"project": "Turbofit", "status": "active"}},
+      "tool_result": {"count": 7},
+      "final_instruction": "Return only the count as an integer.",
+      "final_validator": {"kind": "exact", "value": "7"}
+    },
+    {
+      "id": "route-duration",
+      "request": "Get the driving duration from Reno to Truckee using the route tool.",
+      "tools": [{"type": "function", "function": {"name": "route", "description": "Calculate a route", "parameters": {"type": "object", "properties": {"origin": {"type": "string"}, "destination": {"type": "string"}, "mode": {"type": "string"}}, "required": ["origin", "destination", "mode"]}}}],
+      "expected_tool": {"name": "route", "arguments": {"origin": "Reno", "destination": "Truckee", "mode": "driving"}},
+      "tool_result": {"duration_minutes": 37, "distance_km": 51},
+      "final_instruction": "Return only the duration as an integer followed by minutes.",
+      "final_validator": {"kind": "exact", "value": "37 minutes"}
+    },
+    {
+      "id": "inventory-stock",
+      "request": "Check stock for SKU GPU-3090 using the inventory tool.",
+      "tools": [{"type": "function", "function": {"name": "inventory_lookup", "description": "Look up inventory", "parameters": {"type": "object", "properties": {"sku": {"type": "string"}}, "required": ["sku"]}}}],
+      "expected_tool": {"name": "inventory_lookup", "arguments": {"sku": "GPU-3090"}},
+      "tool_result": {"in_stock": true, "quantity": 3},
+      "final_instruction": "Return only IN STOCK followed by the quantity in parentheses.",
+      "final_validator": {"kind": "exact", "value": "IN STOCK (3)"}
+    }
+  ]
+}

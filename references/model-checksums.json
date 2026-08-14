@@ -25,16 +25,6 @@
       "size": 931145760,
       "mtime_ns": 1784730752151809128,
       "sha256": "acaf5b55d24ebd38c71fa220dc58c9a36776ec543b17728a4b322fc8d92f1de4"
-    },
-    "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf": {
-      "size": 16810713984,
-      "mtime_ns": 1784751673028431562,
-      "sha256": "268cfdb6df2c73a8a3d8591c86e52d72f4386d1dcd4ef7d2d259638df02c6c25"
-    },
-    "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf": {
-      "size": 931146208,
-      "mtime_ns": 1784732954120336413,
-      "sha256": "3e8d1437ad5a37e35665f0819bc36ab82d0eedf1c27360d9737efa5bcad13b1c"
     }
   }
 }

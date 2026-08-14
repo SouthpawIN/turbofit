@@ -1,9 +1,9 @@
 # Turbofit Hermes plugin distribution
 name: turbofit
-version: "3.1.0"
+version: "2.2.0"
 description: >-
   Hermes plugin and setup dashboard for hardware-aware adaptive local inference,
-  portable Turbofiles, Turbohaul Manager v0.7 residency, stable auto/active role
+  portable Turbofiles, pinned native llama.cpp residency, stable auto/active role
   routes, evidence-backed promotion, and external-GPU-first pressure handling.
 author: SouthpawIN
 license: MIT
@@ -21,6 +21,7 @@ distribution_owned:
   - schemas.py
   - plugin_tools.py
   - dashboard/
+  - desktop/
   - SKILL.md
   - README.md
   - distribution.yaml
@@ -29,23 +30,59 @@ distribution_owned:
   - docs/
   - research/
   - profiles/sirvir/
+  - promo/
   - runtime-profiles/
+  - runtime-patches/
   - src/turbofit_runtime/
   - scripts/turbofit-runtime
   - scripts/turbofit-controller
+  - scripts/turbofit-quiesce
+  - tools/benchmarks/auxiliary_tournament.py
   - scripts/install-controller-service
   - scripts/turbofit-runtime-recommend
   - scripts/turbofit-gateway.py
   - scripts/migrate-runtime-profiles
   - scripts/matrix-benchmark.py
+
+  - scripts/turbofit-catalog-campaign
+  - scripts/turbofit-benchmark-orchestrator
+  - scripts/turbofit-intelligence-campaign
+  - scripts/install-benchmark-campaign-service
+  - scripts/turbofit-model-onboard
+  - scripts/watch-qwen38-release
+  - scripts/install-qwen38-watcher
+  - scripts/turbofit-tier-campaign
+  - scripts/turbofit-deepswe
+  - scripts/turbofit-completion-check
+  - scripts/generate-h3-promo-clips
+  - scripts/build-promo-video
+  - scripts/download-models.py
+  - scripts/download-artifacts
+  - scripts/install-dspark-runtime
+  - scripts/install-lemonade-runtime
+  - scripts/install-macos-native-service
+  - scripts/install-windows-native-service.ps1
+  - scripts/verify-dspark-live
   - scripts/generate-configuration-matrix
+  - scripts/generate-artifact-manifest
   - scripts/adaptive-acceptance
   - scripts/controlled-pressure-acceptance
   - scripts/vram-pressure-acceptance
   - scripts/release-check
   - references/results/
   - references/model-catalog.json
+  - references/multimodal-models.json
+  - references/archived-model-zoo.json
+  - references/catalog-campaign-policy.json
+  - references/model-onboarding/README.md
   - references/configuration-matrix.json
+
+  - references/model-recipes.json
+  - references/artifact-manifest.json
+  - references/hardware-tier-tournaments.json
+  - references/auxiliary-tier-recommendations.json
+  - references/intelligence-scores.json
+  - references/external-benchmarks.md
 
 # Installation does not start launchers, watchers, or modify provider credentials.
 # Runtime activation remains an explicit Turbofile selection.

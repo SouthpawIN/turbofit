@@ -1,0 +1,184 @@
+#!/usr/bin/env python3
+"""Atomically validate and onboard a released model family into Turbofit."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Mapping
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.model_catalog import ModelCatalog, build_configuration_matrix, validate_configuration_matrix
+from turbofit_runtime.recipes import RecipeBook
+
+CATALOG = ROOT / "references/model-catalog.json"
+MATRIX = ROOT / "references/configuration-matrix.json"
+RECIPES = ROOT / "references/model-recipes.json"
+ARTIFACTS = ROOT / "references/artifact-manifest.json"
+POLICY = ROOT / "references/catalog-campaign-policy.json"
+QWEN_RELEASE_READY = Path.home() / ".local/state/turbofit/qwen38-release-ready"
+ORCHESTRATOR_STOP = Path.home() / ".local/state/turbofit/benchmark-orchestrator.stop"
+SCHEMA = "turbofit.model-onboarding/v1"
+
+
+def load(path: Path) -> dict[str, Any]:
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError(f"expected JSON object: {path}")
+    return raw
+
+
+def atomic_json(path: Path, payload: Mapping[str, Any]) -> None:
+    content = json.dumps(payload, indent=2, sort_keys=False) + "\n"
+    descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    finally:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+
+
+def validate_artifact(item: Mapping[str, Any]) -> None:
+    required = {"destination", "families", "repo_id", "revision", "path", "sha256", "size_bytes"}
+    if set(item) != required:
+        raise ValueError("onboarding artifact fields do not match manifest schema")
+    if not isinstance(item["families"], list) or not item["families"]:
+        raise ValueError("artifact families must be a non-empty list")
+    if not isinstance(item["repo_id"], str) or "/" not in item["repo_id"]:
+        raise ValueError("artifact repo_id must be owner/repository")
+    if not isinstance(item["revision"], str) or len(item["revision"]) != 40 or any(c not in "0123456789abcdef" for c in item["revision"]):
+        raise ValueError("artifact revision must be a pinned 40-character commit")
+    if not isinstance(item["sha256"], str) or len(item["sha256"]) != 64 or any(c not in "0123456789abcdef" for c in item["sha256"]):
+        raise ValueError("artifact sha256 must be exact")
+    if isinstance(item["size_bytes"], bool) or not isinstance(item["size_bytes"], int) or item["size_bytes"] <= 0:
+        raise ValueError("artifact size_bytes must be positive")
+
+
+def build(spec: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    if set(spec) != {"schema", "family", "replace_model_ids", "models", "recipes", "artifacts"}:
+        raise ValueError("onboarding spec fields do not match schema")
+    if spec["schema"] != SCHEMA:
+        raise ValueError("unsupported onboarding schema")
+    models = spec["models"]
+    recipes = spec["recipes"]
+    artifacts = spec["artifacts"]
+    replace_ids = tuple(spec["replace_model_ids"])
+    if not isinstance(models, list) or not models:
+        raise ValueError("onboarding requires at least one model variant")
+    if not isinstance(recipes, Mapping) or set(recipes) != {str(item.get("id")) for item in models}:
+        raise ValueError("every onboarded model requires exactly one launch recipe")
+    if not isinstance(artifacts, list) or not artifacts:
+        raise ValueError("onboarding requires exact artifact records")
+    if len(replace_ids) != len(models):
+        raise ValueError("replacement must preserve the active variant count")
+    if len(set(replace_ids)) != len(replace_ids):
+        raise ValueError("replacement model IDs must be unique")
+
+    catalog = load(CATALOG)
+    existing = {item["id"]: item for item in catalog["models"]}
+    missing = set(replace_ids) - set(existing)
+    if missing:
+        raise ValueError(f"replacement IDs are not active: {sorted(missing)}")
+    new_ids = [str(item.get("id")) for item in models]
+    if len(new_ids) != len(set(new_ids)) or set(new_ids) & (set(existing) - set(replace_ids)):
+        raise ValueError("onboarded model IDs collide with active models")
+    catalog["models"] = [item for item in catalog["models"] if item["id"] not in replace_ids] + list(models)
+
+    recipe_book = load(RECIPES)
+    for model_id in replace_ids:
+        recipe_book["variants"].pop(model_id, None)
+    recipe_book["variants"].update(recipes)
+
+    artifact_manifest = load(ARTIFACTS)
+    retained_artifacts = []
+    for item in artifact_manifest["artifacts"]:
+        retained_families = [family for family in item["families"] if family not in replace_ids]
+        if retained_families:
+            retained_artifacts.append({**item, "families": retained_families})
+    destinations = {str(item["destination"]): item for item in retained_artifacts}
+    for artifact in artifacts:
+        validate_artifact(artifact)
+        destinations[str(artifact["destination"])] = dict(artifact)
+    artifact_manifest["artifacts"] = list(destinations.values())
+    artifact_manifest["generated_at"] = datetime.now(timezone.utc).isoformat()
+
+    policy = load(POLICY)
+    deferred = list(dict.fromkeys([*policy.get("deferred_models", []), *replace_ids]))
+    policy["deferred_models"] = deferred
+    policy["replacement"] = {
+        "family": str(spec["family"]),
+        "replaces": list(replace_ids),
+        "status": "onboarded-awaiting-physical-evidence",
+    }
+    policy["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        atomic_json(root / "catalog.json", catalog)
+        validated_catalog = ModelCatalog.load(root / "catalog.json")
+        matrix = build_configuration_matrix(validated_catalog)
+        validate_configuration_matrix(matrix, validated_catalog)
+        atomic_json(root / "recipes.json", recipe_book)
+        validated_recipes = RecipeBook.load(root / "recipes.json")
+        new_rows = [row for row in matrix["rows"] if row["main"] in set(new_ids)]
+        for row in new_rows:
+            validated_recipes.resolve_catalog_configuration(row)
+
+    return {
+        "catalog": catalog,
+        "matrix": matrix,
+        "recipes": recipe_book,
+        "artifacts": artifact_manifest,
+        "policy": policy,
+    }
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("spec", type=Path)
+    parser.add_argument("--apply", action="store_true", help="write validated active catalog files")
+    args = parser.parse_args(argv)
+    spec = load(args.spec)
+    result = build(spec)
+    report = {
+        "valid": True,
+        "applied": args.apply,
+        "family": spec["family"],
+        "replaced": spec["replace_model_ids"],
+        "added": [item["id"] for item in spec["models"]],
+        "matrix_rows": len(result["matrix"]["rows"]),
+        "artifacts": len(spec["artifacts"]),
+        "next": "download and SHA-verify artifacts, then run current-recipe catalog rows",
+    }
+    if args.apply:
+        targets = ((CATALOG, "catalog"), (MATRIX, "matrix"), (RECIPES, "recipes"), (ARTIFACTS, "artifacts"), (POLICY, "policy"))
+        backups = {path: path.read_bytes() for path, _ in targets}
+        try:
+            for path, key in targets:
+                atomic_json(path, result[key])
+        except Exception:
+            for path, content in backups.items():
+                path.write_bytes(content)
+            raise
+        QWEN_RELEASE_READY.unlink(missing_ok=True)
+        ORCHESTRATOR_STOP.unlink(missing_ok=True)
+    print(json.dumps(report, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

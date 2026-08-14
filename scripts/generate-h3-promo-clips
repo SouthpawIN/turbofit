@@ -1,0 +1,229 @@
+#!/usr/bin/env python3
+"""Generate the Turbofit promo clips locally with MiniMax H3."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import platform
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_MODEL = Path.home() / "Models/storage/hf/MiniMax-H3"
+DEFAULT_PROMPTS = ROOT / "promo/h3-prompts.json"
+DEFAULT_OUTPUT = ROOT / "promo/h3-local"
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def load_manifest(path: Path) -> dict:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    required = {"schema", "model", "revision", "workflow", "width", "height", "num_frames", "num_inference_steps", "clips"}
+    missing = required - payload.keys()
+    if missing:
+        raise ValueError(f"prompt manifest is missing {sorted(missing)}")
+    if payload["workflow"] != "t2va":
+        raise ValueError("the local promo generator currently requires workflow=t2va")
+    if payload["width"] % 32 or payload["height"] % 32:
+        raise ValueError("H3 width and height must be multiples of 32")
+    ids = [clip["id"] for clip in payload["clips"]]
+    if len(ids) != len(set(ids)):
+        raise ValueError("H3 clip ids must be unique")
+    return payload
+
+
+def write_atomic(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp")
+    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(temporary, path)
+
+
+def build_pipeline(model_root: Path, device: str):
+    import torch
+    from diffusers import (
+        AutoencoderKLMiniMaxH3,
+        AutoencoderKLMiniMaxH3Audio,
+        MiniMaxH3Scheduler,
+        MiniMaxH3Transformer3DModel,
+        ModularPipeline,
+        TorchAoConfig,
+    )
+    from diffusers.hooks import apply_group_offloading
+    from torchao.quantization import Int8WeightOnlyConfig
+    from transformers import Qwen2TokenizerFast, Qwen3VLForConditionalGeneration, Qwen3VLProcessor
+    from transformers import TorchAoConfig as TransformersTorchAoConfig
+
+    pipe = ModularPipeline.from_pretrained(str(model_root), workflow="t2va", local_files_only=True)
+    transformer = MiniMaxH3Transformer3DModel.from_pretrained(
+        str(model_root),
+        subfolder="transformer",
+        dtype=torch.bfloat16,
+        quantization_config=TorchAoConfig(
+            Int8WeightOnlyConfig(version=2),
+            modules_to_not_convert=[
+                "proj_in", "audio_proj_in", "context_embedder", "time_embedder", "time_proj",
+                "token_refiner", "norm_out", "proj_out", "audio_proj_out",
+            ],
+        ),
+        low_cpu_mem_usage=True,
+        local_files_only=True,
+    )
+    text_encoder = Qwen3VLForConditionalGeneration.from_pretrained(
+        str(model_root),
+        subfolder="text_encoder",
+        dtype=torch.bfloat16,
+        quantization_config=TransformersTorchAoConfig(
+            Int8WeightOnlyConfig(version=2),
+            modules_to_not_convert=[
+                "model.visual", "model.language_model.embed_tokens", "model.language_model.norm", "lm_head",
+            ],
+        ),
+        local_files_only=True,
+    )
+    pipe.update_components(
+        transformer=transformer,
+        text_encoder=text_encoder,
+        tokenizer=Qwen2TokenizerFast.from_pretrained(
+            str(model_root), subfolder="tokenizer", local_files_only=True,
+        ),
+        processor=Qwen3VLProcessor.from_pretrained(
+            str(model_root), subfolder="processor", local_files_only=True,
+        ),
+        vae=AutoencoderKLMiniMaxH3.from_pretrained(
+            str(model_root), subfolder="vae", dtype=torch.bfloat16, local_files_only=True,
+        ),
+        audio_vae=AutoencoderKLMiniMaxH3Audio.from_pretrained(
+            str(model_root), subfolder="audio_vae", dtype=torch.bfloat16, local_files_only=True,
+        ),
+        scheduler=MiniMaxH3Scheduler.from_pretrained(
+            str(model_root), subfolder="scheduler", local_files_only=True,
+        ),
+        audio_scheduler=MiniMaxH3Scheduler.from_pretrained(
+            str(model_root), subfolder="audio_scheduler", local_files_only=True,
+        ),
+    )
+    pipe.transformer.requires_grad_(False)
+    pipe.text_encoder.requires_grad_(False)
+    offload = {
+        "onload_device": torch.device(device),
+        "offload_device": torch.device("cpu"),
+        "use_stream": True,
+    }
+    pipe.transformer.enable_group_offload(
+        offload_type="block_level", num_blocks_per_group=1, **offload
+    )
+    apply_group_offloading(pipe.text_encoder.model, offload_type="leaf_level", **offload)
+    pipe.vae.to(device)
+    pipe.audio_vae.to(device)
+    return pipe
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--model-root", type=Path, default=DEFAULT_MODEL)
+    parser.add_argument("--prompts", type=Path, default=DEFAULT_PROMPTS)
+    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--device", default="cuda:0")
+    parser.add_argument("--clip", action="append", default=[])
+    parser.add_argument("--smoke", action="store_true")
+    args = parser.parse_args()
+
+    prompts = load_manifest(args.prompts)
+    selected = [clip for clip in prompts["clips"] if not args.clip or clip["id"] in set(args.clip)]
+    if not selected:
+        raise ValueError("no H3 clips matched --clip")
+    missing = [name for name in ("model_index.json", "modular_model_index.json") if not (args.model_root / name).is_file()]
+    if missing:
+        raise FileNotFoundError(f"H3 model root is incomplete: {missing}")
+
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    os.environ["HF_HUB_OFFLINE"] = "1"
+    os.environ["TRANSFORMERS_OFFLINE"] = "1"
+
+    import torch
+    import diffusers
+    import transformers
+    from diffusers.utils.export_utils import encode_video
+
+    started = time.monotonic()
+    pipe = build_pipeline(args.model_root, args.device)
+    load_seconds = round(time.monotonic() - started, 3)
+    results = []
+    evidence_path = args.output_dir / "generation-evidence.json"
+
+    for clip in selected:
+        clip_started = time.monotonic()
+        width = 320 if args.smoke else int(prompts["width"])
+        height = 192 if args.smoke else int(prompts["height"])
+        frames = 124 if args.smoke else int(prompts["num_frames"])
+        steps = 2 if args.smoke else int(prompts["num_inference_steps"])
+        seed = int(clip["seed"])
+        generated = pipe(
+            prompt=clip["prompt"],
+            width=width,
+            height=height,
+            num_frames=frames,
+            num_inference_steps=steps,
+            generator=torch.Generator(device="cpu").manual_seed(seed),
+            output=["videos", "audio", "sampling_rate"],
+        )
+        suffix = "-smoke" if args.smoke else ""
+        output = args.output_dir / f"{clip['id']}{suffix}.mp4"
+        encode_video(
+            generated["videos"][0],
+            fps=24,
+            output_path=str(output),
+            audio=generated["audio"][0],
+            audio_sample_rate=generated["sampling_rate"],
+        )
+        results.append({
+            "id": clip["id"],
+            "label": clip["label"],
+            "prompt": clip["prompt"],
+            "seed": seed,
+            "width": width,
+            "height": height,
+            "num_frames": frames,
+            "num_inference_steps": steps,
+            "output": str(output),
+            "sha256": sha256(output),
+            "bytes": output.stat().st_size,
+            "generation_seconds": round(time.monotonic() - clip_started, 3),
+        })
+        write_atomic(evidence_path, {
+            "schema": "turbofit.h3-local-generation/v1",
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "model": prompts["model"],
+            "revision": prompts["revision"],
+            "model_root": str(args.model_root),
+            "local_files_only": True,
+            "workflow": prompts["workflow"],
+            "quantization": "torchao-int8-weight-only-v2",
+            "offload": "block-level-transformer-and-leaf-level-text-encoder-to-cpu",
+            "device": args.device,
+            "load_seconds": load_seconds,
+            "software": {
+                "python": platform.python_version(),
+                "torch": torch.__version__,
+                "diffusers": diffusers.__version__,
+                "transformers": transformers.__version__,
+            },
+            "results": results,
+        })
+        print(json.dumps(results[-1], indent=2), flush=True)
+    print(evidence_path)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

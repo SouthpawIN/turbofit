@@ -1,4 +1,4 @@
-"""Real Docker/process backend for controlled campaign runs."""
+"""Native process backend for controlled campaign runs."""
 from __future__ import annotations
 
 import json
@@ -15,7 +15,8 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .hardware import _nvidia_compatibility_library_dir
-from .recipes import ResolvedComponent, ResolvedRecipe
+from .recipes import ResolvedComponent, ResolvedRecipe, resolve_native_backend
+from .runtime_backends import llama_environment
 
 
 class CampaignBackend:
@@ -27,17 +28,29 @@ class CampaignBackend:
         result_dir: Path,
         runtime_state: Path,
         production_gateway_service: str = "turbofit-gateway.service",
+        production_controller_service: str = "turbofit-controller.service",
+        campaign_lease_path: Path | None = None,
+        accelerator_backend: str | None = None,
     ) -> None:
         self.gateway_script = gateway_script
         self.gateway_port = gateway_port
         self.result_dir = result_dir
         self.runtime_state = runtime_state
         self.production_gateway_service = production_gateway_service
+        self.production_controller_service = production_controller_service
+        self.campaign_lease_path = campaign_lease_path or (
+            Path(os.getenv("XDG_STATE_HOME", Path.home() / ".local/state"))
+            / "turbofit/campaign-lease.json"
+        )
+        self.accelerator_backend = resolve_native_backend(accelerator_backend)
         self._handles: list[dict[str, Any]] = []
         self._gateway: subprocess.Popen[str] | None = None
         self._samples: list[list[dict[str, Any]]] = []
         self._monitor_stop = threading.Event()
         self._monitor_thread: threading.Thread | None = None
+        self._production_suspended = False
+        self._production_services_to_restore: list[str] = []
+        self._campaign_lease_depth = 0
 
     @staticmethod
     def _request_json(url: str, payload: dict | None = None, timeout: int = 10) -> tuple[int, dict, dict]:
@@ -57,6 +70,34 @@ class CampaignBackend:
         with socket.socket() as sock:
             sock.settimeout(0.25)
             return sock.connect_ex(("127.0.0.1", port)) == 0
+
+    @staticmethod
+    def _port_in_tcp_tables(port: int) -> bool:
+        target = f"{port:04X}"
+        for table in (Path("/proc/net/tcp"), Path("/proc/net/tcp6")):
+            try:
+                lines = table.read_text(encoding="utf-8").splitlines()[1:]
+            except OSError:
+                continue
+            for line in lines:
+                columns = line.split()
+                if len(columns) > 3 and columns[1].rsplit(":", 1)[-1] == target:
+                    return True
+        return False
+
+    def _wait_port_reusable(self, port: int, timeout_s: float = 90.0) -> None:
+        deadline = time.monotonic() + timeout_s
+        clear_samples = 0
+        while time.monotonic() < deadline:
+            if not self._port_open(port) and not self._port_in_tcp_tables(port):
+                clear_samples += 1
+                if clear_samples >= 3:
+                    return
+            else:
+                clear_samples = 0
+            time.sleep(0.5)
+        raise RuntimeError(f"port {port} did not become reusable within {timeout_s:.0f}s")
+
 
     def _start_monitor(self) -> None:
         if self._monitor_thread and self._monitor_thread.is_alive():
@@ -87,19 +128,77 @@ class CampaignBackend:
         self._monitor_thread = threading.Thread(target=monitor, daemon=True)
         self._monitor_thread.start()
 
+    def _suspend_production(self) -> None:
+        if self._production_suspended:
+            return
+        self.campaign_lease_path.parent.mkdir(parents=True, exist_ok=True)
+        self.campaign_lease_path.write_text(json.dumps({
+            "schema": "turbofit.campaign-lease/v1",
+            "owner_pid": os.getpid(),
+            "gateway_policy": "api-fallback-only",
+        }, sort_keys=True) + "\n", encoding="utf-8")
+        # The production gateway does not own accelerator memory and must remain
+        # available so requests can fall back to the configured API while a
+        # physical campaign has exclusive ownership of local model processes.
+        # Only the controller can repopulate managed residency, so only it is
+        # suspended by the campaign lease.
+        services = (self.production_controller_service,)
+        self._production_services_to_restore = []
+        try:
+            for service in services:
+                active = subprocess.run(
+                    ["systemctl", "--user", "is-active", "--quiet", service],
+                    capture_output=True,
+                ).returncode == 0
+                if active:
+                    self._production_services_to_restore.append(service)
+            if self._production_services_to_restore:
+                subprocess.run(
+                    ["systemctl", "--user", "stop", *self._production_services_to_restore],
+                    check=True, capture_output=True, text=True,
+                )
+        except Exception:
+            self._production_services_to_restore = []
+            self.campaign_lease_path.unlink(missing_ok=True)
+            raise
+        self._production_suspended = True
+
+    def _resume_production(self) -> None:
+        if not self._production_suspended:
+            return
+        services = list(self._production_services_to_restore)
+        self._production_services_to_restore = []
+        self._production_suspended = False
+        if services:
+            subprocess.run(
+                ["systemctl", "--user", "start", *services],
+                check=True, capture_output=True, text=True,
+            )
+        self.campaign_lease_path.unlink(missing_ok=True)
+
+    def acquire_campaign_lease(self) -> None:
+        self._suspend_production()
+        self._campaign_lease_depth += 1
+
+    def release_campaign_lease(self) -> None:
+        if self._campaign_lease_depth <= 0:
+            raise RuntimeError("campaign lease is not held")
+        self._campaign_lease_depth -= 1
+        if self._campaign_lease_depth == 0 and not self._handles:
+            self._resume_production()
+
     @staticmethod
     def process_environment(
         command: tuple[str, ...], *, gpu: str, base: dict[str, str] | None = None,
         platform_name: str | None = None,
+        backend_name: str = "cuda",
         compatibility_library_dir: Callable[[], str | None] | None = None,
     ) -> dict[str, str]:
-        env = dict(os.environ if base is None else base)
         platform_id = platform_name or sys.platform
         if platform_id == "darwin":
-            env.pop("CUDA_VISIBLE_DEVICES", None)
-            env["GGML_METAL"] = "1"
-        else:
-            env["CUDA_VISIBLE_DEVICES"] = gpu
+            backend_name = "metal"
+        env = llama_environment(backend_name, devices=gpu, base=base)
+        if backend_name == "cuda":
             find_compatibility_dir = (
                 compatibility_library_dir or _nvidia_compatibility_library_dir
             )
@@ -110,47 +209,47 @@ class CampaignBackend:
                     f":{existing}" if existing else ""
                 )
         if command:
-            binary_dir = Path(command[0]).resolve().parent
-            if (binary_dir / "libllama.so.0").exists():
+            binary_path = Path(command[0]).resolve()
+            binary_dir = binary_path.parent
+            build_root = binary_dir.parent if binary_dir.name == "bin" else binary_dir
+            library_dirs = (
+                {path.parent for path in build_root.rglob("lib*.so*")}
+                if binary_path.exists() else set()
+            )
+            if library_dirs:
                 existing = env.get("LD_LIBRARY_PATH", "")
-                env["LD_LIBRARY_PATH"] = str(binary_dir) + (f":{existing}" if existing else "")
+                ordered = sorted(library_dirs, key=lambda path: (path != binary_dir, str(path)))
+                prefix = ":".join(str(path) for path in ordered)
+                env["LD_LIBRARY_PATH"] = prefix + (f":{existing}" if existing else "")
         return env
 
     def start(self, component: ResolvedComponent) -> dict[str, Any]:
-        if self._port_open(component.port):
-            raise RuntimeError(f"port {component.port} is occupied before {component.role} launch")
-        self._start_monitor()
-        self.result_dir.mkdir(parents=True, exist_ok=True)
-        if component.kind == "docker":
-            name = f"turbofit-campaign-{component.role}"
-            subprocess.run(["docker", "rm", "-f", name], capture_output=True, text=True)
-            gpu_request = f'"device={component.gpu}"' if "," in component.gpu else f"device={component.gpu}"
-            command = ["docker", "run", "-d", "--name", name, "--gpus", gpu_request, "--network", "host"]
-            for key, value in (component.environment or {}).items():
-                command.extend(["-e", f"{key}={value}"])
-            for mount in component.mounts:
-                source = Path(mount.split(":", 1)[0])
-                if not source.exists():
-                    raise FileNotFoundError(source)
-                command.extend(["-v", mount])
-            command.append(component.image)
-            command.extend(component.command)
-            result = subprocess.run(command, capture_output=True, text=True)
-            if result.returncode:
-                raise RuntimeError(f"docker launch failed for {component.role}: {result.stderr.strip()}")
-            handle = {"kind": "docker", "name": name, "id": result.stdout.strip(), "port": component.port}
-        else:
+        self._suspend_production()
+        try:
+            self._wait_port_reusable(component.port)
+            self._start_monitor()
+            self.result_dir.mkdir(parents=True, exist_ok=True)
+            if component.kind != "process":
+                raise RuntimeError(f"unsupported native component kind: {component.kind}")
             model = Path(component.model_path)
             if not model.exists():
                 raise FileNotFoundError(model)
             log_path = self.result_dir / f"campaign-{component.role}-{component.port}.log"
             log = log_path.open("w")
-            env = self.process_environment(component.command, gpu=component.gpu)
+            env = self.process_environment(
+                component.command,
+                gpu=component.gpu,
+                backend_name=self.accelerator_backend,
+            )
             process = subprocess.Popen(component.command, env=env, stdout=log, stderr=subprocess.STDOUT, text=True, start_new_session=True)
             log.close()
             handle = {"kind": "process", "pid": process.pid, "process": process, "port": component.port, "log": str(log_path)}
-        self._handles.append(handle)
-        return handle
+            self._handles.append(handle)
+            return handle
+        except Exception:
+            if not self._handles and self._campaign_lease_depth == 0:
+                self._resume_production()
+            raise
 
     def wait_ready(self, component: ResolvedComponent, handle: dict[str, Any]) -> dict:
         deadline = time.monotonic() + 1800
@@ -167,13 +266,12 @@ class CampaignBackend:
                         "model": data[0].get("id"),
                         "health": health,
                     }
-            if handle.get("kind") == "process" and handle["process"].poll() is not None:
+            if handle["process"].poll() is not None:
                 raise RuntimeError(f"{component.role} process exited during load; log={handle.get('log')}")
             time.sleep(2)
         raise RuntimeError(f"{component.role} failed readiness on {component.port}: {last}")
 
     def route(self, recipe: ResolvedRecipe, handles: dict[str, Any]) -> dict:
-        subprocess.run(["systemctl", "--user", "stop", self.production_gateway_service], capture_output=True, text=True)
         components = []
         for component in recipe.components:
             handle = handles[component.role]
@@ -197,7 +295,9 @@ class CampaignBackend:
         env = os.environ.copy()
         env.update({
             "TURBOFIT_GATEWAY_PORT": str(self.gateway_port),
+            "TURBOFIT_GATEWAY_HOST": "0.0.0.0",
             "TURBOFIT_RUNTIME_STATE": str(self.runtime_state),
+            "TURBOFIT_CAMPAIGN_GATEWAY": "true",
         })
         log_path = self.result_dir / "campaign-gateway.log"
         log = log_path.open("w")
@@ -219,7 +319,7 @@ class CampaignBackend:
         payload = {
             "model": "auto",
             "messages": [{"role": "user", "content": "Implement merge sort in Python with type hints and explain six design choices."}],
-            "max_tokens": 256,
+            "max_tokens": 128,
             "temperature": 0,
             "chat_template_kwargs": {"enable_thinking": False},
         }
@@ -246,18 +346,15 @@ class CampaignBackend:
 
     def stop(self, component: ResolvedComponent, handle: dict[str, Any]) -> None:
         try:
-            if handle.get("kind") == "docker":
-                subprocess.run(["docker", "rm", "-f", str(handle["name"])], capture_output=True, text=True)
-            else:
-                process: subprocess.Popen[str] = handle["process"]
-                if process.poll() is None:
-                    try: os.killpg(process.pid, signal.SIGTERM)
+            process: subprocess.Popen[str] = handle["process"]
+            if process.poll() is None:
+                try: os.killpg(process.pid, signal.SIGTERM)
+                except ProcessLookupError: pass
+                try: process.wait(timeout=30)
+                except subprocess.TimeoutExpired:
+                    try: os.killpg(process.pid, signal.SIGKILL)
                     except ProcessLookupError: pass
-                    try: process.wait(timeout=30)
-                    except subprocess.TimeoutExpired:
-                        try: os.killpg(process.pid, signal.SIGKILL)
-                        except ProcessLookupError: pass
-                        process.wait()
+                    process.wait()
         finally:
             if handle in self._handles:
                 self._handles.remove(handle)
@@ -273,4 +370,5 @@ class CampaignBackend:
                         try: os.killpg(self._gateway.pid, signal.SIGKILL)
                         except ProcessLookupError: pass
                 self.runtime_state.write_text(json.dumps({"active": None, "components": []}, indent=2) + "\n")
-                subprocess.run(["systemctl", "--user", "restart", self.production_gateway_service], capture_output=True, text=True)
+                if self._campaign_lease_depth == 0:
+                    self._resume_production()

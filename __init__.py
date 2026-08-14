@@ -10,7 +10,13 @@ if str(_PLUGIN_SRC) not in sys.path:
     sys.path.insert(0, str(_PLUGIN_SRC))
 
 from . import schemas
-from .plugin_tools import handle_configure, handle_status
+from .plugin_tools import (
+    handle_configure,
+    handle_status,
+    hardware_tier_snapshot,
+    launch_setup_screen,
+    recommendation_snapshot,
+)
 
 
 def check_available() -> bool:
@@ -18,20 +24,37 @@ def check_available() -> bool:
 
 
 def _slash_turbofit(raw_args: str) -> str:
-    action = str(raw_args or "status").strip().lower()
-    if action in {"", "status"}:
+    action = str(raw_args or "").strip().lower()
+    if action == "status":
         return handle_status({})
+    if action in {"", "scan", "rescan", "recommend"}:
+        try:
+            return json.dumps(recommendation_snapshot())
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)})
+    if action in {"intelligence", "quality", "balanced", "context", "speed"}:
+        try:
+            return json.dumps(recommendation_snapshot(action))
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)})
+    if action in {"tiers", "hardware", "hardware-tiers"}:
+        try:
+            return json.dumps(hardware_tier_snapshot())
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)})
     if action in {"setup", "configure"}:
-        return json.dumps(
-            {
+        try:
+            return json.dumps({
                 "ok": True,
-                "message": (
-                    "Open `hermes dashboard` and select the Turbofit tab, or call "
-                    "turbofit_configure with primary/fallback/profile options."
-                ),
-            }
-        )
-    return json.dumps({"ok": False, "error": "usage: /turbofit [status|setup]"})
+                "setup": launch_setup_screen(),
+                "message": "Hermes Dashboard launched. Open Turbofit to configure the provider, fallbacks, runtimes, and multimodal models.",
+            })
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)})
+    return json.dumps({
+        "ok": False,
+        "error": "usage: /turbofit [scan|status|tiers|intelligence|balanced|speed|setup]",
+    })
 
 
 def register(ctx) -> None:
@@ -55,7 +78,8 @@ def register(ctx) -> None:
     ctx.register_command(
         "turbofit",
         _slash_turbofit,
-        description="Inspect or set up the Turbofit adaptive local provider",
+        description="Rescan hardware and recommend Turbofit model configurations",
+        args_hint="[scan|status|tiers|intelligence|balanced|speed|setup]",
     )
     ctx.register_skill("turbofit", Path(__file__).parent / "SKILL.md")
 

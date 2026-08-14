@@ -127,6 +127,22 @@ def test_portable_llama_cpp_profile_matches_cuda_and_metal_backends() -> None:
     assert not hardware_satisfies(metal, cuda_only.hardware)
 
 
+def test_portable_llama_cpp_profile_matches_cpu_only_total_memory() -> None:
+    portable = profile("portable-24", topology="1x24")
+    portable = replace(
+        portable,
+        hardware=replace(portable.hardware, accelerator="llama.cpp-local", compute_capability_min=None),
+    )
+    cpu = HardwareFingerprint(
+        os="linux",
+        architecture="x86_64",
+        system_ram_mb=65536,
+        devices=(),
+    )
+
+    assert hardware_satisfies(cpu, portable.hardware)
+
+
 def test_only_candidates_with_valid_evidence_are_eligible() -> None:
     item = profile("quality-24", topology="1x24")
     candidates = (
@@ -161,8 +177,9 @@ def test_priority_is_lexicographic_without_weighted_score() -> None:
     assert priority_key(262144, 60, 20) > priority_key(1048576, 100, 10)
 
 
-def test_twenty_tokens_per_second_is_interactive() -> None:
-    assert priority_key(262144, 100, 20)[2] == 20
+def test_thirty_tokens_per_second_is_interactive_and_fifty_is_fast() -> None:
+    assert priority_key(262144, 100, 20)[2] == 30
+    assert priority_key(262144, 100, 20)[4] == 50
 
 
 def test_clear_card_shortfall_has_no_eligible_recommendation() -> None:

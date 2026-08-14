@@ -249,7 +249,7 @@
       {
         "evidence": "sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853",
         "required_mb_per_card": [
-          11163,
+          8149,
           21554
         ],
         "rung_id": "local-dedicated-131072"
@@ -265,24 +265,24 @@
       {
         "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
         "required_mb_per_card": [
-          11093,
-          0
+          0,
+          11093
         ],
         "rung_id": "local-bonsai-262144"
       },
       {
         "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
         "required_mb_per_card": [
-          8149,
-          0
+          0,
+          8149
         ],
         "rung_id": "local-bonsai-131072"
       },
       {
         "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
         "required_mb_per_card": [
-          6677,
-          0
+          0,
+          6677
         ],
         "rung_id": "local-bonsai-65536"
       }
@@ -321,9 +321,9 @@
       {
         "evidence": "sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853",
         "required_mb_per_card": [
-          11163,
-          21554,
-          0
+          8149,
+          0,
+          21554
         ],
         "rung_id": "local-dedicated-131072"
       },
@@ -331,45 +331,45 @@
         "evidence": "sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba",
         "required_mb_per_card": [
           0,
-          21554,
-          0
+          0,
+          21554
         ],
         "rung_id": "local-grm-131072"
       },
       {
         "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
         "required_mb_per_card": [
-          11093,
           0,
-          0
+          0,
+          11093
         ],
         "rung_id": "local-bonsai-262144"
       },
       {
         "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
         "required_mb_per_card": [
-          8149,
           0,
-          0
+          0,
+          8149
         ],
         "rung_id": "local-bonsai-131072"
       },
       {
         "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
         "required_mb_per_card": [
-          6677,
           0,
-          0
+          0,
+          6677
         ],
         "rung_id": "local-bonsai-65536"
       }
     ],
     "hardware-48gb": [
       {
-        "evidence": "sha256:2dd320671f7f891ede49a22820754fa657335581ed1272a3444fe45af9426223",
+        "evidence": "sha256:3eb4d3db1691716c56ebded71ce55f5c2416920fee8718c2eb58761f2bb36677",
         "required_mb_per_card": [
-          20000,
-          20000
+          20500,
+          22500
         ],
         "rung_id": "local-grm-262144"
       },
@@ -384,24 +384,24 @@
       {
         "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
         "required_mb_per_card": [
-          11093,
-          0
+          0,
+          11093
         ],
         "rung_id": "local-bonsai-262144"
       },
       {
         "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
         "required_mb_per_card": [
-          8149,
-          0
+          0,
+          8149
         ],
         "rung_id": "local-bonsai-131072"
       },
       {
         "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
         "required_mb_per_card": [
-          6677,
-          0
+          0,
+          6677
         ],
         "rung_id": "local-bonsai-65536"
       }
@@ -410,7 +410,7 @@
       {
         "evidence": "sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853",
         "required_mb_per_card": [
-          11163,
+          8149,
           21554
         ],
         "rung_id": "local-dedicated-131072"
@@ -426,24 +426,24 @@
       {
         "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
         "required_mb_per_card": [
-          11093,
-          0
+          0,
+          11093
         ],
         "rung_id": "local-bonsai-262144"
       },
       {
         "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
         "required_mb_per_card": [
-          8149,
-          0
+          0,
+          8149
         ],
         "rung_id": "local-bonsai-131072"
       },
       {
         "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
         "required_mb_per_card": [
-          6677,
-          0
+          0,
+          6677
         ],
         "rung_id": "local-bonsai-65536"
       }
@@ -461,10 +461,10 @@
       {
         "evidence": "sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853",
         "required_mb_per_card": [
-          11163,
-          21554,
+          8149,
           0,
-          0
+          0,
+          21554
         ],
         "rung_id": "local-dedicated-131072"
       },
@@ -472,39 +472,39 @@
         "evidence": "sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba",
         "required_mb_per_card": [
           0,
-          21554,
           0,
-          0
+          0,
+          21554
         ],
         "rung_id": "local-grm-131072"
       },
       {
         "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
         "required_mb_per_card": [
-          11093,
           0,
           0,
-          0
+          0,
+          11093
         ],
         "rung_id": "local-bonsai-262144"
       },
       {
         "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
         "required_mb_per_card": [
-          8149,
           0,
           0,
-          0
+          0,
+          8149
         ],
         "rung_id": "local-bonsai-131072"
       },
       {
         "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
         "required_mb_per_card": [
-          6677,
           0,
           0,
-          0
+          0,
+          6677
         ],
         "rung_id": "local-bonsai-65536"
       }

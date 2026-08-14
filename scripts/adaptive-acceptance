@@ -46,7 +46,6 @@ def http_json(url: str) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--real", action="store_true", help="attempt controlled real-host preflight")
-    parser.add_argument("--turbohaul-url", default="http://127.0.0.1:11401")
     parser.add_argument("--gateway-url", default="http://127.0.0.1:8091")
     parser.add_argument("--output", type=Path, default=RESULT)
     args = parser.parse_args()
@@ -62,12 +61,14 @@ def main() -> int:
         checks["nvml"] = command([
             "nvidia-smi", "--query-gpu=index,uuid,memory.total,memory.used,memory.free", "--format=csv,noheader,nounits"
         ])
-        checks["turbohaul_status"] = http_json(args.turbohaul_url.rstrip("/") + "/status")
+        checks["native_runtime"] = command([
+            "python3", "scripts/install-dspark-runtime", "check", "--backend", "auto"
+        ])
         checks["gateway_models"] = http_json(args.gateway_url.rstrip("/") + "/v1/models")
         if not checks["nvml"]["passed"]:
             blockers.append("NVML is unavailable; controlled pressure cannot be measured safely")
-        if not checks["turbohaul_status"]["passed"]:
-            blockers.append("Turbohaul Manager /status is unavailable; polite residency transitions have no live authority")
+        if not checks["native_runtime"]["passed"]:
+            blockers.append("the pinned native llama.cpp runtime is unavailable")
         model_ids = {
             item.get("id") for item in checks["gateway_models"].get("payload", {}).get("data", [])
             if isinstance(item, dict)

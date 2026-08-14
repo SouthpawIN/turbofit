@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+"""Install the bounded hourly Qwen3.8 official-release watcher."""
+from __future__ import annotations
+
+import subprocess
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+USER_UNITS = Path.home() / ".config/systemd/user"
+SERVICE = USER_UNITS / "turbofit-qwen38-watch.service"
+TIMER = USER_UNITS / "turbofit-qwen38-watch.timer"
+
+
+def main() -> int:
+    USER_UNITS.mkdir(parents=True, exist_ok=True)
+    SERVICE.write_text(
+        "[Unit]\n"
+        "Description=Turbofit official Qwen3.8-27B release watcher\n"
+        "After=network-online.target\n\n"
+        "[Service]\n"
+        "Type=oneshot\n"
+        f"ExecStart={ROOT / 'scripts/watch-qwen38-release'}\n"
+        "TimeoutStartSec=60\n"
+        "NoNewPrivileges=true\n"
+        "PrivateTmp=true\n",
+        encoding="utf-8",
+    )
+    TIMER.write_text(
+        "[Unit]\n"
+        "Description=Check hourly for the official Qwen3.8-27B release\n\n"
+        "[Timer]\n"
+        "OnBootSec=2min\n"
+        "OnUnitActiveSec=1h\n"
+        "RandomizedDelaySec=5min\n"
+        "Persistent=true\n\n"
+        "[Install]\n"
+        "WantedBy=timers.target\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["systemctl", "--user", "daemon-reload"], check=True)
+    subprocess.run(["systemctl", "--user", "enable", "--now", TIMER.name], check=True)
+    subprocess.run(["systemctl", "--user", "start", SERVICE.name], check=True)
+    print(f"installed={TIMER}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

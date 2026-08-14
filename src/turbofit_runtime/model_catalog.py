@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
-CATALOG_SCHEMA = "turbofit.model-catalog/v1"
+CATALOG_SCHEMA = "turbofit.model-catalog/v2"
 MATRIX_SCHEMA = "turbofit.configuration-matrix/v1"
 CONTEXTS = (65_536, 131_072, 262_144, 1_048_576)
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -19,32 +19,39 @@ class ModelVariant:
     name: str
     family: str
     source: str
+    revision: str
     artifact: str
     quantization: str
     vision: bool
     moe: bool
     runtime_features: tuple[str, ...]
     roles: tuple[str, ...]
+    upstream_source: str | None = None
+    upstream_revision: str | None = None
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> "ModelVariant":
         required = {
-            "id", "name", "family", "source", "artifact", "quantization",
+            "id", "name", "family", "source", "revision", "artifact", "quantization",
             "vision", "moe", "runtime_features", "roles",
         }
-        if set(value) != required:
+        optional = {"upstream_source", "upstream_revision"}
+        if not required <= set(value) or set(value) - required - optional:
             raise ValueError("model variant fields do not match catalog schema")
         item = cls(
             id=str(value["id"]),
             name=str(value["name"]),
             family=str(value["family"]),
             source=str(value["source"]),
+            revision=str(value["revision"]),
             artifact=str(value["artifact"]),
             quantization=str(value["quantization"]),
             vision=value["vision"],
             moe=value["moe"],
             runtime_features=tuple(value["runtime_features"]),
             roles=tuple(value["roles"]),
+            upstream_source=str(value["upstream_source"]) if value.get("upstream_source") else None,
+            upstream_revision=str(value["upstream_revision"]) if value.get("upstream_revision") else None,
         )
         item.validate()
         return item
@@ -57,6 +64,14 @@ class ModelVariant:
                 raise ValueError(f"model {self.id} has empty {name}")
         if not self.source.startswith("https://huggingface.co/"):
             raise ValueError(f"model {self.id} source must be a Hugging Face URL")
+        if not re.fullmatch(r"[0-9a-f]{40}", self.revision):
+            raise ValueError(f"model {self.id} revision must be a pinned commit")
+        if self.upstream_source and not self.upstream_source.startswith("https://huggingface.co/"):
+            raise ValueError(f"model {self.id} upstream_source must be a Hugging Face URL")
+        if self.upstream_revision and not re.fullmatch(r"[0-9a-f]{40}", self.upstream_revision):
+            raise ValueError(f"model {self.id} upstream_revision must be a pinned commit")
+        if self.upstream_revision and not self.upstream_source:
+            raise ValueError(f"model {self.id} upstream_revision requires upstream_source")
         if not isinstance(self.vision, bool) or not isinstance(self.moe, bool):
             raise ValueError(f"model {self.id} capability flags must be booleans")
         if not self.roles or not set(self.roles) <= {"main", "aux"}:
@@ -100,8 +115,10 @@ class ModelCatalog:
         for model_id in self.auxiliary_options[:-1]:
             if model_id not in by_id or "aux" not in by_id[model_id].roles:
                 raise ValueError(f"invalid auxiliary option: {model_id}")
-        if any("main" not in item.roles for item in self.models):
-            raise ValueError("every catalog model must be main-capable")
+        if any(not set(item.roles) & {"main", "aux"} for item in self.models):
+            raise ValueError("every catalog model must be main-capable or auxiliary-capable")
+        if not any("main" in item.roles for item in self.models):
+            raise ValueError("catalog must expose at least one main model")
 
     @property
     def main_models(self) -> tuple[ModelVariant, ...]:

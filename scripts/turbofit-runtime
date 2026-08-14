@@ -14,12 +14,19 @@ if str(SRC) not in sys.path:
 
 from turbofit_runtime.hardware import probe_hardware  # noqa: E402
 from turbofit_runtime.runtime_cli import run  # noqa: E402
+from turbofit_runtime.routes import load_runtime_resolutions_many  # noqa: E402
 from turbofit_runtime.selection import ProfileCatalog  # noqa: E402
+
+CONFIG_DIR = Path.home() / ".config" / "turbofit"
 
 
 def profile_paths() -> tuple[Path, ...]:
-    """Production exposes only local-only hardware profiles."""
-    return tuple(sorted((ROOT / "runtime-profiles").glob("*gb.yaml")))
+    """Expose canonical Auto tiers plus the user's generated exact combination."""
+    paths = list(sorted((ROOT / "runtime-profiles").glob("*gb.yaml")))
+    manual = CONFIG_DIR / "manual-profile.yaml"
+    if manual.is_file():
+        paths.append(manual)
+    return tuple(paths)
 
 
 def main(argv: list[str]) -> int:
@@ -31,6 +38,16 @@ def main(argv: list[str]) -> int:
     )
     try:
         catalog = ProfileCatalog.from_paths(profile_paths())
+        resolutions = load_runtime_resolutions_many((
+            ROOT / "runtime-profiles/runtime-resolutions.json",
+            CONFIG_DIR / "manual-runtime-resolutions.json",
+        ))
+        policy_path = ROOT / "references/catalog-campaign-policy.json"
+        policy = json.loads(policy_path.read_text(encoding="utf-8")) if policy_path.is_file() else {}
+        catalog = catalog.without_deferred_models(
+            resolutions,
+            {str(item) for item in policy.get("deferred_models", []) if isinstance(item, str)},
+        )
         hardware = probe_hardware()
         return run(
             argv[1:],

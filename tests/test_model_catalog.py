@@ -19,14 +19,24 @@ MATRIX_PATH = ROOT / "references" / "configuration-matrix.json"
 
 def test_catalog_has_every_requested_main_and_auxiliary_variant() -> None:
     catalog = ModelCatalog.load(CATALOG_PATH)
-    assert len(catalog.main_models) == 13
+    assert len(catalog.main_models) == 45
     deepseek = next(item for item in catalog.main_models if item.id == "deepseek-v4-flash-0731-q8-dspark")
     assert deepseek.source == "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF"
+    assert deepseek.upstream_source == "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731"
+    assert deepseek.upstream_revision == "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
     assert deepseek.quantization == "UD-Q8_K_XL"
     assert deepseek.runtime_features == ("dspark", "expert-offload")
     assert catalog.contexts == CONTEXTS
     assert catalog.auxiliary_options == (
-        "carwin-nano", "ternary-bonsai-27b", "bonsai-27b", "auto"
+        "carwin-nano",
+        "carwin-nano-no-mtp",
+        "ternary-bonsai-27b",
+        "ternary-bonsai-27b-dspark",
+        "ternary-bonsai-27b-dspark-bf16",
+        "bonsai-27b",
+        "bonsai-27b-dspark",
+        "bonsai-27b-dspark-bf16",
+        "auto",
     )
     assert all(item.source.startswith("https://huggingface.co/") for item in catalog.models)
 
@@ -35,8 +45,10 @@ def test_complete_matrix_is_generated_not_hand_maintained() -> None:
     catalog = ModelCatalog.load(CATALOG_PATH)
     matrix = json.loads(MATRIX_PATH.read_text())
     validate_configuration_matrix(matrix, catalog)
-    assert len(matrix["rows"]) == 13 * 4 * 4
-    assert len({item["id"] for item in matrix["rows"]}) == 208
+    expected = len(catalog.main_models) * len(catalog.auxiliary_options) * len(CONTEXTS)
+    assert expected == 1620
+    assert len(matrix["rows"]) == expected
+    assert len({item["id"] for item in matrix["rows"]}) == expected
     assert {item["context"] for item in matrix["rows"]} == set(CONTEXTS)
 
 

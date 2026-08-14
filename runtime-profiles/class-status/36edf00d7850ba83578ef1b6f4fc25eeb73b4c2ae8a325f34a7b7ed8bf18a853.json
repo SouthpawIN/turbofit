@@ -15,7 +15,7 @@
       "role": "aux"
     }
   ],
-  "composition_invariant": "Turbohaul split_mode=none isolates each resident to a distinct 24 GiB card; per-component measured peaks plus 512 MiB/card expansion margin fit.",
+  "composition_invariant": "Native process placement isolates each resident to a distinct 24 GiB card; per-component measured peaks plus 512 MiB/card expansion margin fit.",
   "profile_id": "hardware-48gb",
   "schema": "turbofit.class-evidence/v1",
   "status": "composed-measured-isolated-components"

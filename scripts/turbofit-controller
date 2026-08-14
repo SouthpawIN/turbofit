@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Turbofit v2 adaptive controller daemon; Turbohaul is sole process authority."""
+"""Turbofit adaptive controller daemon for pinned native runtimes."""
 from __future__ import annotations
 
 import argparse
@@ -14,46 +14,61 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from turbofit_runtime.acquisition import AcquisitionCatalog, ModelAcquirer  # noqa: E402
 from turbofit_runtime.hardware import probe_hardware  # noqa: E402
-from turbofit_runtime.pressure_probe import probe_nvidia_pressure  # noqa: E402
-from turbofit_runtime.routes import load_runtime_resolutions  # noqa: E402
+from turbofit_runtime.native_backend import NativeRuntimeBackend  # noqa: E402
+from turbofit_runtime.pressure_probe import probe_accelerator_pressure  # noqa: E402
+from turbofit_runtime.recipes import RecipeBook  # noqa: E402
+from turbofit_runtime.routes import load_runtime_resolutions_many  # noqa: E402
 from turbofit_runtime.runtime_service import RuntimeService  # noqa: E402
 from turbofit_runtime.selection import ProfileCatalog  # noqa: E402
-from turbofit_runtime.turbohaul_backend import TurbohaulBackend  # noqa: E402
-from turbofit_runtime.turbohaul_client import TurbohaulClient  # noqa: E402
+
+
+CONFIG_DIR = Path.home() / ".config" / "turbofit"
 
 
 def supported_profiles() -> tuple[Path, ...]:
-    """Production exposes only local-only hardware profiles."""
-    return tuple(sorted((ROOT / "runtime-profiles").glob("*gb.yaml")))
+    paths = list(sorted((ROOT / "runtime-profiles").glob("*gb.yaml")))
+    manual = CONFIG_DIR / "manual-profile.yaml"
+    if manual.is_file():
+        paths.append(manual)
+    return tuple(paths)
 
 
-def build_runtime(args: argparse.Namespace, client: TurbohaulClient) -> RuntimeService:
+def build_runtime(args: argparse.Namespace) -> RuntimeService:
     catalog = ProfileCatalog.from_paths(supported_profiles())
-    resolutions = load_runtime_resolutions(
-        ROOT / "runtime-profiles" / "runtime-resolutions.json"
-    )
-    acquirer = ModelAcquirer(
-        AcquisitionCatalog.load(ROOT / "runtime-profiles" / "acquisitions.json"),
-        client,
-    )
+    resolutions = load_runtime_resolutions_many((
+        ROOT / "runtime-profiles" / "runtime-resolutions.json",
+        CONFIG_DIR / "manual-runtime-resolutions.json",
+    ))
+    policy_path = ROOT / "references/catalog-campaign-policy.json"
+    policy = json.loads(policy_path.read_text(encoding="utf-8")) if policy_path.is_file() else {}
+    deferred = {
+        str(model_id) for model_id in policy.get("deferred_models", [])
+        if isinstance(model_id, str) and model_id
+    }
+    catalog = catalog.without_deferred_models(resolutions, deferred)
+    recipe_book = RecipeBook.load(ROOT / "references" / "model-recipes.json")
 
     def backend_factory(profile, state):
-        return TurbohaulBackend(
+        return NativeRuntimeBackend(
             profile=profile,
             resolutions=resolutions,
+            recipe_book=recipe_book,
             route_state_path=args.routes,
+            state_dir=args.runtime_state_dir,
             manager_port=args.manager_port,
-            client=client,
-            acquirer=acquirer,
             current_state=state,
+            accelerator_backend=recipe_book.backend_name,
+            verification_timeout_s=args.verification_timeout,
         )
 
     return RuntimeService(
         catalog=catalog,
         resolutions=resolutions,
-        requirements_path=ROOT / "runtime-profiles" / "rung-requirements.json",
+        requirements_path=(
+            ROOT / "runtime-profiles" / "rung-requirements.json",
+            CONFIG_DIR / "manual-rung-requirements.json",
+        ),
         controller_state_path=args.state,
         route_state_path=args.routes,
         manager_port=args.manager_port,
@@ -65,8 +80,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--once", action="store_true", help="run one bounded controller tick")
     parser.add_argument("--interval", type=float, default=2.0)
-    parser.add_argument("--manager-url", default=os.getenv("TURBOHAUL_URL", "http://127.0.0.1:11401"))
-    parser.add_argument("--manager-port", type=int, default=11401)
+    parser.add_argument("--manager-port", type=int, default=8092)
+    parser.add_argument("--verification-timeout", type=float, default=900.0)
     parser.add_argument(
         "--selection",
         type=Path,
@@ -82,28 +97,46 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         type=Path,
         default=Path(os.getenv("TURBOFIT_RUNTIME_STATE", Path.home() / ".local/state/turbofit/runtime-state.json")),
     )
+    parser.add_argument(
+        "--runtime-state-dir",
+        type=Path,
+        default=Path(os.getenv("TURBOFIT_NATIVE_STATE", Path.home() / ".local/state/turbofit/native")),
+    )
     args = parser.parse_args(argv)
     if args.interval <= 0:
         parser.error("--interval must be positive")
+    if args.verification_timeout <= 0:
+        parser.error("--verification-timeout must be positive")
     return args
+
+
+def _owned_status(state_dir: Path) -> dict:
+    residents = []
+    for role in ("main", "aux"):
+        try:
+            value = json.loads((state_dir / f"{role}.json").read_text(encoding="utf-8"))
+            pid = int(value["pid"])
+        except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):
+            continue
+        if pid > 0:
+            residents.append({"pid": pid, "role": role})
+    return {"residents": residents}
 
 
 def main(argv: list[str]) -> int:
     args = parse_args(argv[1:])
-    client = TurbohaulClient(args.manager_url, timeout_s=min(10.0, args.interval + 5.0))
-    runtime = build_runtime(args, client)
+    runtime = build_runtime(args)
     while True:
         try:
             hardware = probe_hardware()
             if not hardware.devices:
                 raise RuntimeError("no supported accelerator inventory; refusing adaptive transition")
             controller = runtime.synchronize(args.selection, hardware)
-            manager_status = client.status()
             current = controller.state.adaptive.current_index
             required = controller.requirements.required_mb_by_rung[current]
-            pressure = probe_nvidia_pressure(
+            pressure = probe_accelerator_pressure(
                 hardware,
-                manager_status=manager_status,
+                manager_status=_owned_status(args.runtime_state_dir),
                 managed_required_mb=required,
             )
             result = runtime.tick(pressure, now=time.monotonic())

@@ -1,0 +1,26 @@
+{
+  "schema": "turbofit.native-runtimes/v1",
+  "runtimes": [
+    {
+      "id": "mainline-llama.cpp",
+      "repository": "https://github.com/ggml-org/llama.cpp.git",
+      "revision": "1c3c9674de4d455f1e571bed808252af54932767",
+      "purpose": "default GGUF production runtime",
+      "cuda_binary": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server"
+    },
+    {
+      "id": "prism-llama.cpp",
+      "repository": "https://github.com/PrismML-Eng/llama.cpp.git",
+      "revision": "9ca265a57f85f2117942490f421f64a226dd9847",
+      "purpose": "Ternary Bonsai Q2_0_g128 and DSpark kernels",
+      "cuda_binary": "~/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server"
+    },
+    {
+      "id": "ik-llama.cpp",
+      "repository": "https://github.com/ikawrakow/ik_llama.cpp.git",
+      "revision": "f2328aa0c19954d0ab31a3de60fbf50e47c2429f",
+      "purpose": "GLM 5.2 IQ2_KL, DSA, IndexShare, graph split, and MTP",
+      "cuda_binary": "~/.local/share/turbofit/runtimes/ik-llama.cpp-f2328aa0c19954d0ab31a3de60fbf50e47c2429f/build-cuda/bin/llama-server"
+    }
+  ]
+}

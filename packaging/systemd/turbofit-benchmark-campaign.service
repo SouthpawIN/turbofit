@@ -1,0 +1,15 @@
+[Unit]
+Description=Turbofit exhaustive native runtime and intelligence campaigns
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/projects/turbofit
+Environment=PYTHONPATH=%h/projects/turbofit/src:%h/projects/turbofit
+ExecStart=%h/projects/turbofit/scripts/turbofit-benchmark-orchestrator --catalog-batch 50 --intelligence-batch 1 --idle-seconds 15
+Restart=on-failure
+RestartSec=30
+Nice=10
+
+[Install]
+WantedBy=default.target

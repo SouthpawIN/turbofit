@@ -1,0 +1,242 @@
+#!/usr/bin/env python3
+"""Live-load DeepSeek V4 Q8+DSpark and verify Jinja tool calling."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import signal
+import subprocess
+import sys
+import time
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Sequence
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.backend import CampaignBackend
+from turbofit_runtime.recipes import RecipeBook
+
+PORT = 11731
+
+
+def _replace(command: list[str], flag: str, value: str) -> None:
+    try:
+        command[command.index(flag) + 1] = value
+    except ValueError as exc:
+        raise ValueError(f"launch command is missing {flag}") from exc
+
+
+def prepare_command(
+    original: Sequence[str], *, port: int, backend: str, context: int | None = None,
+    gpu_layers: str | None = None, draft_gpu_layers: str | None = None,
+    cpu_moe: bool = False,
+) -> list[str]:
+    command = list(original)
+    _replace(command, "--port", str(port))
+    if context is not None:
+        _replace(command, "-c", str(context))
+    if backend == "cpu":
+        _replace(command, "-ngl", "0")
+        _replace(command, "-ngld", "0")
+        _replace(command, "--fit", "off")
+    else:
+        if gpu_layers is not None:
+            _replace(command, "-ngl", gpu_layers)
+            _replace(command, "--fit", "off")
+        if draft_gpu_layers is not None:
+            _replace(command, "-ngld", draft_gpu_layers)
+        if cpu_moe and "--cpu-moe" not in command:
+            command.append("--cpu-moe")
+    return command
+
+
+def request_json(path: str, payload: dict[str, Any] | None = None, timeout: int = 30) -> dict[str, Any]:
+    body = None if payload is None else json.dumps(payload).encode("utf-8")
+    request = urllib.request.Request(
+        f"http://127.0.0.1:{PORT}/{path}",
+        data=body,
+        headers={} if body is None else {"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return json.loads(response.read())
+
+
+def tool_token_budget(requested: int) -> int:
+    """Leave enough room for reasoning before a structured DeepSeek tool call."""
+    return max(128, requested)
+
+
+def select_matrix_row(
+    matrix: dict[str, Any], *, main_id: str, context: int,
+) -> dict[str, Any]:
+    return next(
+        item for item in matrix["rows"]
+        if item["main"] == main_id
+        and item["auxiliary"] == "auto"
+        and item["context"] == context
+    )
+
+
+def wait_ready(process: subprocess.Popen[bytes], timeout: int) -> dict[str, Any]:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            raise RuntimeError(f"llama-server exited with {process.returncode}")
+        try:
+            return request_json("health", timeout=5)
+        except Exception:
+            time.sleep(2)
+    raise TimeoutError("DeepSeek DSpark server did not become healthy")
+
+
+def _write_atomic(path: Path, payload: dict[str, Any]) -> None:
+    temporary = path.with_name(f".{path.name}.tmp")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(temporary, path)
+
+
+def run(
+    *, backend: str, output: Path, timeout: int, context: int = 65536,
+    main_id: str = "deepseek-v4-flash-0731-q8-dspark",
+    gpu_layers: str | None = None, draft_gpu_layers: str | None = None,
+    cpu_moe: bool = False, max_tokens: int = 64, request_timeout: int = 900,
+) -> dict[str, Any]:
+    matrix = json.loads((ROOT / "references/configuration-matrix.json").read_text(encoding="utf-8"))
+    row = select_matrix_row(matrix, main_id=main_id, context=context)
+    recipe = RecipeBook.load(
+        ROOT / "references/model-recipes.json",
+        backend_name=backend,
+    ).resolve_catalog_configuration(row)
+    component = recipe.components[0]
+    command = prepare_command(
+        component.command, port=PORT, backend=backend, context=context,
+        gpu_layers=gpu_layers, draft_gpu_layers=draft_gpu_layers,
+        cpu_moe=cpu_moe,
+    )
+    environment = CampaignBackend.process_environment(
+        tuple(command), gpu=component.gpu, backend_name=backend
+    )
+    log_path = output.with_suffix(".log")
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    started = time.monotonic()
+    with log_path.open("wb") as log:
+        process = subprocess.Popen(
+            command,
+            env=environment,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+        try:
+            health = wait_ready(process, timeout)
+            normal = request_json("v1/chat/completions", {
+                "model": component.alias,
+                "messages": [{"role": "user", "content": "/no_think\nReply with exactly OK."}],
+                "max_tokens": max_tokens,
+                "temperature": 0,
+            }, timeout=request_timeout)
+            tools = request_json("v1/chat/completions", {
+                "model": component.alias,
+                "messages": [{"role": "user", "content": "Call get_weather for Paris. Do not answer directly."}],
+                "tools": [{
+                    "type": "function",
+                    "function": {
+                        "name": "get_weather",
+                        "description": "Get weather for a city",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"city": {"type": "string"}},
+                            "required": ["city"],
+                            "additionalProperties": False,
+                        },
+                    },
+                }],
+                "tool_choice": "required",
+                "max_tokens": tool_token_budget(max_tokens),
+                "temperature": 0,
+            }, timeout=request_timeout)
+            choice = (tools.get("choices") or [{}])[0]
+            message = choice.get("message") or {}
+            tool_calls = message.get("tool_calls") or []
+            if not tool_calls or tool_calls[0].get("function", {}).get("name") != "get_weather":
+                diagnostic = {
+                    "schema": "turbofit.dspark-live-diagnostic/v1",
+                    "verified_at": datetime.now(timezone.utc).isoformat(),
+                    "backend": backend,
+                    "row": row,
+                    "command": command,
+                    "health": health,
+                    "normal_response": normal,
+                    "tool_response": tools,
+                    "log": str(log_path),
+                    "error": "Jinja tool-call verification did not return get_weather",
+                }
+                _write_atomic(output.with_suffix(".diagnostic.json"), diagnostic)
+                raise RuntimeError(diagnostic["error"])
+            normal_message = ((normal.get("choices") or [{}])[0].get("message") or {})
+            normal_content = normal_message.get("content") or normal_message.get("reasoning_content")
+            if not normal_content:
+                raise RuntimeError("normal completion was empty")
+            evidence = {
+                "schema": "turbofit.dspark-live/v1",
+                "verified_at": datetime.now(timezone.utc).isoformat(),
+                "backend": backend,
+                "row": row,
+                "command": command,
+                "health": health,
+                "startup_seconds": round(time.monotonic() - started, 3),
+                "normal": {"message": normal_message, "timings": normal.get("timings")},
+                "tool_call": tool_calls[0],
+                "finish_reason": choice.get("finish_reason"),
+                "log": str(log_path),
+            }
+            _write_atomic(output, evidence)
+            return evidence
+        finally:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+                process.wait(timeout=60)
+            except Exception:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--backend", choices=("cuda", "rocm", "metal", "cpu"), default="cuda")
+    parser.add_argument("--timeout", type=int, default=1800)
+    parser.add_argument("--context", type=int, default=65536)
+    parser.add_argument(
+        "--main-id",
+        choices=("deepseek-v4-flash-0731-q8-dspark", "deepseek-v4-flash-0731-q4-dspark"),
+        default="deepseek-v4-flash-0731-q8-dspark",
+    )
+    parser.add_argument("--gpu-layers")
+    parser.add_argument("--draft-gpu-layers")
+    parser.add_argument("--cpu-moe", action="store_true")
+    parser.add_argument("--max-tokens", type=int, default=64)
+    parser.add_argument("--request-timeout", type=int, default=900)
+    parser.add_argument(
+        "--output", type=Path,
+        default=ROOT / "references/results/deepseek-v4-dspark-live.json",
+    )
+    args = parser.parse_args()
+    print(json.dumps(run(
+        backend=args.backend, output=args.output, timeout=args.timeout, main_id=args.main_id,
+        context=args.context, gpu_layers=args.gpu_layers,
+        draft_gpu_layers=args.draft_gpu_layers, cpu_moe=args.cpu_moe,
+        max_tokens=args.max_tokens, request_timeout=args.request_timeout,
+    ), indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

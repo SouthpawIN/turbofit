@@ -1,19 +1,23 @@
 ---
 name: turbofit
-description: "Hardware-aware adaptive Hermes runtime using portable Turbofiles, Turbohaul-owned local residency, stable auto/active:main/active:aux routes, evidence-backed promotion, and external-GPU-first pressure handling. Use for recommending, activating, inspecting, testing, or troubleshooting Turbofit runtimes."
-version: 2.0.0
+description: "Hardware-aware adaptive Hermes runtime using portable Turbofiles, total usable memory, owned native llama.cpp residency, stable auto/active:main/active:aux routes, and evidence-backed promotion. Use for recommending, activating, inspecting, testing, or troubleshooting Turbofit runtimes."
+version: 2.2.0
 author: SouthpawIN + Nous Girl
 license: MIT
-tags: [hermes-agent, turbohaul, llm, gpu, adaptive-runtime, turbofile]
+tags: [hermes-agent, llama-cpp, llm, accelerator, cpu, adaptive-runtime, turbofile]
 ---
 
-# Turbofit adaptive runtime
+# Turbofit
+
+## 2.2 model authority
+
+Qwen 3.8 27B replaces the retired GRM family through six pinned Q4/Q8/BF16 variants, with and without MTP, plus explicit vision projectors. Turbofit 2.2 also adds DeepSeek V4 Flash 0731 Q2 DwarfStar and pinned MiniMax Music 3, NVIDIA Parakeet TDT 0.6B v3, and Soprano TTS integration candidates. The exhaustive campaign contains 1,620 rows; new catalog entries remain candidates until current-recipe physical evidence promotes them.
 
 ## Use when
 
 - Selecting an evidence-backed main/aux runtime for physical hardware
 - Activating or inspecting a Turbofile profile
-- Diagnosing pressure, contraction, expansion, routing, or Turbohaul residency
+- Diagnosing pressure, contraction, expansion, routing, or native residency
 - Benchmarking or promoting a model pair
 - Updating candidate intelligence or generated wiki views
 
@@ -31,7 +35,7 @@ curl -fsS http://127.0.0.1:8091/v1/models
 ```
 
 `set auto` chooses a canonical profile from immutable physical topology. `set
-<profile-id>` validates a measured, Turbohaul-resolvable manual combination.
+<profile-id>` validates a measured, natively resolvable manual combination.
 Both begin at API safety and use the same adaptive controller to contract and
 heal; manual selection changes only the healing ceiling.
 
@@ -40,10 +44,10 @@ Use only stable provider IDs: `auto`, `active:main`, and `active:aux`.
 ## Runtime authorities
 
 1. Turbofile: portable recommendation and ordered rung policy.
-2. Hardware fingerprint: physical topology/capacity; never current free VRAM.
+2. Hardware fingerprint: physical topology, total usable memory, and per-device capacity; never transient free memory.
 3. Pressure snapshot: ownership-aware transient capacity.
 4. Pure policy: dwell/hysteresis/cooldown/flap decision.
-5. Turbohaul Manager v0.7: sole local residency authority.
+5. Native runtime backend: sole local residency authority for owned processes.
 6. Reconciler: drain, activate, verify, publish, rollback.
 7. Gateway route state: backing targets for stable IDs.
 
@@ -51,13 +55,13 @@ Legacy `serve`, direct launchers, and scaling watcher are compatibility tools, n
 
 ## Non-negotiable safety
 
-- Never kill or signal external GPU processes.
-- Never directly signal model processes; use Turbohaul HTTP operations.
+- Never kill or signal external accelerator/model processes.
+- Signal only PID-and-command-verified processes owned by Turbofit.
 - Count external memory as unavailable and managed residency as reclaimable.
 - A temporary auxiliary admission redirect may precede drain; never publish a
   new target rung before verification.
 - Restore and verify the previous rung after any failed transition.
-- Never place paths, secrets, credentials, provider keys, or GPU indices in Turbofiles.
+- Never place paths, secrets, credentials, provider keys, or device indices in Turbofiles.
 - Never treat research candidates or generated wiki text as production authority.
 - Never mark benchmark success without a canonical promotion record.
 
@@ -91,7 +95,7 @@ scripts/release-check
 scripts/release-check --real
 ```
 
-The first command validates syntax, tests, profiles, links, and simulated transitions. The second additionally requires working NVML, Turbohaul `/status`, stable live routes, and controlled real pressure/recovery evidence. Do not claim release readiness if `--real` is blocked.
+The first command validates syntax, tests, profiles, links, and simulated transitions. The second additionally requires working accelerator telemetry, stable live routes, and controlled real pressure/recovery evidence. Do not claim release readiness if `--real` is blocked.
 
 Acceptance evidence: `references/results/adaptive-runtime-acceptance.json`.
 
@@ -109,13 +113,14 @@ No collector may modify runtime profiles, routes, or credentials. Live cron sche
 
 ## Troubleshooting order
 
-1. `nvidia-smi --query-gpu=index,uuid,memory.total,memory.used,memory.free --format=csv,noheader,nounits`
-2. Turbohaul Manager `/status` and `/api/tags`
-3. Gateway `/v1/models`
-4. Route-state freshness and stable IDs
-5. Acceptance record blockers
-6. Focused tests, then full `scripts/release-check`
+1. `scripts/turbofit-runtime status` and the hardware fingerprint in Dashboard/Desktop
+2. The platform's available native inventory probe (CUDA, ROCm, Metal, Vulkan, or CPU)
+3. Native runtime `/health`, `/v1/models`, and `/metrics`
+4. Gateway `/v1/models`
+5. Route-state freshness and stable IDs
+6. Acceptance record blockers
+7. Focused tests, then full `scripts/release-check`
 
-If NVIDIA reports a driver/library mismatch, stop the real pressure test. Do not attempt blind module reloads or disruptive GPU work.
+If the platform reports a driver/runtime mismatch, stop the real pressure test. Do not attempt blind driver reloads or disruptive accelerator work.
 
 Full architecture and schema: `README.md`.

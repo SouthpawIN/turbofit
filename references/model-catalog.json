@@ -1,24 +1,792 @@
 {
-  "schema": "turbofit.model-catalog/v1",
-  "contexts": [65536, 131072, 262144, 1048576],
+  "schema": "turbofit.model-catalog/v2",
+  "contexts": [
+    65536,
+    131072,
+    262144,
+    1048576
+  ],
   "auxiliary_options": [
     "carwin-nano",
+    "carwin-nano-no-mtp",
     "ternary-bonsai-27b",
+    "ternary-bonsai-27b-dspark",
+    "ternary-bonsai-27b-dspark-bf16",
     "bonsai-27b",
+    "bonsai-27b-dspark",
+    "bonsai-27b-dspark-bf16",
     "auto"
   ],
   "models": [
     {
       "id": "deepseek-v4-flash-0731-q8-dspark",
-      "name": "DeepSeek V4 Flash 0731 Q8 with DSpark",
+      "name": "DeepSeek V4 Flash 0731 Q8 + DSpark",
       "family": "DeepSeek V4 Flash 0731",
       "source": "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF",
-      "artifact": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf + dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
+      "artifact": "DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
       "quantization": "UD-Q8_K_XL",
       "vision": false,
       "moe": true,
-      "runtime_features": ["dspark", "expert-offload"],
-      "roles": ["main"]
+      "runtime_features": [
+        "dspark",
+        "expert-offload"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "upstream_source": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731",
+      "upstream_revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q8",
+      "name": "DeepSeek V4 Flash 0731 Q8",
+      "family": "DeepSeek V4 Flash 0731",
+      "source": "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "artifact": "DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
+      "quantization": "UD-Q8_K_XL",
+      "vision": false,
+      "moe": true,
+      "runtime_features": [
+        "expert-offload"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "upstream_source": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731",
+      "upstream_revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q4-dspark",
+      "name": "DeepSeek V4 Flash 0731 Q4 + DSpark",
+      "family": "DeepSeek V4 Flash 0731",
+      "source": "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "artifact": "DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00001-of-00005.gguf",
+      "quantization": "UD-Q4_K_XL",
+      "vision": false,
+      "moe": true,
+      "runtime_features": [
+        "dspark",
+        "expert-offload"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "upstream_source": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731",
+      "upstream_revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q4",
+      "name": "DeepSeek V4 Flash 0731 Q4",
+      "family": "DeepSeek V4 Flash 0731",
+      "source": "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "artifact": "DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00001-of-00005.gguf",
+      "quantization": "UD-Q4_K_XL",
+      "vision": false,
+      "moe": true,
+      "runtime_features": [
+        "expert-offload"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "upstream_source": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731",
+      "upstream_revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
+    },
+    {
+      "id": "deepseek-v4-flash-0731-q2-dspark",
+      "name": "DeepSeek V4 Flash 0731 Q2 + DSpark",
+      "family": "DeepSeek V4 Flash 0731",
+      "source": "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "artifact": "DeepSeek-V4-Flash-0731-UD-Q2_K_XL-00001-of-00003.gguf",
+      "quantization": "UD-Q2_K_XL",
+      "vision": false,
+      "moe": true,
+      "runtime_features": [
+        "dspark",
+        "expert-offload"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
+      "upstream_source": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731",
+      "upstream_revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
+    },
+    {
+      "id": "qwen3-8-27b-q4-mtp",
+      "name": "Qwen 3.8 27B Q4_K_M + MTP",
+      "family": "Qwen 3.8 27B",
+      "source": "https://huggingface.co/ggml-org/Qwen3.8-27B-GGUF",
+      "artifact": "Qwen3.8-27B-Q4_K_M.gguf",
+      "quantization": "Q4_K_M",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "mtp",
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B",
+      "upstream_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"
+    },
+    {
+      "id": "qwen3-8-27b-q4",
+      "name": "Qwen 3.8 27B Q4_K_M",
+      "family": "Qwen 3.8 27B",
+      "source": "https://huggingface.co/ggml-org/Qwen3.8-27B-GGUF",
+      "artifact": "Qwen3.8-27B-Q4_K_M.gguf",
+      "quantization": "Q4_K_M",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B",
+      "upstream_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"
+    },
+    {
+      "id": "qwen3-8-27b-q8-mtp",
+      "name": "Qwen 3.8 27B Q8_0 + MTP",
+      "family": "Qwen 3.8 27B",
+      "source": "https://huggingface.co/ggml-org/Qwen3.8-27B-GGUF",
+      "artifact": "Qwen3.8-27B-Q8_0.gguf",
+      "quantization": "Q8_0",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "mtp",
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B",
+      "upstream_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"
+    },
+    {
+      "id": "qwen3-8-27b-q8",
+      "name": "Qwen 3.8 27B Q8_0",
+      "family": "Qwen 3.8 27B",
+      "source": "https://huggingface.co/ggml-org/Qwen3.8-27B-GGUF",
+      "artifact": "Qwen3.8-27B-Q8_0.gguf",
+      "quantization": "Q8_0",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B",
+      "upstream_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"
+    },
+    {
+      "id": "qwen3-8-27b-bf16-mtp",
+      "name": "Qwen 3.8 27B BF16 + MTP",
+      "family": "Qwen 3.8 27B",
+      "source": "https://huggingface.co/ggml-org/Qwen3.8-27B-GGUF",
+      "artifact": "Qwen3.8-27B-BF16.gguf",
+      "quantization": "BF16",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "mtp",
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B",
+      "upstream_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"
+    },
+    {
+      "id": "qwen3-8-27b-bf16",
+      "name": "Qwen 3.8 27B BF16",
+      "family": "Qwen 3.8 27B",
+      "source": "https://huggingface.co/ggml-org/Qwen3.8-27B-GGUF",
+      "artifact": "Qwen3.8-27B-BF16.gguf",
+      "quantization": "BF16",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B",
+      "upstream_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"
+    },
+    {
+      "id": "carwin-nano",
+      "name": "Carwin MoE Nano MTP",
+      "family": "Carwin Nano",
+      "source": "https://huggingface.co/isneezekittens/Carwin-MoE-Nano-GGUF",
+      "artifact": "carwin-moe-Nano.gguf",
+      "quantization": "native",
+      "vision": false,
+      "moe": true,
+      "runtime_features": [
+        "mtp",
+        "expert-offload"
+      ],
+      "roles": [
+        "aux"
+      ],
+      "revision": "ae4705a9b6c6051fa59615665eb2d2d1e2884557"
+    },
+    {
+      "id": "carwin-nano-no-mtp",
+      "name": "Carwin MoE Nano No MTP",
+      "family": "Carwin Nano",
+      "source": "https://huggingface.co/isneezekittens/Carwin-MoE-Nano-GGUF",
+      "artifact": "carwin-moe-Nano.gguf",
+      "quantization": "native",
+      "vision": false,
+      "moe": true,
+      "runtime_features": [
+        "expert-offload"
+      ],
+      "roles": [
+        "aux"
+      ],
+      "revision": "ae4705a9b6c6051fa59615665eb2d2d1e2884557"
+    },
+    {
+      "id": "ternary-bonsai-27b",
+      "name": "Ternary Bonsai 27B Q2_0",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-Q2_0.gguf",
+      "quantization": "Q2_0",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [],
+      "roles": [
+        "main",
+        "aux"
+      ],
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark-bf16",
+      "name": "Ternary Bonsai 27B Q2_0 + BF16 DSpark",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-Q2_0.gguf",
+      "quantization": "Q2_0",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [
+        "dspark"
+      ],
+      "roles": [
+        "main",
+        "aux"
+      ],
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark",
+      "name": "Ternary Bonsai 27B Q2_0 + Q4 DSpark",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-Q2_0.gguf",
+      "quantization": "Q2_0",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [
+        "dspark"
+      ],
+      "roles": [
+        "main",
+        "aux"
+      ],
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16",
+      "name": "Ternary Bonsai 27B Q2_0 + BF16 Vision",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-Q2_0.gguf",
+      "quantization": "Q2_0",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16",
+      "name": "Ternary Bonsai 27B Q2_0 + BF16 Vision + BF16 DSpark",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-Q2_0.gguf",
+      "quantization": "Q2_0",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector",
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-q4",
+      "name": "Ternary Bonsai 27B Q2_0 + BF16 Vision + Q4 DSpark",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-Q2_0.gguf",
+      "quantization": "Q2_0",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector",
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16",
+      "name": "Ternary Bonsai 27B F16",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [],
+      "roles": [
+        "main"
+      ],
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-dspark-bf16",
+      "name": "Ternary Bonsai 27B F16 + BF16 DSpark",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-dspark-q4",
+      "name": "Ternary Bonsai 27B F16 + Q4 DSpark",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-bf16",
+      "name": "Ternary Bonsai 27B F16 + BF16 Vision",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark",
+      "name": "Ternary Bonsai 27B F16 + BF16 Vision + BF16 DSpark",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector",
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
+      "name": "Ternary Bonsai 27B F16 + BF16 Vision + Q4 DSpark",
+      "family": "Ternary Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
+      "artifact": "Ternary-Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector",
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+    },
+    {
+      "id": "bonsai-27b",
+      "name": "Binary Bonsai 27B Q1_0",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-Q1_0.gguf",
+      "quantization": "Q1_0",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [],
+      "roles": [
+        "main",
+        "aux"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-dspark-bf16",
+      "name": "Binary Bonsai 27B Q1_0 + BF16 DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-Q1_0.gguf",
+      "quantization": "Q1_0",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [
+        "dspark"
+      ],
+      "roles": [
+        "main",
+        "aux"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-dspark",
+      "name": "Binary Bonsai 27B Q1_0 + Q4 DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-Q1_0.gguf",
+      "quantization": "Q1_0",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [
+        "dspark"
+      ],
+      "roles": [
+        "main",
+        "aux"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16",
+      "name": "Binary Bonsai 27B Q1_0 + BF16 Vision",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-Q1_0.gguf",
+      "quantization": "Q1_0",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16-dspark-bf16",
+      "name": "Binary Bonsai 27B Q1_0 + BF16 Vision + BF16 DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-Q1_0.gguf",
+      "quantization": "Q1_0",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector",
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16-dspark-q4",
+      "name": "Binary Bonsai 27B Q1_0 + BF16 Vision + Q4 DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-Q1_0.gguf",
+      "quantization": "Q1_0",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector",
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-q8",
+      "name": "Binary Bonsai 27B Q1_0 + Q8 Vision",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-Q1_0.gguf",
+      "quantization": "Q1_0",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-q8-dspark-bf16",
+      "name": "Binary Bonsai 27B Q1_0 + Q8 Vision + BF16 DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-Q1_0.gguf",
+      "quantization": "Q1_0",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector",
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-q8-dspark-q4",
+      "name": "Binary Bonsai 27B Q1_0 + Q8 Vision + Q4 DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-Q1_0.gguf",
+      "quantization": "Q1_0",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector",
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-fp16",
+      "name": "Binary Bonsai 27B F16",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-fp16-dspark-bf16",
+      "name": "Binary Bonsai 27B F16 + BF16 DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-fp16-dspark-q4",
+      "name": "Binary Bonsai 27B F16 + Q4 DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-bf16",
+      "name": "Binary Bonsai 27B F16 + BF16 Vision",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark",
+      "name": "Binary Bonsai 27B F16 + BF16 Vision + BF16 DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector",
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-bf16-dspark-q4",
+      "name": "Binary Bonsai 27B F16 + BF16 Vision + Q4 DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector",
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8",
+      "name": "Binary Bonsai 27B F16 + Q8 Vision",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8-dspark-bf16",
+      "name": "Binary Bonsai 27B F16 + Q8 Vision + BF16 DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector",
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8-dspark-q4",
+      "name": "Binary Bonsai 27B F16 + Q8 Vision + Q4 DSpark",
+      "family": "Bonsai 27B",
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "artifact": "Bonsai-27B-F16.gguf",
+      "quantization": "F16",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector",
+        "dspark"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292"
     },
     {
       "id": "glm-5-2-2-788bpw",
@@ -29,140 +797,68 @@
       "quantization": "2.788 bpw",
       "vision": false,
       "moe": true,
-      "runtime_features": ["expert-offload"],
-      "roles": ["main"]
+      "runtime_features": [
+        "expert-offload"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "f7c4ef0107a861ac4007e67543ec4eb12c4248c5"
     },
     {
       "id": "minimax-m3-q4",
       "name": "MiniMax M3 Q4",
       "family": "MiniMax M3",
       "source": "https://huggingface.co/unsloth/MiniMax-M3-GGUF",
-      "artifact": "Q4-class GGUF shard set",
+      "artifact": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf",
       "quantization": "Q4",
       "vision": true,
       "moe": true,
-      "runtime_features": ["vision", "expert-offload"],
-      "roles": ["main"]
+      "runtime_features": [
+        "vision",
+        "expert-offload"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "18039c2c5277fc64109acee91fa3ca3a9da73c57"
     },
     {
       "id": "laguna-s2-1-fp16",
       "name": "Laguna S2.1 FP16",
       "family": "Laguna S2.1",
-      "source": "https://huggingface.co/poolside/Laguna-S-2.1",
-      "artifact": "safetensors shard set",
+      "source": "https://huggingface.co/poolside/Laguna-S-2.1-GGUF",
+      "artifact": "laguna-s-2.1-F16.gguf",
       "quantization": "FP16/BF16",
       "vision": false,
       "moe": true,
-      "runtime_features": ["vllm", "expert-offload"],
-      "roles": ["main"]
+      "runtime_features": [
+        "vllm",
+        "expert-offload"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "e08e1fe855bb2d43f96ad78e24495283f3426c67",
+      "upstream_source": "https://huggingface.co/poolside/Laguna-S-2.1"
     },
     {
       "id": "laguna-s2-1-q4",
       "name": "Laguna S2.1 Q4",
       "family": "Laguna S2.1",
-      "source": "https://huggingface.co/unsloth/Laguna-S-2.1-GGUF",
-      "artifact": "Q4 GGUF shard set",
+      "source": "https://huggingface.co/poolside/Laguna-S-2.1-GGUF",
+      "artifact": "laguna-s-2.1-Q4_K_M.gguf",
       "quantization": "Q4",
       "vision": false,
       "moe": true,
-      "runtime_features": ["expert-offload"],
-      "roles": ["main"]
-    },
-    {
-      "id": "grm-2-6-27b",
-      "name": "GRM 2.6 Plus 27B",
-      "family": "GRM 2.6 Plus",
-      "source": "https://huggingface.co/bartowski/OrionLLM_GRM-2.6-Plus-0628-GGUF",
-      "artifact": "OrionLLM_GRM-2.6-Plus-0628-Q4_K_M.gguf",
-      "quantization": "Q4_K_M",
-      "vision": true,
-      "moe": false,
-      "runtime_features": ["vision", "mtp"],
-      "roles": ["main"]
-    },
-    {
-      "id": "carwin-nano",
-      "name": "Carwin MoE Nano",
-      "family": "Carwin Nano",
-      "source": "https://huggingface.co/isneezekittens/Carwin-MoE-Nano-GGUF",
-      "artifact": "carwin-moe-Nano.gguf",
-      "quantization": "repository GGUF",
-      "vision": false,
-      "moe": true,
-      "runtime_features": ["mtp", "expert-offload"],
-      "roles": ["main", "aux"]
-    },
-    {
-      "id": "ternary-bonsai-27b-fp16-vision-dspark",
-      "name": "Ternary Bonsai 27B FP16 Vision with DSpark",
-      "family": "Ternary Bonsai 27B",
-      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
-      "artifact": "Ternary-Bonsai-27B-F16.gguf + mmproj + dspark draft",
-      "quantization": "FP16",
-      "vision": true,
-      "moe": false,
-      "runtime_features": ["vision", "dspark"],
-      "roles": ["main"]
-    },
-    {
-      "id": "ternary-bonsai-27b-dspark",
-      "name": "Ternary Bonsai 27B with DSpark",
-      "family": "Ternary Bonsai 27B",
-      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
-      "artifact": "Ternary-Bonsai-27B-Q2_0.gguf + dspark draft",
-      "quantization": "ternary/Q2",
-      "vision": false,
-      "moe": false,
-      "runtime_features": ["dspark"],
-      "roles": ["main"]
-    },
-    {
-      "id": "ternary-bonsai-27b",
-      "name": "Ternary Bonsai 27B",
-      "family": "Ternary Bonsai 27B",
-      "source": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf",
-      "artifact": "Ternary-Bonsai-27B-Q2_0.gguf",
-      "quantization": "ternary/Q2",
-      "vision": false,
-      "moe": false,
-      "runtime_features": [],
-      "roles": ["main", "aux"]
-    },
-    {
-      "id": "bonsai-27b-fp16-vision-dspark",
-      "name": "Bonsai 27B FP16 Vision with DSpark",
-      "family": "Bonsai 27B",
-      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
-      "artifact": "Bonsai-27B-F16.gguf + mmproj + dspark draft",
-      "quantization": "FP16",
-      "vision": true,
-      "moe": false,
-      "runtime_features": ["vision", "dspark"],
-      "roles": ["main"]
-    },
-    {
-      "id": "bonsai-27b-dspark",
-      "name": "Bonsai 27B with DSpark",
-      "family": "Bonsai 27B",
-      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
-      "artifact": "Bonsai-27B-Q1_0.gguf + dspark draft",
-      "quantization": "Q1",
-      "vision": false,
-      "moe": false,
-      "runtime_features": ["dspark"],
-      "roles": ["main"]
-    },
-    {
-      "id": "bonsai-27b",
-      "name": "Bonsai 27B",
-      "family": "Bonsai 27B",
-      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
-      "artifact": "Bonsai-27B-Q1_0.gguf",
-      "quantization": "Q1",
-      "vision": false,
-      "moe": false,
-      "runtime_features": [],
-      "roles": ["main", "aux"]
+      "runtime_features": [
+        "expert-offload"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "e08e1fe855bb2d43f96ad78e24495283f3426c67",
+      "upstream_source": "https://huggingface.co/unsloth/Laguna-S-2.1-GGUF"
     }
   ]
 }

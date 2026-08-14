@@ -45,23 +45,50 @@ def load_rung_requirements(path: str | Path, profile: Turbofile) -> RungRequirem
     if not isinstance(profiles, Mapping) or profile.id not in profiles:
         raise ValueError(f"missing rung requirements for {profile.id}")
     rows = profiles[profile.id]
-    if not isinstance(rows, list) or len(rows) != len(profile.rungs):
-        raise ValueError("requirement rung count must match profile rung count")
-    values: list[tuple[int, ...]] = []
-    for index, (row, rung) in enumerate(zip(rows, profile.rungs, strict=True)):
+    if not isinstance(rows, list):
+        raise ValueError("rung requirements profile must be a list")
+    by_rung: dict[str, Mapping[str, Any]] = {}
+    for index, row in enumerate(rows):
         if not isinstance(row, Mapping) or set(row) != {
             "rung_id",
             "evidence",
             "required_mb_per_card",
         }:
             raise ValueError(f"invalid requirement row {index}")
-        if row["rung_id"] != rung.id or row["evidence"] != rung.evidence:
+        rung_id = row["rung_id"]
+        if not isinstance(rung_id, str) or not rung_id:
+            raise ValueError(f"invalid requirement rung id {index}")
+        if rung_id in by_rung:
+            raise ValueError(f"duplicate requirement rung id: {rung_id}")
+        by_rung[rung_id] = row
+
+    values: list[tuple[int, ...]] = []
+    for index, rung in enumerate(profile.rungs):
+        row = by_rung.get(rung.id)
+        if row is None:
+            raise ValueError(f"missing requirement row for {rung.id}")
+        if row["evidence"] != rung.evidence:
             raise ValueError(f"requirement row {index} does not match profile evidence")
         required = row["required_mb_per_card"]
         if not isinstance(required, list):
             raise ValueError(f"requirement row {index} must contain a list")
         values.append(tuple(required))
     return RungRequirements(profile.id, values)
+
+
+def load_rung_requirements_any(
+    paths: Sequence[str | Path], profile: Turbofile,
+) -> RungRequirements:
+    """Load one profile from ordered canonical/manual requirement stores."""
+    for path in paths:
+        try:
+            raw: Any = json.loads(Path(path).read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            continue
+        profiles = raw.get("profiles") if isinstance(raw, Mapping) else None
+        if isinstance(profiles, Mapping) and profile.id in profiles:
+            return load_rung_requirements(path, profile)
+    raise ValueError(f"missing rung requirements for {profile.id}")
 
 
 @dataclass(frozen=True)

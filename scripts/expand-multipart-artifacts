@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""Expand every first GGUF shard in the artifact manifest to its complete pinned shard set."""
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path, PurePosixPath
+
+from huggingface_hub import HfApi
+
+ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = ROOT / "references" / "artifact-manifest.json"
+FIRST_SHARD = re.compile(r"^(?P<prefix>.+)-00001-of-(?P<count>\d+)\.gguf$")
+
+
+def main() -> int:
+    payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    artifacts = payload["artifacts"]
+    existing = {item["destination"] for item in artifacts}
+    additions: list[dict] = []
+    api = HfApi()
+    metadata_cache: dict[tuple[str, str], dict[str, object]] = {}
+    for item in tuple(artifacts):
+        filename = PurePosixPath(item["path"]).name
+        match = FIRST_SHARD.fullmatch(filename)
+        if not match:
+            continue
+        cache_key = (item["repo_id"], item["revision"])
+        if cache_key not in metadata_cache:
+            info = api.model_info(
+                item["repo_id"],
+                revision=item["revision"],
+                files_metadata=True,
+            )
+            metadata_cache[cache_key] = {sibling.rfilename: sibling for sibling in info.siblings}
+        siblings = metadata_cache[cache_key]
+        path = PurePosixPath(item["path"])
+        destination = PurePosixPath(item["destination"])
+        for index in range(2, int(match.group("count")) + 1):
+            sibling_name = f"{match.group('prefix')}-{index:05d}-of-{match.group('count')}.gguf"
+            sibling_path = str(path.with_name(sibling_name))
+            sibling_destination = str(destination.with_name(sibling_name))
+            if sibling_destination in existing:
+                continue
+            metadata = siblings.get(sibling_path)
+            if metadata is None or metadata.lfs is None or metadata.size is None:
+                raise RuntimeError(f"missing immutable LFS metadata for {item['repo_id']}:{sibling_path}")
+            additions.append(
+                {
+                    "destination": sibling_destination,
+                    "families": list(item["families"]),
+                    "repo_id": item["repo_id"],
+                    "revision": item["revision"],
+                    "path": sibling_path,
+                    "sha256": metadata.lfs.sha256,
+                    "size_bytes": metadata.size,
+                }
+            )
+            existing.add(sibling_destination)
+    artifacts.extend(additions)
+    artifacts.sort(key=lambda artifact: artifact["destination"])
+    MANIFEST.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"added": len(additions), "artifacts": len(artifacts)}, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

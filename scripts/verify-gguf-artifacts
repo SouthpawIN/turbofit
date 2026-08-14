@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+"""Validate every pinned GGUF artifact structurally and optionally by SHA-256."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = ROOT / "references/artifact-manifest.json"
+RECIPES = ROOT / "references/model-recipes.json"
+MODEL_ROOT = Path.home() / "Models/storage/gguf"
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        while block := handle.read(8 * 1024 * 1024):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--hash", action="store_true", help="also read and verify every artifact byte")
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    recipes = json.loads(RECIPES.read_text(encoding="utf-8"))
+    parser_roots = {
+        "mainline-llama.cpp": Path(str(recipes["atomic_binary"])).expanduser().parents[2],
+        "prism-llama.cpp": Path.home() / ".local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847",
+        "ik-llama.cpp": Path.home() / ".local/share/turbofit/runtimes/ik-llama.cpp-f2328aa0c19954d0ab31a3de60fbf50e47c2429f",
+    }
+
+    records = []
+    for artifact in manifest["artifacts"]:
+        path = MODEL_ROOT / artifact["destination"]
+        runtime = "mainline-llama.cpp"
+        if artifact["destination"] == "Ternary-Bonsai-27B/Ternary-Bonsai-27B-Q2_0.gguf":
+            runtime = "prism-llama.cpp"
+        elif artifact["destination"].startswith("GLM-5.2-2.788bpw/"):
+            runtime = "ik-llama.cpp"
+        record = {
+            "destination": artifact["destination"],
+            "validation_runtime": runtime,
+            "exists": path.is_file(),
+            "size_expected": artifact["size_bytes"],
+            "size_actual": path.stat().st_size if path.is_file() else None,
+            "size_valid": path.is_file() and path.stat().st_size == artifact["size_bytes"],
+            "structure_valid": False,
+            "sha256_valid": None,
+            "error": None,
+        }
+        if path.is_file():
+            try:
+                environment = dict(os.environ)
+                environment["PYTHONPATH"] = str(parser_roots[runtime] / "gguf-py")
+                check = subprocess.run(
+                    [sys.executable, "-c", "from gguf import GGUFReader; import sys; GGUFReader(sys.argv[1], 'r')", str(path)],
+                    text=True, capture_output=True, env=environment,
+                )
+                if check.returncode:
+                    raise RuntimeError(check.stderr.strip() or check.stdout.strip())
+                record["structure_valid"] = True
+            except Exception as exc:
+                record["error"] = f"{type(exc).__name__}: {exc}"
+            if args.hash:
+                record["sha256_valid"] = sha256(path) == artifact["sha256"]
+        records.append(record)
+    payload = {
+        "schema": "turbofit.gguf-artifact-validation/v1",
+        "hash_checked": args.hash,
+        "total": len(records),
+        "valid": sum(item["size_valid"] and item["structure_valid"] and item["sha256_valid"] is not False for item in records),
+        "invalid": sum(not (item["size_valid"] and item["structure_valid"] and item["sha256_valid"] is not False) for item in records),
+        "records": records,
+    }
+    text = json.dumps(payload, indent=2) + "\n"
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(text, encoding="utf-8")
+    print(text, end="")
+    return 1 if payload["invalid"] else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

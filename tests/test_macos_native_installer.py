@@ -32,15 +32,21 @@ def test_pinned_runtime_is_preferred_over_path(tmp_path: Path, monkeypatch) -> N
     assert MODULE._llama_server() == str(binary)
 
 
-def test_existing_pinned_runtime_is_version_checked(
+def test_existing_pinned_runtime_is_checked_by_shared_installer(
     tmp_path: Path, monkeypatch
 ) -> None:
     binary = tmp_path / "llama-server"
     binary.write_text("")
     monkeypatch.setattr(MODULE, "LLAMA_RUNTIME_BINARY", binary)
-    monkeypatch.setattr(MODULE, "_llama_version", lambda _path: "version: 10173 (test)")
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        MODULE.subprocess,
+        "run",
+        lambda command, **_kwargs: calls.append(command),
+    )
 
     assert MODULE._install_llama_runtime() == str(binary)
+    assert calls and calls[0][-3:] == ["check", "--backend", "metal"]
 
 
 def test_native_launch_enables_bounded_prompt_cache() -> None:

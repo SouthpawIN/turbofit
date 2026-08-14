@@ -1,7 +1,7 @@
 """Manual and hardware-auto selection of adaptive Turbofile profiles."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 import json
 import os
@@ -108,6 +108,40 @@ class ProfileCatalog:
     def profiles(self) -> tuple[Turbofile, ...]:
         return self._profiles
 
+    def without_deferred_models(
+        self,
+        resolutions: Mapping[str, Mapping[str, Mapping[str, Mapping[str, int | str]]]],
+        deferred_model_ids: set[str],
+    ) -> "ProfileCatalog":
+        """Remove local rungs routed to deferred models while retaining safe rungs."""
+        if not deferred_model_ids:
+            return self
+        filtered: list[Turbofile] = []
+        for profile in self.profiles:
+            kept = []
+            for rung in profile.rungs:
+                roles = resolutions.get(profile.id, {}).get(rung.id, {})
+                routed_models = {
+                    str(role.get(field))
+                    for role in roles.values()
+                    for field in ("model_tag", "family")
+                    if role.get(field) is not None
+                }
+                if routed_models & deferred_model_ids:
+                    continue
+                kept.append(rung)
+            if not kept:
+                raise ValueError(f"deferring models removes every rung from {profile.id}")
+            rungs = tuple(kept)
+            selected = replace(
+                profile,
+                rungs=rungs,
+                revision=profile.revision + (rungs != profile.rungs),
+            )
+            selected.validate()
+            filtered.append(selected)
+        return ProfileCatalog(filtered)
+
     def select(self, hardware: HardwareFingerprint, *, requested: str = "auto") -> ProfileChoice:
         if requested == "auto":
             profile = self._auto(hardware)
@@ -137,7 +171,7 @@ class ProfileCatalog:
         if exact:
             return max(exact, key=self._auto_rank)
 
-        total_gb = hardware.total_vram_mb / 1024
+        total_gb = hardware.total_usable_memory_mb / 1024
         safe_api = [
             profile
             for profile in self._profiles

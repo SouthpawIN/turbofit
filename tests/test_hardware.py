@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import json
 
 import pytest
 
@@ -9,6 +10,7 @@ from turbofit_runtime.hardware import (
     HardwareFingerprint,
     _run_command,
     parse_nvidia_inventory_csv,
+    parse_rocm_smi_json,
     probe_hardware,
 )
 
@@ -125,6 +127,61 @@ def test_probe_uses_stable_nvidia_query() -> None:
         "--format=csv,noheader,nounits",
     ]]
     assert fingerprint.devices[0].name == "RTX 4090"
+
+
+def test_parse_rocm_inventory_preserves_identity_capacity_and_bus() -> None:
+    raw = json.dumps({
+        "card0": {
+            "Card series": "AMD Radeon PRO W7900",
+            "Unique ID": "0x1234",
+            "PCI Bus": "0000:41:00.0",
+            "VRAM Total Memory (B)": "51527024640",
+        }
+    })
+
+    devices = parse_rocm_smi_json(raw)
+
+    assert devices == (
+        AcceleratorDevice(
+            index=0,
+            uuid="0x1234",
+            name="AMD Radeon PRO W7900",
+            vendor="amd",
+            backend="rocm",
+            memory_total_mb=49140,
+            compute_capability=None,
+            bus_id="0000:41:00.0",
+        ),
+    )
+
+
+def test_probe_falls_back_to_rocm_when_nvidia_is_absent() -> None:
+    commands: list[list[str]] = []
+
+    def run(command: list[str]) -> str:
+        commands.append(command)
+        if command[0] == "nvidia-smi":
+            raise FileNotFoundError(command[0])
+        return json.dumps({
+            "card0": {
+                "Card series": "AMD Radeon RX 7900 XTX",
+                "Unique ID": "0xabcd",
+                "PCI Bus": "0000:03:00.0",
+                "VRAM Total Memory (B)": str(24 * 1024**3),
+            }
+        })
+
+    fingerprint = probe_hardware(
+        command_runner=run,
+        os_name="linux",
+        architecture="x86_64",
+        system_ram_mb=65536,
+    )
+
+    assert commands[0][0] == "nvidia-smi"
+    assert commands[1][0] == "rocm-smi"
+    assert fingerprint.backends == ("rocm",)
+    assert fingerprint.total_vram_mb == 24576
 
 
 def test_probe_apple_silicon_exposes_unified_memory_as_metal_capacity() -> None:

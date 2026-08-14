@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+"""Show all Turbofit hardware tiers, candidates, fit evidence, intelligence, and TPS."""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.hardware import probe_hardware
+from turbofit_runtime.tier_report import build_tier_report
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    report = build_tier_report(ROOT, probe_hardware())
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    if args.json:
+        print(json.dumps(report, indent=2))
+        return 0
+    hardware = report["current_hardware"]
+    print(
+        f"Current: tier {hardware['native_tier_gb']} GB; "
+        f"RAM {hardware['system_ram_mb'] / 1024:.1f} GB; "
+        f"accelerator {hardware['accelerator_memory_mb'] / 1024:.1f} GB; "
+        f"devices {hardware['device_memory_mb']} MiB"
+    )
+    print("TIER   TOPOLOGY   STATUS                    MEASURED WINNER / INTELLIGENCE / TPS")
+    print("-" * 110)
+    for tier in report["tiers"]:
+        winner = tier["recommendations"]["measured_winner"]
+        identity = winner["configuration_id"] if winner else "none"
+        intelligence = winner["intelligence_score"] if winner else None
+        tps = winner["measured_tps"] if winner else None
+        print(
+            f"{tier['capacity_gb']:>4}GB  {tier['topology']['topology']:<10} "
+            f"{tier['status']:<25} {identity} / "
+            f"{('pending' if intelligence is None else f'{intelligence:.2f}')} / "
+            f"{('pending' if tps is None else f'{tps:.2f}') }"
+        )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

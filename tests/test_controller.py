@@ -250,7 +250,29 @@ def test_48gb_class_accounts_managed_residency_on_the_pinned_cards() -> None:
     requirements = load_rung_requirements(
         root / "runtime-profiles/rung-requirements.json", profile
     )
-    assert requirements.required_mb_by_rung[0] == (20_000, 20_000)
+    assert requirements.required_mb_by_rung[0] == (0, 11_093)
+
+
+def test_filtered_rungs_keep_matching_requirement_rows() -> None:
+    from pathlib import Path
+
+    from turbofit_runtime.profile_io import load_profile
+
+    root = Path(__file__).resolve().parents[1]
+    profile = load_profile(root / "runtime-profiles/48gb.yaml")
+    original = load_rung_requirements(
+        root / "runtime-profiles/rung-requirements.json", profile
+    )
+    filtered = replace(
+        profile,
+        rungs=profile.rungs[1:],
+    )
+
+    requirements = load_rung_requirements(
+        root / "runtime-profiles/rung-requirements.json", filtered
+    )
+
+    assert requirements.required_mb_by_rung == original.required_mb_by_rung[1:]
 
 
 def test_controller_state_round_trips_atomically(tmp_path) -> None:

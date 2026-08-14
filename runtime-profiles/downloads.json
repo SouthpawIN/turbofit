@@ -1,0 +1,149 @@
+{
+  "schema": "turbofit.downloads/v1",
+  "files": {
+    "bonsai-27b-q1": {
+      "repo_id": "prism-ml/Bonsai-27B-gguf",
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292",
+      "path": "Bonsai-27B-Q1_0.gguf",
+      "destination": "prism-ml--Bonsai-27B-gguf/Bonsai-27B-Q1_0.gguf",
+      "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+      "size_bytes": 3803452480
+    },
+    "deepseek-v4-q8-shard-1": {
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "57326b941c4603e24d1a5e71c22520c66e086eb8",
+      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
+      "destination": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
+      "sha256": "d13ce8f90855547bdaebe7312f531a1f2c4f822178d3103951f27fe884395cfa",
+      "size_bytes": 5257408
+    },
+    "deepseek-v4-q8-shard-2": {
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "57326b941c4603e24d1a5e71c22520c66e086eb8",
+      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00002-of-00005.gguf",
+      "destination": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00002-of-00005.gguf",
+      "sha256": "3da2f2443063f83635986f9b67fa7e8e3d03c53b81a9a08d2007936612423610",
+      "size_bytes": 49215492960
+    },
+    "deepseek-v4-q8-shard-3": {
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "57326b941c4603e24d1a5e71c22520c66e086eb8",
+      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00003-of-00005.gguf",
+      "destination": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00003-of-00005.gguf",
+      "sha256": "7d622a7760d359ec9257b3493ad531e3bf0bfbe6f6533267e16e6dde8153ddce",
+      "size_bytes": 49700372160
+    },
+    "deepseek-v4-q8-shard-4": {
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "57326b941c4603e24d1a5e71c22520c66e086eb8",
+      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00004-of-00005.gguf",
+      "destination": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00004-of-00005.gguf",
+      "sha256": "6ed2bce452214f156b85e7c5f7d4fc242a3052f409d1b90a61422f60669c2de3",
+      "size_bytes": 49466495968
+    },
+    "deepseek-v4-q8-shard-5": {
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "57326b941c4603e24d1a5e71c22520c66e086eb8",
+      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00005-of-00005.gguf",
+      "destination": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00005-of-00005.gguf",
+      "sha256": "ea4727af4888fdca0fff796ec81ac2f3ebb43c310b2feb4798f41d82744b42ea",
+      "size_bytes": 13481997024
+    },
+    "deepseek-v4-dspark-q8": {
+      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "revision": "57326b941c4603e24d1a5e71c22520c66e086eb8",
+      "path": "dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
+      "destination": "dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
+      "sha256": "2c7ac54b0b64a99df1f139a9f1371a00198265e1d6a614b77597d20a655a4249",
+      "size_bytes": 10896057440
+    },
+    "qwen3-8-27b-qwen3.8-27b-q4-k-m": {
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "Qwen3.8-27B-Q4_K_M.gguf",
+      "destination": "Qwen3.8-27B/Qwen3.8-27B-Q4_K_M.gguf",
+      "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+      "size_bytes": 18973870432
+    },
+    "qwen3-8-27b-qwen3.8-27b-q8-0": {
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "Qwen3.8-27B-Q8_0.gguf",
+      "destination": "Qwen3.8-27B/Qwen3.8-27B-Q8_0.gguf",
+      "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+      "size_bytes": 28595763552
+    },
+    "qwen3-8-27b-qwen3.8-27b-bf16": {
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "Qwen3.8-27B-BF16.gguf",
+      "destination": "Qwen3.8-27B/Qwen3.8-27B-BF16.gguf",
+      "sha256": "5a3eedc837bcbd1365cdbf5b71e698df3122e76586ba872f07ce3ed4a9bfa97e",
+      "size_bytes": 53808281952
+    },
+    "qwen3-8-27b-mmproj-qwen3.8-27b-q8-0": {
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "mmproj-Qwen3.8-27B-Q8_0.gguf",
+      "destination": "Qwen3.8-27B/mmproj-Qwen3.8-27B-Q8_0.gguf",
+      "sha256": "2e968a6af97ce35d8971890b257b9b7edabf20ad91450501fa53162a19ee33eb",
+      "size_bytes": 629247008
+    },
+    "qwen3-8-27b-mmproj-qwen3.8-27b-bf16": {
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "mmproj-Qwen3.8-27B-BF16.gguf",
+      "destination": "Qwen3.8-27B/mmproj-Qwen3.8-27B-BF16.gguf",
+      "sha256": "de2a49866988ea272c43dc2a43ee2662c25725a717ca5b9059ea420a97f53fe8",
+      "size_bytes": 931145888
+    },
+    "qwen3-8-27b-mtp-qwen3.8-27b-q4-0": {
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "mtp-Qwen3.8-27B-Q4_0.gguf",
+      "destination": "Qwen3.8-27B/mtp-Qwen3.8-27B-Q4_0.gguf",
+      "sha256": "051a1764cff8c4f3ee6ae8b00593a0364c7539c67fa50ffc58f3f96509fca38e",
+      "size_bytes": 1680271648
+    },
+    "qwen3-8-27b-mtp-qwen3.8-27b-q8-0": {
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "mtp-Qwen3.8-27B-Q8_0.gguf",
+      "destination": "Qwen3.8-27B/mtp-Qwen3.8-27B-Q8_0.gguf",
+      "sha256": "cbf60a0c48b431bb61f1d49b8948dc88ac29c398d6dbdbbb2e6e89ef77eacc9a",
+      "size_bytes": 3164006688
+    },
+    "qwen3-8-27b-mtp-qwen3.8-27b-bf16": {
+      "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "path": "mtp-Qwen3.8-27B-BF16.gguf",
+      "destination": "Qwen3.8-27B/mtp-Qwen3.8-27B-BF16.gguf",
+      "sha256": "5723e551c4ee2b8c11933d687f445800521047edc39769bee6e3c78c4e141ace",
+      "size_bytes": 5946009888
+    }
+  },
+  "groups": {
+    "production-floor": [
+      "bonsai-27b-q1",
+      "qwen3-8-27b-qwen3.8-27b-q4-k-m"
+    ],
+    "deepseek-v4-flash-0731-q8-dspark": [
+      "deepseek-v4-q8-shard-1",
+      "deepseek-v4-q8-shard-2",
+      "deepseek-v4-q8-shard-3",
+      "deepseek-v4-q8-shard-4",
+      "deepseek-v4-q8-shard-5",
+      "deepseek-v4-dspark-q8"
+    ],
+    "qwen3-8-27b": [
+      "qwen3-8-27b-qwen3.8-27b-q4-k-m",
+      "qwen3-8-27b-qwen3.8-27b-q8-0",
+      "qwen3-8-27b-qwen3.8-27b-bf16",
+      "qwen3-8-27b-mmproj-qwen3.8-27b-q8-0",
+      "qwen3-8-27b-mmproj-qwen3.8-27b-bf16",
+      "qwen3-8-27b-mtp-qwen3.8-27b-q4-0",
+      "qwen3-8-27b-mtp-qwen3.8-27b-q8-0",
+      "qwen3-8-27b-mtp-qwen3.8-27b-bf16"
+    ]
+  }
+}

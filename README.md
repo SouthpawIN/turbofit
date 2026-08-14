@@ -2,365 +2,504 @@
 
 ![Turbofit — unified backend, amber and mint aesthetic](assets/turbofit-hero.png)
 
-<p align="center">
-  <a href="https://x.com/vSouthvPawv/status/2081193435172618461?s=20"><strong>▶ Watch the 53-second Turbofit overview</strong></a>
-</p>
+**One model provider. Every machine. The best local configuration the hardware can safely sustain.**
 
-**A local-model provider for Hermes Agent that fits itself around the way you use your computer.**
+Turbofit is a first-class [Hermes Agent](https://github.com/NousResearch/hermes-agent) provider and adaptive local-inference runtime. It inventories physical compute and total usable memory, recommends evidence-backed model configurations, launches native backends, and moves between quality, context, and speed rungs without changing the client-facing model name.
 
-Turbofit detects the machine's physical accelerator topology, selects a local main/auxiliary model ladder, downloads the required artifacts through [Turbohaul Manager](https://github.com/MrTrenchTrucker/turbohaul-manager), and exposes stable OpenAI-compatible model IDs to Hermes Agent.
+The provider is always:
 
-When another program needs VRAM, Turbofit contracts one step at a time: it can remove a dedicated auxiliary residency, route auxiliary work through the main model, reduce context, or move to a smaller local model. After memory remains available long enough, it heals back toward the selected ceiling.
-
-> **Current scope is local-only.** Turbofit does not select, configure, or fall back to API models. API orchestration is recorded under [Later development](#later-development), not presented as a current feature.
-
-## What works now
-
-- **Hermes provider:** one local OpenAI-compatible endpoint with stable `auto`, `active:main`, and `active:aux` IDs.
-- **Hardware-aware auto selection:** canonical profiles from 8 GB through 300+ GB; no 48 GB runtime special case.
-- **Manual profile selection:** pin the adaptive ceiling to a compatible hardware profile.
-- **Managed model acquisition:** first activation pulls missing GGUF artifacts from pinned Hugging Face commits, verifies SHA-256, deduplicates shared blobs, installs Turbohaul manifests, and verifies the final tags before inference.
-- **Adaptive local scaling:** contraction dwell, expansion dwell, hysteresis, cooldown, rollback, and flap quarantine.
-- **External workload priority:** Turbofit never kills or signals games, editors, renderers, or other GPU consumers.
-- **Verified publication:** a new route is published only after its local model rung loads and passes verification.
-- **Bounded auxiliary lifecycle:** `active:aux` forwards SSE frames immediately, propagates client disconnect cancellation through Turbohaul to llama.cpp, disables hidden-thinking by default, and caps each generation at 4,096 tokens unless explicitly configured otherwise.
-- **Portable configuration:** Turbofiles contain no credentials, machine-local paths, mutable process state, or embedded model binaries.
-
-## Hardware tiers
-
-![Turbofit auto-fit hardware ladder: one setting for every tier](assets/turbofit-tier-list.png)
-
-The graphic shows the full product ladder: hardware tiers, context targets, auxiliary choices, pressure response, and the model families moving through promotion. The table below distinguishes the local ladders available now from higher-context and broader-model combinations still awaiting evidence.
-
-Turbofit ships local-only profiles for these physical classes:
-
-| Class | Canonical topology | Current local ladder |
-|---:|---|---|
-| 8 GB | `1x8` | Bonsai 27B 1-bit, 64K shared main/aux floor |
-| 16 GB | `1x16` | Bonsai 27B 1-bit: 262K → 128K → 64K |
-| 24 GB | `1x24` | GRM 2.6 Plus 128K → Bonsai 262K → 128K → 64K |
-| 48 GB | `2x24` | GRM 2.6 Plus 262K shared main/aux → GRM 128K → Bonsai floors |
-| 64 GB | `2x32` | same verified dual-model ladder with additional headroom |
-| 96 GB | `4x24` | same verified dual-model ladder; unused cards remain available to other work |
-| 200 GB | `2x100` | same verified dual-model ladder while larger candidates are promoted |
-| 300+ GB | `3x100` | same verified dual-model ladder; unused cards remain available to other work |
-
-The current dual-24 GB production ceiling routes both `active:main` and `active:aux` to the same GRM 2.6 Plus 262K runtime. Stage-v1 passed with 100% quality, 100% context retrieval, 3.823 effective end-to-end tok/s, and 12,369 / 15,437 MiB peak GPU use (`sha256:2dd320671f7f891ede49a22820754fa657335581ed1272a3444fe45af9426223`). A separate live 256-token probe reported 55.885 llama-server decode tok/s; effective throughput includes gateway and manager orchestration.
-
-Profiles are selected from physical capacity, not transient free VRAM. Larger cards can satisfy a smaller per-card envelope when card count and topology shape remain compatible; `1x48` is still not treated as `2x24`.
-
-The Bonsai floor was measured on the current benchmark host. The 8/16/64/96/200/300 class mappings are portable recommendations, not claims of completed benchmarking on every accelerator family. Activation remains fail-closed if Turbohaul cannot load or verify a selected rung.
-
-## Selection and model downloads
-
-```bash
-# Show local profiles, rungs, and compatibility with this machine
-scripts/turbofit-runtime list
-
-# Let Turbofit choose from physical hardware
-scripts/turbofit-runtime set auto
-
-# Or select a compatible local profile explicitly
-scripts/turbofit-runtime set hardware-16gb
-
-# Inspect the persisted selection
-scripts/turbofit-runtime status
-
-# Run one controller reconciliation
-scripts/turbofit-controller --once
-
-# Optional persistent user service
-scripts/install-controller-service --start
+```text
+provider: custom:turbofit
+model: auto
 ```
 
-A new selection starts at its smallest local floor—not at an API fallback. Before that floor is published, the controller:
+Turbofit can be the primary provider, one entry in an ordered fallback chain, or both.
 
-1. Resolves every model tag required by the rung.
-2. Checks Turbohaul's installed tags and content digests.
-3. Pulls each missing Hugging Face artifact from an exact commit.
-4. Requires the downloaded SHA-256 to match the acquisition catalog.
-5. Reuses a verified blob when several model tags share it.
-6. Installs the context/runtime manifest for each tag.
-7. Loads and verifies the selected local rung.
-8. Atomically publishes the stable routes.
+> **Evidence policy:** catalog entries are candidates until they pass the physical benchmark campaign. A candidate is never presented as a winner merely because it compiles, downloads, or fits an estimated memory budget.
 
-Acquisition recipes live in `runtime-profiles/acquisitions.json`. Model lifecycle authority remains in Turbohaul Manager; Turbofit does not create a second model store.
+## Turbofit 2.2 — new model release
 
-## Hermes Agent provider
+Turbofit 2.2 replaces every active GRM 2.6 variant with the released **Qwen 3.8 27B** family and adds the newly requested DeepSeek and multimodal model paths. GRM artifacts and routes are removed from active manifests; immutable historical evidence remains attached to the retired IDs and cannot satisfy Qwen's new recipe hashes.
 
-Run the Turbofit gateway at `http://127.0.0.1:8091`, then configure one provider:
+| New model | Turbofit entries | Capability | Current status |
+|---|---|---|---|
+| **Qwen 3.8 27B** | `Q4_K_M`, `Q8_0`, and `BF16`, each with or without MTP | Dense native image/video understanding, 262K native context, optional vision projector and MTP draft | **6 active catalog candidates** replacing the 6 retired GRM entries |
+| **DeepSeek V4 Flash 0731 Q2 DwarfStar** | `UD-Q2_K_XL + DSpark` | Large sparse main-model path with expert offload and speculative decoding | **Active catalog candidate** for high-memory systems |
+| **MiniMax Music 3** | `minimax-music3` | Full-song music generation | **Pinned integration candidate** |
+| **NVIDIA Parakeet TDT 0.6B v3** | `parakeet-tdt-0-6b-v3` | Local speech-to-text | **Pinned integration candidate** |
+| **Soprano TTS** | `soprano-tts` | Local text-to-speech | **Pinned integration candidate** |
+
+“Active catalog candidate” means the model is selectable by the catalog/campaign machinery, not that Turbofit has fabricated a benchmark winner. Automatic promotion still requires current-recipe physical and intelligence evidence.
+
+![Turbofit 2.2 Qwen 3.8 27B release lineup: Q4, Q8, and BF16 with optional MTP](assets/turbofit-2.2-qwen-lineup.png)
+
+| Usable memory band | Main model path |
+|---|---|
+| 256 GB and above | DeepSeek V4 Flash 0731 Q4 |
+| 128–256 GB | DeepSeek V4 Flash 0731 Q2 DwarfStar path |
+| 24–128 GB | Qwen 3.8 27B |
+| 16 GB | Ternary Bonsai 27B |
+| 8 GB | Binary Bonsai 27B |
+
+Auxiliary selection is intentionally smaller: **Carwin Nano**, **Ternary Bonsai**, or **Binary Bonsai**. Multimodal setup includes **MiniMax H3**, **MiniMax Music 3**, **NVIDIA Parakeet TDT 0.6B v3** speech-to-text, and **Soprano TTS**.
+
+The lineup is a product target, not fabricated benchmark evidence. Newly onboarded Qwen rows remain candidates until exact artifacts, contexts, topology, output, throughput, and cleanup pass the physical campaign; Auto continues on a proven safe rung until promotion completes.
+
+![Turbofit 2.2 auto-fit model ladder from Binary Bonsai through Qwen 3.8 and DeepSeek V4 Flash](assets/turbofit-2.2-model-ladder.png)
+
+---
+
+## What it does
+
+- Detects Linux, macOS, Windows, WSL2, CPU-only, discrete-accelerator, and unified-memory systems.
+- Reasons over **system RAM plus accelerator memory**, while preserving per-device limits and an OS safety reserve.
+- Selects a safe hardware profile automatically or accepts a manual override.
+- Exposes one OpenAI-compatible `/v1` endpoint through the Turbofit gateway.
+- Runs native `llama.cpp` backends with CUDA, ROCm, Metal, Vulkan, or CPU execution as available.
+- Uses Lemonade when a validated NPU recipe is available; otherwise it fails closed to a supported native backend.
+- Uses DSpark, native MTP, expert offload, vision projectors, and context scaling only when the selected recipe declares them.
+- Configures explicit `-b` and `-ub` microbatch values for every native recipe so TurboHaul/prefill work is bounded instead of allowed to consume the whole machine.
+- Preserves exact 64K, 128K, 262K, and 1M context tiers.
+- Keeps main and auxiliary roles independent. Vision stays on the main model; auxiliary models handle tool calls and lightweight orchestration.
+- Manages image, video, music, speech-to-text, and text-to-speech recommendations from the same setup surfaces.
+- Publishes status, hardware, recommendations, benchmark evidence, configuration, fallbacks, and multimodal controls in Hermes Dashboard and Hermes Desktop.
+
+---
+
+## Install
+
+### Hermes plugin
+
+```bash
+hermes plugins install --enable https://github.com/SouthpawIN/Turbofit.git
+```
+
+Restart the Hermes gateway after installation so provider, tool, slash-command, skill, and dashboard registrations are reloaded.
+
+### Guided setup
+
+From Hermes:
+
+```text
+/turbofit setup
+```
+
+That launches Hermes Dashboard. Open **Turbofit** to:
+
+1. rescan physical hardware;
+2. compare intelligence, balanced, and speed recommendations;
+3. choose Auto or an exact evidence-backed main × auxiliary × context combination that fits the machine;
+4. set Turbofit as primary and/or edit the complete ordered fallback chain;
+5. install supported native runtimes;
+6. install the bundled Hermes Desktop surface;
+7. choose multimodal models by modality;
+8. apply the configuration transactionally.
+
+The same controls are available in Hermes Desktop under **Turbofit**.
+
+### Command-line setup
+
+```bash
+# Hardware scan + all recommendation preferences
+/turbofit
+
+# One recommendation preference
+/turbofit intelligence
+/turbofit balanced
+/turbofit speed
+
+# Runtime/provider status
+/turbofit status
+```
+
+The plugin also registers:
+
+- `turbofit_status`
+- `turbofit_configure`
+
+---
+
+## Hermes configuration
+
+Turbofit writes the current Hermes provider schema and preserves unrelated user configuration.
 
 ```yaml
-custom_providers:
-  - name: turbofit
-    base_url: http://127.0.0.1:8091/v1
-    api_key: not-needed
-    api_mode: chat_completions
-    models:
-      auto: {}
-      active:main: {}
-      active:aux: {}
-
 model:
   provider: custom:turbofit
   default: auto
+
+providers:
+  turbofit:
+    base_url: http://127.0.0.1:8091/v1
+    api_key: not-needed
+    model: auto
+    model_name: auto
+    provider: turbofit
+    tool_format: hermes
+
+fallback_providers:
+  - provider: nous
+    model: Hermes-4-405B
+  - provider: custom:turbofit
+    model: auto
 ```
 
-Stable model IDs:
+Fallback entries contain only `provider` and `model`. Credentials remain in provider configuration, never in the fallback chain. Dashboard and Desktop expose the whole ordered chain rather than a Turbofit-only toggle.
 
-| ID | Meaning |
-|---|---|
-| `auto` | current selected main route |
-| `active:main` | current main residency |
-| `active:aux` | dedicated auxiliary when present, otherwise shared main |
+Remote addresses are rejected unless they are loopback or verified tailnet addresses. Public binds require gateway authentication.
 
-The IDs stay constant while the controller changes the backing local model and context.
+---
 
-## Install the Hermes plugin
+## Hardware model
 
-```bash
-hermes plugins install SouthpawIN/turbofit --enable
-```
+Turbofit separates three concerns:
 
-Restart Hermes, then open the setup screen:
+1. **Physical capacity** — immutable RAM, accelerator memory, topology, architecture, operating system, and available backends.
+2. **Live pressure** — current memory headroom, utilization, process health, restart budgets, and cooldown state.
+3. **Evidence** — exact runtime string, model artifacts, context, health checks, output, throughput, peak memory, and post-run cleanup.
 
-```bash
-hermes dashboard
-```
+Recommendations use physical capacity. Runtime transitions use live pressure. A busy machine does not permanently receive a weaker profile, and a large total-memory number does not erase per-device constraints.
 
-Select **Turbofit** in the dashboard. The plugin can scan/select a compatible
-hardware profile, register the `custom:turbofit` endpoint, set `auto` as the
-primary model, add or remove Turbofit from the canonical
-`fallback_providers` chain, and publish both provider and dashboard endpoints
-privately with Tailscale Serve. Tailnet publishing defaults to separate HTTPS
-ports and never exposes a public Funnel route. It also registers `/turbofit`,
-`turbofit_status`, and `turbofit_configure` for CLI and gateway sessions.
+Supported execution paths:
 
-The setup screen installs **Sirvir** by default as a separate Hermes customer-
-service profile. Sirvir helps users install, configure, use, and troubleshoot
-Turbofit, and turns recurring support cases into evidence-backed pull request
-suggestions. Updates replace only Sirvir's distribution-owned `SOUL.md`,
-`AGENTS.md`, `config.yaml`, and manifest; profile memories and user state are
-preserved. Disable the checkbox if the profile is not wanted.
+| Platform | Native path | Notes |
+|---|---|---|
+| Linux | CUDA, ROCm, Vulkan, CPU | Multi-device and CPU/offload recipes supported |
+| Windows | CUDA, ROCm where supported, Vulkan, CPU | Native and WSL2 detection |
+| WSL2 | CUDA, Vulkan, CPU | Host memory and accelerator inventory kept separate |
+| macOS | Metal, CPU | Unified memory is counted once, not RAM plus duplicated VRAM |
+| CPU-only | CPU | Uses safe RAM-backed profiles and lower initial rungs |
+| NPU-equipped systems | Lemonade when validated | Falls back to supported native execution when no proven NPU recipe exists |
 
-Linux/WSL2 NVIDIA launches use CUDA. Apple Silicon is detected as one unified
-Metal device; the portable 8/16/24 GB profiles compile Docker-only Bonsai
-recipes to native `llama-server` processes with Metal enabled. Every generated
-launch path includes `--jinja` for tool-call templates.
+---
 
-Development should happen from a Git checkout, not the installed plugin directory.
+## Adaptive runtime
 
-Current requirements:
-
-- Python 3.11+
-- Hermes Agent
-- Turbohaul Manager v0.7
-- PyYAML for YAML Turbofiles
-- a supported local runtime/accelerator backend
-- network access to the pinned Hugging Face artifacts on first acquisition
-
-CUDA on Linux/WSL2 and Metal on Apple Silicon are implemented. NVIDIA remains the primary measured backend; Metal launch compilation is portable but still requires host-specific benchmark promotion before claiming equivalent performance. AMD/Intel backends remain discovery-only.
-
-### Native Apple Silicon test runtime
-
-Turbohaul Manager's published runtime is CUDA-only. On Apple Silicon with at
-least 16 GB of unified memory, a local test installation can instead preserve
-Turbofit's stable provider IDs while running the verified Bonsai floor through
-the checksum-pinned official Metal-enabled `llama-server`.
-
-Before installation, place `Bonsai-27B-Q1_0.gguf` at
-`~/.local/share/turbofit/models/Bonsai-27B-Q1_0.gguf`. The installer verifies
-SHA-256 `17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0`
-and refuses to launch a different artifact.
-
-```bash
-scripts/install-macos-native-service install
-scripts/install-macos-native-service status
-# Produces benchmark evidence plus a Metal-specific promotion record:
-scripts/benchmark-macos-native
-# Stops/removes the services and route state, but preserves the model:
-scripts/install-macos-native-service uninstall
-```
-
-This native path binds both services to loopback, shares the main model for
-auxiliary work, disables hidden thinking and API fallback, and does not change
-Hermes's active model. It is a fixed safe floor rather than the NVIDIA adaptive
-controller. Its route publishes the real 64K allocation and a conservative
-prefill-aware request policy. The gateway exposes that allocation through both
-`/v1/models` and `/v1/props`, rejects identical requests while one is active,
-and tears down the upstream socket when a client disconnects—even before the
-first generated byte.
-
-The installer uses the checksum-pinned official Apple Silicon llama.cpp
-`b10173` release in a versioned runtime directory, leaving Homebrew's binary
-available as a rollback. Prompt caching, partial-prefix reuse, and bounded
-host-memory context checkpoints are enabled for long-lived Hermes sessions.
-
-Metal promotion uses `benchmarks/suite-metal.json`. Apple unified-memory use is
-recorded as accelerator memory; package power is intentionally not a required
-gate because collecting it through `powermetrics` requires elevated privileges.
-The canonical CUDA promotion suite continues to require per-card power evidence.
-
-## Adaptive behavior
-
-<p align="center">
-  <img src="assets/turbofit-social-square.png" alt="AI that makes room: auto-selects main and auxiliary, steps down under VRAM load, and heals when memory returns" width="620">
-</p>
-
-A representative ladder is:
+Each `Turbofile` is an ordered ladder. A profile starts at its safest runnable rung and heals upward only after sustained headroom.
 
 ```text
-local main + dedicated local auxiliary
-→ local main shared with auxiliary work
-→ smaller local model/context
-→ minimum local floor
+quality-main + auxiliary + 262K
+              │ pressure
+              ▼
+quality-main only + 262K
+              │ pressure
+              ▼
+compact-main + auxiliary + 128K
+              │ pressure
+              ▼
+compact-main only + 64K
+              │ pressure
+              ▼
+cloud/API fallback
 ```
 
-Contraction occurs only after a sustained deficit. Healing occurs one rung at a time only after the configured margin, dwell, hysteresis, cooldown, and flap controls pass.
+Safety behavior:
 
-A transition:
+- pressure degrades quickly;
+- recovery is slower and hysteretic;
+- cooldowns prevent oscillation;
+- transitions serialize under a lock;
+- restart budgets prevent loops;
+- failed local health checks fail closed;
+- unsupported flags are rejected before launch;
+- model processes are verified dead and memory clear before benchmark continuation.
 
-1. Blocks new auxiliary admission when leaving dedicated mode.
-2. Drains active auxiliary streams.
-3. Requests clean unload through Turbohaul.
-4. Activates or acquires the target local rung.
-5. Verifies the target.
-6. Atomically publishes routes.
-7. Restores and verifies the previous state on failure.
+### TurboHaul and microbatching
 
-At the minimum local floor, Turbofit does not route to an API model. If no lower local rung fits, it holds the floor and reports the capacity condition.
-
-## Configuration and evidence
-
-| Path | Purpose |
-|---|---|
-| `runtime-profiles/*gb.yaml` | production hardware profiles |
-| `runtime-profiles/acquisitions.json` | pinned sources, hashes, and Turbohaul tag recipes |
-| `runtime-profiles/runtime-resolutions.json` | rung-to-model-tag resolution |
-| `runtime-profiles/rung-requirements.json` | per-card VRAM requirements |
-| `references/model-catalog.json` | requested model variants and capabilities |
-| `references/configuration-matrix.json` | generated main × auxiliary × context candidate space |
-| `benchmarks/suite.yaml` | promotion gates |
-| `references/results/` | measured machine-readable evidence |
-
-The matrix contains 13 main variants × 4 auxiliary modes × 4 contexts: **208 research configurations**. This includes DeepSeek V4 Flash 0731 UD-Q8_K_XL with its Q8 DSpark draft module at 64K, 128K, 262K, and 1M. Every row compiles to a concrete, `--jinja`-enabled launch recipe; FP16, quantized, vision-projector, and DSpark artifacts resolve independently. A compilable row is not automatically a production recommendation. Production promotion requires artifact, runtime, performance, quality, and pressure/self-heal evidence. The DeepSeek DSpark candidate requires a llama.cpp build whose `--spec-type` includes `draft-dspark`; older atomic builds must be rebuilt before this recipe can run.
-
-The hybrid system-RAM catalog separately defines executable 64K, 128K, 262K, and 1M candidates for Laguna, MiniMax M3, and GLM 5.2. Higher-context rows are explicitly `configured-unmeasured`, use CPU/system-RAM policies (including MoE expert offload where supported), and cannot be promoted until real evidence exists.
-
-The current source list includes:
-
-- [DeepSeek V4 Flash 0731 GGUF](https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF)
-- [GLM/GRM 5.2 2.788 bpw](https://huggingface.co/sokann/GLM-5.2-GGUF-2.788bpw)
-- [MiniMax M3 GGUF](https://huggingface.co/unsloth/MiniMax-M3-GGUF)
-- [Laguna S 2.1](https://huggingface.co/poolside/Laguna-S-2.1)
-- [Laguna S 2.1 GGUF](https://huggingface.co/unsloth/Laguna-S-2.1-GGUF)
-- [GRM 2.6 Plus GGUF](https://huggingface.co/bartowski/OrionLLM_GRM-2.6-Plus-0628-GGUF)
-- [Carwin MoE Nano GGUF](https://huggingface.co/isneezekittens/Carwin-MoE-Nano-GGUF)
-- [Ternary Bonsai 27B GGUF](https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf)
-- [Bonsai 27B GGUF](https://huggingface.co/prism-ml/Bonsai-27B-gguf)
-
-## Performance priorities
-
-Candidate ranking follows:
+Every native model recipe emits explicit batch and microbatch arguments:
 
 ```text
-quality
-→ reach 128K context
-→ reach 20 tok/s
-→ reach 262K context
-→ reach 100 tok/s
-→ reach 1M context
-→ maximize speed
+-b <batch> -ub <microbatch>
 ```
 
-Measured claims remain attached to their exact artifact, runtime flags, context, host fingerprint, throughput, TTFT, and per-card VRAM evidence.
+Large/offloaded models default to smaller microbatches; compact models can use larger microbatches. Recipe and context overrides may tune both values, but Turbofit rejects `ubatch > batch`. The goal is faster prompt prefill without allowing a single request to monopolize memory.
 
-## Hybrid large-model bring-up
+---
 
-`runtime-profiles/hybrid-models.json` defines dual-24 GB GPU + system-RAM placements for Laguna S 2.1 Q4_K_M, MiniMax M3 UD-Q4_K_M, and GLM 5.2 2.788 bpw. Every artifact is bound to an immutable Hugging Face revision, required SHA-256 identity, and exact file size. A benchmark pass validates only that exact artifact, runtime, flags, context, and host class; it does not automatically add the candidate to the production adaptation ladder.
+## Model research matrix
 
-| Validated model placement | 64K | 128K | 262K | 1M | Evidence |
-|---|---:|---:|---:|---:|---|
-| Laguna S 2.1 Q4_K_M · layer split · host KV · 10 threads | **5.462** | **5.493** | **3.929** | **3.832** | `sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b` |
-| MiniMax M3 UD-Q4_K_M · layer split · host KV · 12 threads | **1.637** | **1.570** | **1.484** | **1.982** | `sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b` |
-| GLM 5.2 2.788 bpw · ik_llama.cpp MLA/DSA · 14 threads | **1.156** | **1.161** | **1.176** | **0.942** | `sha256:f09ff73a098ced577cc4d973ec0fd01d09a7e853d4e5c1e966c24df10701c08b` |
-
-Values are median **server decode tok/s** from two repeated 128-token generations after warm-up. Laguna uses 34 CPU-MoE layers at 64K/128K and 40 at 262K/1M; its 64K placement selects GPU 1 as primary. MiniMax uses 56 CPU-MoE layers at 64K/128K and 58 at 262K/1M, with GPU 1 primary at 1M. GLM uses NUMA-distributed all-CPU experts through 262K and 72 CPU-MoE layers at 1M. Every rung keeps KV in host RAM. Tensor split was rejected because the Laguna fork lacks `llama_params_fit` support for tensor mode, was built without NCCL, and asserts in its internal AllReduce path; the validated topology therefore remains layer split.
-
-The configuration checker reports both static `hardware_fits` and current `launch_ready`, so a machine is not called ready while another resident model still occupies required VRAM:
+The canonical matrix is generated by:
 
 ```bash
-scripts/turbofit-hybrid-config list
-scripts/turbofit-hybrid-config check glm-5-2-2-788bpw dual-24gb-64k
+scripts/build-exhaustive-model-matrix
+scripts/expand-multipart-artifacts
 ```
 
-The evidence-first benchmark stage records raw responses, measured token usage, exact-answer quality checks, passkey context retrieval, effective end-to-end output throughput, host RAM, per-GPU VRAM, and an evidence SHA-256:
+Current generated scope:
+
+- **45 main configurations**
+- **9 auxiliary choices** including `auto`
+- **4 exact context tiers**
+- **1,620 benchmark rows**
+- **47 pinned model/runtime variants** total, including two auxiliary-only Carwin modes
+
+### Main configurations
+
+#### DeepSeek V4 Flash 0731
+
+The canonical upstream is the official [`deepseek-ai/DeepSeek-V4-Flash-0731`](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731) checkpoint, pinned at commit `7872f01b1d1fe23eabc4c98b48bffcef5a386062`. The deployable GGUFs and matching extracted 0731 DSpark sidecar come from `unsloth/DeepSeek-V4-Flash-0731-GGUF`, pinned at commit `fbbb5b93fb787c21338159b0af3318bb3f4d9768`. The native runtime is llama.cpp b10269 (`1c3c9674de4d455f1e571bed808252af54932767`), which avoids the upstream-documented b10259–b10268 DSpark loader regression window.
+
+- Q8 + matching 0731 DSpark Q8
+- Q8 without DSpark
+- Q4 + matching 0731 DSpark Q8
+- Q4 without DSpark
+- Q2 DwarfStar + matching 0731 DSpark Q8
+
+#### Qwen 3.8 27B
+
+The official [`Qwen/Qwen3.8-27B`](https://huggingface.co/Qwen/Qwen3.8-27B) checkpoint is pinned at commit `1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0`. Hugging Face reports exactly **27,781,427,952 BF16 parameters**. Qwen's model card describes a dense causal language model with a vision encoder, 64 language-model layers, hidden size 5,120, native image/video understanding, flexible thinking control, and MTP training.
+
+Qwen declares **262,144 tokens of native context**, extensible to **1,000,000 tokens** with YaRN. Vendor-reported results include **73.0 Terminal-Bench 2.1**, **61.7 SWE-bench Pro**, **42.2 DeepSWE 1.1**, and **84.3 OSWorld-Verified**. These published scores describe the upstream checkpoint; Turbofit does not reuse them as local physical or intelligence evidence.
+
+The deployable llama.cpp artifacts come from [`ggml-org/Qwen3.8-27B-GGUF`](https://huggingface.co/ggml-org/Qwen3.8-27B-GGUF), pinned at commit `0669b98607d47046c7c2b3f801011d54a08cfccf`:
+
+- Q4_K_M with and without the exact Q4 MTP sidecar;
+- Q8_0 with and without the exact Q8 MTP sidecar;
+- BF16 with and without the exact BF16 MTP sidecar;
+- Q8 and BF16 vision projectors.
+
+Every file is bound to its Hugging Face LFS SHA-256 and exact byte size in [`references/artifact-manifest.json`](references/artifact-manifest.json). The MTP compiler attaches the sidecar with `--model-draft`; non-MTP variants do not inherit one.
+
+#### Ternary Bonsai 27B
+
+Every valid Cartesian combination of:
+
+- compact ternary weights or F16 weights;
+- no vision projector or BF16 vision projector;
+- no draft, BF16 DSpark draft, or Q4 DSpark draft.
+
+#### Binary Bonsai 27B
+
+Every valid Cartesian combination of:
+
+- compact binary weights or F16 weights;
+- no vision projector, BF16 projector, or Q8 projector;
+- no draft, BF16 DSpark draft, or Q4 DSpark draft.
+
+Only artifacts actually published by the pinned upstream revision enter the matrix. Missing imaginary combinations are not fabricated.
+
+### Auxiliary choices
+
+- Carwin MoE Nano with MTP
+- Carwin MoE Nano without MTP
+- Ternary Bonsai compact baseline
+- Ternary Bonsai + Q4 DSpark
+- Ternary Bonsai + BF16 DSpark
+- Binary Bonsai compact baseline
+- Binary Bonsai + Q4 DSpark
+- Binary Bonsai + BF16 DSpark
+- Automatic auxiliary selection
+
+Auxiliary recipes do not load vision projectors. Visual input is routed to the main model.
+
+### Archived Model Zoo
+
+Deprecated primary candidates remain reproducible research targets but are excluded from automatic promotion:
+
+- GLM 5.2 2.788 bpw
+- MiniMax M3 Q4
+- Laguna S2.1 F16
+- Laguna S2.1 Q4
+
+Canonical metadata: [`references/archived-model-zoo.json`](references/archived-model-zoo.json).
+
+---
+
+## Benchmark campaign
+
+Run or resume the complete campaign:
 
 ```bash
-scripts/turbofit-benchmark-stage \
-  --candidate <model-id> \
-  --configuration dual-24gb-64k \
-  --base-url http://127.0.0.1:<port>/v1 \
-  --model <served-model> \
-  --output references/results/<run>.json \
-  --disable-thinking
+# Install/verify the three pinned native runtimes used by the exact artifacts
+scripts/install-native-runtimes
+scripts/install-native-runtimes --check-only
+
+PYTHONPATH=src:. scripts/turbofit-catalog-campaign run
 ```
 
-## Verification
+Mainline `llama.cpp` serves standard GGUFs, the pinned PrismML fork serves Bonsai/Ternary custom Q1/Q2 and DSpark artifacts, and pinned `ik_llama.cpp` serves GLM 5.2 IQ2_KL with DSA, IndexShare, CPU-MoE, and native MTP. Runtime revisions and binary paths are canonical in [`references/native-runtimes.json`](references/native-runtimes.json). Validate each artifact with its required parser using `scripts/verify-gguf-artifacts`; parsing all artifacts with mainline `llama.cpp` is intentionally invalid because the custom quantization formats require their matching runtimes.
+
+Inspect progress:
 
 ```bash
-# Unit, integration, schema, profile, link, and simulated adaptation checks
+PYTHONPATH=src:. scripts/turbofit-catalog-campaign status
+```
+
+Status separates `current_recipe` coverage—whose `pending + resolved + deferred` always equals all 1,620 active rows—from `historical_attempts`, which may contain obsolete runtime failures or successes and is never release eligibility. Deferred rows remain explicit and are never counted as resolved.
+
+The campaign is resumable and records failed attempts rather than silently dropping them. Runtime failures preserve command lines, tracebacks, component/gateway logs, telemetry, and hashes in a unique immutable directory under `references/results/catalog-campaign/failures/<row>/<timestamp>/`. State records pin the canonical production-recipe and validation-protocol SHA-256; changing a runtime, artifact, offload policy, command, smoke-request length, or shared-route scheduling automatically requeues stale successes and resets the attempt budget. Each row acquires an exclusive production-service lease before the first GPU-clear gate: Turbofit's controller/gateway are paused, benchmark components run without a port/GPU race, post-run GPU clear is verified, and only services that were previously active are restored. Every successful row requires:
+
+1. immutable artifact verification;
+2. exact launch recipe compilation;
+3. requested context verification;
+4. main and auxiliary health checks;
+5. non-empty output;
+6. throughput and peak-memory capture;
+7. runtime-string capture;
+8. process shutdown;
+9. post-run memory-clear verification.
+
+Promotion priority is lexicographic, not a weighted score:
+
+1. strongest intelligence tier;
+2. at least 128K context;
+3. at least 30 output tokens/second;
+4. at least 262K context;
+5. at least 50 output tokens/second;
+6. 1M context;
+7. fastest measured result.
+
+Raw evidence and resumable state live under [`references/results/catalog-campaign/`](references/results/catalog-campaign/). Every current-recipe attempt writes to a unique immutable attempt directory and binds its exact OS/architecture, host RAM, accelerator UUIDs, PCI topology, per-device memory, compute capability, driver revision, topology key, and raw-result SHA-256. Changing this physical-evidence protocol invalidates prior recipe success instead of silently blessing evidence that lacks the required identity. Failed rows remain unresolved and are retried with bounded exponential backoff; an arbitrary attempt count never converts failure into completion. The only terminal physical-fit classification is `classify-hardware-incompatible`, which requires current-recipe, current-fingerprint, checksum-bound failure evidence and a concrete required-memory value greater than available physical memory. Curated physical winners live in [`references/hardware-tier-tournaments.json`](references/hardware-tier-tournaments.json). Dashboard and Desktop render the same evidence rather than maintaining a second result source.
+
+### Measured intelligence campaign
+
+Runtime fit and decode speed do **not** imply intelligence. Turbofit therefore runs a second durable campaign against each exact production configuration after its native runtime row passes:
+
+```bash
+# Initialize or inspect all 1,620 configurations × three benchmark levels
+PYTHONPATH=src:. scripts/turbofit-intelligence-campaign init
+PYTHONPATH=src:. scripts/turbofit-intelligence-campaign status
+
+# Run the next production configuration
+PYTHONPATH=src:. scripts/turbofit-intelligence-campaign run-one
+
+# Run the serialized native-fit + intelligence campaigns continuously
+PYTHONPATH=src:. scripts/turbofit-benchmark-orchestrator --catalog-batch 50 --intelligence-batch 1
+# Install the reboot-persistent user service (add --start when no campaign is active)
+scripts/install-benchmark-campaign-service
+systemctl --user status turbofit-benchmark-campaign.service
+```
+
+`~/.config/systemd/user/turbofit-benchmark-campaign.service` is the reboot-persistent user service. The orchestrator uses a host lock so runtime-fit and intelligence jobs never compete for the same accelerators. Failed native rows remain explicit diagnostic evidence and mark their promotion/release prerequisites blocked until their root cause changes the production-recipe identity and requeues physical validation.
+
+A physical campaign suspends only the production **controller** that owns local model residency; the lightweight provider gateway stays online. A live PID-bound `turbofit.campaign-lease/v1` marker makes that production gateway refuse all campaign model ports and route `auto`, `active:main`, and `active:aux` only to the explicitly configured API fallback. The isolated temporary measurement gateway sets `TURBOFIT_CAMPAIGN_GATEWAY=true`, so it alone may route the exact benchmark model ports. This prevents user traffic from contaminating physical measurements while preserving Hermes availability. Nous fallback credentials are resolved through Hermes' refresh-aware auth API. If that login is unavailable, required universal-provider requests return an explicit retryable `503` rather than a false `204` success or a connection failure.
+
+Every run launches the same quantized main/auxiliary recipe used in production and pins its canonical recipe SHA-256. It then executes:
+
+1. **DeepSWE**, pinned to `datacurve-ai/deep-swe@435ee89ec2f2e2289f33b0da4f992f0b7b7266b9`, through PIER `0.3.0` and the main production route;
+2. **Turbofit Agentic Production Pair v1**, where the auxiliary route performs schema-bound tool selection and the main route synthesizes the final answer from deterministic tool results.
+
+Benchmark levels are deliberately explicit:
+
+| Level | DeepSWE | Agentic pair |
+|---|---:|---:|
+| screening | 3 tasks × 1 sample | 8 cases × 1 |
+| promotion | 30 tasks × 3 samples | 8 cases × 3 |
+| release | 113 tasks × 3 samples | 8 cases × 3 |
+
+The intelligence score is `100 × geometric_mean(DeepSWE resolved rate, agentic decision accuracy)` with equal weights. Geometric aggregation prevents a model that fails one domain from hiding behind strength in the other. Tokens/second remains a separate measured axis. Balanced ranking is the harmonic mean of intelligence and speed normalized to a 50 tok/s target.
+
+No score is emitted unless both harnesses complete and immutable raw evidence, suite revisions, exact quantizations, context, and production-recipe hash are present. Intelligence records use resolved runtime aliases for `main` and `auxiliary`; shared-main auxiliary identity is `auto:<main-alias>`, with raw catalog identities retained separately. DeepSWE additionally requires physical model calls and agent steps for every PIER trial; container/network failures are infrastructure-invalid results, never model scores. The temporary production gateway binds to the container-reachable host route only during the benchmark. On deny-incoming hosts, the intelligence runner owns a narrowly scoped temporary `INPUT -i br+ -p tcp --dport 18092 -j ACCEPT` rule and removes it in cleanup; it never opens the port persistently or to non-Docker interfaces. PIER receives both `OPENAI_BASE_URL` and `OPENAI_API_BASE` through explicit `--agent-env` values because PIER `--env-file` changes host-side resolution but does not inject provider routing into the mini-swe-agent container. DeepSWE runner protocol v3 also pins LiteLLM to zero retries and a 300-second request timeout: deterministic context-limit or request failures terminate the trial and remain genuine measured model failures instead of wedging the campaign in exponential retries. The initial loopback translation uses the host's active non-loopback route rather than assuming Docker's `172.17.0.1`. PIER creates per-trial Compose bridges with different gateways, so Turbofit's custom mini-swe-agent adapter discovers `/proc/net/route` inside each trial and rewrites the runtime provider URL to that exact bridge gateway before the first model call. Every intelligence attempt has a unique immutable directory containing its runtime logs, DeepSWE jobs, normalized summaries, agentic evidence, aggregate, recipe, and terminal success/failure record. Missing results are displayed as **pending**, never as zero or as a catalog-derived proxy. Evidence lives under [`references/results/intelligence-campaign/`](references/results/intelligence-campaign/) and the recommendation index is [`references/intelligence-scores.json`](references/intelligence-scores.json).
+
+Show every hardware tier with storage, host-memory status, aggregate/per-device accelerator requirements, topology, quantization/offload mode, physical-fit evidence, intelligence, and TPS:
+
+```bash
+PYTHONPATH=src:. scripts/turbofit-hardware-tiers
+/turbofit tiers
+```
+
+---
+
+## Multimodal model manager
+
+Turbofit scans total usable memory and platform support, then labels each option as ready, candidate, unsupported, or too large. Candidate integrations are never marked ready until their adapter exists.
+
+| Modality | Managed options |
+|---|---|
+| Image | Hermes configured image-generation provider |
+| Video | Hermes configured video provider; MiniMax H3 research candidate |
+| Music | Hermes music generation; MiniMax Music 3; ACE-Step 1.5 2B and 4B local candidates |
+| Speech-to-text | Hermes local transcription; Parakeet TDT 0.6B v3; Nemotron 3.5 ASR 0.6B |
+| Text-to-speech | Edge TTS; Soprano TTS; Darwin TTS 1.7B Cross |
+
+### New multimodal candidates in 2.2
+
+- **MiniMax Music 3** is pinned to the official [`MiniMaxAI/MiniMax-Music3`](https://huggingface.co/MiniMaxAI/MiniMax-Music3) commit `fbdf52fbaaca799592917417eb05f1899f1255ec`. Its model card describes complete songs up to five minutes, an 8B global LLM plus 0.6B local LLM, 32 kHz 16-bit stereo output, a full-precision route under 24 GB VRAM, and streamed CPU offload down to 8 GB VRAM.
+- **NVIDIA Parakeet TDT 0.6B v3** is pinned to [`nvidia/parakeet-tdt-0.6b-v3`](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) commit `541d1f99c6b0c3cd0b11a95167540bb8edefd82b` as the new local speech-to-text candidate.
+- **Soprano TTS** is pinned to [`MurrayMacdonald/soprano-tts`](https://huggingface.co/MurrayMacdonald/soprano-tts) commit `55651f7b114c8c2a4d98d612e9f13bfa3b6a8123` as the new local text-to-speech candidate.
+
+All three remain explicitly labeled `candidate` until their Turbofit adapter and physical generation/transcription receipt pass. A pinned entry is reproducible metadata, not a false claim of completed integration.
+
+![Turbofit 2.2 multimodal additions: MiniMax Music 3, NVIDIA Parakeet TDT 0.6B v3, and Soprano TTS](assets/turbofit-2.2-multimodal.png)
+
+The MiniMax H3 repository is a roughly 498 GB BF16 audio/video model release, not a small image model. Its official full-precision workflow recommends four GPUs. Turbofit separately preserves the physically demonstrated local INT8 streamed host-offload route: 24 GB accelerator memory minimum, 96 GB host RAM minimum, and 192 GB host RAM recommended. The 2.1 promo uses only clips generated locally on this machine from the pinned H3 revision in six requested styles; no sample footage or output from another machine is used. Prompts, seeds, timings, logs, checksums, contact sheet, TTS, and ffmpeg/ffprobe evidence are under `promo/`.
+
+Catalog and pinned revisions: [`references/multimodal-models.json`](references/multimodal-models.json).
+
+---
+
+## Dashboard and Desktop
+
+Both surfaces provide:
+
+- physical hardware and total usable memory;
+- gateway and backend health;
+- Auto selection or manual main-model, auxiliary-model, and context selectors generated from every current-recipe validated combination;
+- intelligence, balanced, and speed recommendations;
+- primary-provider toggle;
+- complete ordered fallback-chain editor;
+- local or tailnet base URL;
+- runtime and Sirvir profile installation;
+- native Hermes Desktop plugin installation;
+- multimodal recommendation and selection controls;
+- benchmark campaign evidence;
+- auxiliary recommendations by hardware tier.
+
+Desktop plugin source: [`desktop/plugin.js`](desktop/plugin.js).
+
+Manual options are not hardcoded UI labels. `/combinations` derives them from current physical campaign evidence, exposes incompatible options with a reason, and materializes the selected exact recipe as a user-local Turbofile with a safe API fallback. New model families therefore appear without a UI code change after their exact rows pass. Use [`scripts/turbofit-model-onboard`](scripts/turbofit-model-onboard) with a strict released-artifact spec for day-zero replacements; see [`references/model-onboarding/README.md`](references/model-onboarding/README.md).
+
+---
+
+## Developer verification
+
+```bash
+# Unit and integration suite
+PYTHONPATH=src:. python3 -m pytest -q
+
+# JavaScript syntax
+node --check dashboard/dist/index.js
+node --check desktop/plugin.js
+
+# Full release gate
 scripts/release-check
-
-# Adds live NVML, Turbohaul, stable-route, controlled-pressure,
-# external-process survival, contraction, and healing checks
-scripts/release-check --real
 ```
 
-A simulated pass is not represented as real pressure evidence. The latest machine-readable acceptance record is stored at `references/results/adaptive-runtime-acceptance.json`.
+The release gate validates Python syntax, shell syntax, schemas, model recipes, generated matrix coverage, immutable artifacts, campaign plumbing, plugin isolation, and the complete test suite.
 
-## Safety invariants
-
-<p align="center">
-  <img src="assets/turbofit-story-9x16.png" alt="Your computer stays yours. Turbofit keeps local intelligence available while yielding resources to your work." width="430">
-</p>
-
-- External GPU processes are never terminated or signaled.
-- Physical capacity selects the profile; transient availability selects the rung.
-- All model lifecycle operations go through Turbohaul.
-- Downloads use pinned revisions and required SHA-256 values.
-- Missing or mismatched artifacts fail closed.
-- New routes are not published before local verification.
-- Credentials and machine-local paths never enter portable profiles.
-- Research candidates never become production recommendations automatically.
-
-## Remaining development
-
-The following items remain outside the verified release boundary:
-
-- production ROCm and Lemonade launch/control backends (ROCm is currently discovery/recommendation only; Lemonade is not integrated)
-- a rebuilt `draft-dspark`-capable llama.cpp runtime plus downloaded DeepSeek V4 artifacts and live benchmark evidence
-- promotion evidence for every one of the 208 compiled model configurations
-- automated DeepSWE/external benchmark ingestion and a verified repository publishing cadence
-- Mixture-of-Agents presets and pricing-aware opt-in API routing
-
-## Thank You 🙏
-
-## License
-
-MIT License. Copyright (c) 2026 **sovthpaw (SouthpawIN)**. See [`LICENSE`](LICENSE).
+---
 
 ## Repository map
 
 ```text
-src/turbofit_runtime/       schemas, selection, acquisition, policy, controller
-runtime-profiles/           production profiles and runtime catalogs
-benchmarks/                 promotion suite
-research/                   candidate-only discovery
-scripts/turbofit-runtime    list/set/status selection CLI
-scripts/turbofit-controller adaptive local controller
-scripts/turbofit-gateway.py stable OpenAI-compatible gateway
-references/results/         measured evidence
-assets/turbofit-hero.png    README image
-tests/                      unit and integration gates
+.
+├── __init__.py                         Hermes plugin registration
+├── plugin.yaml                         plugin manifest
+├── plugin_tools.py                     status/configuration/setup transactions
+├── schemas.py                          Hermes tool schemas
+├── dashboard/                          Hermes Dashboard tab + backend API
+├── desktop/plugin.js                   native Hermes Desktop surface
+├── src/turbofit_runtime/               adaptive runtime and research engine
+├── runtime-profiles/                   hardware-layer Turbofiles
+├── references/
+│   ├── model-catalog.json              pinned model/runtime variants
+│   ├── configuration-matrix.json       all main × aux × context rows
+│   ├── model-recipes.json              exact native launch recipes
+│   ├── artifact-manifest.json          pinned files, shards, hashes, sizes
+│   ├── multimodal-models.json          multimodal candidates and integrations
+│   ├── archived-model-zoo.json         deprecated research candidates
+│   └── results/catalog-campaign/       resumable raw evidence
+├── scripts/
+│   ├── build-exhaustive-model-matrix
+│   ├── expand-multipart-artifacts
+│   ├── download-artifacts
+│   ├── turbofit-catalog-campaign
+│   └── release-check
+└── tests/
 ```
+
+---
+
+## License
+
+See [`LICENSE`](LICENSE).

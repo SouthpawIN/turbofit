@@ -3,15 +3,15 @@ from __future__ import annotations
 from turbofit_runtime.pressure import CardMemory, GPUProcess, measure_pressure
 
 
-def test_managed_and_turbohaul_memory_is_not_external_demand() -> None:
+def test_managed_runtime_memory_is_not_external_demand() -> None:
     snapshot = measure_pressure(
         cards=(CardMemory(gpu=0, total_mb=24576, used_mb=18000),),
         processes=(
             GPUProcess(gpu=0, pid=10, used_mb=14000, name="llama-main"),
-            GPUProcess(gpu=0, pid=11, used_mb=2000, name="turbohaul-sidecar"),
+            GPUProcess(gpu=0, pid=11, used_mb=2000, name="native-runtime"),
         ),
         managed_pids={10},
-        turbohaul_pids={11},
+        runtime_pids={11},
         managed_resident_mb={0: 16000},
         desktop_baseline_mb={0: 1000},
         safety_reserve_mb={0: 1000},
@@ -33,7 +33,7 @@ def test_unrelated_gpu_process_reduces_budget_but_is_never_an_action_target() ->
             GPUProcess(0, 21, 3000, "turbofit-main"),
         ),
         managed_pids={21},
-        turbohaul_pids=set(),
+        runtime_pids=set(),
         managed_resident_mb={0: 3000},
         desktop_baseline_mb={0: 1000},
         safety_reserve_mb={0: 1024},
@@ -52,7 +52,7 @@ def test_desktop_baseline_and_inflight_reservation_are_reserved_per_card() -> No
         cards=(CardMemory(0, 24576, 1200), CardMemory(1, 24576, 500)),
         processes=(GPUProcess(0, 30, 700, "desktop", desktop=True),),
         managed_pids=set(),
-        turbohaul_pids=set(),
+        runtime_pids=set(),
         managed_resident_mb={},
         desktop_baseline_mb={0: 1200, 1: 800},
         safety_reserve_mb={0: 1024, 1: 1024},
@@ -71,7 +71,7 @@ def test_missing_process_data_degrades_to_conservative_used_memory_accounting() 
         cards=(CardMemory(0, 24576, 10000),),
         processes=None,
         managed_pids={99},
-        turbohaul_pids=set(),
+        runtime_pids=set(),
         managed_resident_mb={0: 6000},
         desktop_baseline_mb={0: 1000},
         safety_reserve_mb={0: 1024},
@@ -91,7 +91,7 @@ def test_pressure_never_aggregates_asymmetric_cards() -> None:
         cards=(CardMemory(0, 24576, 23000), CardMemory(1, 24576, 1000)),
         processes=(GPUProcess(0, 50, 22000, "external"),),
         managed_pids=set(),
-        turbohaul_pids=set(),
+        runtime_pids=set(),
         managed_resident_mb={},
         desktop_baseline_mb={0: 500, 1: 500},
         safety_reserve_mb={0: 1024, 1: 1024},

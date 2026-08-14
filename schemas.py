@@ -29,6 +29,31 @@ TURBOFIT_CONFIGURE = {
                 "type": "boolean",
                 "description": "Add Turbofit to Hermes' fallback_providers chain; false removes it.",
             },
+            "fallback_chain": {
+                "type": "array",
+                "description": "Replace Hermes' ordered fallback chain. Entries contain only provider and model; credentials remain in provider configuration.",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["provider", "model"],
+                    "properties": {
+                        "provider": {"type": "string"},
+                        "model": {"type": "string"},
+                    },
+                },
+            },
+            "multimodal": {
+                "type": "object",
+                "description": "Select hardware-fit image, video, music, TTS, and STT integrations.",
+                "additionalProperties": False,
+                "properties": {
+                    "image": {"type": "string"},
+                    "video": {"type": "string"},
+                    "music": {"type": "string"},
+                    "tts": {"type": "string"},
+                    "stt": {"type": "string"},
+                },
+            },
             "profile": {
                 "type": "string",
                 "description": "Turbofit profile selection: auto or a compatible hardware-*gb profile.",
@@ -44,6 +69,14 @@ TURBOFIT_CONFIGURE = {
             "install_sirvir": {
                 "type": "boolean",
                 "description": "Install or update the bundled Sirvir Turbofit customer-service profile while preserving its user data.",
+            },
+            "install_desktop": {
+                "type": "boolean",
+                "description": "Install or update the bundled native Hermes Desktop Turbofit page.",
+            },
+            "install_lemonade": {
+                "type": "boolean",
+                "description": "Install or start the digest-pinned loopback Lemonade Server runtime.",
             },
             "dashboard_local_port": {"type": "integer", "minimum": 1, "maximum": 65535},
             "provider_local_port": {"type": "integer", "minimum": 1, "maximum": 65535},

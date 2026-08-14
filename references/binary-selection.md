@@ -32,7 +32,7 @@ Does the model need turbo2/turbo3/turbo4 KV cache?
 
 ## VRAM considerations for spec decoding
 
-`--model-draft <same.gguf>` loads the model GGUF **twice** — once for the main model, once for the draft. On a GPU that already has other processes (ACE-Step, training, display server), this can cause OOM. Always check `nvidia-smi --query-gpu=memory.free` before enabling spec decoding.
+`--model-draft <same.gguf>` loads the model GGUF **twice** — once for the main model, once for the draft. On a machine that already has other accelerator or model processes, this can cause an out-of-memory failure. Check `scripts/turbofit-runtime status` and the platform inventory before enabling speculative decoding.
 
 If VRAM is tight, remove spec decoding presets entirely. The model still works — just without the 2-3x speedup from speculative decoding.
 

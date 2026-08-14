@@ -25,11 +25,11 @@ def test_builds_shared_main_route_for_24gb_profile() -> None:
     state = build_route_state(profile(24), 0, resolutions, manager_port=11401)
 
     assert state["active"] == "hardware-24gb"
-    assert state["rung_id"] == "local-grm-131072"
+    assert state["rung_id"] == "local-bonsai-262144"
     assert state["routes"]["main"] == {
         "kind": "local",
-        "alias": "grm-2-6-plus-auto-128k-main",
-        "port": 11401,
+        "alias": "bonsai-27b-1bit-262k-main",
+        "port": 8092,
     }
     assert state["routes"]["aux"] == {"kind": "shared-main"}
 
@@ -40,9 +40,9 @@ def test_builds_context_matched_shared_route_for_48gb_profile() -> None:
     )
     state = build_route_state(profile(48), 0, resolutions, manager_port=11401)
 
-    assert state["routes"]["main"]["alias"] == "grm-2-6-plus-262k-split-main"
+    assert state["routes"]["main"]["alias"] == "bonsai-27b-1bit-262k-main"
     assert state["routes"]["aux"] == {"kind": "shared-main"}
-    assert state["routes"]["main"]["port"] == 11401
+    assert state["routes"]["main"]["port"] == 8092
 
 
 def test_local_floor_route_contains_no_api_policy_or_credentials() -> None:

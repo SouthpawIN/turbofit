@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+"""Install and verify Turbofit's pinned native Lemonade runtime."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import platform
+import shutil
+import subprocess
+import tarfile
+import tempfile
+import time
+import urllib.request
+import zipfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+import sys
+sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.runtime_backends import LemonadeClient
+
+VERSION = "11.5.1"
+RELEASE = f"https://github.com/lemonade-sdk/lemonade/releases/download/v{VERSION}"
+ASSETS = {
+    ("linux", "x86_64"): (
+        f"lemonade-embeddable-{VERSION}-ubuntu-x64.tar.gz",
+        "bdfd3c3e5d6eda5101c8a32f36e6dd9236ceb9ab2eb66734c32628e6e86e18ac",
+    ),
+    ("linux", "aarch64"): (
+        f"lemonade-embeddable-{VERSION}-ubuntu-arm64.tar.gz",
+        "9a7fa9caa2f9cd5177a42eff4bd4bee92d6bedd1bf16b8360265e5c48dfb1458",
+    ),
+    ("darwin", "arm64"): (
+        f"lemonade-embeddable-{VERSION}-macos-arm64.tar.gz",
+        "c45af4dcfbddf55b85cfc37c3cfadbf5bf7a3bb4b437028c999dc7d5058cd73a",
+    ),
+    ("windows", "amd64"): (
+        f"lemonade-embeddable-{VERSION}-windows-x64.zip",
+        "50a133bbc35c4f3f8971eafef2c9fe56c4bbbfb0f1032bf8728324d8d8c8a0e1",
+    ),
+}
+BASE_URL = "http://127.0.0.1:13305/api/v1"
+
+
+def runtime_root(base: Path | None = None) -> Path:
+    parent = base or Path.home() / ".local/share/turbofit/runtimes"
+    return parent / f"lemonade-{VERSION}"
+
+
+def platform_key(system: str | None = None, machine: str | None = None) -> tuple[str, str]:
+    system_name = (system or platform.system()).lower()
+    machine_name = (machine or platform.machine()).lower()
+    aliases = {"amd64": "x86_64" if system_name != "windows" else "amd64", "arm64": "arm64", "aarch64": "aarch64", "x86_64": "x86_64"}
+    normalized = aliases.get(machine_name, machine_name)
+    if system_name == "windows" and normalized == "x86_64":
+        normalized = "amd64"
+    key = (system_name, normalized)
+    if key not in ASSETS:
+        raise RuntimeError(f"unsupported native Lemonade platform: {key}")
+    return key
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        while chunk := handle.read(8 * 1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _safe_member(destination: Path, member: str) -> None:
+    target = (destination / member).resolve()
+    if destination.resolve() not in (target, *target.parents):
+        raise RuntimeError(f"unsafe archive member: {member}")
+
+
+def extract_archive(archive: Path, destination: Path) -> Path:
+    destination.mkdir(parents=True, exist_ok=True)
+    if archive.name.endswith(".zip"):
+        with zipfile.ZipFile(archive) as bundle:
+            for member in bundle.infolist():
+                _safe_member(destination, member.filename)
+            bundle.extractall(destination)
+    else:
+        with tarfile.open(archive, "r:gz") as bundle:
+            for member in bundle.getmembers():
+                _safe_member(destination, member.name)
+                if member.issym() or member.islnk():
+                    raise RuntimeError(f"archive links are not allowed: {member.name}")
+            bundle.extractall(destination, filter="data")
+    roots = [item for item in destination.iterdir() if item.is_dir()]
+    if len(roots) != 1:
+        raise RuntimeError("native Lemonade archive must contain one root directory")
+    return roots[0]
+
+
+def binary_path(base: Path | None = None) -> Path:
+    suffix = ".exe" if platform.system().lower() == "windows" else ""
+    return runtime_root(base) / f"lemond{suffix}"
+
+
+def install_files(*, base: Path | None = None, system: str | None = None, machine: str | None = None) -> dict:
+    key = platform_key(system, machine)
+    asset, expected = ASSETS[key]
+    root = runtime_root(base)
+    if root.is_dir():
+        binary = root / ("lemond.exe" if key[0] == "windows" else "lemond")
+        if not binary.is_file():
+            raise RuntimeError(f"existing runtime is incomplete: {root}")
+        return {"runtime": str(root), "binary": str(binary), "asset": asset, "sha256": expected, "installed": False}
+    root.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="turbofit-lemonade-") as temporary_name:
+        temporary = Path(temporary_name)
+        archive = temporary / asset
+        urllib.request.urlretrieve(f"{RELEASE}/{asset}", archive)
+        actual = sha256_file(archive)
+        if actual != expected:
+            raise RuntimeError(f"native Lemonade checksum mismatch: {actual}")
+        extracted = extract_archive(archive, temporary / "extract")
+        shutil.copytree(extracted, root)
+    for name in ("lemond", "lemonade"):
+        candidate = root / (f"{name}.exe" if key[0] == "windows" else name)
+        if candidate.exists() and key[0] != "windows":
+            candidate.chmod(candidate.stat().st_mode | 0o755)
+    return {"runtime": str(root), "binary": str(root / ("lemond.exe" if key[0] == "windows" else "lemond")), "asset": asset, "sha256": expected, "installed": True}
+
+
+def service_command(base: Path | None = None) -> list[str]:
+    return [str(binary_path(base)), "--host", "127.0.0.1", "--port", "13305"]
+
+
+def install_linux_service(base: Path | None = None) -> Path:
+    unit = Path.home() / ".config/systemd/user/turbofit-lemonade.service"
+    unit.parent.mkdir(parents=True, exist_ok=True)
+    command = " ".join(service_command(base))
+    unit.write_text(
+        "[Unit]\nDescription=Turbofit native Lemonade Server\nAfter=network.target\n\n"
+        "[Service]\nType=simple\nExecStart=" + command + "\nRestart=on-failure\nRestartSec=3\n\n"
+        "[Install]\nWantedBy=default.target\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["systemctl", "--user", "daemon-reload"], check=True)
+    subprocess.run(["systemctl", "--user", "enable", "--now", unit.name], check=True)
+    return unit
+
+
+def start(base: Path | None = None) -> dict:
+    host = platform.system().lower()
+    if host == "linux" and shutil.which("systemctl"):
+        unit = install_linux_service(base)
+        mode = f"systemd-user:{unit.name}"
+    else:
+        log_dir = Path.home() / ".local/state/turbofit"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log = (log_dir / "lemonade.log").open("a", encoding="utf-8")
+        process = subprocess.Popen(service_command(base), stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+        log.close()
+        (log_dir / "lemonade.pid").write_text(str(process.pid) + "\n", encoding="utf-8")
+        mode = f"native-process:{process.pid}"
+    deadline = time.monotonic() + 90
+    error = ""
+    while time.monotonic() < deadline:
+        try:
+            health = LemonadeClient(base_url=BASE_URL, timeout_s=3).health()
+            return {"mode": mode, "health": health}
+        except Exception as exc:
+            error = str(exc)
+            time.sleep(1)
+    raise RuntimeError(f"native Lemonade failed readiness: {error}")
+
+
+def check(*, base: Path | None = None, require_live: bool = True) -> dict:
+    binary = binary_path(base)
+    if not binary.is_file():
+        raise FileNotFoundError(binary)
+    payload = {"status": "installed", "version": VERSION, "binary": str(binary), "base_url": BASE_URL}
+    if require_live:
+        health = LemonadeClient(base_url=BASE_URL).health()
+        payload.update({"status": "verified", "health": health})
+    return payload
+
+
+def install(*, base: Path | None = None, no_start: bool = False) -> dict:
+    files = install_files(base=base)
+    if no_start:
+        return {**files, **check(base=base, require_live=False)}
+    running = start(base)
+    return {**files, **check(base=base), "service": running["mode"]}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=("install", "check", "start", "print-binary"), nargs="?", default="install")
+    parser.add_argument("--runtime-dir", type=Path)
+    parser.add_argument("--no-start", action="store_true")
+    args = parser.parse_args()
+    if args.action == "install":
+        result = install(base=args.runtime_dir, no_start=args.no_start)
+    elif args.action == "start":
+        result = start(args.runtime_dir)
+    else:
+        result = check(base=args.runtime_dir, require_live=args.action == "check")
+    if args.action == "print-binary":
+        print(result["binary"])
+    else:
+        print(json.dumps(result, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

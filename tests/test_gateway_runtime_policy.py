@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
+import sys
+import types
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -23,29 +26,26 @@ def test_gateway_and_controller_share_the_same_default_route_state() -> None:
     assert GATEWAY.RUNTIME_STATE.endswith("/.local/state/turbofit/runtime-state.json")
 
 
-def test_health_probe_accepts_turbohaul_manager_status(monkeypatch) -> None:
-    replies = iter([
-        SimpleNamespace(returncode=0, stdout='{"detail":"Not Found"}'),
-        SimpleNamespace(returncode=0, stdout='{"detail":"Not Found"}'),
-        SimpleNamespace(returncode=0, stdout='{"residents":[]}'),
-    ])
-    monkeypatch.setattr(GATEWAY.subprocess, "run", lambda *args, **kwargs: next(replies))
+def test_nous_api_auth_uses_hermes_refresh_aware_runtime_credentials(monkeypatch) -> None:
+    package = types.ModuleType("hermes_cli")
+    package.__path__ = []
+    auth = types.ModuleType("hermes_cli.auth")
+    setattr(
+        auth,
+        "resolve_nous_runtime_credentials",
+        lambda **_kwargs: {"api_key": "fresh-invoke-jwt"},
+    )
+    monkeypatch.setitem(sys.modules, "hermes_cli", package)
+    monkeypatch.setitem(sys.modules, "hermes_cli.auth", auth)
 
-    assert GATEWAY.check_port(11401) is True
+    assert GATEWAY._get_api_key("nous") == "fresh-invoke-jwt"
 
 
-def test_turbohaul_health_is_model_specific(monkeypatch) -> None:
-    status = {
-        "loading": {"model_tag": "loading-model"},
-        "residents": [{"model_tag": "resident-model"}],
-        "queue": [],
-    }
-    reply = SimpleNamespace(returncode=0, stdout=json.dumps(status))
+def test_health_probe_accepts_native_runtime_health(monkeypatch) -> None:
+    reply = SimpleNamespace(returncode=0, stdout='{"status":"ok"}')
     monkeypatch.setattr(GATEWAY.subprocess, "run", lambda *args, **kwargs: reply)
 
-    assert GATEWAY._turbohaul_model_state(11401, "resident-model") == "ready"
-    assert GATEWAY._turbohaul_model_state(11401, "loading-model") == "loading"
-    assert GATEWAY._turbohaul_model_state(11401, "absent-model") == "down"
+    assert GATEWAY.check_port(8092) is True
 
 
 def test_explicit_api_fallback_precedes_interactive_profile_provider(tmp_path, monkeypatch) -> None:
@@ -64,6 +64,71 @@ def test_explicit_api_fallback_precedes_interactive_profile_provider(tmp_path, m
     assert fallback["provider"] == "nous"
     assert fallback["model_id"] == "z-ai/glm-5.2"
     assert fallback["base_url"] == "https://inference-api.nousresearch.com"
+
+
+def test_campaign_lease_forces_api_fallback_without_touching_campaign_models(tmp_path, monkeypatch) -> None:
+    lease = tmp_path / "campaign-lease.json"
+    lease.write_text(json.dumps({
+        "schema": "turbofit.campaign-lease/v1",
+        "owner_pid": os.getpid(),
+        "gateway_policy": "api-fallback-only",
+    }))
+    fallback = {
+        "alias": "api-fallback",
+        "base_url": "https://api.example.test",
+        "port": 0,
+        "is_api": True,
+        "model_id": "safe-api-model",
+        "provider": "example",
+    }
+    monkeypatch.setattr(GATEWAY, "CAMPAIGN_LEASE", str(lease))
+    monkeypatch.setattr(GATEWAY, "ALLOW_API", True)
+    monkeypatch.setattr(GATEWAY, "_find_api_fallback_in_profiles", lambda: fallback)
+    monkeypatch.setattr(GATEWAY, "_get_api_key", lambda _provider: "credential")
+    monkeypatch.setattr(
+        GATEWAY, "runtime_override",
+        lambda _role: (_ for _ in ()).throw(AssertionError("campaign local route must not be inspected")),
+    )
+    GATEWAY._cache.update({"main": None, "aux": None, "ts": 0})
+
+    main = GATEWAY.resolve_main()
+    aux = GATEWAY.resolve_aux()
+
+    assert main["model_id"] == "safe-api-model"
+    assert main["campaign_lease"] is True
+    assert aux["model_id"] == "safe-api-model"
+    assert aux["mode"] == "shared-main"
+
+
+def test_temporary_campaign_gateway_ignores_production_campaign_lease(tmp_path, monkeypatch) -> None:
+    lease = tmp_path / "campaign-lease.json"
+    lease.write_text(json.dumps({
+        "schema": "turbofit.campaign-lease/v1",
+        "owner_pid": os.getpid(),
+        "gateway_policy": "api-fallback-only",
+    }))
+    monkeypatch.setattr(GATEWAY, "CAMPAIGN_LEASE", str(lease))
+    monkeypatch.setattr(GATEWAY, "CAMPAIGN_GATEWAY", True, raising=False)
+
+    assert GATEWAY.campaign_lease_active() is False
+
+
+def test_campaign_api_fallback_is_not_ready_without_credentials(tmp_path, monkeypatch) -> None:
+    lease = tmp_path / "campaign-lease.json"
+    lease.write_text(json.dumps({
+        "schema": "turbofit.campaign-lease/v1",
+        "owner_pid": os.getpid(),
+        "gateway_policy": "api-fallback-only",
+    }))
+    monkeypatch.setattr(GATEWAY, "CAMPAIGN_LEASE", str(lease))
+    monkeypatch.setattr(GATEWAY, "ALLOW_API", True)
+    monkeypatch.setattr(GATEWAY, "_find_api_fallback_in_profiles", lambda: {
+        "alias": "api-fallback", "provider": "nous", "is_api": True,
+    })
+    monkeypatch.setattr(GATEWAY, "_get_api_key", lambda _provider: None)
+    GATEWAY._cache.update({"main": None, "aux": None, "ts": 0})
+
+    assert GATEWAY.resolve_main() is None
 
 
 def test_dynamic_local_main_and_dedicated_aux_routes(tmp_path, monkeypatch) -> None:

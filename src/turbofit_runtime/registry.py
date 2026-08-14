@@ -1,4 +1,4 @@
-"""Register every passing campaign row as a swappable runtime profile."""
+"""Register passing native campaign rows as swappable runtime profiles."""
 from __future__ import annotations
 
 import json
@@ -9,22 +9,12 @@ from pathlib import Path
 from .evidence import BenchmarkResult
 from .recipes import RecipeBook, ResolvedComponent
 from .schema import MatrixRow
-from .turbohaul import ComponentSpec, TurbohaulCompiler, UnsupportedTurbohaulMethod
 
 
 class ProfileRegistry:
-    def __init__(
-        self,
-        *,
-        recipes: RecipeBook,
-        profiles_path: Path,
-        turbohaul_dir: Path,
-        compiler: TurbohaulCompiler | None = None,
-    ) -> None:
+    def __init__(self, *, recipes: RecipeBook, profiles_path: Path) -> None:
         self.recipes = recipes
         self.profiles_path = profiles_path
-        self.turbohaul_dir = turbohaul_dir
-        self.compiler = compiler or TurbohaulCompiler()
 
     @staticmethod
     def _atomic_json(path: Path, payload: dict) -> None:
@@ -34,112 +24,55 @@ class ProfileRegistry:
             with os.fdopen(descriptor, "w") as handle:
                 json.dump(payload, handle, indent=2)
                 handle.write("\n")
-                handle.flush(); os.fsync(handle.fileno())
+                handle.flush()
+                os.fsync(handle.fileno())
             os.replace(temporary, path)
         finally:
-            try: os.unlink(temporary)
-            except FileNotFoundError: pass
+            try:
+                os.unlink(temporary)
+            except FileNotFoundError:
+                pass
 
     @staticmethod
     def _profile_component(component: ResolvedComponent) -> dict:
-        common = {
+        if component.kind != "process":
+            raise ValueError(f"unsupported native component kind: {component.kind}")
+        return {
             "role": component.role,
-            "kind": component.kind,
+            "kind": "process",
             "name": f"turbofit-runtime-{component.role}",
-            "gpu": (
-                (f'"device={component.gpu}"' if "," in component.gpu else f"device={component.gpu}")
-                if component.kind == "docker" else component.gpu
-            ),
+            "gpu": component.gpu,
             "port": component.port,
             "method": component.method,
+            "command": list(component.command),
         }
-        if component.kind == "docker":
-            return {
-                **common,
-                "image": component.image,
-                "mounts": list(component.mounts),
-                "environment": component.environment or {},
-                "args": list(component.command),
-            }
-        return {**common, "command": list(component.command)}
 
-    @staticmethod
-    def _component_gpu(component: ResolvedComponent) -> int:
-        return int(component.gpu.split(",")[0])
-
-    def _component_spec(self, row: MatrixRow, result: BenchmarkResult, component: ResolvedComponent) -> ComponentSpec:
-        gpu = self._component_gpu(component)
-        expected = result.gpu_peak_mb.get(gpu)
-        if expected is None:
-            expected = max(result.gpu_peak_mb.values())
-        model_path = Path(component.model_path)
-        measured_budget_bytes = expected * 1024 * 1024
-        kv_budget_bytes = max(0, measured_budget_bytes - model_path.stat().st_size)
-        # Turbohaul's generic GGUF attention parser can conservatively overstate
-        # long-context KV by tens of GiB for architectures with bounded/SWA KV.
-        # A promoted profile already carries measured peak evidence, so compile
-        # the implied bytes/token override rather than defeating the manager's
-        # cross-resident safety gate with a fictional CPU-offload flag.
-        kv_bytes_per_token = max(1024.0, kv_budget_bytes / row.context)
-        return ComponentSpec(
-            role=component.role,
-            model_tag=f"{row.id}-{component.role}"[:64],
-            model_path=model_path,
-            projector_path=Path(component.projector_path) if component.projector_path else None,
-            context=row.context,
-            expected_vram_mb=expected,
-            gpu=gpu,
-            method=component.method,
-            cache_type_k="q4_0",
-            cache_type_v="q4_0",
-            auto_place_eligible=False,
-            vision=bool(component.projector_path),
-            kv_bytes_per_token=kv_bytes_per_token,
-        )
-
-    def register(self, item: MatrixRow, result: BenchmarkResult, evidence_path: Path) -> None:
-        recipe = self.recipes.resolve(item)
+    def register(
+        self,
+        item: MatrixRow,
+        result: BenchmarkResult,
+        evidence_path: Path,
+        *,
+        recipe=None,
+    ) -> None:
+        recipe = recipe or self.recipes.resolve(item)
         try:
             existing = json.loads(self.profiles_path.read_text())
         except (FileNotFoundError, json.JSONDecodeError):
-            existing = {"schema_version": 1, "gateway": "http://127.0.0.1:8091", "profiles": {}}
-        existing.setdefault("schema_version", 1)
+            existing = {"schema_version": 2, "gateway": "http://127.0.0.1:8091", "profiles": {}}
+        existing["schema_version"] = 2
         existing.setdefault("gateway", "http://127.0.0.1:8091")
         existing.setdefault("profiles", {})
-
-        manifest_paths = []
-        model_tags = []
-        backend = "turbohaul"
-        compiled_payloads: list[tuple[Path, dict]] = []
-        try:
-            if any("," in component.gpu or "--tensor-split" in component.command for component in recipe.components):
-                raise UnsupportedTurbohaulMethod("multi-GPU layer-split profiles require the hybrid launcher")
-            for component in recipe.components:
-                compiled = self.compiler.compile_component(self._component_spec(item, result, component))
-                manifest_path = self.turbohaul_dir / f"{compiled.manifest['model_tag']}.json"
-                compiled_payloads.append((manifest_path, {
-                    "manifest": compiled.manifest,
-                    "sources": compiled.sources,
-                    "matrix_row": item.id,
-                    "evidence": str(evidence_path),
-                }))
-                manifest_paths.append(str(manifest_path))
-                model_tags.append(compiled.manifest["model_tag"])
-            runtime_string = self.compiler.runtime_string(item.id, tuple(model_tags))
-        except UnsupportedTurbohaulMethod:
-            backend = "turbohaul-hybrid"
-            manifest_paths = []
-            runtime_string = result.runtime_string
-            compiled_payloads = []
-
-        for path, payload in compiled_payloads:
-            self._atomic_json(path, payload)
         existing["profiles"][item.id] = {
+            "evidence_schema": "turbofit.catalog-physical/v4",
             "description": f"{item.main} main with {item.aux} auxiliary at {item.context}",
             "context": item.context,
             "evidence": str(evidence_path),
-            "backend": backend,
-            "runtime_string": runtime_string,
+            "raw_result": result.raw_result_path,
+            "raw_result_sha256": result.raw_result_sha256,
+            "physical_fingerprint": result.physical_fingerprint,
+            "backend": "native-process",
+            "runtime_string": result.runtime_string,
             "expected": {
                 "main_alias": recipe.main_alias,
                 "aux_alias": recipe.aux_alias,
@@ -152,6 +85,5 @@ class ProfileRegistry:
                 "method": result.method,
             },
             "components": [self._profile_component(component) for component in recipe.components],
-            "turbohaul_manifests": manifest_paths,
         }
         self._atomic_json(self.profiles_path, existing)

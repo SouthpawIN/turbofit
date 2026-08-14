@@ -1,164 +1,200 @@
 #!/usr/bin/env python3
-"""Download TurboFit GGUF models with resume, retry, and SHA-256 verification.
+"""Download pinned Turbofit model groups with resume and SHA-256 verification."""
+from __future__ import annotations
 
-Usage:
-    python download-models.py [--base-dir <path>]
-
-Default base directory:
-    Windows: %USERPROFILE%\\.turbohaul\\models
-    Linux:   ~/.turbohaul/models
-"""
 import argparse
 import hashlib
+import json
 import os
+import shutil
 import sys
 import time
 import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
 
-DEFAULT_BASE = os.path.join(
-    os.environ.get("USERPROFILE", os.path.expanduser("~")),
-    ".turbohaul", "models",
-)
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+sys.path.insert(0, str(SRC))
 
-MODELS = [
-    {
-        "name": "Bonsai-27B-Q1_0.gguf",
-        "url": "https://huggingface.co/prism-ml/Bonsai-27B-gguf/resolve/f10afb355f104535e3e3e98cf7ab7795c72bd292/Bonsai-27B-Q1_0.gguf",
-        "subdir": "prism-ml--Bonsai-27B-gguf",
-        "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
-        "size": 3803452480,
-    },
-    {
-        "name": "grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf",
-        "url": "https://huggingface.co/DAXZEIT/GRM-2.6-Plus-0628-MTP-reasoning-i1-GGUF/resolve/cc2ed138ba38ac7d1db051c210b19843e00687e2/grm-2.6-plus-0628-Q4_K_M-reasoning-imat.gguf",
-        "subdir": "DAXZEIT--GRM-2.6-Plus-0628-MTP-reasoning-i1-GGUF",
-        "sha256": "268cfdb6df2c73a8a3d8591c86e52d72f4386d1dcd4ef7d2d259638df02c6c25",
-        "size": 16810713984,
-    },
-]
+from turbofit_runtime.downloads import DownloadCatalog, DownloadFile
 
+
+DEFAULT_BASE = Path(os.environ.get("TURBOFIT_MODEL_ROOT", "~/Models/storage/gguf")).expanduser()
+DEFAULT_CATALOG = ROOT / "runtime-profiles" / "downloads.json"
 MAX_RETRIES = 10
-CHUNK = 8 * 1024 * 1024  # 8MB
+CHUNK = 8 * 1024 * 1024
 
 
-def sha256_file(path):
+def sha256_file(path: Path) -> str:
     sha = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(CHUNK), b""):
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(CHUNK), b""):
             sha.update(chunk)
     return sha.hexdigest()
 
 
-def download_with_resume(model, base_dir):
-    """Download a file with HTTP Range resume and retry on connection drops."""
-    dest = os.path.join(base_dir, model["subdir"], model["name"])
-    tmp = dest + ".tmp"
-    expected = model["size"]
-    os.makedirs(os.path.dirname(dest), exist_ok=True)
+def verify_file(item: DownloadFile, destination: Path) -> bool:
+    return (
+        destination.is_file()
+        and destination.stat().st_size == item.size_bytes
+        and sha256_file(destination) == item.sha256
+    )
 
-    # Already complete and verified?
-    if os.path.exists(dest) and os.path.getsize(dest) == expected:
-        print(f"[CHECK] {model['name']} exists ({expected} bytes), verifying SHA...")
-        if sha256_file(dest) == model["sha256"]:
-            print(f"[OK] {model['name']} SHA-256 verified!")
+
+def missing_bytes(files: tuple[DownloadFile, ...], base_dir: Path) -> int:
+    total = 0
+    for item in files:
+        destination = base_dir / item.destination
+        if not destination.is_file() or destination.stat().st_size != item.size_bytes:
+            total += item.size_bytes
+    return total
+
+
+def require_disk_capacity(files: tuple[DownloadFile, ...], base_dir: Path) -> None:
+    base_dir.mkdir(parents=True, exist_ok=True)
+    needed = missing_bytes(files, base_dir)
+    free = shutil.disk_usage(base_dir).free
+    reserve = max(2 * 1024**3, needed // 20)
+    if needed + reserve > free:
+        raise RuntimeError(
+            f"insufficient disk space: need {needed + reserve} bytes including reserve, have {free}"
+        )
+
+
+def write_receipt(path: Path, files: tuple[DownloadFile, ...], base_dir: Path) -> None:
+    payload = {
+        "schema": "turbofit.download-verification/v1",
+        "verified_at": datetime.now(timezone.utc).isoformat(),
+        "files": [
+            {
+                "id": item.id,
+                "path": str(base_dir / item.destination),
+                "size_bytes": item.size_bytes,
+                "sha256": item.sha256,
+            }
+            for item in files
+        ],
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def download_with_resume(item: DownloadFile, base_dir: Path) -> bool:
+    destination = base_dir / item.destination
+    temporary = destination.with_name(destination.name + ".tmp")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+
+    if destination.exists():
+        print(f"[CHECK] {item.id}: verifying {destination}")
+        if verify_file(item, destination):
+            print(f"[OK] {item.id}")
             return True
-        print("[WARN] SHA mismatch on final file, re-downloading")
-        os.unlink(dest)
+        destination.unlink()
 
     for attempt in range(1, MAX_RETRIES + 1):
-        have = os.path.getsize(tmp) if os.path.exists(tmp) else 0
-
-        if have >= expected:
-            print(f"\n[VERIFY] {model['name']} download complete ({have} bytes), checking SHA...")
-            if sha256_file(tmp) == model["sha256"]:
-                os.replace(tmp, dest)
-                print(f"[OK] {model['name']} SHA-256 verified and saved!")
+        have = temporary.stat().st_size if temporary.exists() else 0
+        if have > item.size_bytes:
+            temporary.unlink()
+            have = 0
+        if have == item.size_bytes:
+            if sha256_file(temporary) == item.sha256:
+                os.replace(temporary, destination)
+                print(f"[OK] {item.id}")
                 return True
-            else:
-                print("[CORRUPT] SHA mismatch, deleting and restarting from scratch")
-                os.unlink(tmp)
-                have = 0
-                continue
+            temporary.unlink()
+            have = 0
 
-        pct = have * 100 // expected if expected else 0
-        print(f"\n[ATTEMPT {attempt}/{MAX_RETRIES}] {model['name']}: "
-              f"resuming from {have/1024**3:.2f}/{expected/1024**3:.2f} GB ({pct}%)")
-
-        headers = {"User-Agent": "turbofit-dl/1.0"}
-        if have > 0:
+        percent = have * 100 // item.size_bytes
+        print(
+            f"[ATTEMPT {attempt}/{MAX_RETRIES}] {item.id}: "
+            f"{have / 1024**3:.2f}/{item.size_bytes / 1024**3:.2f} GiB ({percent}%)"
+        )
+        headers = {"User-Agent": "turbofit-downloader/2.0"}
+        if have:
             headers["Range"] = f"bytes={have}-"
-
-        req = urllib.request.Request(model["url"], headers=headers)
-        start = time.time()
-        downloaded_this_attempt = 0
-
+        request = urllib.request.Request(item.url, headers=headers)
+        downloaded = 0
+        start = time.monotonic()
         try:
-            with urllib.request.urlopen(req, timeout=120) as resp:
-                status = resp.status
-                if have > 0 and status == 200:
-                    print("  Server sent 200 (not 206), restarting download")
+            with urllib.request.urlopen(request, timeout=120) as response:
+                append = have > 0 and response.status == 206
+                mode = "ab" if append else "wb"
+                if not append:
                     have = 0
-                    mode = "wb"
-                elif status == 206:
-                    mode = "ab"
-                else:
-                    mode = "wb"
-
-                with open(tmp, mode) as f:
-                    while True:
-                        chunk = resp.read(CHUNK)
-                        if not chunk:
-                            break
-                        f.write(chunk)
-                        downloaded_this_attempt += len(chunk)
-                        total = have + downloaded_this_attempt
-                        elapsed = time.time() - start
-                        speed = downloaded_this_attempt / elapsed / 1024 / 1024 if elapsed > 0 else 0
-                        pct = total * 100 // expected
-                        print(f"\r  {pct:3d}% | {total/1024**3:.2f}/{expected/1024**3:.2f} GB "
-                              f"| {speed:.0f} MB/s", end="", flush=True)
-
+                with temporary.open(mode) as handle:
+                    while chunk := response.read(CHUNK):
+                        handle.write(chunk)
+                        downloaded += len(chunk)
+                        current = have + downloaded
+                        elapsed = max(0.001, time.monotonic() - start)
+                        speed = downloaded / elapsed / 1024**2
+                        print(
+                            f"\r  {current * 100 // item.size_bytes:3d}% | "
+                            f"{current / 1024**3:.2f}/{item.size_bytes / 1024**3:.2f} GiB | "
+                            f"{speed:.0f} MiB/s",
+                            end="",
+                            flush=True,
+                        )
         except Exception as exc:
-            elapsed = time.time() - start
-            speed = downloaded_this_attempt / elapsed / 1024 / 1024 if elapsed > 0 else 0
-            print(f"\n  [DROP] Connection lost after {downloaded_this_attempt/1024**2:.0f} MB "
-                  f"({speed:.0f} MB/s): {exc}")
-            print("  Will retry in 3 seconds...")
+            print(f"\n[RETRY] {item.id}: {exc}")
             time.sleep(3)
             continue
 
-        total = have + downloaded_this_attempt
-        if total >= expected:
-            print("\n[VERIFY] Checking SHA-256...")
-            if sha256_file(tmp) == model["sha256"]:
-                os.replace(tmp, dest)
-                print(f"[OK] {model['name']} SHA-256 verified and saved!")
-                return True
-            else:
-                print("[CORRUPT] SHA mismatch, restarting")
-                os.unlink(tmp)
-                continue
-        else:
-            print(f"\n  [INCOMPLETE] Got {total}/{expected} bytes, retrying...")
-            time.sleep(2)
-            continue
+        print()
+        if temporary.stat().st_size == item.size_bytes and sha256_file(temporary) == item.sha256:
+            os.replace(temporary, destination)
+            print(f"[OK] {item.id}")
+            return True
+        if temporary.stat().st_size >= item.size_bytes:
+            temporary.unlink()
+        time.sleep(2)
 
-    print(f"[FAIL] {model['name']} failed after {MAX_RETRIES} attempts")
+    print(f"[FAIL] {item.id}")
     return False
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Download TurboFit GGUF models")
-    parser.add_argument("--base-dir", default=DEFAULT_BASE,
-                        help=f"Model storage directory (default: {DEFAULT_BASE})")
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--catalog", type=Path, default=DEFAULT_CATALOG)
+    parser.add_argument("--base-dir", type=Path, default=DEFAULT_BASE)
+    parser.add_argument("--group", action="append", dest="groups")
+    parser.add_argument("--list-groups", action="store_true")
+    parser.add_argument("--verify-only", action="store_true")
+    parser.add_argument("--receipt", type=Path)
     args = parser.parse_args()
 
-    print(f"Model directory: {args.base_dir}")
-    ok = True
-    for m in MODELS:
-        if not download_with_resume(m, args.base_dir):
-            ok = False
-    print("\n" + "=" * 60)
-    print("ALL_DONE" if ok else "SOME_FAILED")
-    print("=" * 60)
-    sys.exit(0 if ok else 1)
+    catalog = DownloadCatalog.load(args.catalog)
+    if args.list_groups:
+        for group in sorted(catalog.groups):
+            print(group)
+        return 0
+    groups = args.groups or ["production-floor"]
+    selected: list[DownloadFile] = []
+    seen: set[str] = set()
+    for group in groups:
+        for item in catalog.files_for_group(group):
+            if item.id not in seen:
+                selected.append(item)
+                seen.add(item.id)
+    files = tuple(selected)
+    if args.verify_only:
+        failures = [item.id for item in files if not verify_file(item, args.base_dir / item.destination)]
+        if failures:
+            print("UNVERIFIED: " + ", ".join(failures))
+            return 1
+        if args.receipt:
+            write_receipt(args.receipt, files, args.base_dir)
+        print("ALL_VERIFIED")
+        return 0
+
+    require_disk_capacity(files, args.base_dir)
+    success = all(download_with_resume(item, args.base_dir) for item in files)
+    if success and args.receipt:
+        write_receipt(args.receipt, files, args.base_dir)
+    print("ALL_DONE" if success else "SOME_FAILED")
+    return 0 if success else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

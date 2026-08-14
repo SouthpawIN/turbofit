@@ -1,15 +1,15 @@
 schema: turbofit.runtime/v1
 id: hardware-96gb
-revision: 2
+revision: 3
 hardware:
   class_vram_gb: 96
   min_devices: 4
   total_vram_gb: 96
   per_device_min_gb: 24
-  accelerator: nvidia-cuda
+  accelerator: llama.cpp-local
   topology: 4x24
 policy:
-  recommendation: portable-local-floor
+  recommendation: evidence-gated
   external_gpu_priority: absolute
   contraction_dwell_s: 5
   expansion_dwell_s: 120
@@ -22,17 +22,6 @@ roles:
   auxiliary: active:aux
   fallback: active:main
 rungs:
-- id: local-dedicated-131072
-  context: 131072
-  aux_mode: dedicated
-  evidence: sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853
-  main_manifest: sha256:05d85116405e37360ba6057a2746e4769d9ee08f239df8fdc973e3e75041437d
-  aux_manifest: sha256:6456085521bfd9d8846c0f7e581611d56b2fe108e31c02af2dfdf56dea474e1c
-- id: local-grm-131072
-  context: 131072
-  aux_mode: shared-main
-  evidence: sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba
-  main_manifest: sha256:05d85116405e37360ba6057a2746e4769d9ee08f239df8fdc973e3e75041437d
 - id: local-bonsai-262144
   context: 262144
   aux_mode: shared-main

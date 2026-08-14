@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import os
 import platform
 import re
@@ -16,6 +17,15 @@ NVIDIA_INVENTORY_QUERY = [
     "nvidia-smi",
     "--query-gpu=index,uuid,name,memory.total,compute_cap,pci.bus_id",
     "--format=csv,noheader,nounits",
+]
+ROCM_INVENTORY_QUERY = [
+    "rocm-smi",
+    "--showproductname",
+    "--showuniqueid",
+    "--showmeminfo",
+    "vram",
+    "--showbus",
+    "--json",
 ]
 
 
@@ -73,6 +83,28 @@ class HardwareFingerprint:
     @property
     def total_vram_mb(self) -> int:
         return sum(device.memory_total_mb for device in self.devices)
+
+    @property
+    def unified_memory(self) -> bool:
+        return any(
+            device.vendor == "apple"
+            or device.uuid == "apple-unified-memory"
+            or "unified memory" in device.name.lower()
+            or "gb10" in device.name.lower()
+            or "dgx spark" in device.name.lower()
+            for device in self.devices
+        )
+
+    @property
+    def shared_memory_pool(self) -> bool:
+        return not self.devices or self.unified_memory
+
+    @property
+    def total_usable_memory_mb(self) -> int:
+        """Memory usable by local inference without double-counting unified RAM."""
+        reserve_mb = min(8192, max(1024, round(self.system_ram_mb * 0.05)))
+        usable_system_mb = max(0, self.system_ram_mb - reserve_mb)
+        return usable_system_mb if self.shared_memory_pool else usable_system_mb + self.total_vram_mb
 
     @property
     def vendors(self) -> tuple[str, ...]:
@@ -155,6 +187,44 @@ def parse_nvidia_inventory_csv(raw: str) -> tuple[AcceleratorDevice, ...]:
     return tuple(sorted(devices, key=lambda item: (item.bus_id or "", item.index)))
 
 
+def parse_rocm_smi_json(raw: str) -> tuple[AcceleratorDevice, ...]:
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError("invalid rocm-smi JSON") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("rocm-smi inventory must be an object")
+    devices: list[AcceleratorDevice] = []
+    for key, value in payload.items():
+        if not isinstance(key, str) or not key.lower().startswith("card") or not isinstance(value, dict):
+            continue
+        suffix = key[4:]
+        if not suffix.isdigit():
+            raise ValueError(f"invalid rocm-smi card key: {key}")
+        index = int(suffix)
+        name = str(value.get("Card series") or value.get("Card model") or "").strip()
+        uuid = str(value.get("Unique ID") or value.get("Serial Number") or "").strip()
+        bus = str(value.get("PCI Bus") or value.get("PCI Bus ID") or "").strip()
+        memory = value.get("VRAM Total Memory (B)")
+        if not name or not uuid or memory is None:
+            raise ValueError(f"incomplete rocm-smi inventory for {key}")
+        try:
+            memory_mb = int(str(memory).strip()) // (1024 * 1024)
+        except ValueError as exc:
+            raise ValueError(f"invalid rocm-smi VRAM for {key}") from exc
+        devices.append(AcceleratorDevice(
+            index=index,
+            uuid=uuid,
+            name=name,
+            vendor="amd",
+            backend="rocm",
+            memory_total_mb=memory_mb,
+            compute_capability=None,
+            bus_id=bus or None,
+        ))
+    return tuple(sorted(devices, key=lambda item: (item.bus_id or "", item.index)))
+
+
 def probe_hardware(
     *,
     command_runner: Callable[[list[str]], str] | None = None,
@@ -170,8 +240,13 @@ def probe_hardware(
     release = (kernel_release or platform.release()).lower()
     try:
         devices = parse_nvidia_inventory_csv(runner(list(NVIDIA_INVENTORY_QUERY)))
-    except (FileNotFoundError, OSError, subprocess.SubprocessError):
+    except (FileNotFoundError, OSError, ValueError, subprocess.SubprocessError):
         devices = ()
+    if not devices and normalized_os == "linux":
+        try:
+            devices = parse_rocm_smi_json(runner(list(ROCM_INVENTORY_QUERY)))
+        except (FileNotFoundError, OSError, ValueError, subprocess.SubprocessError):
+            devices = ()
     if not devices and normalized_os == "darwin" and normalized_architecture in {"arm64", "aarch64"}:
         # Metal shares system memory with macOS. Reserve 8 GiB so profile matching
         # never treats memory required by the OS as fully allocatable model VRAM.

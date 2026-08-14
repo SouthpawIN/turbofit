@@ -1,33 +1,34 @@
 {
-  "blockers": [],
+  "blockers": [
+    "NVML is unavailable; controlled pressure cannot be measured safely",
+    "live adaptive controller service is not active"
+  ],
   "checks": {
-    "controlled_pressure": {
-      "exit_code": 0,
-      "output": "{\n  \"checks\": {\n    \"contracted_to_local_rung\": \"local-grm-131072\",\n    \"external_process_survived\": true,\n    \"healed_to_selected_ceiling\": true,\n    \"initial_local\": true,\n    \"pressure_allocated\": {\n      \"device\": 0,\n      \"mb\": 9329,\n      \"pid\": 904773\n    }\n  },\n  \"recorded_at\": \"2026-08-04T20:20:11.300832+00:00\",\n  \"safety\": {\n    \"acceptance_owned_processes_terminated\": 1,\n    \"external_processes_signaled\": 0\n  },\n  \"schema\": \"turbofit.controlled-pressure-acceptance/v1\",\n  \"status\": \"pass\"\n}\n",
-      "passed": true
-    },
     "controller_service": {
-      "exit_code": 0,
-      "output": "active\n",
-      "passed": true
+      "exit_code": 3,
+      "output": "inactive\n",
+      "passed": false
     },
     "gateway_models": {
       "passed": true,
       "payload": {
         "data": [
           {
+            "context_length": 65536,
             "description": "Hardware-matched tested main + auxiliary configuration",
             "id": "auto",
             "object": "model",
             "owned_by": "turbofit"
           },
           {
+            "context_length": 65536,
             "description": "Stable route to the currently reconciled main role",
             "id": "active:main",
             "object": "model",
             "owned_by": "turbofit"
           },
           {
+            "context_length": 65536,
             "description": "Stable route to the currently reconciled auxiliary role",
             "id": "active:aux",
             "object": "model",
@@ -38,174 +39,29 @@
       },
       "status": 200
     },
-    "nvml": {
+    "native_runtime": {
       "exit_code": 0,
-      "output": "0, GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1, 24576, 12739, 11377\n1, GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1, 24576, 15462, 8663\n",
+      "output": "{\n  \"backend\": \"cuda\",\n  \"binary\": \"/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-6ea215d171fd31df943bf1ac8227129f2b963160/build-cuda/bin/llama-server\",\n  \"revision\": \"6ea215d171fd31df943bf1ac8227129f2b963160\",\n  \"status\": \"verified\"\n}\n",
       "passed": true
+    },
+    "nvml": {
+      "exit_code": 18,
+      "output": "Failed to initialize NVML: Driver/library version mismatch\nNVML library version: 580.159\n",
+      "passed": false
     },
     "simulated_transitions": {
       "exit_code": 0,
-      "output": "..........................                                               [100%]\n26 passed in 1.32s\n",
+      "output": ".............................                                            [100%]\n29 passed in 2.33s\n",
       "passed": true
-    },
-    "turbohaul_status": {
-      "passed": true,
-      "payload": {
-        "active": null,
-        "background_sweeper": {
-          "last_sweep_iso": "2026-08-04T20:19:35+00:00",
-          "slots_finalized_lifetime": 0
-        },
-        "engine_stall": null,
-        "evictions": {
-          "last_evicted_at": null,
-          "total_lifetime": 0
-        },
-        "generation": {
-          "eta_s": null,
-          "generation_id": null,
-          "max_tokens": null,
-          "measured_at_iso": "2026-08-04T20:20:10+00:00",
-          "n_ctx": null,
-          "n_decoded": 0,
-          "n_prompt_cache": null,
-          "n_prompt_proc": null,
-          "n_prompt_tokens": 0,
-          "n_remain": null,
-          "pct": null,
-          "prefill_pct": null,
-          "prompt_progress": null,
-          "riders": 0,
-          "stalled": false,
-          "state": "transitioning",
-          "streaming": false,
-          "tok_s": null,
-          "tok_s_instant": 0.0
-        },
-        "grace": null,
-        "idle_hot": null,
-        "kv_classifier": {
-          "events": {
-            "sub-agent": 108
-          },
-          "forced_clean_restores": 0,
-          "last": {
-            "action": "fresh",
-            "clean_bin_id": null,
-            "common_prefix_turns": 0,
-            "event_type": "sub-agent",
-            "forced_clean_restore": false,
-            "incoming_turns": 1,
-            "resolved_from": "restore-no-bins"
-          },
-          "wave_return_restores": 0
-        },
-        "load_verify": [],
-        "loading": null,
-        "parallel_slots": {
-          "max": 2,
-          "used": 0
-        },
-        "persist_kvcache": {
-          "cap_bytes": 85899345920,
-          "file_count": 0,
-          "headroom_bytes": 85899345920,
-          "over_cap": false,
-          "total_bytes": 0
-        },
-        "queue": {
-          "acceptance_buffer_depth": 0,
-          "staging_queue_depth": 0,
-          "staging_queue_max": 100
-        },
-        "request_identity": {
-          "ip": "127.0.0.1",
-          "is_compression": null,
-          "is_curator": null,
-          "is_main": null,
-          "is_sub_agent": null,
-          "model_tag": "grm-2-6-plus-262k-split-main",
-          "resolved_class": null,
-          "session_id": null,
-          "thread_id": "auto-88fc8ea4c4d97f72a4cfef2a"
-        },
-        "residents": [
-          {
-            "generation": {
-              "eta_s": null,
-              "generation_id": null,
-              "max_tokens": null,
-              "measured_at_iso": "2026-08-04T20:20:10+00:00",
-              "n_ctx": null,
-              "n_decoded": 0,
-              "n_prompt_cache": null,
-              "n_prompt_proc": null,
-              "n_prompt_tokens": 0,
-              "n_remain": null,
-              "pct": null,
-              "prefill_pct": null,
-              "prompt_progress": null,
-              "riders": 0,
-              "stalled": false,
-              "state": "transitioning",
-              "streaming": false,
-              "tok_s": null,
-              "tok_s_instant": 0.0
-            },
-            "idle_expires_in_s": 455,
-            "inflight": 0,
-            "main_gpu": 1,
-            "model_tag": "grm-2-6-plus-262k-split-main",
-            "parallel": 1,
-            "pid": 823804,
-            "port": 11900,
-            "reserved_need_mib": 30517,
-            "spawn_seq": 1,
-            "split_mode": "layer",
-            "state": "IDLE_EVICTABLE"
-          }
-        ],
-        "shadow_bytematch": {},
-        "shadow_diag": {
-          "byteparity": {},
-          "evictions": {},
-          "kvgc": {
-            "ceiling": 21474836480,
-            "dead_protected_bins": 0,
-            "dead_protected_bytes": 0,
-            "deleted": 0,
-            "floor_reason": "under-cap",
-            "over_cap": 0,
-            "protected_bin_count": 0,
-            "protected_bytes": 0,
-            "protected_threads": {},
-            "total_bytes": 0,
-            "ts": 1785874535.8255424
-          },
-          "restores": {
-            "fresh": 108
-          },
-          "saves": {}
-        },
-        "shadow_reprefill": {},
-        "shadow_restore_prefer": {},
-        "tooltail_restore_skip": {},
-        "vram": [
-          11377,
-          8663
-        ],
-        "vram_total_mib": null
-      },
-      "status": 200
     }
   },
   "real_requested": true,
-  "recorded_at": "2026-08-04T20:29:52.687417+00:00",
+  "recorded_at": "2026-08-05T00:49:24.749992+00:00",
   "safety": {
     "direct_process_signals_sent": 0,
     "external_processes_modified": 0,
-    "gpu_allocation_attempted": true
+    "gpu_allocation_attempted": false
   },
   "schema": "turbofit.adaptive-acceptance/v1",
-  "status": "real-pass"
+  "status": "blocked"
 }

@@ -89,6 +89,31 @@ def test_manual_selection_uses_exact_profile(tmp_path, monkeypatch):
     assert calls == []
 
 
+def test_unified_aux_unavailable_returns_retryable_error(monkeypatch):
+    gateway = ThreadingHTTPServer(("127.0.0.1", 0), GATEWAY.GatewayHandler)
+    monkeypatch.setattr(GATEWAY, "resolve_requested_profile", lambda _model: "active")
+    monkeypatch.setattr(GATEWAY, "resolve_aux", lambda: None)
+    thread = threading.Thread(target=gateway.serve_forever, daemon=True)
+    thread.start()
+    client = http.client.HTTPConnection("127.0.0.1", gateway.server_port, timeout=2)
+    payload = json.dumps({
+        "model": "active:aux",
+        "messages": [{"role": "user", "content": "hello"}],
+    })
+    try:
+        client.request(
+            "POST", "/v1/chat/completions", body=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        response = client.getresponse()
+        assert response.status == 503
+        assert response.getheader("Retry-After") == "5"
+    finally:
+        client.close()
+        gateway.shutdown()
+        gateway.server_close()
+
+
 def test_aux_stream_reaches_client_and_propagates_disconnect(monkeypatch):
     release_upstream = threading.Event()
     upstream_disconnected = threading.Event()

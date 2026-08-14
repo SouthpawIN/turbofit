@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+"""Serialize native fit and intelligence campaigns on one accelerator host."""
+from __future__ import annotations
+
+import argparse
+import fcntl
+import json
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+LOCK = Path.home() / ".local/state/turbofit/benchmark-orchestrator.lock"
+STOP = Path.home() / ".local/state/turbofit/benchmark-orchestrator.stop"
+
+
+def run(command: list[str]) -> tuple[int, str]:
+    environment = {**os.environ, "PYTHONPATH": f"{ROOT / 'src'}:{ROOT}"}
+    result = subprocess.run(command, cwd=ROOT, env=environment, text=True, capture_output=True, check=False)
+    output = (result.stdout + result.stderr).strip()
+    if output:
+        print(output, flush=True)
+    return result.returncode, output
+
+
+def catalog_complete() -> bool:
+    code, output = run([str(ROOT / "scripts/turbofit-catalog-campaign"), "status"])
+    if code != 0:
+        return False
+    try:
+        return int(json.loads(output)["current_recipe"]["pending"]) == 0
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return False
+
+
+def intelligence_has_ready() -> bool:
+    path = ROOT / "references/intelligence-campaign-state.json"
+    try:
+        state = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return any(item.get("status") == "ready" for item in (state.get("runs") or {}).values())
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--catalog-batch", type=int, default=10)
+    parser.add_argument("--intelligence-batch", type=int, default=1)
+    parser.add_argument("--idle-seconds", type=int, default=15)
+    parser.add_argument("--once", action="store_true")
+    args = parser.parse_args()
+    if args.catalog_batch < 0 or args.intelligence_batch < 0:
+        parser.error("batch sizes must be non-negative")
+    LOCK.parent.mkdir(parents=True, exist_ok=True)
+    with LOCK.open("w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print(json.dumps({"status": "already-running", "lock": str(LOCK)}))
+            return 0
+        while not STOP.exists():
+            if not catalog_complete() and args.catalog_batch:
+                run([str(ROOT / "scripts/turbofit-catalog-campaign"), "run", "--limit", str(args.catalog_batch)])
+            run([str(ROOT / "scripts/turbofit-intelligence-campaign"), "init"])
+            if intelligence_has_ready() and args.intelligence_batch:
+                run([str(ROOT / "scripts/turbofit-intelligence-campaign"), "run", "--limit", str(args.intelligence_batch)])
+                run([str(ROOT / "scripts/turbofit-hardware-tiers"), "--output", "references/hardware-tier-report.json"])
+            if catalog_complete() and not intelligence_has_ready():
+                print(json.dumps({"status": "complete-or-blocked", "reason": "no runnable production configurations remain"}), flush=True)
+                return 0
+            if args.once:
+                return 0
+            time.sleep(args.idle_seconds)
+    STOP.unlink(missing_ok=True)
+    print(json.dumps({"status": "stopped"}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

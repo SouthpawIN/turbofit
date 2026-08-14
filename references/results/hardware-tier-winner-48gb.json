@@ -1,0 +1,51 @@
+{
+  "schema": "turbofit.hardware-tier-winner-evidence/v1",
+  "tier": "hardware-48gb",
+  "configuration": "grm-2-6-27b-q8--auto--262k",
+  "hardware": {
+    "gpus": [
+      "GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1",
+      "GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1"
+    ],
+    "gpu_model": "NVIDIA GeForce RTX 3090",
+    "vram_mib_per_gpu": 24576,
+    "driver": "580.159.03",
+    "cpu": "2x Intel Xeon E5-2620 v4 (16 physical / 32 logical cores)",
+    "ram_bytes": 405654077440
+  },
+  "winner_metrics": {
+    "exact_context": 262144,
+    "health": {
+      "status": "ok"
+    },
+    "campaign_decode_tps": {
+      "main": 61.79623800917626,
+      "aux_shared": 62.91979299388105
+    },
+    "quality_passes": 4,
+    "quality_total": 5,
+    "tool_passes": 2,
+    "tool_total": 3,
+    "quality_decode_tps_median": 52.90224615497796,
+    "gpu_peak_mb": {
+      "0": 19110,
+      "1": 21138
+    }
+  },
+  "auxiliary_winner": "carwin-nano",
+  "source_files": [
+    {
+      "path": "references/results/tier-campaign/grm-2-6-plus-27b-q8-auto-262k.json",
+      "sha256": "be2f588cc0f5bc11dc59e129d63a15934e3c75436a6aa7aae8a2b351f8cdbf8e"
+    },
+    {
+      "path": "references/results/main-tournament-48gb-grm-q8-262k.json",
+      "sha256": "111a091b0b297c2e6e8c96b52a397709adeda1b0cf2f54219d62308e022db193"
+    },
+    {
+      "path": "references/results/auxiliary-tournament-48gb.json",
+      "sha256": "622a8ef5f0b0167942ed26331947f576600db05319f99492d59ab2f536656f74"
+    }
+  ],
+  "selection": "Q8 and Q4 tied at 4/5 quality and 2/3 tools at exact 262K. Q8 won the precision tie and measured 52.90 tok/s median versus Q4 50.53 tok/s in the controlled quality run. Carwin Nano separately won the dedicated auxiliary tournament."
+}

@@ -17,7 +17,7 @@ if [ -n "${gpu_pids//[[:space:]]/}" ]; then
   exit 0
 fi
 
-if scripts/turbofit-campaign run-one; then
+if scripts/turbofit-catalog-campaign run-one; then
   printf '{"model_intel":"updated","benchmark":"completed"}\n'
 else
   status=$?

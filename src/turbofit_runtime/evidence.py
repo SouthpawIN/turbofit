@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
+import re
 import tempfile
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
@@ -28,6 +30,8 @@ class BenchmarkResult:
     main_tps: float
     aux_tps: float
     gpu_peak_mb: dict[int, int]
+    physical_fingerprint: str
+    raw_result_sha256: str
     runtime_string: str
     gpu_clear_after: GPUClearEvent
     raw_result_path: str
@@ -52,6 +56,25 @@ class BenchmarkResult:
             failures.append("aux throughput")
         if not self.gpu_peak_mb:
             failures.append("GPU peak memory")
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", self.physical_fingerprint):
+            failures.append("physical hardware fingerprint")
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", self.raw_result_sha256):
+            failures.append("raw-result checksum")
+        else:
+            raw_path = Path(self.raw_result_path)
+            if not raw_path.is_file():
+                failures.append("raw-result file")
+            else:
+                actual = "sha256:" + hashlib.sha256(raw_path.read_bytes()).hexdigest()
+                if actual != self.raw_result_sha256:
+                    failures.append("raw-result checksum mismatch")
+                try:
+                    raw_payload = json.loads(raw_path.read_text(encoding="utf-8"))
+                    bound = str((raw_payload.get("physical_hardware") or {}).get("fingerprint_sha256", ""))
+                    if bound != self.physical_fingerprint:
+                        failures.append("raw-result physical fingerprint mismatch")
+                except (OSError, json.JSONDecodeError):
+                    failures.append("raw-result JSON")
         if not self.runtime_string.strip():
             failures.append("runtime string")
         if not self.gpu_clear_after.passed:
@@ -86,6 +109,66 @@ class EvidencePublisher:
     def _context_label(context: int) -> str:
         return {65_536: "64K", 131_072: "128K", 262_144: "262K", 1_048_576: "1M"}[context]
 
+    def _initial_checklist(self, matrix: Matrix) -> str:
+        lines = [
+            "---",
+            "title: Turbofit benchmark campaign",
+            "type: benchmark",
+            "tags: [turbofit, native-runtime, benchmark]",
+            "---",
+            "",
+            "# Turbofit benchmark campaign",
+            "",
+            "### Success index",
+            "",
+        ]
+        for item in matrix.rows:
+            label = self._context_label(item.context)
+            lines.append(f'<a id="{item.id}"></a>')
+            lines.append(f'- [ ] **{item.main}:{item.aux} @ {label} context**')
+        return "\n".join(lines) + "\n"
+
+    def ensure_checklist(self) -> None:
+        """Synchronize a stale checklist to the current matrix without losing successes."""
+        matrix = load_matrix(self.matrix_path)
+        fresh = self._initial_checklist(matrix)
+        try:
+            existing = self.checklist_path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            existing = ""
+
+        success_index: list[str] = []
+        in_index = False
+        for line in existing.splitlines():
+            if line == "### Success index":
+                in_index = True
+                continue
+            if in_index and line.startswith("- [") and not line.startswith(("- [ ]", "- [x]")):
+                success_index.append(line)
+            elif in_index and line.startswith("<a id="):
+                break
+
+        for row in matrix.rows:
+            label = self._context_label(row.context)
+            pending = f'- [ ] **{row.main}:{row.aux} @ {label} context**'
+            passed_base = f'- [x] **{row.main}:{row.aux} @ {label} context**'
+            old_passed = next((line for line in existing.splitlines() if line.startswith(passed_base)), None)
+            evidence_path = self.evidence_dir / f"{row.id}.md"
+            if old_passed and evidence_path.is_file():
+                fresh = fresh.replace(pending, old_passed, 1)
+            elif evidence_path.is_file():
+                fresh = fresh.replace(
+                    pending,
+                    f'{passed_base} — [evidence](evidence/{evidence_path.name})',
+                    1,
+                )
+
+        if success_index:
+            marker = "### Success index\n\n"
+            fresh = fresh.replace(marker, marker + "\n".join(dict.fromkeys(success_index)) + "\n", 1)
+        if fresh != existing:
+            self._atomic_write(self.checklist_path, fresh)
+
     def publish_success(self, row: MatrixRow, result: BenchmarkResult) -> Path:
         result.validate(row)
         matrix = load_matrix(self.matrix_path)
@@ -107,7 +190,7 @@ title: Matrix evidence - {row.main} with {row.aux} at {label}
 created: {timestamp[:10]}
 updated: {timestamp[:10]}
 type: benchmark
-tags: [turbofit, turbohaul, benchmark, runtime]
+tags: [turbofit, native-runtime, benchmark, runtime]
 ---
 
 # Matrix evidence: {row.main}:{row.aux} @ {label}
@@ -121,6 +204,8 @@ tags: [turbofit, turbohaul, benchmark, runtime]
 - Auxiliary decode: `{result.aux_tps:.2f} tok/s`
 - Runtime string: `{result.runtime_string}`
 - Raw result: `{result.raw_result_path}`
+- Raw result SHA-256: `{result.raw_result_sha256}`
+- Physical hardware fingerprint: `{result.physical_fingerprint}`
 - GPU-clear gate: `PASS`
 - GPU-clear event: `{result.gpu_clear_after.timestamp}`
 
@@ -133,7 +218,10 @@ tags: [turbofit, turbohaul, benchmark, runtime]
 **PASS.** Exact context, both health checks, both inference routes, measured throughput, per-card peak memory, a deterministic runtime string, and post-run GPU clearing were all recorded.
 """
 
-        checklist = self.checklist_path.read_text()
+        try:
+            checklist = self.checklist_path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            checklist = self._initial_checklist(matrix)
         pending = f'- [ ] **{row.main}:{row.aux} @ {label} context**'
         passed_base = f'- [x] **{row.main}:{row.aux} @ {label} context**'
         passed = f'{passed_base} — [evidence](evidence/{evidence_path.name})'

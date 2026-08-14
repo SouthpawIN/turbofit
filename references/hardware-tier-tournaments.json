@@ -1,0 +1,103 @@
+{
+  "schema": "turbofit.hardware-tier-tournaments/v1",
+  "ranking": [
+    "quality",
+    "context_128k",
+    "server_decode_30_tps",
+    "context_262k",
+    "server_decode_50_tps",
+    "context_1m"
+  ],
+  "tiers": [
+    {
+      "id": "hardware-8gb",
+      "vram_gb": 8,
+      "physical_evidence_required": true,
+      "candidates": [
+        "bonsai-27b-dspark--auto--64k",
+        "bonsai-27b--auto--128k"
+      ],
+      "winner": null
+    },
+    {
+      "id": "hardware-16gb",
+      "vram_gb": 16,
+      "physical_evidence_required": true,
+      "candidates": [
+        "bonsai-27b-dspark--auto--128k",
+        "ternary-bonsai-27b-dspark--auto--128k",
+        "bonsai-27b--auto--262k"
+      ],
+      "winner": null
+    },
+    {
+      "id": "hardware-24gb",
+      "vram_gb": 24,
+      "physical_evidence_required": true,
+      "candidates": [
+        "qwen3-8-27b-q4-mtp--auto--64k",
+        "qwen3-8-27b-q4-mtp--auto--128k",
+        "ternary-bonsai-27b--auto--262k"
+      ],
+      "winner": null
+    },
+    {
+      "id": "hardware-48gb",
+      "vram_gb": 48,
+      "physical_evidence_required": true,
+      "candidates": [
+        "qwen3-8-27b-q4-mtp--carwin-nano--64k",
+        "qwen3-8-27b-q4-mtp--ternary-bonsai-27b--64k",
+        "qwen3-8-27b-q4-mtp--bonsai-27b--64k",
+        "qwen3-8-27b-q4-mtp--auto--262k",
+        "qwen3-8-27b-q8-mtp--auto--128k",
+        "qwen3-8-27b-q8-mtp--auto--262k"
+      ],
+      "winner": null
+    },
+    {
+      "id": "hardware-64gb",
+      "vram_gb": 64,
+      "physical_evidence_required": true,
+      "candidates": [
+        "qwen3-8-27b-q8-mtp--auto--262k",
+        "qwen3-8-27b-bf16-mtp--auto--64k",
+        "qwen3-8-27b-bf16-mtp--auto--128k"
+      ],
+      "winner": null
+    },
+    {
+      "id": "hardware-96gb",
+      "vram_gb": 96,
+      "physical_evidence_required": true,
+      "candidates": [
+        "qwen3-8-27b-bf16-mtp--auto--128k",
+        "qwen3-8-27b-bf16-mtp--auto--262k",
+        "qwen3-8-27b-bf16-mtp--carwin-nano--128k"
+      ],
+      "winner": null
+    },
+    {
+      "id": "hardware-200gb",
+      "vram_gb": 200,
+      "physical_evidence_required": true,
+      "candidates": [
+        "deepseek-v4-flash-0731-q8-dspark--auto--128k",
+        "deepseek-v4-flash-0731-q8-dspark--auto--262k",
+        "qwen3-8-27b-bf16-mtp--auto--1m"
+      ],
+      "winner": null
+    },
+    {
+      "id": "hardware-300gb",
+      "vram_gb": 300,
+      "physical_evidence_required": true,
+      "candidates": [
+        "deepseek-v4-flash-0731-q8-dspark--auto--262k",
+        "deepseek-v4-flash-0731-q8-dspark--auto--1m",
+        "deepseek-v4-flash-0731-q8-dspark--carwin-nano--262k"
+      ],
+      "winner": null
+    }
+  ]
+}
