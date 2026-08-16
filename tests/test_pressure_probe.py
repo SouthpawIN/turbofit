@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 from test_selection import hardware
-from turbofit_runtime.pressure_probe import probe_nvidia_pressure
+from turbofit_runtime.hardware import HardwareFingerprint
+from turbofit_runtime.pressure_probe import (
+    normalize_managed_requirements,
+    probe_accelerator_pressure,
+    probe_nvidia_pressure,
+)
 
 
 CARD_CSV = "0, 24576, 23000\n1, 24576, 1000\n"
@@ -55,3 +60,27 @@ def test_probe_fails_closed_when_process_inventory_is_unavailable() -> None:
     assert snapshot.process_data_available is False
     assert snapshot.cards[0].external_mb == 244
     assert snapshot.release_targets == ()
+
+
+def test_cpu_only_pressure_uses_available_system_ram_as_the_managed_pool() -> None:
+    fingerprint = HardwareFingerprint("linux", "x86_64", 65536)
+
+    snapshot = probe_accelerator_pressure(
+        fingerprint,
+        manager_status={"residents": [{"pid": 111}]},
+        managed_required_mb=(),
+        system_available_mb=49152,
+        desktop_baseline_mb=0,
+        safety_reserve_mb=1024,
+    )
+
+    assert snapshot.cards[0].total_mb == fingerprint.host_usable_memory_mb
+    assert snapshot.cards[0].observed_used_mb == fingerprint.host_usable_memory_mb - 49152
+    assert snapshot.cards[0].available_for_managed_mb == 48128
+    assert snapshot.process_data_available is False
+
+
+def test_shared_memory_requirements_collapse_discrete_profile_cards_into_one_pool() -> None:
+    cpu = HardwareFingerprint("linux", "x86_64", 393216)
+
+    assert normalize_managed_requirements(cpu, (24576, 24576, 24576)) == (73728,)

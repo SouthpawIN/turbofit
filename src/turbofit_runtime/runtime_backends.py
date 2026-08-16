@@ -17,10 +17,13 @@ def llama_environment(
     devices: str = "0",
     base: Mapping[str, str] | None = None,
 ) -> dict[str, str]:
-    if backend not in {"cuda", "rocm", "metal", "cpu"}:
+    if backend not in {"cuda", "rocm", "metal", "vulkan", "cpu"}:
         raise ValueError(f"unsupported llama backend: {backend}")
     env = dict(os.environ if base is None else base)
-    for name in ("CUDA_VISIBLE_DEVICES", "HIP_VISIBLE_DEVICES", "ROCR_VISIBLE_DEVICES"):
+    for name in (
+        "CUDA_VISIBLE_DEVICES", "HIP_VISIBLE_DEVICES", "ROCR_VISIBLE_DEVICES",
+        "GGML_VK_VISIBLE_DEVICES",
+    ):
         env.pop(name, None)
     if backend == "cuda":
         env["CUDA_VISIBLE_DEVICES"] = devices
@@ -29,6 +32,8 @@ def llama_environment(
         env["ROCR_VISIBLE_DEVICES"] = devices
     elif backend == "metal":
         env["GGML_METAL"] = "1"
+    elif backend == "vulkan":
+        env["GGML_VK_VISIBLE_DEVICES"] = devices
     return env
 
 

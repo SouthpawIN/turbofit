@@ -85,6 +85,15 @@ class HardwareFingerprint:
         return sum(device.memory_total_mb for device in self.devices)
 
     @property
+    def host_reserve_mb(self) -> int:
+        """RAM kept available for the OS and non-model processes."""
+        return min(8192, max(1024, round(self.system_ram_mb * 0.05)))
+
+    @property
+    def host_usable_memory_mb(self) -> int:
+        return max(0, self.system_ram_mb - self.host_reserve_mb)
+
+    @property
     def unified_memory(self) -> bool:
         return any(
             device.vendor == "apple"
@@ -100,11 +109,19 @@ class HardwareFingerprint:
         return not self.devices or self.unified_memory
 
     @property
+    def memory_pool_kind(self) -> str:
+        if not self.devices:
+            return "cpu"
+        return "unified" if self.unified_memory else "dedicated"
+
+    @property
     def total_usable_memory_mb(self) -> int:
         """Memory usable by local inference without double-counting unified RAM."""
-        reserve_mb = min(8192, max(1024, round(self.system_ram_mb * 0.05)))
-        usable_system_mb = max(0, self.system_ram_mb - reserve_mb)
-        return usable_system_mb if self.shared_memory_pool else usable_system_mb + self.total_vram_mb
+        return (
+            self.host_usable_memory_mb
+            if self.shared_memory_pool
+            else self.host_usable_memory_mb + self.total_vram_mb
+        )
 
     @property
     def vendors(self) -> tuple[str, ...]:

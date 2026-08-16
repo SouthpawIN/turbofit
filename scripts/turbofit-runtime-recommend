@@ -209,7 +209,9 @@ def current_validated_profiles(path: Path | None) -> set[str] | None:
         state = json.loads(path.read_text(encoding="utf-8")).get("rows") or {}
         configurations = json.loads((ROOT / "references/configuration-matrix.json").read_text(encoding="utf-8"))
         catalog = ModelCatalog.load(ROOT / "references/model-catalog.json")
-        recipes = RecipeBook.load(ROOT / "references/model-recipes.json")
+        recipes = RecipeBook.load(
+            ROOT / "references/model-recipes.json", hardware=probe_hardware(),
+        )
         index = build_configuration_index(configurations, catalog)
         profiles = json.loads(DEFAULT_PROFILES.read_text(encoding="utf-8")).get("profiles") or {}
     except (OSError, ValueError):
@@ -253,7 +255,9 @@ def current_intelligence_recipes() -> dict[tuple[str, str, int], str]:
     configurations = json.loads(
         (ROOT / "references/configuration-matrix.json").read_text(encoding="utf-8")
     )
-    recipes = RecipeBook.load(ROOT / "references/model-recipes.json")
+    recipes = RecipeBook.load(
+        ROOT / "references/model-recipes.json", hardware=probe_hardware(),
+    )
     result = {}
     for configuration in configurations.get("rows") or []:
         recipe = recipes.resolve_catalog_configuration(configuration)

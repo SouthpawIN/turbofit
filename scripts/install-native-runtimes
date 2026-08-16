@@ -6,7 +6,9 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,9 +27,40 @@ def run(command: list[str], *, cwd: Path | None = None) -> None:
     subprocess.run(command, cwd=cwd, check=True)
 
 
-def install(runtime: dict, *, check_only: bool) -> dict:
-    binary = Path(os.path.expanduser(runtime["cuda_binary"])).resolve()
-    source = Path(os.path.expanduser(runtime.get("source", str(binary.parents[2])))).resolve()
+def cmake_configuration(backend: str) -> tuple[str, str]:
+    try:
+        return {
+            "cuda": ("build-cuda", "-DGGML_CUDA=ON"),
+            "rocm": ("build-rocm", "-DGGML_HIP=ON"),
+            "metal": ("build-metal", "-DGGML_METAL=ON"),
+            "vulkan": ("build-vulkan", "-DGGML_VULKAN=ON"),
+            "cpu": ("build-cpu", "-DGGML_NATIVE=ON"),
+        }[backend]
+    except KeyError as exc:
+        raise ValueError(f"unsupported native backend: {backend}") from exc
+
+
+def detect_backend() -> str:
+    explicit = os.getenv("TURBOFIT_ACCELERATOR_BACKEND", "").lower()
+    if explicit:
+        cmake_configuration(explicit)
+        return explicit
+    if sys.platform == "darwin":
+        return "metal"
+    if shutil.which("nvidia-smi"):
+        return "cuda"
+    if shutil.which("rocm-smi") or shutil.which("amd-smi") or shutil.which("rocminfo"):
+        return "rocm"
+    if shutil.which("vulkaninfo"):
+        return "vulkan"
+    return "cpu"
+
+
+def install(runtime: dict, *, backend: str, check_only: bool) -> dict:
+    cuda_binary = Path(os.path.expanduser(runtime["cuda_binary"])).resolve()
+    source = Path(os.path.expanduser(runtime.get("source", str(cuda_binary.parents[2])))).resolve()
+    build_dir, accelerator_flag = cmake_configuration(backend)
+    binary = source / build_dir / "bin/llama-server"
     revision = runtime["revision"]
     if not source.exists():
         if check_only:
@@ -42,14 +75,15 @@ def install(runtime: dict, *, check_only: bool) -> dict:
         run(["git", "-C", str(source), "checkout", "--detach", revision])
     if not check_only:
         run([
-            "cmake", "-B", "build-cuda", "-DGGML_CUDA=ON", "-DLLAMA_CURL=OFF",
+            "cmake", "-B", build_dir, accelerator_flag, "-DLLAMA_CURL=OFF",
             "-DCMAKE_BUILD_TYPE=Release",
         ], cwd=source)
-        run(["cmake", "--build", "build-cuda", "--target", "llama-server", "-j", str(os.cpu_count() or 8)], cwd=source)
+        run(["cmake", "--build", build_dir, "--target", "llama-server", "-j", str(os.cpu_count() or 8)], cwd=source)
     if not binary.is_file() or not os.access(binary, os.X_OK):
         raise RuntimeError(f"runtime binary is unavailable: {binary}")
     return {
         "id": runtime["id"],
+        "backend": backend,
         "revision": revision,
         "binary": str(binary),
         "binary_sha256": sha256(binary),
@@ -60,6 +94,7 @@ def install(runtime: dict, *, check_only: bool) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime", action="append", help="runtime id; repeat to select several")
+    parser.add_argument("--backend", choices=("cuda", "rocm", "metal", "vulkan", "cpu"))
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
@@ -68,7 +103,8 @@ def main() -> int:
     missing = selected - {item["id"] for item in runtimes}
     if missing:
         raise ValueError(f"unknown runtime ids: {sorted(missing)}")
-    records = [install(item, check_only=args.check_only) for item in runtimes]
+    backend = args.backend or detect_backend()
+    records = [install(item, backend=backend, check_only=args.check_only) for item in runtimes]
     print(json.dumps({"schema": "turbofit.native-runtime-verification/v1", "runtimes": records}, indent=2))
     return 0
 

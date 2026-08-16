@@ -53,6 +53,12 @@ Use only stable provider IDs: `auto`, `active:main`, and `active:aux`.
 
 Legacy `serve`, direct launchers, and scaling watcher are compatibility tools, not adaptive authorities.
 
+## Portable memory allocation
+
+Hardware fingerprints classify memory as `dedicated`, `unified`, or `cpu`. Turbofit reserves 5% of host RAM, bounded to 1–8 GiB, and never double-counts unified memory. Dedicated systems can combine VRAM and host RAM through llama.cpp offload; contexts beyond the model's native window move KV cache pressure to host RAM when at least 32 GiB is usable. Unified-memory systems suppress discrete split flags. CPU-only systems use pinned CPU runtimes with both model and draft GPU layers set to zero.
+
+Backend order is CUDA → ROCm → Vulkan → CPU on Linux/Windows and Metal on macOS. Build or verify the current machine's pinned backend with `scripts/install-native-runtimes --backend cuda|rocm|metal|vulkan|cpu`.
+
 ## Non-negotiable safety
 
 - Never kill or signal external accelerator/model processes.

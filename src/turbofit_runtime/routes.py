@@ -12,6 +12,16 @@ from .runtime_profile import AuxMode, Turbofile
 RuntimeResolutions = dict[str, dict[str, dict[str, dict[str, int | str]]]]
 
 
+def _large_context_request_policy(context: int) -> dict[str, int] | None:
+    if context < 1_048_576:
+        return None
+    return {
+        "initial_response_timeout_s": 1800,
+        "maximum_timeout_s": 3600,
+        "generation_grace_s": 1800,
+    }
+
+
 def load_runtime_resolutions(path: str | Path) -> RuntimeResolutions:
     raw: Any = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(raw, Mapping) or set(raw) != {"schema", "profiles"}:
@@ -125,6 +135,9 @@ def build_route_state(
                 "port": int(main.get("port", manager_port)),
             }
         }
+        request_policy = _large_context_request_policy(rung.context)
+        if request_policy is not None:
+            routes["main"]["request_policy"] = request_policy
         if rung.aux_mode is AuxMode.SHARED_MAIN:
             routes["aux"] = {"kind": "shared-main"}
         else:
@@ -137,6 +150,8 @@ def build_route_state(
                 "port": int(aux.get("port", manager_port)),
                 "mode": "dedicated",
             }
+            if request_policy is not None:
+                routes["aux"]["request_policy"] = request_policy
     return {
         "schema": "turbofit.runtime-routes/v1",
         "active": profile.id,

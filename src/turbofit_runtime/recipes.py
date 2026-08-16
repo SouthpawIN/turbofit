@@ -8,6 +8,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from .hardware import HardwareFingerprint
 from .schema import MatrixRow
 
 
@@ -22,7 +23,7 @@ def resolve_native_backend(
         backend_name or os.environ.get("TURBOFIT_ACCELERATOR_BACKEND") or ""
     ).lower()
     if explicit:
-        if explicit not in {"cuda", "rocm", "metal", "cpu"}:
+        if explicit not in {"cuda", "rocm", "metal", "vulkan", "cpu"}:
             raise ValueError(f"unsupported native backend: {explicit}")
         return explicit
     host = str(platform_name or sys.platform).lower()
@@ -34,6 +35,8 @@ def resolve_native_backend(
         which("rocm-smi") or which("amd-smi") or which("rocminfo")
     ):
         return "rocm"
+    if which("vulkaninfo"):
+        return "vulkan"
     return "cpu"
 
 
@@ -68,6 +71,7 @@ class RecipeBook:
         *,
         platform_name: str | None = None,
         backend_name: str | None = None,
+        hardware: HardwareFingerprint | None = None,
     ) -> None:
         if data.get("schema_version") != 1:
             raise ValueError(f"unsupported recipe schema: {data.get('schema_version')}")
@@ -75,6 +79,7 @@ class RecipeBook:
         self.models = data.get("models") or {}
         self.variants = data.get("variants") or {}
         self.platform_name = platform_name or sys.platform
+        self.hardware = hardware
         self.model_root = Path(
             os.environ.get("TURBOFIT_MODEL_ROOT", "~/Models/storage/gguf")
         ).expanduser()
@@ -95,11 +100,13 @@ class RecipeBook:
         *,
         platform_name: str | None = None,
         backend_name: str | None = None,
+        hardware: HardwareFingerprint | None = None,
     ) -> "RecipeBook":
         return cls(
             json.loads(Path(path).read_text()),
             platform_name=platform_name,
             backend_name=backend_name,
+            hardware=hardware,
         )
 
     @staticmethod
@@ -131,15 +138,30 @@ class RecipeBook:
         alias_override: str | None = None,
     ) -> ResolvedComponent:
         _, spec = self._spec(family)
+        if self.hardware is not None:
+            available = {str(device.index) for device in self.hardware.devices}
+            requested = [item for item in gpu.split(",") if item in available]
+            if not available:
+                gpu = ""
+            elif self.hardware.memory_pool_kind == "unified":
+                gpu = str(self.hardware.devices[0].index)
+            else:
+                gpu = ",".join(requested) or str(self.hardware.devices[0].index)
         method = self._context_method(spec, context)
         context_override = (spec.get("context_overrides") or {}).get(str(context)) or {}
         kind = str(spec["kind"])
         alias = alias_override or str(spec["alias"])
         port = port_override or int(spec["port"])
         component_binaries = spec.get("native_binaries") or {}
-        binary_value = component_binaries.get(
-            self.backend_name, spec.get("binary", self.atomic_binary)
-        )
+        binary_value = component_binaries.get(self.backend_name)
+        if binary_value is None and spec.get("binary"):
+            binary_value = str(spec["binary"])
+            for backend in ("cuda", "rocm", "metal", "vulkan", "cpu"):
+                binary_value = binary_value.replace(
+                    f"/build-{backend}/", f"/build-{self.backend_name}/"
+                )
+        if binary_value is None:
+            binary_value = self.atomic_binary
         binary = str(Path(str(binary_value)).expanduser())
         if kind != "process":
             raise ValueError(f"unsupported recipe kind: {kind}")
@@ -165,11 +187,16 @@ class RecipeBook:
         if not 1 <= ubatch_size <= batch_size:
             raise ValueError(f"invalid batch/ubatch recipe for {family}: {batch_size}/{ubatch_size}")
         runtime_flavor = str(spec.get("runtime_flavor", "mainline"))
+        gpu_layers = context_override.get(
+            "gpu_layers", 99 if runtime_flavor == "ik" else "auto"
+        )
+        if self.backend_name == "cpu":
+            gpu_layers = 0
         if runtime_flavor == "ik":
             command = [
                 binary, "-m", model,
                 "--host", "127.0.0.1", "--port", str(port), "--alias", alias,
-                "-c", str(context), "-ngl", str(context_override.get("gpu_layers", 99)),
+                "-c", str(context), "-ngl", str(gpu_layers),
                 "-fa", "on", "--jinja", "-b", str(batch_size), "-ub", str(ubatch_size),
                 "--parallel", "1",
             ]
@@ -185,20 +212,26 @@ class RecipeBook:
             command = [
                 binary, "-m", model,
                 "--host", "127.0.0.1", "--port", str(port), "--alias", alias,
-                "-c", str(context), "-ngl", str(context_override.get("gpu_layers", "auto")), "--fit", fit, "-fa", "on", "--jinja",
+                "-c", str(context), "-ngl", str(gpu_layers), "--fit", fit, "-fa", "on", "--jinja",
                 "-b", str(batch_size), "-ub", str(ubatch_size),
                 "--cache-type-k", "q4_0", "--cache-type-v", "q4_0", "--parallel", "1",
             ]
         else:
             raise ValueError(f"unsupported runtime flavor for {family}: {runtime_flavor}")
-        if context_override.get("split_mode"):
+        multi_device = (
+            self.hardware is None
+            or (
+                self.hardware.memory_pool_kind == "dedicated"
+                and len([item for item in gpu.split(",") if item]) > 1
+            )
+        )
+        accelerator_split = self.backend_name in {"cuda", "rocm", "vulkan"} and multi_device
+        if context_override.get("split_mode") and accelerator_split:
             command.extend(["--split-mode", str(context_override["split_mode"])])
-        if context_override.get("tensor_split"):
+        if context_override.get("tensor_split") and accelerator_split:
             command.extend(["--tensor-split", str(context_override["tensor_split"])])
-        if context_override.get("main_gpu") is not None:
+        if context_override.get("main_gpu") is not None and self.backend_name in {"cuda", "rocm", "vulkan"}:
             command.extend(["--main-gpu", str(context_override["main_gpu"])])
-        if context_override.get("kv_offload") is False:
-            command.append("--no-kv-offload")
         n_cpu_moe = context_override.get("n_cpu_moe", spec.get("n_cpu_moe"))
         if n_cpu_moe is not None:
             command.extend(["--n-cpu-moe", str(n_cpu_moe)])
@@ -206,6 +239,14 @@ class RecipeBook:
             command.append("--cpu-moe")
         scaling = spec.get("context_scaling") or {}
         native_context = int(spec.get("native_context", context))
+        host_kv = bool(
+            self.hardware is not None
+            and self.hardware.memory_pool_kind == "dedicated"
+            and context > native_context
+            and self.hardware.host_usable_memory_mb >= 32 * 1024
+        )
+        if context_override.get("kv_offload") is False or host_kv:
+            command.append("--no-kv-offload")
         if context > native_context and scaling:
             command.extend([
                 "--rope-scaling", str(scaling["method"]),
@@ -228,7 +269,10 @@ class RecipeBook:
                 "--model-draft", draft,
                 "--spec-type", "draft-dspark",
                 "--spec-draft-n-max", str(spec.get("draft_n_max", 4)),
-                "-ngld", str(context_override.get("draft_gpu_layers", "auto")),
+                "-ngld", str(
+                    0 if self.backend_name == "cpu"
+                    else context_override.get("draft_gpu_layers", "auto")
+                ),
             ])
         if projector:
             command.extend(["--mmproj", projector])
@@ -283,8 +327,28 @@ class RecipeBook:
         main_large = bool(main_spec.get("large", False))
         main_override = (main_spec.get("context_overrides") or {}).get(str(context)) or {}
         override_gpu = str(main_override.get("gpu", ""))
+        if self.hardware is not None:
+            device_ids = [str(device.index) for device in self.hardware.devices]
+            if not device_ids:
+                auto_main_gpu = auto_aux_gpu = ""
+            elif self.hardware.memory_pool_kind == "unified" or len(device_ids) == 1:
+                auto_main_gpu = auto_aux_gpu = device_ids[0]
+            else:
+                auto_aux_gpu = device_ids[0]
+                auto_main_gpu = (
+                    ",".join(device_ids)
+                    if aux_name == "auto" and (
+                        main_large or context > int(main_spec.get("native_context", context))
+                    )
+                    else device_ids[-1]
+                )
+            # Portable hardware planning supersedes topology-specific catalog hints.
+            override_gpu = ""
+        else:
+            auto_aux_gpu = "0"
+            auto_main_gpu = "0,1" if main_large else ("0" if aux_name == "auto" else "1")
         if aux_name == "auto":
-            main_gpu = override_gpu or ("0,1" if main_large else "0")
+            main_gpu = override_gpu or auto_main_gpu
             main = self._component(main_name, "main", context, main_gpu, port_override=11605)
             return ResolvedRecipe(
                 row_id=row_id,
@@ -294,12 +358,12 @@ class RecipeBook:
                 aux_mode="shared-main",
                 components=(main,),
             )
-        aux = self._component(aux_name, "aux", context, "0", port_override=11610)
+        aux = self._component(aux_name, "aux", context, auto_aux_gpu, port_override=11610)
         main = self._component(
             main_name,
             "main",
             context,
-            override_gpu or ("0,1" if main_large else "1"),
+            override_gpu or auto_main_gpu,
             port_override=11605,
         )
         return ResolvedRecipe(

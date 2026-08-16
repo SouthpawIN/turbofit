@@ -102,6 +102,8 @@ class CampaignBackend:
     def _start_monitor(self) -> None:
         if self._monitor_thread and self._monitor_thread.is_alive():
             return
+        if self.accelerator_backend != "cuda":
+            return
         self._samples = []
         self._monitor_stop.clear()
 
@@ -298,6 +300,7 @@ class CampaignBackend:
             "TURBOFIT_GATEWAY_HOST": "0.0.0.0",
             "TURBOFIT_RUNTIME_STATE": str(self.runtime_state),
             "TURBOFIT_CAMPAIGN_GATEWAY": "true",
+            "TURBOFIT_BACKEND_TIMEOUT": "3600",
         })
         log_path = self.result_dir / "campaign-gateway.log"
         log = log_path.open("w")
@@ -326,7 +329,7 @@ class CampaignBackend:
         code, body, headers = self._request_json(
             f"http://127.0.0.1:{self.gateway_port}/{role}/v1/chat/completions",
             payload=payload,
-            timeout=600,
+            timeout=3660,
         )
         if code != 200:
             raise RuntimeError(f"{role} inference failed ({code}): {body}")

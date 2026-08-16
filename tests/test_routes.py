@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 from turbofit_runtime.profile_io import load_yaml_profile
@@ -69,3 +70,19 @@ def test_route_publication_is_atomic(tmp_path: Path) -> None:
 
     assert json.loads(path.read_text()) == state
     assert not list(tmp_path.glob(".runtime-state.json.*"))
+
+
+def test_one_million_context_route_extends_backend_timeout_for_host_offload() -> None:
+    resolutions = load_runtime_resolutions(
+        ROOT / "runtime-profiles" / "runtime-resolutions.json"
+    )
+    selected = profile(24)
+    selected = replace(
+        selected,
+        rungs=(replace(selected.rungs[0], context=1_048_576),) + selected.rungs[1:],
+    )
+
+    state = build_route_state(selected, 0, resolutions, manager_port=11401)
+
+    assert state["routes"]["main"]["request_policy"]["maximum_timeout_s"] == 3600
+    assert state["routes"]["main"]["request_policy"]["initial_response_timeout_s"] == 1800

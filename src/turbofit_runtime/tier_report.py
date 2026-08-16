@@ -87,7 +87,7 @@ def build_tier_report(root: str | Path, hardware: HardwareFingerprint) -> dict[s
     evidence_index = json.loads((root / "runtime-profiles/class-evidence-index.json").read_text(encoding="utf-8"))
     campaign_path = root / "references/catalog-campaign-state.json"
     campaign_rows = (json.loads(campaign_path.read_text(encoding="utf-8")).get("rows") or {}) if campaign_path.is_file() else {}
-    recipes = RecipeBook.load(root / "references/model-recipes.json")
+    recipes = RecipeBook.load(root / "references/model-recipes.json", hardware=hardware)
     valid_intelligence_recipes = {}
     for configuration in configurations["rows"]:
         recipe = recipes.resolve_catalog_configuration(configuration)
@@ -234,8 +234,10 @@ def build_tier_report(root: str | Path, hardware: HardwareFingerprint) -> dict[s
             "os": hardware.os,
             "architecture": hardware.architecture,
             "system_ram_mb": hardware.system_ram_mb,
+            "host_usable_memory_mb": hardware.host_usable_memory_mb,
             "accelerator_memory_mb": hardware.total_vram_mb,
             "usable_memory_mb": hardware.total_usable_memory_mb,
+            "memory_pool_kind": hardware.memory_pool_kind,
             "shared_memory_pool": hardware.shared_memory_pool,
             "device_memory_mb": [device.memory_total_mb for device in hardware.devices],
             "native_tier_gb": _native_tier(hardware),

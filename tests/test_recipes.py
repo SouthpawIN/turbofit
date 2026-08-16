@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from turbofit_runtime.recipes import RecipeBook
+from turbofit_runtime.recipes import RecipeBook, resolve_native_backend
+from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
 from turbofit_runtime.schema import MatrixRow
 
 
@@ -30,6 +31,14 @@ def test_auto_profile_launches_only_main_component() -> None:
     assert component.gpu == "0"
     assert "--spec-type" in component.command
     assert "draft-mtp" in component.command
+
+
+def test_backend_detection_uses_vulkan_before_cpu_when_no_vendor_cli_exists() -> None:
+    available = {"vulkaninfo"}
+
+    assert resolve_native_backend(
+        platform_name="linux", which=lambda command: command if command in available else None,
+    ) == "vulkan"
 
 
 def test_small_dedicated_pair_pins_aux_gpu0_and_main_gpu1() -> None:
@@ -289,3 +298,68 @@ def test_recipe_compiles_deterministic_profile_name_and_aliases() -> None:
     assert resolved.main_alias == "qwen3-8-27b-q4-mtp"
     assert resolved.aux_alias == "carwin-nano"
     assert resolved.aux_mode == "dedicated"
+
+
+def test_cpu_only_qwen_1m_uses_host_memory_and_cpu_binary() -> None:
+    hardware = HardwareFingerprint("linux", "x86_64", 393216)
+    component = RecipeBook.load(
+        RECIPES, platform_name="linux", backend_name="cpu", hardware=hardware,
+    ).resolve(row("qwen3-8-27b-q4-mtp", "auto", 1_048_576)).components[0]
+
+    assert component.command[0].endswith("build-cpu/bin/llama-server")
+    assert component.command[component.command.index("-ngl") + 1] == "0"
+    assert "--split-mode" not in component.command
+    assert "--tensor-split" not in component.command
+    assert "--main-gpu" not in component.command
+
+
+def test_cpu_only_dspark_uses_the_pinned_prism_cpu_runtime() -> None:
+    hardware = HardwareFingerprint("linux", "x86_64", 131072)
+    component = RecipeBook.load(
+        RECIPES, platform_name="linux", backend_name="cpu", hardware=hardware,
+    ).resolve(row("1 Bit Bonsai", "auto", 65_536)).components[0]
+
+    assert component.command[0].endswith(
+        "prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cpu/bin/llama-server"
+    )
+    assert component.command[component.command.index("-ngl") + 1] == "0"
+    assert component.command[component.command.index("-ngld") + 1] == "0"
+
+
+def test_dedicated_gpu_qwen_1m_places_large_kv_cache_in_detected_host_ram() -> None:
+    hardware = HardwareFingerprint(
+        "linux", "x86_64", 393216,
+        devices=(
+            AcceleratorDevice(0, "a", "RTX 3090", "nvidia", "cuda", 24576, "8.6", "01"),
+            AcceleratorDevice(1, "b", "RTX 3090", "nvidia", "cuda", 24576, "8.6", "02"),
+        ),
+    )
+    component = RecipeBook.load(
+        RECIPES, platform_name="linux", backend_name="cuda", hardware=hardware,
+    ).resolve(row("qwen3-8-27b-q4-mtp", "auto", 1_048_576)).components[0]
+
+    assert component.gpu == "0,1"
+    assert "--no-kv-offload" in component.command
+    assert component.command[component.command.index("-ngl") + 1] == "auto"
+
+
+def test_unified_memory_qwen_1m_uses_one_shared_pool_without_host_gpu_double_counting() -> None:
+    hardware = HardwareFingerprint(
+        "linux", "aarch64", 131072,
+        devices=(AcceleratorDevice(0, "u", "NVIDIA GB10", "nvidia", "cuda", 131072, "12.1", "01"),),
+    )
+    component = RecipeBook.load(
+        RECIPES, platform_name="linux", backend_name="cuda", hardware=hardware,
+    ).resolve(row("qwen3-8-27b-q4-mtp", "auto", 1_048_576)).components[0]
+
+    assert component.gpu == "0"
+    assert "--no-kv-offload" not in component.command
+    assert "--tensor-split" not in component.command
+
+    direct = RecipeBook.load(
+        RECIPES, platform_name="linux", backend_name="cuda", hardware=hardware,
+    ).resolve_component(
+        "qwen3-8-27b-q4-mtp", role="main", gpu="0,1", port=11605,
+        context=1_048_576,
+    )
+    assert direct.gpu == "0"

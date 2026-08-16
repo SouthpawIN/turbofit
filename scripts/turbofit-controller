@@ -47,7 +47,10 @@ def build_runtime(args: argparse.Namespace) -> RuntimeService:
         if isinstance(model_id, str) and model_id
     }
     catalog = catalog.without_deferred_models(resolutions, deferred)
-    recipe_book = RecipeBook.load(ROOT / "references" / "model-recipes.json")
+    hardware = probe_hardware()
+    recipe_book = RecipeBook.load(
+        ROOT / "references" / "model-recipes.json", hardware=hardware,
+    )
 
     def backend_factory(profile, state):
         return NativeRuntimeBackend(
@@ -129,8 +132,6 @@ def main(argv: list[str]) -> int:
     while True:
         try:
             hardware = probe_hardware()
-            if not hardware.devices:
-                raise RuntimeError("no supported accelerator inventory; refusing adaptive transition")
             controller = runtime.synchronize(args.selection, hardware)
             current = controller.state.adaptive.current_index
             required = controller.requirements.required_mb_by_rung[current]

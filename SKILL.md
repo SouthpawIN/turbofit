@@ -35,6 +35,14 @@ The same controls are available in `hermes dashboard` under **Turbofit** and thr
 - Scores require both benchmark suites and immutable raw evidence. Never replace missing scores with catalog tiers, parameter counts, or vendor benchmark claims.
 - `/turbofit tiers` and `scripts/turbofit-hardware-tiers` show every 8/16/24/48/64/96/200/300 GB class with pending versus measured intelligence and TPS.
 
+## Portable memory allocation
+
+- Hardware fingerprints classify memory as `dedicated`, `unified`, or `cpu` and reserve 5% of host RAM, bounded to 1–8 GiB.
+- Dedicated systems may combine accelerator VRAM with host RAM through llama.cpp offload; contexts beyond the model's native window place KV cache in host RAM when at least 32 GiB is usable.
+- Unified-memory systems count RAM once and suppress discrete multi-GPU split flags.
+- CPU-only systems set model and draft GPU layers to zero.
+- Native backend order is CUDA, ROCm, Vulkan, then CPU on Linux/Windows, and Metal on macOS. Use `scripts/install-native-runtimes --backend <backend>` for an explicit build.
+
 ## Invariants
 
 - Stable model IDs are `auto`, `active:main`, and `active:aux`.

@@ -9,6 +9,8 @@
 - Added SHA-256-pinned main GGUFs, Q8/BF16 vision projectors, and Q4/Q8/BF16 MTP sidecars.
 - Fixed the MTP compiler to emit `--model-draft` for separately published MTP artifacts; regression tests now verify draft and projector wiring.
 - Added the executable DeepSeek V4 Flash 0731 `UD-Q2_K_XL` DwarfStar variant and expanded the exhaustive matrix to 1,620 rows.
+- Made native allocation portable across dedicated VRAM + host RAM, unified-memory accelerators, Vulkan/ROCm/Metal, and CPU-only hosts. Large contexts explicitly place KV cache in usable host RAM when needed; shared pools are counted once; CPU/shared pressure no longer requires an NVIDIA inventory.
+- Physically validated Qwen 3.8 27B Q4+MTP at a 1,048,576-token configured context on dual RTX 3090 plus host RAM: 0.51 tok/s, 81.82% MTP acceptance, 23,471/23,253 MiB peak VRAM.
 
 ### Catalog and release surfaces
 

@@ -24,6 +24,7 @@ from turbofit_runtime.catalog_campaign import (
 from turbofit_runtime.evidence import EvidencePublisher
 from turbofit_runtime.executor import LocalPairExecutor
 from turbofit_runtime.gpu import GPUClearGate
+from turbofit_runtime.hardware import probe_hardware
 from turbofit_runtime.model_catalog import ModelCatalog
 from turbofit_runtime.recipes import RecipeBook
 from turbofit_runtime.registry import ProfileRegistry
@@ -75,7 +76,7 @@ def deferred_rows(configurations: dict, catalog: ModelCatalog) -> tuple[frozense
 
 def build_runner() -> CampaignRunner:
     catalog, configurations = canonical()
-    recipes = RecipeBook.load(RECIPES)
+    recipes = RecipeBook.load(RECIPES, hardware=probe_hardware())
     backend = CampaignBackend(
         gateway_script=ROOT / "scripts/turbofit-gateway.py",
         result_dir=RESULTS,

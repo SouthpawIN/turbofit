@@ -158,7 +158,15 @@ Turbofit separates three concerns:
 2. **Live pressure** — current memory headroom, utilization, process health, restart budgets, and cooldown state.
 3. **Evidence** — exact runtime string, model artifacts, context, health checks, output, throughput, peak memory, and post-run cleanup.
 
-Recommendations use physical capacity. Runtime transitions use live pressure. A busy machine does not permanently receive a weaker profile, and a large total-memory number does not erase per-device constraints.
+Recommendations use physical capacity. Runtime transitions use live pressure. A busy machine does not permanently receive a weaker profile. Benchmark promotion still preserves exact per-device topology, while runtime allocation may combine dedicated accelerator memory with reserved host RAM through llama.cpp offload.
+
+Turbofit classifies memory as one of three pool types:
+
+- **Dedicated:** host RAM and accelerator VRAM are detected separately, then combined only for allocatable-capacity checks. Large contexts keep model layers resident on the available accelerators and move KV cache pressure into detected host RAM when the context exceeds the model's native window.
+- **Unified:** Apple Silicon, DGX Spark/GB10, and other declared unified-memory devices use one shared pool; RAM is counted once and multi-device split flags are suppressed.
+- **CPU-only:** usable host RAM becomes the local inference pool, GPU layers and draft GPU layers are set to zero, and pinned CPU-native runtimes are selected.
+
+Five percent of system RAM is reserved for the OS, bounded to 1–8 GiB. Backend selection is ordered CUDA → ROCm → Vulkan → CPU on Linux/Windows and Metal on macOS; `TURBOFIT_ACCELERATOR_BACKEND` can explicitly select any supported backend. Install the pinned runtime for a specific machine with `scripts/install-native-runtimes --backend cuda|rocm|metal|vulkan|cpu`.
 
 Supported execution paths:
 

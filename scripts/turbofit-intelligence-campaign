@@ -119,7 +119,7 @@ def atomic_json(path: Path, value: Any) -> None:
 def load_inputs() -> tuple[dict[str, Any], ModelCatalog, RecipeBook, dict[str, dict[str, Any]], dict[str, str]]:
     configurations = json.loads(CONFIGURATIONS.read_text(encoding="utf-8"))
     catalog = ModelCatalog.load(CATALOG)
-    recipes = RecipeBook.load(RECIPES)
+    recipes = RecipeBook.load(RECIPES, hardware=probe_hardware())
     index = build_configuration_index(configurations, catalog)
     by_model = {item.id: item for item in catalog.models}
     display_ids = {}

@@ -304,3 +304,26 @@ def test_parse_nvidia_inventory_gb10_unified_memory_falls_back_to_system_ram(
     assert devices[0].name == "NVIDIA GB10"
     assert devices[0].memory_total_mb == 131072
     assert devices[0].compute_capability == "12.1"
+
+
+def test_memory_capacity_distinguishes_dedicated_unified_and_cpu_pools() -> None:
+    dedicated = HardwareFingerprint(
+        os="linux", architecture="x86_64", system_ram_mb=393216,
+        devices=(
+            AcceleratorDevice(0, "a", "RTX 3090", "nvidia", "cuda", 24576, "8.6", "01"),
+            AcceleratorDevice(1, "b", "RTX 3090", "nvidia", "cuda", 24576, "8.6", "02"),
+        ),
+    )
+    unified = HardwareFingerprint(
+        os="linux", architecture="aarch64", system_ram_mb=131072,
+        devices=(AcceleratorDevice(0, "u", "NVIDIA GB10", "nvidia", "cuda", 131072, "12.1", "01"),),
+    )
+    cpu = HardwareFingerprint(os="linux", architecture="x86_64", system_ram_mb=65536)
+
+    assert dedicated.memory_pool_kind == "dedicated"
+    assert dedicated.host_usable_memory_mb == 385024
+    assert dedicated.total_usable_memory_mb == 434176
+    assert unified.memory_pool_kind == "unified"
+    assert unified.total_usable_memory_mb == unified.host_usable_memory_mb == 124518
+    assert cpu.memory_pool_kind == "cpu"
+    assert cpu.total_usable_memory_mb == cpu.host_usable_memory_mb == 62259

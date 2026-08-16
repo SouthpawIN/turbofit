@@ -50,6 +50,8 @@ def test_tier_report_covers_exact_project_tiers_and_current_machine() -> None:
     assert [tier["capacity_gb"] for tier in report["tiers"]] == [8, 16, 24, 48, 64, 96, 200, 300]
     assert report["current_hardware"]["native_tier_gb"] == 48
     assert report["current_hardware"]["system_ram_mb"] == 393216
+    assert report["current_hardware"]["memory_pool_kind"] == "dedicated"
+    assert report["current_hardware"]["host_usable_memory_mb"] == 385024
 
 
 def test_tier_candidates_reject_stale_winner_and_keep_requirements_separate() -> None:
