@@ -1,16 +1,17 @@
 # Turbofit
 
-## 2.2 new models
+## 2.3 new models
 
 | New model | Variants or role | State |
 |---|---|---|
-| **Qwen 3.8 27B** | Q4, Q8, and BF16; each with or without MTP; pinned vision projectors | 6 active catalog candidates replacing the 6 retired GRM entries |
-| **DeepSeek V4 Flash 0731 Q2 DwarfStar** | Q2 main model + DSpark and expert offload | Active high-memory catalog candidate |
+| **Qwen 3.8 27B Unleashed** | UD-IQ3_XXS, UD-Q3_K_XL | Active catalog candidates |
+| **Ornith 1.5 35A3B** | Q4_K_M MoE auxiliary | Active auxiliary candidate |
+| **Qwen 3.8 27B** | Q4, Q8, and BF16; each with or without MTP | Active catalog candidates |
 | **MiniMax Music 3** | Music generation | Pinned integration candidate |
 | **NVIDIA Parakeet TDT 0.6B v3** | Speech-to-text | Pinned integration candidate |
 | **Soprano TTS** | Text-to-speech | Pinned integration candidate |
 
-Qwen 3.8 27B is now the active dense multimodal 27B family. No retired GRM recipe or artifact remains active. The 1,620-row campaign remains evidence-gated: a catalog candidate is not a benchmark winner until current-recipe physical and intelligence evidence passes.
+DeepSeek V4 Flash 0731 is retired. API fallback is the five keyless Nous free models. Catalog candidates are not benchmark winners until current-recipe physical and intelligence evidence passes.
 
 The canonical model IDs, source revisions, artifacts, sizes, and hashes are in `references/model-catalog.json`, `references/artifact-manifest.json`, and `references/multimodal-models.json` at the repository root.
 

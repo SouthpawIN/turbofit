@@ -9,53 +9,45 @@
       "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
       "size_bytes": 3803452480
     },
-    "deepseek-v4-q8-shard-1": {
-      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
-      "revision": "57326b941c4603e24d1a5e71c22520c66e086eb8",
-      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
-      "destination": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
-      "sha256": "d13ce8f90855547bdaebe7312f531a1f2c4f822178d3103951f27fe884395cfa",
-      "size_bytes": 5257408
+    "qwen3-8-27b-unleashed-ud-iq3-xxs": {
+      "repo_id": "outsourc-e/Qwen3.8-27B-Unleashed-GGUF",
+      "revision": "67a999218fd7002f11bf82bc81d6289beea60841",
+      "path": "Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf",
+      "destination": "Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf",
+      "sha256": "585267a0ba9bee47e3684f68e7991a61f48ef589982ef93cc0963ff344bc1fca",
+      "size_bytes": 10968037216
     },
-    "deepseek-v4-q8-shard-2": {
-      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
-      "revision": "57326b941c4603e24d1a5e71c22520c66e086eb8",
-      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00002-of-00005.gguf",
-      "destination": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00002-of-00005.gguf",
-      "sha256": "3da2f2443063f83635986f9b67fa7e8e3d03c53b81a9a08d2007936612423610",
-      "size_bytes": 49215492960
+    "qwen3-8-27b-unleashed-ud-q3-k-xl": {
+      "repo_id": "outsourc-e/Qwen3.8-27B-Unleashed-GGUF",
+      "revision": "67a999218fd7002f11bf82bc81d6289beea60841",
+      "path": "Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+      "destination": "Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+      "sha256": "b4c9721ab6ed1b7d1d1863b8f43e2fbce6a88dab39ea4333d2e74a7ad69580fe",
+      "size_bytes": 13223069536
     },
-    "deepseek-v4-q8-shard-3": {
-      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
-      "revision": "57326b941c4603e24d1a5e71c22520c66e086eb8",
-      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00003-of-00005.gguf",
-      "destination": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00003-of-00005.gguf",
-      "sha256": "7d622a7760d359ec9257b3493ad531e3bf0bfbe6f6533267e16e6dde8153ddce",
-      "size_bytes": 49700372160
+    "qwen3-8-27b-unleashed-mmproj": {
+      "repo_id": "outsourc-e/Qwen3.8-27B-Unleashed-GGUF",
+      "revision": "67a999218fd7002f11bf82bc81d6289beea60841",
+      "path": "mmproj-Unleashed-f16.gguf",
+      "destination": "Qwen3.8-27B-Unleashed/mmproj-Unleashed-f16.gguf",
+      "sha256": "02b26e0e0e3f1b09be342f21cff7461f571ce491a2ce514a5e7c9880fc1cee2e",
+      "size_bytes": 931145760
     },
-    "deepseek-v4-q8-shard-4": {
-      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
-      "revision": "57326b941c4603e24d1a5e71c22520c66e086eb8",
-      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00004-of-00005.gguf",
-      "destination": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00004-of-00005.gguf",
-      "sha256": "6ed2bce452214f156b85e7c5f7d4fc242a3052f409d1b90a61422f60669c2de3",
-      "size_bytes": 49466495968
+    "ornith-1-5-35a3b-q4": {
+      "repo_id": "ornith-ai/Ornith-1.5-35B-A3B-GGUF",
+      "revision": "fbbaed45c2f0e200276ffa51701a24d45dc7f57e",
+      "path": "Ornith-1.5-35B-Q4_K_M.gguf",
+      "destination": "Ornith-1.5-35B-A3B/Ornith-1.5-35B-Q4_K_M.gguf",
+      "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+      "size_bytes": 21713462848
     },
-    "deepseek-v4-q8-shard-5": {
-      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
-      "revision": "57326b941c4603e24d1a5e71c22520c66e086eb8",
-      "path": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00005-of-00005.gguf",
-      "destination": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00005-of-00005.gguf",
-      "sha256": "ea4727af4888fdca0fff796ec81ac2f3ebb43c310b2feb4798f41d82744b42ea",
-      "size_bytes": 13481997024
-    },
-    "deepseek-v4-dspark-q8": {
-      "repo_id": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
-      "revision": "57326b941c4603e24d1a5e71c22520c66e086eb8",
-      "path": "dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
-      "destination": "dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
-      "sha256": "2c7ac54b0b64a99df1f139a9f1371a00198265e1d6a614b77597d20a655a4249",
-      "size_bytes": 10896057440
+    "ornith-1-5-35a3b-mmproj": {
+      "repo_id": "ornith-ai/Ornith-1.5-35B-A3B-GGUF",
+      "revision": "fbbaed45c2f0e200276ffa51701a24d45dc7f57e",
+      "path": "mmproj-Ornith-1.5-35B-BF16.gguf",
+      "destination": "Ornith-1.5-35B-A3B/mmproj-Ornith-1.5-35B-BF16.gguf",
+      "sha256": "d9ce31026d1cb1f3f8d5152e2e2a014d9d2b302b6c93a7dc07bb0a0487f52837",
+      "size_bytes": 902822016
     },
     "qwen3-8-27b-qwen3.8-27b-q4-k-m": {
       "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
@@ -127,13 +119,14 @@
       "bonsai-27b-q1",
       "qwen3-8-27b-qwen3.8-27b-q4-k-m"
     ],
-    "deepseek-v4-flash-0731-q8-dspark": [
-      "deepseek-v4-q8-shard-1",
-      "deepseek-v4-q8-shard-2",
-      "deepseek-v4-q8-shard-3",
-      "deepseek-v4-q8-shard-4",
-      "deepseek-v4-q8-shard-5",
-      "deepseek-v4-dspark-q8"
+    "qwen3-8-27b-unleashed": [
+      "qwen3-8-27b-unleashed-ud-iq3-xxs",
+      "qwen3-8-27b-unleashed-ud-q3-k-xl",
+      "qwen3-8-27b-unleashed-mmproj"
+    ],
+    "ornith-1-5-35a3b": [
+      "ornith-1-5-35a3b-q4",
+      "ornith-1-5-35a3b-mmproj"
     ],
     "qwen3-8-27b": [
       "qwen3-8-27b-qwen3.8-27b-q4-k-m",

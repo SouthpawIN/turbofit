@@ -29,7 +29,7 @@ def test_hardware_tournaments_cover_every_physical_tier_and_valid_configuration(
     assert all(winner is None for winner in winners.values())
 
 
-def test_64_and_96gb_qwen_candidates_are_active_but_unpromoted() -> None:
+def test_64_and_96gb_unleashed_candidates_are_active_but_unpromoted() -> None:
     configurations = json.loads((ROOT / "references/configuration-matrix.json").read_text())
     tournaments = load_tournaments(ROOT / "references/hardware-tier-tournaments.json", configurations)
     policy = json.loads((ROOT / "references/catalog-campaign-policy.json").read_text())
@@ -38,18 +38,19 @@ def test_64_and_96gb_qwen_candidates_are_active_but_unpromoted() -> None:
 
     for vram in (64, 96):
         candidates = by_tier[vram]["candidates"]
-        assert all(item.startswith("qwen3-8-27b-") for item in candidates)
+        assert all("unleashed" in item or item.startswith("qwen3-8-27b-") for item in candidates)
         assert all(item.split("--", 1)[0] not in deferred for item in candidates)
         assert by_tier[vram]["winner"] is None
 
 
-def test_200_and_300gb_tiers_include_deepseek() -> None:
+def test_200_and_300gb_tiers_use_qwen_not_deepseek() -> None:
     configurations = json.loads((ROOT / "references/configuration-matrix.json").read_text())
     tournaments = load_tournaments(ROOT / "references/hardware-tier-tournaments.json", configurations)
     by_tier = {item["vram_gb"]: item for item in tournaments["tiers"]}
 
     for vram in (200, 300):
-        assert any(item.startswith("deepseek-v4-flash-0731") for item in by_tier[vram]["candidates"])
+        assert all("deepseek" not in item for item in by_tier[vram]["candidates"])
+        assert any("qwen3-8-27b" in item for item in by_tier[vram]["candidates"])
 
 
 def test_tier_winner_requires_hash_bound_physical_evidence() -> None:

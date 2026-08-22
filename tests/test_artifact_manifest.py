@@ -29,7 +29,7 @@ def test_artifact_manifest_covers_every_executable_matrix_file() -> None:
 
     assert payload["schema"] == "turbofit.artifact-manifest/v1"
     assert expected_destinations <= actual
-    assert len(actual) == 44
+    assert len(actual) == 35
     assert all(len(item["sha256"]) == 64 for item in payload["artifacts"])
     assert all(len(item["revision"]) == 40 for item in payload["artifacts"])
     assert all(item["size_bytes"] > 0 for item in payload["artifacts"])
@@ -38,19 +38,22 @@ def test_artifact_manifest_covers_every_executable_matrix_file() -> None:
 def test_model_catalog_pins_every_source_revision() -> None:
     catalog = ModelCatalog.load(ROOT / "references/model-catalog.json")
 
-    assert len(catalog.models) == 47
+    assert len(catalog.models) == 45
     assert all(len(model.revision) == 40 for model in catalog.models)
 
 
-def test_deepseek_artifacts_pin_current_0731_quant_and_official_upstream() -> None:
+def test_unleashed_and_ornith_artifacts_are_pinned() -> None:
     catalog = ModelCatalog.load(ROOT / "references/model-catalog.json")
-    deepseek = [model for model in catalog.models if model.id.startswith("deepseek-v4-flash-0731-")]
+    unleashed = [model for model in catalog.models if "unleashed" in model.id]
+    ornith = [model for model in catalog.models if model.id.startswith("ornith-1-5-35a3b")]
     manifest = json.loads((ROOT / "references/artifact-manifest.json").read_text())
-    artifacts = [item for item in manifest["artifacts"] if item["repo_id"] == "unsloth/DeepSeek-V4-Flash-0731-GGUF"]
+    unleashed_artifacts = [item for item in manifest["artifacts"] if item["repo_id"] == "outsourc-e/Qwen3.8-27B-Unleashed-GGUF"]
+    ornith_artifacts = [item for item in manifest["artifacts"] if item["repo_id"] == "ornith-ai/Ornith-1.5-35B-A3B-GGUF"]
 
-    assert len(deepseek) == 5
-    assert {model.revision for model in deepseek} == {"fbbb5b93fb787c21338159b0af3318bb3f4d9768"}
-    assert {model.upstream_revision for model in deepseek} == {"7872f01b1d1fe23eabc4c98b48bffcef5a386062"}
-    assert artifacts
-    assert {item["revision"] for item in artifacts} == {"fbbb5b93fb787c21338159b0af3318bb3f4d9768"}
-    assert any(item["path"] == "dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf" for item in artifacts)
+    assert len(unleashed) == 2
+    assert {model.revision for model in unleashed} == {"67a999218fd7002f11bf82bc81d6289beea60841"}
+    assert ornith and ornith[0].revision == "fbbaed45c2f0e200276ffa51701a24d45dc7f57e"
+    assert unleashed_artifacts
+    assert ornith_artifacts
+    assert any(item["path"] == "Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf" for item in unleashed_artifacts)
+    assert any(item["path"] == "Ornith-1.5-35B-Q4_K_M.gguf" for item in ornith_artifacts)

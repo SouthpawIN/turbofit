@@ -7,115 +7,10 @@
     1048576
   ],
   "auxiliary_options": [
-    "carwin-nano",
-    "carwin-nano-no-mtp",
-    "ternary-bonsai-27b",
-    "ternary-bonsai-27b-dspark",
-    "ternary-bonsai-27b-dspark-bf16",
-    "bonsai-27b",
-    "bonsai-27b-dspark",
-    "bonsai-27b-dspark-bf16",
+    "ornith-1-5-35a3b",
     "auto"
   ],
   "models": [
-    {
-      "id": "deepseek-v4-flash-0731-q8-dspark",
-      "name": "DeepSeek V4 Flash 0731 Q8 + DSpark",
-      "family": "DeepSeek V4 Flash 0731",
-      "source": "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF",
-      "artifact": "DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
-      "quantization": "UD-Q8_K_XL",
-      "vision": false,
-      "moe": true,
-      "runtime_features": [
-        "dspark",
-        "expert-offload"
-      ],
-      "roles": [
-        "main"
-      ],
-      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
-      "upstream_source": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731",
-      "upstream_revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
-    },
-    {
-      "id": "deepseek-v4-flash-0731-q8",
-      "name": "DeepSeek V4 Flash 0731 Q8",
-      "family": "DeepSeek V4 Flash 0731",
-      "source": "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF",
-      "artifact": "DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
-      "quantization": "UD-Q8_K_XL",
-      "vision": false,
-      "moe": true,
-      "runtime_features": [
-        "expert-offload"
-      ],
-      "roles": [
-        "main"
-      ],
-      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
-      "upstream_source": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731",
-      "upstream_revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
-    },
-    {
-      "id": "deepseek-v4-flash-0731-q4-dspark",
-      "name": "DeepSeek V4 Flash 0731 Q4 + DSpark",
-      "family": "DeepSeek V4 Flash 0731",
-      "source": "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF",
-      "artifact": "DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00001-of-00005.gguf",
-      "quantization": "UD-Q4_K_XL",
-      "vision": false,
-      "moe": true,
-      "runtime_features": [
-        "dspark",
-        "expert-offload"
-      ],
-      "roles": [
-        "main"
-      ],
-      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
-      "upstream_source": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731",
-      "upstream_revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
-    },
-    {
-      "id": "deepseek-v4-flash-0731-q4",
-      "name": "DeepSeek V4 Flash 0731 Q4",
-      "family": "DeepSeek V4 Flash 0731",
-      "source": "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF",
-      "artifact": "DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00001-of-00005.gguf",
-      "quantization": "UD-Q4_K_XL",
-      "vision": false,
-      "moe": true,
-      "runtime_features": [
-        "expert-offload"
-      ],
-      "roles": [
-        "main"
-      ],
-      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
-      "upstream_source": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731",
-      "upstream_revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
-    },
-    {
-      "id": "deepseek-v4-flash-0731-q2-dspark",
-      "name": "DeepSeek V4 Flash 0731 Q2 + DSpark",
-      "family": "DeepSeek V4 Flash 0731",
-      "source": "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF",
-      "artifact": "DeepSeek-V4-Flash-0731-UD-Q2_K_XL-00001-of-00003.gguf",
-      "quantization": "UD-Q2_K_XL",
-      "vision": false,
-      "moe": true,
-      "runtime_features": [
-        "dspark",
-        "expert-offload"
-      ],
-      "roles": [
-        "main"
-      ],
-      "revision": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
-      "upstream_source": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731",
-      "upstream_revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
-    },
     {
       "id": "qwen3-8-27b-q4-mtp",
       "name": "Qwen 3.8 27B Q4_K_M + MTP",
@@ -859,6 +754,63 @@
       ],
       "revision": "e08e1fe855bb2d43f96ad78e24495283f3426c67",
       "upstream_source": "https://huggingface.co/unsloth/Laguna-S-2.1-GGUF"
+    },
+    {
+      "id": "qwen3-8-27b-unleashed-ud-iq3-xxs",
+      "name": "Qwen 3.8 27B Unleashed UD-IQ3_XXS",
+      "family": "Qwen 3.8 27B Unleashed",
+      "source": "https://huggingface.co/outsourc-e/Qwen3.8-27B-Unleashed-GGUF",
+      "artifact": "Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf",
+      "quantization": "UD-IQ3_XXS",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "67a999218fd7002f11bf82bc81d6289beea60841",
+      "upstream_source": "https://huggingface.co/JonathanColetti/Qwen3.8-27B-Uncensored",
+      "upstream_revision": "5bb7aa90f0efef548e87005b1fb7658e522b6b7f"
+    },
+    {
+      "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+      "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+      "family": "Qwen 3.8 27B Unleashed",
+      "source": "https://huggingface.co/outsourc-e/Qwen3.8-27B-Unleashed-GGUF",
+      "artifact": "Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+      "quantization": "UD-Q3_K_XL",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "67a999218fd7002f11bf82bc81d6289beea60841",
+      "upstream_source": "https://huggingface.co/JonathanColetti/Qwen3.8-27B-Uncensored",
+      "upstream_revision": "5bb7aa90f0efef548e87005b1fb7658e522b6b7f"
+    },
+    {
+      "id": "ornith-1-5-35a3b",
+      "name": "Ornith 1.5 35B-A3B Q4_K_M",
+      "family": "Ornith 1.5 35A3B",
+      "source": "https://huggingface.co/ornith-ai/Ornith-1.5-35B-A3B-GGUF",
+      "artifact": "Ornith-1.5-35B-Q4_K_M.gguf",
+      "quantization": "Q4_K_M",
+      "vision": true,
+      "moe": true,
+      "runtime_features": [
+        "expert-offload",
+        "vision-projector"
+      ],
+      "roles": [
+        "aux"
+      ],
+      "revision": "fbbaed45c2f0e200276ffa51701a24d45dc7f57e",
+      "upstream_source": "https://huggingface.co/ornith-ai/Ornith-1.5-35B-A3B"
     }
   ]
 }

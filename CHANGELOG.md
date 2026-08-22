@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.3 — Unleashed / Ornith / Nous free fallback
+
+### Model runtime
+
+- Removed DeepSeek V4 Flash 0731 from the active catalog, recipes, downloads, and hardware-tier candidates.
+- Main Auto chain is now Bonsai 27B at 8GB, Qwen 3.8 27B Unleashed UD-IQ3_XXS at 16GB, UD-Q3_K_XL at 24–95GB, and the existing Qwen 3.8 27B 16-bit recipe at 96GB+ until an Unleashed FP16 GGUF is published.
+- Auxiliary authority is Ornith 1.5 35A3B or auto. Ornith is MoE: scale-down offloads experts, then lowers context, then switches aux to auto, then a listed Unleashed quant, then Bonsai.
+- Replaced the API fallback chain with the five keyless Nous free models: `upstage/solar-pro4:free`, `meituan/longcat-2.0:free`, `tencent/hy3:free`, `poolside/laguna-s-2.1:free`, `stepfun/step-3.7-flash:free`. NVIDIA NIM is no longer a fallback provider.
+
+### Hermes plugin install
+
+- Slimmed `distribution.yaml` so plugin install no longer ships benchmark result dumps as payload.
+
 ## 2.2 — Qwen 3.8 27B day-zero release
 
 ### Model runtime

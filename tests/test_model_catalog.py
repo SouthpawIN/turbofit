@@ -19,23 +19,14 @@ MATRIX_PATH = ROOT / "references" / "configuration-matrix.json"
 
 def test_catalog_has_every_requested_main_and_auxiliary_variant() -> None:
     catalog = ModelCatalog.load(CATALOG_PATH)
-    assert len(catalog.main_models) == 45
-    deepseek = next(item for item in catalog.main_models if item.id == "deepseek-v4-flash-0731-q8-dspark")
-    assert deepseek.source == "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF"
-    assert deepseek.upstream_source == "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731"
-    assert deepseek.upstream_revision == "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
-    assert deepseek.quantization == "UD-Q8_K_XL"
-    assert deepseek.runtime_features == ("dspark", "expert-offload")
+    assert len(catalog.main_models) == 42
+    unleashed = next(item for item in catalog.main_models if item.id == "qwen3-8-27b-unleashed-ud-q3-k-xl")
+    assert unleashed.source == "https://huggingface.co/outsourc-e/Qwen3.8-27B-Unleashed-GGUF"
+    assert unleashed.upstream_source == "https://huggingface.co/JonathanColetti/Qwen3.8-27B-Uncensored"
+    assert unleashed.quantization == "UD-Q3_K_XL"
     assert catalog.contexts == CONTEXTS
     assert catalog.auxiliary_options == (
-        "carwin-nano",
-        "carwin-nano-no-mtp",
-        "ternary-bonsai-27b",
-        "ternary-bonsai-27b-dspark",
-        "ternary-bonsai-27b-dspark-bf16",
-        "bonsai-27b",
-        "bonsai-27b-dspark",
-        "bonsai-27b-dspark-bf16",
+        "ornith-1-5-35a3b",
         "auto",
     )
     assert all(item.source.startswith("https://huggingface.co/") for item in catalog.models)
@@ -46,7 +37,7 @@ def test_complete_matrix_is_generated_not_hand_maintained() -> None:
     matrix = json.loads(MATRIX_PATH.read_text())
     validate_configuration_matrix(matrix, catalog)
     expected = len(catalog.main_models) * len(catalog.auxiliary_options) * len(CONTEXTS)
-    assert expected == 1620
+    assert expected == 336
     assert len(matrix["rows"]) == expected
     assert len({item["id"] for item in matrix["rows"]}) == expected
     assert {item["context"] for item in matrix["rows"]} == set(CONTEXTS)

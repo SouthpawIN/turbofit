@@ -11,14 +11,14 @@ ROOT = Path(__file__).parents[1]
 CATALOG = ROOT / "runtime-profiles" / "downloads.json"
 
 
-def test_download_catalog_contains_complete_pinned_deepseek_q8_dspark_group() -> None:
+def test_download_catalog_contains_complete_pinned_unleashed_group() -> None:
     catalog = DownloadCatalog.load(CATALOG)
-    files = catalog.files_for_group("deepseek-v4-flash-0731-q8-dspark")
+    files = catalog.files_for_group("qwen3-8-27b-unleashed")
 
-    assert len(files) == 6
-    assert {item.revision for item in files} == {"57326b941c4603e24d1a5e71c22520c66e086eb8"}
-    assert sum("UD-Q8_K_XL" in item.path for item in files) == 5
-    assert sum("dspark" in item.path for item in files) == 1
+    assert len(files) == 3
+    assert {item.revision for item in files} == {"67a999218fd7002f11bf82bc81d6289beea60841"}
+    assert sum("UD-Q3_K_XL" in item.path or "UD-IQ3_XXS" in item.path for item in files) == 2
+    assert sum("mmproj" in item.path for item in files) == 1
     assert all(len(item.sha256) == 64 and item.size_bytes > 0 for item in files)
 
 

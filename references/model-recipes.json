@@ -2,66 +2,6 @@
   "schema_version": 1,
   "atomic_binary": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
   "variants": {
-    "deepseek-v4-flash-0731-q8-dspark": {
-      "family": "DeepSeek V4 Flash 0731",
-      "alias": "deepseek-v4-flash-0731-q8-dspark",
-      "model": "${TURBOFIT_MODEL_ROOT}/DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
-      "draft": "${TURBOFIT_MODEL_ROOT}/DeepSeek-V4-Flash-0731/dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
-      "methods": {
-        "65536": "dspark",
-        "131072": "dspark",
-        "262144": "dspark",
-        "1048576": "dspark"
-      }
-    },
-    "deepseek-v4-flash-0731-q8": {
-      "family": "DeepSeek V4 Flash 0731",
-      "alias": "deepseek-v4-flash-0731-q8",
-      "model": "${TURBOFIT_MODEL_ROOT}/DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
-      "draft": "",
-      "methods": {
-        "65536": "baseline",
-        "131072": "baseline",
-        "262144": "baseline",
-        "1048576": "baseline"
-      }
-    },
-    "deepseek-v4-flash-0731-q4-dspark": {
-      "family": "DeepSeek V4 Flash 0731",
-      "alias": "deepseek-v4-flash-0731-q4-dspark",
-      "model": "${TURBOFIT_MODEL_ROOT}/DeepSeek-V4-Flash-0731/UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00001-of-00005.gguf",
-      "draft": "${TURBOFIT_MODEL_ROOT}/DeepSeek-V4-Flash-0731/dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
-      "methods": {
-        "65536": "dspark",
-        "131072": "dspark",
-        "262144": "dspark",
-        "1048576": "dspark"
-      }
-    },
-    "deepseek-v4-flash-0731-q4": {
-      "family": "DeepSeek V4 Flash 0731",
-      "alias": "deepseek-v4-flash-0731-q4",
-      "model": "${TURBOFIT_MODEL_ROOT}/DeepSeek-V4-Flash-0731/UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00001-of-00005.gguf",
-      "draft": "",
-      "methods": {
-        "65536": "baseline",
-        "131072": "baseline",
-        "262144": "baseline",
-        "1048576": "baseline"
-      }
-    },
-    "deepseek-v4-flash-0731-q2-dspark": {
-      "family": "DeepSeek V4 Flash 0731",
-      "alias": "deepseek-v4-flash-0731-q2-dspark",
-      "model": "${TURBOFIT_MODEL_ROOT}/DeepSeek-V4-Flash-0731/UD-Q2_K_XL/DeepSeek-V4-Flash-0731-UD-Q2_K_XL-00001-of-00003.gguf",
-      "draft": "${TURBOFIT_MODEL_ROOT}/DeepSeek-V4-Flash-0731/dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
-      "methods": {
-        "65536": "dspark",
-        "131072": "dspark",
-        "262144": "dspark",
-        "1048576": "dspark"
-      }
-    },
     "qwen3-8-27b-q4-mtp": {
       "family": "Qwen 3.8 27B",
       "alias": "qwen3-8-27b-q4-mtp",
@@ -567,68 +507,49 @@
     "laguna-s2-1-q4": {
       "family": "Laguna S2.1",
       "alias": "laguna-s2-1-q4"
+    },
+    "qwen3-8-27b-unleashed-ud-iq3-xxs": {
+      "family": "Qwen 3.8 27B Unleashed",
+      "alias": "qwen3-8-27b-unleashed-ud-iq3-xxs",
+      "model": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf",
+      "projector": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B-Unleashed/mmproj-Unleashed-f16.gguf",
+      "draft": "",
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
+      }
+    },
+    "qwen3-8-27b-unleashed-ud-q3-k-xl": {
+      "family": "Qwen 3.8 27B Unleashed",
+      "alias": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+      "model": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+      "projector": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B-Unleashed/mmproj-Unleashed-f16.gguf",
+      "draft": "",
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
+      }
+    },
+    "ornith-1-5-35a3b": {
+      "family": "Ornith 1.5 35A3B",
+      "alias": "ornith-1-5-35a3b",
+      "model": "${TURBOFIT_MODEL_ROOT}/Ornith-1.5-35B-A3B/Ornith-1.5-35B-Q4_K_M.gguf",
+      "projector": "${TURBOFIT_MODEL_ROOT}/Ornith-1.5-35B-A3B/mmproj-Ornith-1.5-35B-BF16.gguf",
+      "draft": "",
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
+      },
+      "cpu_moe": true
     }
   },
   "models": {
-    "DeepSeek V4 Flash 0731": {
-      "alias": "deepseek-v4-flash-0731",
-      "kind": "process",
-      "model": "${TURBOFIT_MODEL_ROOT}/DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
-      "draft": "${TURBOFIT_MODEL_ROOT}/DeepSeek-V4-Flash-0731/dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
-      "port": 11608,
-      "large": true,
-      "draft_n_max": 3,
-      "native_context": 1048576,
-      "max_context": 1048576,
-      "context_overrides": {
-        "65536": {
-          "gpu": "0,1",
-          "gpu_layers": 99,
-          "draft_gpu_layers": 0,
-          "fit": "off",
-          "cpu_moe": true,
-          "split_mode": "layer",
-          "tensor_split": "1,1",
-          "kv_offload": false
-        },
-        "131072": {
-          "gpu": "0,1",
-          "gpu_layers": 99,
-          "draft_gpu_layers": 0,
-          "fit": "off",
-          "cpu_moe": true,
-          "split_mode": "layer",
-          "tensor_split": "1,1",
-          "kv_offload": false
-        },
-        "262144": {
-          "gpu": "0,1",
-          "gpu_layers": 99,
-          "draft_gpu_layers": 0,
-          "fit": "off",
-          "cpu_moe": true,
-          "split_mode": "layer",
-          "tensor_split": "1,1",
-          "kv_offload": false
-        },
-        "1048576": {
-          "gpu": "0,1",
-          "gpu_layers": 99,
-          "draft_gpu_layers": 0,
-          "fit": "off",
-          "cpu_moe": true,
-          "split_mode": "layer",
-          "tensor_split": "1,1",
-          "kv_offload": false
-        }
-      },
-      "methods": {
-        "65536": "dspark",
-        "131072": "dspark",
-        "262144": "dspark",
-        "1048576": "dspark"
-      }
-    },
     "1 Bit Bonsai": {
       "alias": "bonsai-27b-1bit",
       "kind": "process",
@@ -796,6 +717,55 @@
         "131072": "baseline",
         "262144": "baseline",
         "1048576": "baseline"
+      }
+    },
+    "Qwen 3.8 27B Unleashed": {
+      "alias": "qwen3-8-27b-unleashed",
+      "kind": "process",
+      "model": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+      "projector": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B-Unleashed/mmproj-Unleashed-f16.gguf",
+      "port": 11606,
+      "large": false,
+      "native_context": 262144,
+      "max_context": 1048576,
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
+      }
+    },
+    "Ornith 1.5 35A3B": {
+      "alias": "ornith-1-5-35a3b",
+      "kind": "process",
+      "model": "${TURBOFIT_MODEL_ROOT}/Ornith-1.5-35B-A3B/Ornith-1.5-35B-Q4_K_M.gguf",
+      "projector": "${TURBOFIT_MODEL_ROOT}/Ornith-1.5-35B-A3B/mmproj-Ornith-1.5-35B-BF16.gguf",
+      "port": 11610,
+      "large": false,
+      "cpu_moe": true,
+      "native_context": 262144,
+      "max_context": 1048576,
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
+      },
+      "context_overrides": {
+        "65536": {
+          "cpu_moe": true
+        },
+        "131072": {
+          "cpu_moe": true
+        },
+        "262144": {
+          "cpu_moe": true,
+          "n_cpu_moe": 8
+        },
+        "1048576": {
+          "cpu_moe": true,
+          "n_cpu_moe": 16
+        }
       }
     }
   },

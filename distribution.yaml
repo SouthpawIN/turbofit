@@ -1,6 +1,6 @@
 # Turbofit Hermes plugin distribution
 name: turbofit
-version: "2.2.0"
+version: "2.3.0"
 description: >-
   Hermes plugin and setup dashboard for hardware-aware adaptive local inference,
   portable Turbofiles, pinned native llama.cpp residency, stable auto/active role
@@ -69,7 +69,6 @@ distribution_owned:
   - scripts/controlled-pressure-acceptance
   - scripts/vram-pressure-acceptance
   - scripts/release-check
-  - references/results/
   - references/model-catalog.json
   - references/multimodal-models.json
   - references/archived-model-zoo.json
