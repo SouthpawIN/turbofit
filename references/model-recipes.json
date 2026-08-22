@@ -773,6 +773,7 @@
       "port": 11610,
       "large": false,
       "cpu_moe": true,
+      "no_mmap": false,
       "native_context": 262144,
       "max_context": 1048576,
       "methods": {

@@ -10,7 +10,7 @@ The canonical models in the TurboFit Check chain.
 
 Scans the user's hardware, then recommends and configures Hermes-Agent main and auxiliary models for that device.
 
-Low-VRAM Auto is **Bonsai 27B** (main) or **Ornith 1.5 35A3B** with `--cpu-moe` (experts on host RAM). Never recommend a 9B. See [`allowed_lineup.py`](../src/turbofit_runtime/allowed_lineup.py).
+Low-VRAM Auto is **Bonsai 27B** (dense, all on GPU) or **Ornith 1.5 35A3B** with `--cpu-moe` and mmap. On 8 GB VRAM + <32 GB RAM, Ornith experts stream from disk — not a 9B shrink, and not a 32 GB RAM requirement.
 
 Must account for:
 

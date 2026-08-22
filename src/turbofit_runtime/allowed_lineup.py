@@ -1,8 +1,10 @@
 """Canonical TurboFit Check / Auto lineup.
 
 A 9B must never be recommended. Low-VRAM machines run Bonsai 27B or
-Ornith 1.5 35A3B with experts offloaded to CPU. The 700B+ MoE class is
-out of scope for Auto.
+Ornith 1.5 35A3B. Ornith experts stay off the GPU (`--cpu-moe`) and are
+mmapped so an 8 GB card with 8-16 GB RAM streams cold experts from disk
+instead of requiring 32 GB of host RAM. The 700B+ MoE class is out of
+Auto.
 """
 from __future__ import annotations
 
@@ -13,6 +15,7 @@ ALLOWED_MAIN = (
     "bonsai-27b",
     "bonsai-27b-q1",
     "bonsai-27b-1bit",
+    "ornith-1-5-35a3b",
     "qwen3-8-27b-unleashed-ud-iq3-xxs",
     "qwen3-8-27b-unleashed-ud-q3-k-xl",
     "qwen3-8-27b-unleashed",
@@ -57,6 +60,27 @@ def is_allowed_aux(alias: str) -> bool:
     return token in allowed or token.startswith("ornith-1-5") or token.startswith("carwin")
 
 
+def expert_residency(*, host_ram_gb: float) -> dict[str, object]:
+    """How Ornith 1.5 experts live on a small box.
+
+    ram: host can hold the 21 GB Q4 experts.
+    disk: mmap + no mlock; cold experts stream from the drive.
+    """
+    if host_ram_gb >= 32:
+        return {
+            "mode": "ram",
+            "cpu_moe": True,
+            "mmap": True,
+            "mlock": False,
+        }
+    return {
+        "mode": "disk",
+        "cpu_moe": True,
+        "mmap": True,
+        "mlock": False,
+    }
+
+
 def local_main_for_vram_gb(vram_gb: float) -> str:
     if vram_gb < 16:
         return "bonsai-27b"
@@ -68,10 +92,53 @@ def local_main_for_vram_gb(vram_gb: float) -> str:
 
 
 def local_aux_for_host(*, vram_gb: float, host_ram_gb: float) -> str:
-    """Ornith 1.5 35A3B with CPU expert offload whenever host RAM can hold experts."""
-    if host_ram_gb >= 32:
-        return "ornith-1-5-35a3b"
-    return "auto"
+    """Ornith 1.5 is the aux MoE. On 8 GB VRAM it cannot share the card with
+    Bonsai, so aux becomes shared-main. On more VRAM, Ornith streams experts
+    from RAM or disk — never shrinks to a 9B.
+    """
+    if vram_gb < 16:
+        return "auto"
+    return "ornith-1-5-35a3b"
+
+
+def low_vram_moe_main() -> str:
+    """8 GB MoE option: Ornith 1.5 with experts mmapped from disk or RAM."""
+    return "ornith-1-5-35a3b"
+
+
+def check_local_options(*, vram_gb: float, host_ram_gb: float) -> list[dict[str, object]]:
+    """Ranked Check options. 8 GB boxes get Bonsai and disk-streamed Ornith."""
+    residency = expert_residency(host_ram_gb=host_ram_gb)
+    if vram_gb < 16:
+        return [
+            {
+                "role": "main",
+                "alias": "bonsai-27b",
+                "why": "Dense 27B that fits an 8 GB card without offload.",
+            },
+            {
+                "role": "main",
+                "alias": "ornith-1-5-35a3b",
+                "why": (
+                    "35A3B MoE. Experts stay off GPU (--cpu-moe) and mmap "
+                    f"from {residency['mode']} so 8 GB VRAM + <32 GB RAM still works."
+                ),
+                "residency": residency,
+            },
+        ]
+    return [
+        {
+            "role": "main",
+            "alias": local_main_for_vram_gb(vram_gb),
+            "why": "Unleashed / Qwen band for this VRAM.",
+        },
+        {
+            "role": "aux",
+            "alias": "ornith-1-5-35a3b",
+            "why": "35A3B aux with CPU/disk expert stream.",
+            "residency": residency,
+        },
+    ]
 
 
 def filter_aliases(aliases: Iterable[str], *, role: str) -> list[str]:

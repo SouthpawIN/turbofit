@@ -4,7 +4,7 @@
 
 ### Recommendations
 
-- Auto/Check will never recommend a 9B. Low-VRAM devices get Bonsai 27B and/or Ornith 1.5 35A3B with CPU expert offload.
+- Auto/Check will never recommend a 9B. Low-VRAM devices get Bonsai 27B and/or Ornith 1.5 35A3B. Ornith experts mmap from disk when host RAM is under 32 GB.
 
 ### Model runtime
 
