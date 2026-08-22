@@ -123,11 +123,10 @@ def build_pipeline(model_root: Path, device: str):
         offload_type="block_level", num_blocks_per_group=1, **offload
     )
     apply_group_offloading(pipe.text_encoder.model, offload_type="leaf_level", **offload)
-    # Keep VAEs on CPU so H3 can share a GPU that already hosts llama-server.
-    # Decode latents arrive as float16; leaving the VAE in float32/bf16
-    # raises "Input type (c10::Half) and bias type (float)".
-    pipe.vae.to(device="cpu", dtype=torch.float16)
-    pipe.audio_vae.to(device="cpu", dtype=torch.float16)
+    # Decode latents stay on the generation device as float16. Putting the
+    # VAE on CPU made decode fail: CUDA Half latents vs CPU Half weights.
+    pipe.vae.to(device=device, dtype=torch.float16)
+    pipe.audio_vae.to(device=device, dtype=torch.float16)
     return pipe
 
 

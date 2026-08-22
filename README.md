@@ -408,6 +408,8 @@ PYTHONPATH=src:. scripts/turbofit-hardware-tiers
 /turbofit tiers
 ```
 
+Live serving TPS measured on this dual RTX 3090 (`2x24`) host: [`docs/hardware-tier-tps.md`](docs/hardware-tier-tps.md). Those numbers are not 8 GB / 16 GB card proof.
+
 ---
 
 ## Multimodal model manager
