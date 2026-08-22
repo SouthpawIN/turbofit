@@ -69,15 +69,16 @@
       "has_vision": true
     },
     {
-      "name": "ornith-9b",
-      "tier": "f",
-      "role": "main",
-      "ctx": 65536,
-      "tok_s": 98.3,
-      "tokens": 512,
-      "time_s": 5.21,
+      "name": "ornith-1-5-35a3b",
+      "tier": "sf",
+      "role": "aux",
+      "ctx": 262144,
+      "tok_s": 0,
+      "tokens": 0,
+      "time_s": 0,
       "has_mtp": false,
-      "has_vision": false
+      "has_vision": true,
+      "notes": "MoE 35A3B. Low-VRAM path is --cpu-moe, not a 9B shrink."
     }
   ]
 }

@@ -18,6 +18,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from turbofit_runtime.recommend import priority_key  # noqa: E402
+from turbofit_runtime.allowed_lineup import is_allowed_aux, is_allowed_main, is_banned  # noqa: E402
 from turbofit_runtime.hardware import HardwareFingerprint, probe_hardware  # noqa: E402
 from turbofit_runtime.catalog_campaign import build_configuration_index  # noqa: E402
 from turbofit_runtime.executor import capture_physical_hardware, production_recipe_sha256  # noqa: E402
@@ -351,6 +352,15 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
     for name, profile in payload.get("profiles", {}).items():
         if current_profiles is not None and name not in current_profiles:
             continue
+        expected = profile.get("expected") or {}
+        main = str(expected.get("main_alias", ""))
+        aux = str(expected.get("aux_alias", ""))
+        if is_banned(main) or is_banned(aux):
+            continue
+        if main and not is_allowed_main(main):
+            continue
+        if aux and aux != "auto" and not is_allowed_aux(aux):
+            continue
         context = int(profile.get("context", 0))
         if context < args.context:
             continue
@@ -375,8 +385,6 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
         if args.fit_only and not fit:
             continue
         expected = profile.get("expected") or {}
-        main = str(expected.get("main_alias", ""))
-        aux = str(expected.get("aux_alias", ""))
         aux_mode = str(expected.get("aux_mode", "dedicated"))
         stored_tps = [float(stored_metrics.get(key) or 0.0) for key in ("main_tps", "aux_tps")]
         if all(value > 0 for value in stored_tps):
