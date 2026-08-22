@@ -21,5 +21,22 @@ Captured: `2026-08-22T19:30:25.572825+00:00`
 | 24-95GB | `unleashed-ud-q3-k-xl` | 262144 | 39.90 | 37.91 | 18405+68 | live /completion; Unleashed Q3/IQ3; YaRN only at 1M |
 | 24-95GB | `unleashed-ud-q3-k-xl` | 1048576 | 8.84 | 18.45 | 12203+13167 | live /completion; Unleashed Q3/IQ3; YaRN only at 1M |
 
+## Best decode per band / context
+
+- **8GB @ 64K**: Bonsai Q1 = **58.75 tok/s**
+- **8GB @ 128K**: Bonsai Q1 = **58.13 tok/s**
+- **8GB @ 262K**: Bonsai Q1 = **58.48 tok/s**
+- **8GB @ 1M YaRN**: Bonsai Q1 = **9.41 tok/s**
+- **16GB @ 64K**: Unleashed UD-IQ3_XXS = **41.35 tok/s**
+- **16GB @ 128K**: Unleashed UD-IQ3_XXS = **40.76 tok/s**
+- **16GB @ 262K**: Unleashed UD-IQ3_XXS = **40.71 tok/s**
+- **16GB @ 1M YaRN**: Unleashed UD-IQ3_XXS = **8.62 tok/s**
+- **24-95GB @ 64K**: Unleashed UD-Q3_K_XL = **40.05 tok/s**
+- **24-95GB @ 128K**: Unleashed UD-Q3_K_XL = **39.68 tok/s**
+- **24-95GB @ 262K**: Unleashed UD-Q3_K_XL = **39.90 tok/s**
+- **24-95GB @ 1M YaRN**: Unleashed UD-Q3_K_XL = **8.84 tok/s**
+
+Carwin aux 64K–1M still pending. Serve flags baked into the Unleashed recipe: `-ngl 99 -fa on -b 2048 -ub 512`, YaRN scale 4 at 1M.
+
 Raw: [`references/results/hardware-tier-tps-contexts-2x24.json`](references/results/hardware-tier-tps-contexts-2x24.json)
 
