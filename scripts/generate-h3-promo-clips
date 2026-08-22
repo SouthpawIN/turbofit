@@ -123,10 +123,22 @@ def build_pipeline(model_root: Path, device: str):
         offload_type="block_level", num_blocks_per_group=1, **offload
     )
     apply_group_offloading(pipe.text_encoder.model, offload_type="leaf_level", **offload)
-    # Decode latents stay on the generation device as float16. Putting the
-    # VAE on CPU made decode fail: CUDA Half latents vs CPU Half weights.
-    pipe.vae.to(device=device, dtype=torch.float16)
-    pipe.audio_vae.to(device=device, dtype=torch.float16)
+    # VAE encoder/decoder/quant convs must stay float32. Decode latents arrive
+    # as CUDA float16; cast them to the VAE module dtype/device instead of
+    # flattening the VAE with .to(dtype=float16).
+    def _align_decode(module):
+        original = module.decode
+
+        def decode(latents, *args, **kwargs):
+            target = next(module.parameters())
+            return original(latents.to(device=target.device, dtype=target.dtype), *args, **kwargs)
+
+        module.decode = decode
+
+    pipe.vae.to(device=device)
+    pipe.audio_vae.to(device=device)
+    _align_decode(pipe.vae)
+    _align_decode(pipe.audio_vae)
     return pipe
 
 
