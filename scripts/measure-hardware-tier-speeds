@@ -1,0 +1,291 @@
+#!/usr/bin/env python3
+"""Speed-check every TurboFit hardware-tier model at 64K/128K/262K/1M YaRN.
+
+Does not skip a missing artifact: exits 2 so the caller can download and retry.
+Does not substitute Q4_K_M for Unleashed or BF16.
+"""
+from __future__ import annotations
+
+import json
+import os
+import signal
+import statistics
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT_JSON = ROOT / "references/results/hardware-tier-tps-contexts-2x24.json"
+OUT_MD = ROOT / "docs/hardware-tier-tps.md"
+PORT = 18101
+HOST = "127.0.0.1"
+MAINLINE = Path.home() / ".local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server"
+PRISM = Path.home() / ".local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server"
+MODELS = Path.home() / "Models/storage/gguf"
+CONTEXTS = (65536, 131072, 262144, 1048576)
+NATIVE = 262144
+YARN = ["--rope-scaling", "yarn", "--rope-scale", "4", "--yarn-orig-ctx", "262144", "--no-kv-offload"]
+
+MODELSPEC = [
+    {"band": "8GB", "id": "bonsai-27b-q1", "binary": PRISM,
+     "model": MODELS / "Bonsai-27B/Bonsai-27B-Q1_0.gguf"},
+    {"band": "8GB-moe", "id": "ornith-1-5-35a3b", "binary": MAINLINE,
+     "model": MODELS / "Ornith-1.5-35B-A3B/Ornith-1.5-35B-Q4_K_M.gguf",
+     "extra": ["--cpu-moe"]},
+    {"band": "16GB", "id": "unleashed-ud-iq3-xxs", "binary": MAINLINE,
+     "model": MODELS / "Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf"},
+    {"band": "24-95GB", "id": "unleashed-ud-q3-k-xl", "binary": MAINLINE,
+     "model": MODELS / "Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf"},
+    {"band": "96GB", "id": "qwen3-8-27b-bf16", "binary": MAINLINE,
+     "model": MODELS / "Qwen3.8-27B/Qwen3.8-27B-BF16.gguf"},
+    {"band": "aux", "id": "carwin-moe-nano", "binary": MAINLINE,
+     "model": MODELS / "Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+     "extra": ["--cpu-moe"]},
+]
+
+
+def request(url, payload=None, timeout=300):
+    data = None
+    headers = {}
+    method = "GET"
+    if payload is not None:
+        data = json.dumps(payload).encode()
+        headers["Content-Type"] = "application/json"
+        method = "POST"
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as handle:
+            return handle.status, json.loads(handle.read())
+    except urllib.error.HTTPError as exc:
+        return exc.code, {"error": exc.read().decode(errors="replace")}
+    except Exception as exc:
+        return 0, {"error": str(exc)}
+
+
+def wait_health(timeout=900):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        status, _ = request(f"http://{HOST}:{PORT}/health", timeout=3)
+        if status == 200:
+            return True
+        time.sleep(2)
+    return False
+
+
+def kill_port():
+    try:
+        raw = subprocess.check_output(["ss", "-ltnp"], text=True, timeout=5)
+    except Exception:
+        return
+    for line in raw.splitlines():
+        if f":{PORT}" not in line or "pid=" not in line:
+            continue
+        pid = line.split("pid=", 1)[1].split(",")[0]
+        try:
+            os.kill(int(pid), signal.SIGTERM)
+        except Exception:
+            pass
+
+
+def gpu_snap():
+    try:
+        raw = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=index,memory.used,memory.total", "--format=csv,noheader,nounits"],
+            text=True, timeout=5,
+        )
+    except Exception:
+        return []
+    rows = []
+    for line in raw.splitlines():
+        parts = [p.strip() for p in line.split(",")]
+        if len(parts) == 3:
+            rows.append({"index": parts[0], "used": parts[1], "total": parts[2]})
+    return rows
+
+
+def serve_args(spec, context: int) -> list[str]:
+    args = [
+        "-ngl", "99", "-fa", "on", "-b", "2048", "-ub", "512",
+        "-c", str(context), "--parallel", "1",
+        "--cache-type-k", "q4_0", "--cache-type-v", "q4_0", "--jinja",
+    ]
+    args.extend(spec.get("extra") or [])
+    if context > NATIVE:
+        args.extend(YARN)
+        args.extend(["--split-mode", "layer", "--tensor-split", "1,1"])
+    return args
+
+
+def completion(n=128, timeout=900):
+    status, body = request(
+        f"http://{HOST}:{PORT}/completion",
+        {"prompt": "List four local inference serving tips.\n", "n_predict": n, "temperature": 0, "cache_prompt": False},
+        timeout=timeout,
+    )
+    timings = body.get("timings") if isinstance(body, dict) else None
+    return {
+        "http": status,
+        "predicted_per_second": None if not isinstance(timings, dict) else timings.get("predicted_per_second"),
+        "prompt_per_second": None if not isinstance(timings, dict) else timings.get("prompt_per_second"),
+        "error": None if status == 200 else body,
+    }
+
+
+def median(values):
+    clean = [float(v) for v in values if isinstance(v, (int, float))]
+    return float(statistics.median(clean)) if clean else None
+
+
+def load_payload():
+    if OUT_JSON.is_file():
+        try:
+            return json.loads(OUT_JSON.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {
+        "schema": "turbofit.hardware-tier-tps/v3",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "topology": "2x24",
+        "contexts": list(CONTEXTS),
+        "rows": [],
+    }
+
+
+def measured(payload, model_id, context):
+    for row in payload.get("rows") or []:
+        if row.get("id") == model_id and row.get("context") == context and row.get("decode_tps_median") is not None:
+            return True
+    return False
+
+
+def cell(payload, model_id, context):
+    for row in payload.get("rows") or []:
+        if row.get("id") == model_id and row.get("context") == context and row.get("decode_tps_median") is not None:
+            return f"{row['decode_tps_median']:.2f}"
+    return "—"
+
+
+def write_out(payload):
+    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    OUT_MD.parent.mkdir(parents=True, exist_ok=True)
+    payload["updated_at"] = datetime.now(timezone.utc).isoformat()
+    OUT_JSON.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    lines = [
+        "# Hardware-tier serving TPS",
+        "",
+        "Live `llama-server /completion` medians. Three 128-token generations after warmup.",
+        "Contexts: **64K, 128K, 262K, 1M YaRN** (scale 4, orig 262144).",
+        "Host: dual RTX 3090 (`2x24`). Not smaller-card proof.",
+        "Unleashed artifacts only. Stock Qwen Q4_K_M is not used as a stand-in.",
+        f"Updated: `{payload['updated_at']}`",
+        "",
+        "## Tier board",
+        "",
+        "| Tier | Canonical model | 64K | 128K | 262K | 1M YaRN |",
+        "|---|---|---:|---:|---:|---:|",
+        f"| 8 GB | Bonsai 27B Q1 | {cell(payload,'bonsai-27b-q1',65536)} | {cell(payload,'bonsai-27b-q1',131072)} | {cell(payload,'bonsai-27b-q1',262144)} | {cell(payload,'bonsai-27b-q1',1048576)} |",
+        f"| 8 GB MoE | Ornith 1.5 35A3B `--cpu-moe` mmap | {cell(payload,'ornith-1-5-35a3b',65536)} | {cell(payload,'ornith-1-5-35a3b',131072)} | {cell(payload,'ornith-1-5-35a3b',262144)} | {cell(payload,'ornith-1-5-35a3b',1048576)} |",
+        f"| 16 GB | Unleashed UD-IQ3_XXS | {cell(payload,'unleashed-ud-iq3-xxs',65536)} | {cell(payload,'unleashed-ud-iq3-xxs',131072)} | {cell(payload,'unleashed-ud-iq3-xxs',262144)} | {cell(payload,'unleashed-ud-iq3-xxs',1048576)} |",
+        f"| 24 GB | Unleashed UD-Q3_K_XL | {cell(payload,'unleashed-ud-q3-k-xl',65536)} | {cell(payload,'unleashed-ud-q3-k-xl',131072)} | {cell(payload,'unleashed-ud-q3-k-xl',262144)} | {cell(payload,'unleashed-ud-q3-k-xl',1048576)} |",
+        f"| 48 GB | Unleashed UD-Q3_K_XL | {cell(payload,'unleashed-ud-q3-k-xl',65536)} | {cell(payload,'unleashed-ud-q3-k-xl',131072)} | {cell(payload,'unleashed-ud-q3-k-xl',262144)} | {cell(payload,'unleashed-ud-q3-k-xl',1048576)} |",
+        f"| 64 GB | Unleashed UD-Q3_K_XL | {cell(payload,'unleashed-ud-q3-k-xl',65536)} | {cell(payload,'unleashed-ud-q3-k-xl',131072)} | {cell(payload,'unleashed-ud-q3-k-xl',262144)} | {cell(payload,'unleashed-ud-q3-k-xl',1048576)} |",
+        f"| 96 GB | Qwen 3.8 27B BF16 | {cell(payload,'qwen3-8-27b-bf16',65536)} | {cell(payload,'qwen3-8-27b-bf16',131072)} | {cell(payload,'qwen3-8-27b-bf16',262144)} | {cell(payload,'qwen3-8-27b-bf16',1048576)} |",
+        f"| 200 GB | Qwen 3.8 27B BF16 @ 1M | — | — | — | {cell(payload,'qwen3-8-27b-bf16',1048576)} |",
+        f"| 300 GB | Qwen 3.8 27B BF16 @ 1M | — | — | — | {cell(payload,'qwen3-8-27b-bf16',1048576)} |",
+        f"| aux | Carwin Nano `--cpu-moe` | {cell(payload,'carwin-moe-nano',65536)} | {cell(payload,'carwin-moe-nano',131072)} | {cell(payload,'carwin-moe-nano',262144)} | {cell(payload,'carwin-moe-nano',1048576)} |",
+        "",
+        "8 GB without 32 GB RAM: Bonsai (dense) or Ornith 1.5 with `--cpu-moe` + mmap. Never a 9B.",
+        "",
+        f"Raw: [`{OUT_JSON.relative_to(ROOT)}`]({OUT_JSON.relative_to(ROOT)})",
+        "",
+    ]
+    OUT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def run_one(spec, context, payload) -> bool:
+    args = serve_args(spec, context)
+    kill_port()
+    time.sleep(1)
+    log = ROOT / "logs" / f"tps-{spec['id']}-{context}.log"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env["CUDA_VISIBLE_DEVICES"] = "0,1" if context > NATIVE else "0"
+    cmd = [str(spec["binary"]), "-m", str(spec["model"]), "--host", HOST, "--port", str(PORT), *args]
+    handle = log.open("w", encoding="utf-8")
+    proc = subprocess.Popen(cmd, stdout=handle, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True, env=env)
+    row = {"band": spec["band"], "id": spec["id"], "context": context, "command": cmd, "pid": proc.pid}
+    ok = False
+    try:
+        if not wait_health(900):
+            row["notes"] = f"health failed; {log}"
+            payload["rows"].append(row)
+            write_out(payload)
+            return False
+        completion(32, timeout=900)
+        samples = [completion(128, timeout=900) for _ in range(3)]
+        row["samples"] = samples
+        row["decode_tps_median"] = median([s.get("predicted_per_second") for s in samples])
+        row["prefill_tps_median"] = median([s.get("prompt_per_second") for s in samples])
+        snap = gpu_snap()
+        row["gpu"] = snap
+        row["gpu_used"] = "+".join(item["used"] for item in snap) if snap else None
+        row["notes"] = "live /completion; YaRN only at 1M"
+        if row["decode_tps_median"] is None:
+            row["notes"] = f"no timings; {samples}"
+        else:
+            ok = True
+        payload["rows"].append(row)
+        write_out(payload)
+        return ok
+    finally:
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+        except Exception:
+            proc.terminate()
+        try:
+            proc.wait(timeout=30)
+        except Exception:
+            proc.kill()
+        kill_port()
+        time.sleep(2)
+
+
+def main() -> int:
+    payload = load_payload()
+    write_out(payload)
+    missing = []
+    failed = []
+    only = set(sys.argv[1:]) if len(sys.argv) > 1 else None
+    for spec in MODELSPEC:
+        if only and spec["id"] not in only:
+            continue
+        if not spec["binary"].is_file():
+            missing.append(str(spec["binary"]))
+            continue
+        if not spec["model"].is_file():
+            missing.append(str(spec["model"]))
+            continue
+        for context in CONTEXTS:
+            if measured(payload, spec["id"], context):
+                continue
+            print(f"MEASURING {spec['id']} @ {context}", flush=True)
+            if not run_one(spec, context, payload):
+                failed.append(f"{spec['id']}@{context}")
+    write_out(payload)
+    if missing:
+        print("MISSING ARTIFACTS:", *missing, sep="\n  ", flush=True)
+        return 2
+    if failed:
+        print("FAILED:", *failed, sep="\n  ", flush=True)
+        return 1
+    print(OUT_JSON)
+    print(OUT_MD)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

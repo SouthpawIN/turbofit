@@ -857,6 +857,580 @@
       ],
       "gpu_used": "12203+13167",
       "notes": "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+    },
+    {
+      "band": "aux",
+      "id": "carwin-moe-nano",
+      "context": 65536,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "65536",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja",
+        "--cpu-moe"
+      ],
+      "pid": 1036753,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 19.5559336369392,
+          "prompt_per_second": 21.228830875211624,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 19.290920035217987,
+          "prompt_per_second": 18.61655710047123,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 19.103861726248823,
+          "prompt_per_second": 20.784079395183287,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 19.290920035217987,
+      "prefill_tps_median": 20.784079395183287,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "2427",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "2427+68",
+      "notes": "live /completion; YaRN only at 1M"
+    },
+    {
+      "band": "aux",
+      "id": "carwin-moe-nano",
+      "context": 131072,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "131072",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja",
+        "--cpu-moe"
+      ],
+      "pid": 1082468,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 25.319740852452377,
+          "prompt_per_second": 23.989084966340315,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 25.519938847846536,
+          "prompt_per_second": 25.532186512622477,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 25.43785908618466,
+          "prompt_per_second": 24.38340465479195,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 25.43785908618466,
+      "prefill_tps_median": 24.38340465479195,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "2979",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "2979+68",
+      "notes": "live /completion; YaRN only at 1M"
+    },
+    {
+      "band": "aux",
+      "id": "carwin-moe-nano",
+      "context": 262144,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "262144",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja",
+        "--cpu-moe"
+      ],
+      "pid": 1119993,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 21.81519834190858,
+          "prompt_per_second": 23.696963234161544,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 25.09693199809812,
+          "prompt_per_second": 23.05714713918447,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 24.591351298596255,
+          "prompt_per_second": 24.519118782870944,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 24.591351298596255,
+      "prefill_tps_median": 23.696963234161544,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "4083",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "4083+68",
+      "notes": "live /completion; YaRN only at 1M"
+    },
+    {
+      "band": "aux",
+      "id": "carwin-moe-nano",
+      "context": 1048576,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "1048576",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja",
+        "--cpu-moe",
+        "--rope-scaling",
+        "yarn",
+        "--rope-scale",
+        "4",
+        "--yarn-orig-ctx",
+        "262144",
+        "--no-kv-offload",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1"
+      ],
+      "pid": 1159223,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 11.412420815185651,
+          "prompt_per_second": 18.100612253209466,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 11.771225496768707,
+          "prompt_per_second": 18.167696926479874,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 11.616881070727928,
+          "prompt_per_second": 18.134996917050522,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 11.616881070727928,
+      "prefill_tps_median": 18.134996917050522,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "4649",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "4845",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "4649+4845",
+      "notes": "live /completion; YaRN only at 1M"
+    },
+    {
+      "band": "8GB-moe",
+      "id": "ornith-1-5-35a3b",
+      "context": 65536,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Ornith-1.5-35B-A3B/Ornith-1.5-35B-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "65536",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja",
+        "--cpu-moe"
+      ],
+      "pid": 1921516,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 31.23081622714173,
+          "prompt_per_second": 26.100886451356104,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 27.005324690504214,
+          "prompt_per_second": 27.277500835373466,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 33.147139634915334,
+          "prompt_per_second": 28.234530124478983,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 31.23081622714173,
+      "prefill_tps_median": 27.277500835373466,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "2793",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "2793+68",
+      "notes": "live /completion; YaRN only at 1M"
+    },
+    {
+      "band": "8GB-moe",
+      "id": "ornith-1-5-35a3b",
+      "context": 131072,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Ornith-1.5-35B-A3B/Ornith-1.5-35B-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "131072",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja",
+        "--cpu-moe"
+      ],
+      "pid": 2088040,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 23.58539673309088,
+          "prompt_per_second": 22.60423377298568,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 24.75392088569529,
+          "prompt_per_second": 26.21824724462608,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 29.29593402189459,
+          "prompt_per_second": 28.413631439683186,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 24.75392088569529,
+      "prefill_tps_median": 26.21824724462608,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "3271",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "3271+68",
+      "notes": "live /completion; YaRN only at 1M"
+    },
+    {
+      "band": "8GB-moe",
+      "id": "ornith-1-5-35a3b",
+      "context": 262144,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Ornith-1.5-35B-A3B/Ornith-1.5-35B-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "262144",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja",
+        "--cpu-moe"
+      ],
+      "pid": 2127231,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 28.251605265039785,
+          "prompt_per_second": 26.84779982280452,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 24.944595714362553,
+          "prompt_per_second": 28.931522702204223,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 22.11954681887219,
+          "prompt_per_second": 21.21065092836368,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 24.944595714362553,
+      "prefill_tps_median": 26.84779982280452,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "4375",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "4375+68",
+      "notes": "live /completion; YaRN only at 1M"
+    },
+    {
+      "band": "8GB-moe",
+      "id": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Ornith-1.5-35B-A3B/Ornith-1.5-35B-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "1048576",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja",
+        "--cpu-moe",
+        "--rope-scaling",
+        "yarn",
+        "--rope-scale",
+        "4",
+        "--yarn-orig-ctx",
+        "262144",
+        "--no-kv-offload",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1"
+      ],
+      "pid": 2166753,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 8.996998446682275,
+          "prompt_per_second": 16.899956482612055,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 10.766658417836181,
+          "prompt_per_second": 14.466415312700608,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 11.087542383863191,
+          "prompt_per_second": 18.876605986243675,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 10.766658417836181,
+      "prefill_tps_median": 16.899956482612055,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "4741",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "4945",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "4741+4945",
+      "notes": "live /completion; YaRN only at 1M"
     }
   ],
   "best": {
@@ -910,5 +1484,6 @@
     }
   },
   "finished_at": "2026-08-22T19:38:52.621598+00:00",
-  "note": "Carwin aux 64K-1M still pending. Main Unleashed Q3/IQ3 and Bonsai complete."
+  "note": "Carwin aux 64K-1M still pending. Main Unleashed Q3/IQ3 and Bonsai complete.",
+  "updated_at": "2026-08-22T21:22:27.728816+00:00"
 }
