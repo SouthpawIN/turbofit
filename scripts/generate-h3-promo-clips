@@ -124,8 +124,10 @@ def build_pipeline(model_root: Path, device: str):
     )
     apply_group_offloading(pipe.text_encoder.model, offload_type="leaf_level", **offload)
     # Keep VAEs on CPU so H3 can share a GPU that already hosts llama-server.
-    pipe.vae.to("cpu")
-    pipe.audio_vae.to("cpu")
+    # Decode latents arrive as float16; leaving the VAE in float32/bf16
+    # raises "Input type (c10::Half) and bias type (float)".
+    pipe.vae.to(device="cpu", dtype=torch.float16)
+    pipe.audio_vae.to(device="cpu", dtype=torch.float16)
     return pipe
 
 
