@@ -2,6 +2,10 @@
 
 ## 2.3 — Unleashed / Ornith / Nous free fallback
 
+### Recommendations
+
+- Auto/Check will never recommend a 9B. Low-VRAM devices get Bonsai 27B and/or Ornith 1.5 35A3B with CPU expert offload.
+
 ### Model runtime
 
 - Removed DeepSeek V4 Flash 0731 from the active catalog, recipes, downloads, and hardware-tier candidates.

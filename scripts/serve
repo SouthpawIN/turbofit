@@ -33,6 +33,7 @@ mkdir -p "${TURBOFIT_ROOT}"/{logs,pid,port,strings,launchers} "${TURBOFIT_CONFIG
 export TURBOFIT_CATALOG="${CATALOG}"
 export TURBOFIT_CURATED="${CURATED}"
 export TURBOFIT_HERMES_CONFIG="${HERMES_CONFIG}"
+export TURBOFIT_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/src"
 
 # Bootstrap empty catalog + curated slots if missing (first run)
 if [ ! -f "${CATALOG}" ]; then
@@ -1313,6 +1314,19 @@ slot = sys.argv[1]             # "main" or "aux"
 want_vision = sys.argv[2] == "true"
 prefer_free = sys.argv[3] == "true"
 
+src = os.environ.get("TURBOFIT_SRC")
+if src and os.path.isdir(src) and src not in sys.path:
+    sys.path.insert(0, src)
+try:
+    from turbofit_runtime.allowed_lineup import is_allowed_aux, is_allowed_main, is_banned
+except Exception:
+    def is_banned(alias):
+        return "9b" in str(alias).lower()
+    def is_allowed_main(alias):
+        return not is_banned(alias)
+    def is_allowed_aux(alias):
+        return not is_banned(alias)
+
 curated_path = os.environ.get("TURBOFIT_CURATED", os.path.expanduser("~/.config/turbofit/curated.yaml"))
 catalog_path = os.environ.get("TURBOFIT_CATALOG", os.path.expanduser("~/.config/turbofit/models.yaml"))
 
@@ -1352,6 +1366,13 @@ for slot_key in chain:
 
     for tr, idx, e, kind in entries_by_tier:
         if not meets(e, want_vision):
+            continue
+        alias = e.get("alias") or e.get("model_id") or ""
+        if is_banned(alias) or is_banned(e.get("model_id", "")):
+            continue
+        if slot == "main" and kind == "local" and not is_allowed_main(alias):
+            continue
+        if slot == "aux" and kind == "local" and not is_allowed_aux(alias):
             continue
         if kind == "local":
             alias = e.get("alias")
@@ -3073,6 +3094,23 @@ import sys, yaml, os, json
 from urllib.request import urlopen
 from urllib.error import URLError
 
+src = os.environ.get("TURBOFIT_SRC")
+if src and os.path.isdir(src) and src not in sys.path:
+    sys.path.insert(0, src)
+try:
+    from turbofit_runtime.allowed_lineup import is_banned, is_allowed_main, is_allowed_aux, local_main_for_vram_gb, local_aux_for_host
+except Exception:
+    def is_banned(alias):
+        return "9b" in str(alias).lower()
+    def is_allowed_main(alias):
+        return not is_banned(alias)
+    def is_allowed_aux(alias):
+        return not is_banned(alias)
+    def local_main_for_vram_gb(vram_gb):
+        return "bonsai-27b"
+    def local_aux_for_host(*, vram_gb, host_ram_gb):
+        return "ornith-1-5-35a3b" if host_ram_gb >= 32 else "auto"
+
 cat_path = sys.argv[1]
 with open(cat_path) as f:
     cfg = yaml.safe_load(f) or {}
@@ -3096,6 +3134,8 @@ if bench_data:
 
 results = []
 for alias, m in models.items():
+    if is_banned(alias) or not (is_allowed_main(alias) or is_allowed_aux(alias)):
+        continue
     path = m.get("path", "")
     if not os.path.exists(path):
         continue

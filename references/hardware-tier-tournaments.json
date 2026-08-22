@@ -15,6 +15,7 @@
       "physical_evidence_required": true,
       "candidates": [
         "bonsai-27b--auto--64k",
+        "bonsai-27b--ornith-1-5-35a3b--64k",
         "bonsai-27b--auto--128k"
       ],
       "winner": null
