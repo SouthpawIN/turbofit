@@ -202,8 +202,6 @@ class RecipeBook:
             ]
             if fit == "on":
                 command.append("--fit")
-            if spec.get("no_mmap"):
-                command.append("--no-mmap")
             if spec.get("dsa"):
                 command.extend(["-mla", "1", "-dsa", "-fidx"])
             if spec.get("worst_graph_tokens") is not None:
@@ -218,6 +216,10 @@ class RecipeBook:
             ]
         else:
             raise ValueError(f"unsupported runtime flavor for {family}: {runtime_flavor}")
+        if spec.get("no_mmap"):
+            command.append("--no-mmap")
+        if spec.get("mlock"):
+            command.append("--mlock")
         multi_device = (
             self.hardware is None
             or (
