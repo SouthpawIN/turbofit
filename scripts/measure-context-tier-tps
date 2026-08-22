@@ -1,0 +1,261 @@
+#!/usr/bin/env python3
+"""Live llama-server TPS at Turbofit context limits: 64K, 128K, 262K, 1M YaRN.
+
+Uses Unleashed UD-Q3_K_XL / UD-IQ3_XXS, Bonsai Q1, and Carwin Nano.
+Does not substitute stock Qwen Q4_K_M.
+"""
+from __future__ import annotations
+
+import json
+import os
+import signal
+import statistics
+import subprocess
+import time
+import urllib.error
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT_JSON = ROOT / "references/results/hardware-tier-tps-contexts-2x24.json"
+OUT_MD = ROOT / "docs/hardware-tier-tps.md"
+PORT = 18101
+HOST = "127.0.0.1"
+MAINLINE = Path.home() / ".local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server"
+PRISM = Path.home() / ".local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server"
+MODELS = Path.home() / "Models/storage/gguf"
+
+CONTEXTS = (65536, 131072, 262144, 1048576)
+NATIVE = 262144
+YARN = ["--rope-scaling", "yarn", "--rope-scale", "4", "--yarn-orig-ctx", "262144", "--no-kv-offload"]
+
+MODELSPEC = [
+    {
+        "band": "8GB",
+        "id": "bonsai-27b-q1",
+        "binary": PRISM,
+        "model": MODELS / "Bonsai-27B/Bonsai-27B-Q1_0.gguf",
+    },
+    {
+        "band": "16GB",
+        "id": "unleashed-ud-iq3-xxs",
+        "binary": MAINLINE,
+        "model": MODELS / "Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf",
+    },
+    {
+        "band": "24-95GB",
+        "id": "unleashed-ud-q3-k-xl",
+        "binary": MAINLINE,
+        "model": MODELS / "Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+    },
+    {
+        "band": "aux",
+        "id": "carwin-moe-nano",
+        "binary": MAINLINE,
+        "model": MODELS / "Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+    },
+]
+
+
+def request(url, payload=None, timeout=300):
+    data = None
+    headers = {}
+    method = "GET"
+    if payload is not None:
+        data = json.dumps(payload).encode()
+        headers["Content-Type"] = "application/json"
+        method = "POST"
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as handle:
+            return handle.status, json.loads(handle.read())
+    except urllib.error.HTTPError as exc:
+        return exc.code, {"error": exc.read().decode(errors="replace")}
+    except Exception as exc:
+        return 0, {"error": str(exc)}
+
+
+def wait_health(timeout=600):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        status, _ = request(f"http://{HOST}:{PORT}/health", timeout=3)
+        if status == 200:
+            return True
+        time.sleep(2)
+    return False
+
+
+def kill_port():
+    try:
+        raw = subprocess.check_output(["ss", "-ltnp"], text=True, timeout=5)
+    except Exception:
+        return
+    for line in raw.splitlines():
+        if f":{PORT}" not in line or "pid=" not in line:
+            continue
+        pid = line.split("pid=", 1)[1].split(",")[0]
+        try:
+            os.kill(int(pid), signal.SIGTERM)
+        except Exception:
+            pass
+
+
+def gpu_snap():
+    try:
+        raw = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=index,memory.used,memory.total", "--format=csv,noheader,nounits"],
+            text=True,
+            timeout=5,
+        )
+    except Exception:
+        return []
+    rows = []
+    for line in raw.splitlines():
+        parts = [p.strip() for p in line.split(",")]
+        if len(parts) == 3:
+            rows.append({"index": parts[0], "used": parts[1], "total": parts[2]})
+    return rows
+
+
+def serve_args(context: int) -> list[str]:
+    args = [
+        "-ngl", "99", "-fa", "on", "-b", "2048", "-ub", "512",
+        "-c", str(context), "--parallel", "1",
+        "--cache-type-k", "q4_0", "--cache-type-v", "q4_0", "--jinja",
+    ]
+    if context > NATIVE:
+        args.extend(YARN)
+        args.extend(["--split-mode", "layer", "--tensor-split", "1,1"])
+    return args
+
+
+def write_out(payload):
+    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    OUT_MD.parent.mkdir(parents=True, exist_ok=True)
+    OUT_JSON.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    lines = [
+        "# Hardware-tier serving TPS",
+        "",
+        "Live `llama-server /completion` medians. Three 128-token generations after warmup.",
+        "Contexts are Turbofit limits: **64K, 128K, 262K, 1M YaRN** (scale 4, orig 262144).",
+        "Host: dual RTX 3090 (`2x24`). Not smaller-card proof.",
+        "Unleashed artifacts: pinned `UD-Q3_K_XL` and `UD-IQ3_XXS`. Stock Qwen Q4_K_M is not used.",
+        f"Captured: `{payload.get('generated_at')}`",
+        "",
+        "| Band | Model | Context | Decode tok/s | Prefill tok/s | GPU used MiB | Notes |",
+        "|---|---|---:|---:|---:|---|---|",
+    ]
+    for row in payload.get("rows", []):
+        dec = row.get("decode_tps_median")
+        pre = row.get("prefill_tps_median")
+        lines.append(
+            f"| {row.get('band')} | `{row.get('id')}` | {row.get('context')} | "
+            f"{'—' if dec is None else f'{dec:.2f}'} | "
+            f"{'—' if pre is None else f'{pre:.2f}'} | "
+            f"{row.get('gpu_used') or '—'} | {row.get('notes') or ''} |"
+        )
+    best = payload.get("best") or {}
+    if best:
+        lines += ["", "## Best decode per band / context", ""]
+        for key, item in best.items():
+            lines.append(f"- **{key}**: `{item['id']}` = **{item['decode_tps_median']:.2f} tok/s**")
+    lines += ["", f"Raw: [`{OUT_JSON.relative_to(ROOT)}`]({OUT_JSON.relative_to(ROOT)})", ""]
+    OUT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def completion(n=128, timeout=600):
+    status, body = request(
+        f"http://{HOST}:{PORT}/completion",
+        {"prompt": "List four local inference serving tips.\n", "n_predict": n, "temperature": 0, "cache_prompt": False},
+        timeout=timeout,
+    )
+    timings = body.get("timings") if isinstance(body, dict) else None
+    return {
+        "http": status,
+        "predicted_per_second": None if not isinstance(timings, dict) else timings.get("predicted_per_second"),
+        "prompt_per_second": None if not isinstance(timings, dict) else timings.get("prompt_per_second"),
+        "error": None if status == 200 else body,
+    }
+
+
+def median(values):
+    clean = [float(v) for v in values if isinstance(v, (int, float))]
+    return float(statistics.median(clean)) if clean else None
+
+
+def main() -> int:
+    payload = {
+        "schema": "turbofit.hardware-tier-tps/v2",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "topology": "2x24",
+        "contexts": list(CONTEXTS),
+        "rows": [],
+    }
+    write_out(payload)
+    for spec in MODELSPEC:
+        if not spec["model"].is_file() or not spec["binary"].is_file():
+            payload["rows"].append({
+                "band": spec["band"], "id": spec["id"], "context": None,
+                "notes": f"missing {spec['model'] if not spec['model'].is_file() else spec['binary']}",
+            })
+            write_out(payload)
+            continue
+        for context in CONTEXTS:
+            args = serve_args(context)
+            kill_port()
+            time.sleep(1)
+            log = ROOT / "logs" / f"tps-{spec['id']}-{context}.log"
+            log.parent.mkdir(parents=True, exist_ok=True)
+            env = os.environ.copy()
+            env["CUDA_VISIBLE_DEVICES"] = "0,1" if context > NATIVE else "0"
+            cmd = [str(spec["binary"]), "-m", str(spec["model"]), "--host", HOST, "--port", str(PORT), *args]
+            handle = log.open("w", encoding="utf-8")
+            proc = subprocess.Popen(cmd, stdout=handle, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True, env=env)
+            row = {"band": spec["band"], "id": spec["id"], "context": context, "command": cmd, "pid": proc.pid}
+            try:
+                if not wait_health(900):
+                    row["notes"] = f"health failed; {log}"
+                    payload["rows"].append(row)
+                    write_out(payload)
+                    continue
+                completion(32, timeout=900)
+                samples = [completion(128, timeout=900) for _ in range(3)]
+                row["samples"] = samples
+                row["decode_tps_median"] = median([s.get("predicted_per_second") for s in samples])
+                row["prefill_tps_median"] = median([s.get("prompt_per_second") for s in samples])
+                snap = gpu_snap()
+                row["gpu"] = snap
+                row["gpu_used"] = "+".join(item["used"] for item in snap) if snap else None
+                row["notes"] = "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+                payload["rows"].append(row)
+                write_out(payload)
+            finally:
+                try:
+                    os.killpg(proc.pid, signal.SIGTERM)
+                except Exception:
+                    proc.terminate()
+                try:
+                    proc.wait(timeout=30)
+                except Exception:
+                    proc.kill()
+                kill_port()
+                time.sleep(3)
+    best = {}
+    for row in payload["rows"]:
+        tps = row.get("decode_tps_median")
+        if tps is None:
+            continue
+        key = f"{row['band']} @ {row['context']}"
+        if key not in best or tps > best[key]["decode_tps_median"]:
+            best[key] = row
+    payload["best"] = {k: {"id": v["id"], "decode_tps_median": v["decode_tps_median"]} for k, v in best.items()}
+    payload["finished_at"] = datetime.now(timezone.utc).isoformat()
+    write_out(payload)
+    print(OUT_JSON)
+    print(OUT_MD)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
