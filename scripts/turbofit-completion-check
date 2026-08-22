@@ -314,10 +314,10 @@ def report() -> dict[str, Any]:
         "bundled_sirvir_customer_service": {
             "ok": all(
                 (ROOT / "profiles/sirvir" / name).is_file()
-                for name in ("SOUL.md", "AGENTS.md", "config.yaml", "distribution.yaml")
+                for name in ("SOUL.md", "INSTRUCTIONS.md", "config.yaml", "distribution.yaml")
             )
             and "install_sirvir_profile" in plugin_tools
-            and "pull request suggestion" in (ROOT / "profiles/sirvir/AGENTS.md").read_text(encoding="utf-8").lower(),
+            and "pull request suggestion" in (ROOT / "profiles/sirvir/INSTRUCTIONS.md").read_text(encoding="utf-8").lower(),
         },
         "multimodal_setup_and_fit": {
             "ok": multimodal_catalog.get("schema") == "turbofit.multimodal-catalog/v1"

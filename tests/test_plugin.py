@@ -210,7 +210,7 @@ def test_install_sirvir_profile_copies_bundled_customer_service_profile(tmp_path
         "path": str(profile),
     }
     assert "customer service" in (profile / "SOUL.md").read_text().lower()
-    assert "pull request" in (profile / "AGENTS.md").read_text().lower()
+    assert "pull request" in (profile / "INSTRUCTIONS.md").read_text().lower()
     assert (profile / "config.yaml").is_file()
 
 
