@@ -6,6 +6,7 @@
 |---|---|---|
 | **Qwen 3.8 27B Unleashed** | UD-IQ3_XXS, UD-Q3_K_XL | Active catalog candidates |
 | **Ornith 1.5 35A3B** | Q4_K_M MoE auxiliary | Active auxiliary candidate |
+| **Carwin Nano** | Optional MoE auxiliary | Optional auxiliary candidate |
 | **Qwen 3.8 27B** | Q4, Q8, and BF16; each with or without MTP | Active catalog candidates |
 | **MiniMax Music 3** | Music generation | Pinned integration candidate |
 | **NVIDIA Parakeet TDT 0.6B v3** | Speech-to-text | Pinned integration candidate |

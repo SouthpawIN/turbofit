@@ -27,6 +27,7 @@ def test_catalog_has_every_requested_main_and_auxiliary_variant() -> None:
     assert catalog.contexts == CONTEXTS
     assert catalog.auxiliary_options == (
         "ornith-1-5-35a3b",
+        "carwin-nano",
         "auto",
     )
     assert all(item.source.startswith("https://huggingface.co/") for item in catalog.models)
@@ -37,7 +38,7 @@ def test_complete_matrix_is_generated_not_hand_maintained() -> None:
     matrix = json.loads(MATRIX_PATH.read_text())
     validate_configuration_matrix(matrix, catalog)
     expected = len(catalog.main_models) * len(catalog.auxiliary_options) * len(CONTEXTS)
-    assert expected == 336
+    assert expected == 504
     assert len(matrix["rows"]) == expected
     assert len({item["id"] for item in matrix["rows"]}) == expected
     assert {item["context"] for item in matrix["rows"]} == set(CONTEXTS)

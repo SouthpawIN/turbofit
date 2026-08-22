@@ -202,8 +202,8 @@ def test_every_catalog_configuration_compiles_to_an_actual_jinja_launch_recipe()
 
     resolved = [book.resolve_catalog_configuration(item) for item in matrix["rows"]]
 
-    assert len(resolved) == 336
-    assert len({item.row_id for item in resolved}) == 336
+    assert len(resolved) == 504
+    assert len({item.row_id for item in resolved}) == 504
     assert all(component.command and "--jinja" in component.command for item in resolved for component in item.components)
 
 

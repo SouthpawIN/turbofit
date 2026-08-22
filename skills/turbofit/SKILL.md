@@ -11,7 +11,7 @@ tags: [hermes-agent, llama-cpp, llm, accelerator, cpu, adaptive-runtime, turbofi
 
 ## 2.3 model authority
 
-Main Auto chain: Bonsai 27B (8GB), Qwen 3.8 27B Unleashed UD-IQ3_XXS (16GB), UD-Q3_K_XL (24–95GB), and Qwen 3.8 27B 16-bit (96GB+) until an Unleashed FP16 GGUF is published. Auxiliary is Ornith 1.5 35A3B or auto. DeepSeek V4 Flash 0731 is retired. API fallback is the five keyless Nous free models. New catalog entries remain candidates until current-recipe physical evidence promotes them.
+Main Auto chain: Bonsai 27B (8GB), Qwen 3.8 27B Unleashed UD-IQ3_XXS (16GB), UD-Q3_K_XL (24–95GB), and Qwen 3.8 27B 16-bit (96GB+) until an Unleashed FP16 GGUF is published. Auxiliary is Ornith 1.5 35A3B, optional Carwin Nano, or auto. DeepSeek V4 Flash 0731 is retired. API fallback is the five keyless Nous free models. New catalog entries remain candidates until current-recipe physical evidence promotes them.
 
 ## Use when
 

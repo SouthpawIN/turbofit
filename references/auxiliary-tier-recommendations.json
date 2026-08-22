@@ -22,7 +22,7 @@
         "current production-recipe intelligence and TPS evidence required"
       ],
       "candidate": "auto",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE) or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
     },
     {
       "vram_gb": 16,
@@ -37,7 +37,7 @@
         "current production-recipe intelligence and TPS evidence required"
       ],
       "candidate": "ornith-1-5-35a3b",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE) or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
     },
     {
       "vram_gb": 24,
@@ -52,7 +52,7 @@
         "current production-recipe intelligence and TPS evidence required"
       ],
       "candidate": "ornith-1-5-35a3b",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE) or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
     },
     {
       "vram_gb": 48,
@@ -60,6 +60,7 @@
       "status": "requires-current-recipe-validation",
       "candidates": [
         "ornith-1-5-35a3b",
+        "carwin-nano",
         "auto"
       ],
       "main_control": null,
@@ -69,7 +70,7 @@
         "current production-recipe intelligence and TPS evidence required"
       ],
       "candidate": "ornith-1-5-35a3b",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE) or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai.",
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai.",
       "evidence": null,
       "decode_tps": null
     },
@@ -83,7 +84,7 @@
       "limitations": [
         "physical exact-topology promotion pending"
       ],
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE) or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai.",
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai.",
       "evidence": null
     },
     {
@@ -96,7 +97,7 @@
       "limitations": [
         "physical exact-topology promotion pending"
       ],
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE) or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai.",
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai.",
       "evidence": null
     },
     {
@@ -112,7 +113,7 @@
         "246 GiB artifact requires system-RAM offload",
         "physical 200GB tournament pending"
       ],
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE) or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
     },
     {
       "vram_gb": 300,
@@ -126,7 +127,7 @@
       "limitations": [
         "physical 300GB tournament pending"
       ],
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE) or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
     }
   ]
 }

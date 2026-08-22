@@ -30,6 +30,34 @@
       "status": "candidate"
     },
     {
+      "id": "qwen3-8-27b-q4-mtp--carwin-nano--64k",
+      "main": "qwen3-8-27b-q4-mtp",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-mtp--carwin-nano--128k",
+      "main": "qwen3-8-27b-q4-mtp",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-mtp--carwin-nano--262k",
+      "main": "qwen3-8-27b-q4-mtp",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-mtp--carwin-nano--1m",
+      "main": "qwen3-8-27b-q4-mtp",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "qwen3-8-27b-q4-mtp--auto--64k",
       "main": "qwen3-8-27b-q4-mtp",
       "auxiliary": "auto",
@@ -82,6 +110,34 @@
       "id": "qwen3-8-27b-q4--ornith-1-5-35a3b--1m",
       "main": "qwen3-8-27b-q4",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4--carwin-nano--64k",
+      "main": "qwen3-8-27b-q4",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4--carwin-nano--128k",
+      "main": "qwen3-8-27b-q4",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4--carwin-nano--262k",
+      "main": "qwen3-8-27b-q4",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4--carwin-nano--1m",
+      "main": "qwen3-8-27b-q4",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -142,6 +198,34 @@
       "status": "candidate"
     },
     {
+      "id": "qwen3-8-27b-q8-mtp--carwin-nano--64k",
+      "main": "qwen3-8-27b-q8-mtp",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q8-mtp--carwin-nano--128k",
+      "main": "qwen3-8-27b-q8-mtp",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q8-mtp--carwin-nano--262k",
+      "main": "qwen3-8-27b-q8-mtp",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q8-mtp--carwin-nano--1m",
+      "main": "qwen3-8-27b-q8-mtp",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "qwen3-8-27b-q8-mtp--auto--64k",
       "main": "qwen3-8-27b-q8-mtp",
       "auxiliary": "auto",
@@ -194,6 +278,34 @@
       "id": "qwen3-8-27b-q8--ornith-1-5-35a3b--1m",
       "main": "qwen3-8-27b-q8",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q8--carwin-nano--64k",
+      "main": "qwen3-8-27b-q8",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q8--carwin-nano--128k",
+      "main": "qwen3-8-27b-q8",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q8--carwin-nano--262k",
+      "main": "qwen3-8-27b-q8",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q8--carwin-nano--1m",
+      "main": "qwen3-8-27b-q8",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -254,6 +366,34 @@
       "status": "candidate"
     },
     {
+      "id": "qwen3-8-27b-bf16-mtp--carwin-nano--64k",
+      "main": "qwen3-8-27b-bf16-mtp",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-bf16-mtp--carwin-nano--128k",
+      "main": "qwen3-8-27b-bf16-mtp",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-bf16-mtp--carwin-nano--262k",
+      "main": "qwen3-8-27b-bf16-mtp",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-bf16-mtp--carwin-nano--1m",
+      "main": "qwen3-8-27b-bf16-mtp",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "qwen3-8-27b-bf16-mtp--auto--64k",
       "main": "qwen3-8-27b-bf16-mtp",
       "auxiliary": "auto",
@@ -306,6 +446,34 @@
       "id": "qwen3-8-27b-bf16--ornith-1-5-35a3b--1m",
       "main": "qwen3-8-27b-bf16",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-bf16--carwin-nano--64k",
+      "main": "qwen3-8-27b-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-bf16--carwin-nano--128k",
+      "main": "qwen3-8-27b-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-bf16--carwin-nano--262k",
+      "main": "qwen3-8-27b-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-bf16--carwin-nano--1m",
+      "main": "qwen3-8-27b-bf16",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -366,6 +534,34 @@
       "status": "candidate"
     },
     {
+      "id": "ternary-bonsai-27b--carwin-nano--64k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--carwin-nano--128k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--carwin-nano--262k",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b--carwin-nano--1m",
+      "main": "ternary-bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "ternary-bonsai-27b--auto--64k",
       "main": "ternary-bonsai-27b",
       "auxiliary": "auto",
@@ -418,6 +614,34 @@
       "id": "ternary-bonsai-27b-dspark-bf16--ornith-1-5-35a3b--1m",
       "main": "ternary-bonsai-27b-dspark-bf16",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark-bf16--carwin-nano--64k",
+      "main": "ternary-bonsai-27b-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark-bf16--carwin-nano--128k",
+      "main": "ternary-bonsai-27b-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark-bf16--carwin-nano--262k",
+      "main": "ternary-bonsai-27b-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark-bf16--carwin-nano--1m",
+      "main": "ternary-bonsai-27b-dspark-bf16",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -478,6 +702,34 @@
       "status": "candidate"
     },
     {
+      "id": "ternary-bonsai-27b-dspark--carwin-nano--64k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--carwin-nano--128k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--carwin-nano--262k",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-dspark--carwin-nano--1m",
+      "main": "ternary-bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "ternary-bonsai-27b-dspark--auto--64k",
       "main": "ternary-bonsai-27b-dspark",
       "auxiliary": "auto",
@@ -530,6 +782,34 @@
       "id": "ternary-bonsai-27b-compact-vision-bf16--ornith-1-5-35a3b--1m",
       "main": "ternary-bonsai-27b-compact-vision-bf16",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16--carwin-nano--64k",
+      "main": "ternary-bonsai-27b-compact-vision-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16--carwin-nano--128k",
+      "main": "ternary-bonsai-27b-compact-vision-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16--carwin-nano--262k",
+      "main": "ternary-bonsai-27b-compact-vision-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16--carwin-nano--1m",
+      "main": "ternary-bonsai-27b-compact-vision-bf16",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -590,6 +870,34 @@
       "status": "candidate"
     },
     {
+      "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--carwin-nano--64k",
+      "main": "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--carwin-nano--128k",
+      "main": "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--carwin-nano--262k",
+      "main": "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--carwin-nano--1m",
+      "main": "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--auto--64k",
       "main": "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16",
       "auxiliary": "auto",
@@ -642,6 +950,34 @@
       "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-q4--ornith-1-5-35a3b--1m",
       "main": "ternary-bonsai-27b-compact-vision-bf16-dspark-q4",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-q4--carwin-nano--64k",
+      "main": "ternary-bonsai-27b-compact-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-q4--carwin-nano--128k",
+      "main": "ternary-bonsai-27b-compact-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-q4--carwin-nano--262k",
+      "main": "ternary-bonsai-27b-compact-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-q4--carwin-nano--1m",
+      "main": "ternary-bonsai-27b-compact-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -702,6 +1038,34 @@
       "status": "candidate"
     },
     {
+      "id": "ternary-bonsai-27b-fp16--carwin-nano--64k",
+      "main": "ternary-bonsai-27b-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16--carwin-nano--128k",
+      "main": "ternary-bonsai-27b-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16--carwin-nano--262k",
+      "main": "ternary-bonsai-27b-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16--carwin-nano--1m",
+      "main": "ternary-bonsai-27b-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "ternary-bonsai-27b-fp16--auto--64k",
       "main": "ternary-bonsai-27b-fp16",
       "auxiliary": "auto",
@@ -754,6 +1118,34 @@
       "id": "ternary-bonsai-27b-fp16-dspark-bf16--ornith-1-5-35a3b--1m",
       "main": "ternary-bonsai-27b-fp16-dspark-bf16",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-dspark-bf16--carwin-nano--64k",
+      "main": "ternary-bonsai-27b-fp16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-dspark-bf16--carwin-nano--128k",
+      "main": "ternary-bonsai-27b-fp16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-dspark-bf16--carwin-nano--262k",
+      "main": "ternary-bonsai-27b-fp16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-dspark-bf16--carwin-nano--1m",
+      "main": "ternary-bonsai-27b-fp16-dspark-bf16",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -814,6 +1206,34 @@
       "status": "candidate"
     },
     {
+      "id": "ternary-bonsai-27b-fp16-dspark-q4--carwin-nano--64k",
+      "main": "ternary-bonsai-27b-fp16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-dspark-q4--carwin-nano--128k",
+      "main": "ternary-bonsai-27b-fp16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-dspark-q4--carwin-nano--262k",
+      "main": "ternary-bonsai-27b-fp16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-dspark-q4--carwin-nano--1m",
+      "main": "ternary-bonsai-27b-fp16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "ternary-bonsai-27b-fp16-dspark-q4--auto--64k",
       "main": "ternary-bonsai-27b-fp16-dspark-q4",
       "auxiliary": "auto",
@@ -866,6 +1286,34 @@
       "id": "ternary-bonsai-27b-fp16-vision-bf16--ornith-1-5-35a3b--1m",
       "main": "ternary-bonsai-27b-fp16-vision-bf16",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-bf16--carwin-nano--64k",
+      "main": "ternary-bonsai-27b-fp16-vision-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-bf16--carwin-nano--128k",
+      "main": "ternary-bonsai-27b-fp16-vision-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-bf16--carwin-nano--262k",
+      "main": "ternary-bonsai-27b-fp16-vision-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-bf16--carwin-nano--1m",
+      "main": "ternary-bonsai-27b-fp16-vision-bf16",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -926,6 +1374,34 @@
       "status": "candidate"
     },
     {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--carwin-nano--64k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--carwin-nano--128k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--carwin-nano--262k",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-dspark--carwin-nano--1m",
+      "main": "ternary-bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "ternary-bonsai-27b-fp16-vision-dspark--auto--64k",
       "main": "ternary-bonsai-27b-fp16-vision-dspark",
       "auxiliary": "auto",
@@ -978,6 +1454,34 @@
       "id": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4--ornith-1-5-35a3b--1m",
       "main": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4--carwin-nano--64k",
+      "main": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4--carwin-nano--128k",
+      "main": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4--carwin-nano--262k",
+      "main": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4--carwin-nano--1m",
+      "main": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -1038,6 +1542,34 @@
       "status": "candidate"
     },
     {
+      "id": "bonsai-27b--carwin-nano--64k",
+      "main": "bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--carwin-nano--128k",
+      "main": "bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--carwin-nano--262k",
+      "main": "bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b--carwin-nano--1m",
+      "main": "bonsai-27b",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "bonsai-27b--auto--64k",
       "main": "bonsai-27b",
       "auxiliary": "auto",
@@ -1090,6 +1622,34 @@
       "id": "bonsai-27b-dspark-bf16--ornith-1-5-35a3b--1m",
       "main": "bonsai-27b-dspark-bf16",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark-bf16--carwin-nano--64k",
+      "main": "bonsai-27b-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark-bf16--carwin-nano--128k",
+      "main": "bonsai-27b-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark-bf16--carwin-nano--262k",
+      "main": "bonsai-27b-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark-bf16--carwin-nano--1m",
+      "main": "bonsai-27b-dspark-bf16",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -1150,6 +1710,34 @@
       "status": "candidate"
     },
     {
+      "id": "bonsai-27b-dspark--carwin-nano--64k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--carwin-nano--128k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--carwin-nano--262k",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-dspark--carwin-nano--1m",
+      "main": "bonsai-27b-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "bonsai-27b-dspark--auto--64k",
       "main": "bonsai-27b-dspark",
       "auxiliary": "auto",
@@ -1202,6 +1790,34 @@
       "id": "bonsai-27b-compact-vision-bf16--ornith-1-5-35a3b--1m",
       "main": "bonsai-27b-compact-vision-bf16",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16--carwin-nano--64k",
+      "main": "bonsai-27b-compact-vision-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16--carwin-nano--128k",
+      "main": "bonsai-27b-compact-vision-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16--carwin-nano--262k",
+      "main": "bonsai-27b-compact-vision-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16--carwin-nano--1m",
+      "main": "bonsai-27b-compact-vision-bf16",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -1262,6 +1878,34 @@
       "status": "candidate"
     },
     {
+      "id": "bonsai-27b-compact-vision-bf16-dspark-bf16--carwin-nano--64k",
+      "main": "bonsai-27b-compact-vision-bf16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16-dspark-bf16--carwin-nano--128k",
+      "main": "bonsai-27b-compact-vision-bf16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16-dspark-bf16--carwin-nano--262k",
+      "main": "bonsai-27b-compact-vision-bf16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16-dspark-bf16--carwin-nano--1m",
+      "main": "bonsai-27b-compact-vision-bf16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "bonsai-27b-compact-vision-bf16-dspark-bf16--auto--64k",
       "main": "bonsai-27b-compact-vision-bf16-dspark-bf16",
       "auxiliary": "auto",
@@ -1314,6 +1958,34 @@
       "id": "bonsai-27b-compact-vision-bf16-dspark-q4--ornith-1-5-35a3b--1m",
       "main": "bonsai-27b-compact-vision-bf16-dspark-q4",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16-dspark-q4--carwin-nano--64k",
+      "main": "bonsai-27b-compact-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16-dspark-q4--carwin-nano--128k",
+      "main": "bonsai-27b-compact-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16-dspark-q4--carwin-nano--262k",
+      "main": "bonsai-27b-compact-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-bf16-dspark-q4--carwin-nano--1m",
+      "main": "bonsai-27b-compact-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -1374,6 +2046,34 @@
       "status": "candidate"
     },
     {
+      "id": "bonsai-27b-compact-vision-q8--carwin-nano--64k",
+      "main": "bonsai-27b-compact-vision-q8",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-q8--carwin-nano--128k",
+      "main": "bonsai-27b-compact-vision-q8",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-q8--carwin-nano--262k",
+      "main": "bonsai-27b-compact-vision-q8",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-q8--carwin-nano--1m",
+      "main": "bonsai-27b-compact-vision-q8",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "bonsai-27b-compact-vision-q8--auto--64k",
       "main": "bonsai-27b-compact-vision-q8",
       "auxiliary": "auto",
@@ -1426,6 +2126,34 @@
       "id": "bonsai-27b-compact-vision-q8-dspark-bf16--ornith-1-5-35a3b--1m",
       "main": "bonsai-27b-compact-vision-q8-dspark-bf16",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-q8-dspark-bf16--carwin-nano--64k",
+      "main": "bonsai-27b-compact-vision-q8-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-q8-dspark-bf16--carwin-nano--128k",
+      "main": "bonsai-27b-compact-vision-q8-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-q8-dspark-bf16--carwin-nano--262k",
+      "main": "bonsai-27b-compact-vision-q8-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-q8-dspark-bf16--carwin-nano--1m",
+      "main": "bonsai-27b-compact-vision-q8-dspark-bf16",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -1486,6 +2214,34 @@
       "status": "candidate"
     },
     {
+      "id": "bonsai-27b-compact-vision-q8-dspark-q4--carwin-nano--64k",
+      "main": "bonsai-27b-compact-vision-q8-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-q8-dspark-q4--carwin-nano--128k",
+      "main": "bonsai-27b-compact-vision-q8-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-q8-dspark-q4--carwin-nano--262k",
+      "main": "bonsai-27b-compact-vision-q8-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-compact-vision-q8-dspark-q4--carwin-nano--1m",
+      "main": "bonsai-27b-compact-vision-q8-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "bonsai-27b-compact-vision-q8-dspark-q4--auto--64k",
       "main": "bonsai-27b-compact-vision-q8-dspark-q4",
       "auxiliary": "auto",
@@ -1538,6 +2294,34 @@
       "id": "bonsai-27b-fp16--ornith-1-5-35a3b--1m",
       "main": "bonsai-27b-fp16",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16--carwin-nano--64k",
+      "main": "bonsai-27b-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16--carwin-nano--128k",
+      "main": "bonsai-27b-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16--carwin-nano--262k",
+      "main": "bonsai-27b-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16--carwin-nano--1m",
+      "main": "bonsai-27b-fp16",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -1598,6 +2382,34 @@
       "status": "candidate"
     },
     {
+      "id": "bonsai-27b-fp16-dspark-bf16--carwin-nano--64k",
+      "main": "bonsai-27b-fp16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-dspark-bf16--carwin-nano--128k",
+      "main": "bonsai-27b-fp16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-dspark-bf16--carwin-nano--262k",
+      "main": "bonsai-27b-fp16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-dspark-bf16--carwin-nano--1m",
+      "main": "bonsai-27b-fp16-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "bonsai-27b-fp16-dspark-bf16--auto--64k",
       "main": "bonsai-27b-fp16-dspark-bf16",
       "auxiliary": "auto",
@@ -1650,6 +2462,34 @@
       "id": "bonsai-27b-fp16-dspark-q4--ornith-1-5-35a3b--1m",
       "main": "bonsai-27b-fp16-dspark-q4",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-dspark-q4--carwin-nano--64k",
+      "main": "bonsai-27b-fp16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-dspark-q4--carwin-nano--128k",
+      "main": "bonsai-27b-fp16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-dspark-q4--carwin-nano--262k",
+      "main": "bonsai-27b-fp16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-dspark-q4--carwin-nano--1m",
+      "main": "bonsai-27b-fp16-dspark-q4",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -1710,6 +2550,34 @@
       "status": "candidate"
     },
     {
+      "id": "bonsai-27b-fp16-vision-bf16--carwin-nano--64k",
+      "main": "bonsai-27b-fp16-vision-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-bf16--carwin-nano--128k",
+      "main": "bonsai-27b-fp16-vision-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-bf16--carwin-nano--262k",
+      "main": "bonsai-27b-fp16-vision-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-bf16--carwin-nano--1m",
+      "main": "bonsai-27b-fp16-vision-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "bonsai-27b-fp16-vision-bf16--auto--64k",
       "main": "bonsai-27b-fp16-vision-bf16",
       "auxiliary": "auto",
@@ -1762,6 +2630,34 @@
       "id": "bonsai-27b-fp16-vision-dspark--ornith-1-5-35a3b--1m",
       "main": "bonsai-27b-fp16-vision-dspark",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--carwin-nano--64k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--carwin-nano--128k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--carwin-nano--262k",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-dspark--carwin-nano--1m",
+      "main": "bonsai-27b-fp16-vision-dspark",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -1822,6 +2718,34 @@
       "status": "candidate"
     },
     {
+      "id": "bonsai-27b-fp16-vision-bf16-dspark-q4--carwin-nano--64k",
+      "main": "bonsai-27b-fp16-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-bf16-dspark-q4--carwin-nano--128k",
+      "main": "bonsai-27b-fp16-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-bf16-dspark-q4--carwin-nano--262k",
+      "main": "bonsai-27b-fp16-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-bf16-dspark-q4--carwin-nano--1m",
+      "main": "bonsai-27b-fp16-vision-bf16-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "bonsai-27b-fp16-vision-bf16-dspark-q4--auto--64k",
       "main": "bonsai-27b-fp16-vision-bf16-dspark-q4",
       "auxiliary": "auto",
@@ -1874,6 +2798,34 @@
       "id": "bonsai-27b-fp16-vision-q8--ornith-1-5-35a3b--1m",
       "main": "bonsai-27b-fp16-vision-q8",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8--carwin-nano--64k",
+      "main": "bonsai-27b-fp16-vision-q8",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8--carwin-nano--128k",
+      "main": "bonsai-27b-fp16-vision-q8",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8--carwin-nano--262k",
+      "main": "bonsai-27b-fp16-vision-q8",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8--carwin-nano--1m",
+      "main": "bonsai-27b-fp16-vision-q8",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -1934,6 +2886,34 @@
       "status": "candidate"
     },
     {
+      "id": "bonsai-27b-fp16-vision-q8-dspark-bf16--carwin-nano--64k",
+      "main": "bonsai-27b-fp16-vision-q8-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8-dspark-bf16--carwin-nano--128k",
+      "main": "bonsai-27b-fp16-vision-q8-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8-dspark-bf16--carwin-nano--262k",
+      "main": "bonsai-27b-fp16-vision-q8-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8-dspark-bf16--carwin-nano--1m",
+      "main": "bonsai-27b-fp16-vision-q8-dspark-bf16",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "bonsai-27b-fp16-vision-q8-dspark-bf16--auto--64k",
       "main": "bonsai-27b-fp16-vision-q8-dspark-bf16",
       "auxiliary": "auto",
@@ -1986,6 +2966,34 @@
       "id": "bonsai-27b-fp16-vision-q8-dspark-q4--ornith-1-5-35a3b--1m",
       "main": "bonsai-27b-fp16-vision-q8-dspark-q4",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8-dspark-q4--carwin-nano--64k",
+      "main": "bonsai-27b-fp16-vision-q8-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8-dspark-q4--carwin-nano--128k",
+      "main": "bonsai-27b-fp16-vision-q8-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8-dspark-q4--carwin-nano--262k",
+      "main": "bonsai-27b-fp16-vision-q8-dspark-q4",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "bonsai-27b-fp16-vision-q8-dspark-q4--carwin-nano--1m",
+      "main": "bonsai-27b-fp16-vision-q8-dspark-q4",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -2046,6 +3054,34 @@
       "status": "candidate"
     },
     {
+      "id": "glm-5-2-2-788bpw--carwin-nano--64k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--carwin-nano--128k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--carwin-nano--262k",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-2-2-788bpw--carwin-nano--1m",
+      "main": "glm-5-2-2-788bpw",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "glm-5-2-2-788bpw--auto--64k",
       "main": "glm-5-2-2-788bpw",
       "auxiliary": "auto",
@@ -2098,6 +3134,34 @@
       "id": "minimax-m3-q4--ornith-1-5-35a3b--1m",
       "main": "minimax-m3-q4",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--carwin-nano--64k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--carwin-nano--128k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--carwin-nano--262k",
+      "main": "minimax-m3-q4",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "minimax-m3-q4--carwin-nano--1m",
+      "main": "minimax-m3-q4",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -2158,6 +3222,34 @@
       "status": "candidate"
     },
     {
+      "id": "laguna-s2-1-fp16--carwin-nano--64k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--carwin-nano--128k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--carwin-nano--262k",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-fp16--carwin-nano--1m",
+      "main": "laguna-s2-1-fp16",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "laguna-s2-1-fp16--auto--64k",
       "main": "laguna-s2-1-fp16",
       "auxiliary": "auto",
@@ -2210,6 +3302,34 @@
       "id": "laguna-s2-1-q4--ornith-1-5-35a3b--1m",
       "main": "laguna-s2-1-q4",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--carwin-nano--64k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--carwin-nano--128k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--carwin-nano--262k",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "laguna-s2-1-q4--carwin-nano--1m",
+      "main": "laguna-s2-1-q4",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },
@@ -2270,6 +3390,34 @@
       "status": "candidate"
     },
     {
+      "id": "qwen3-8-27b-unleashed-ud-iq3-xxs--carwin-nano--64k",
+      "main": "qwen3-8-27b-unleashed-ud-iq3-xxs",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-unleashed-ud-iq3-xxs--carwin-nano--128k",
+      "main": "qwen3-8-27b-unleashed-ud-iq3-xxs",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-unleashed-ud-iq3-xxs--carwin-nano--262k",
+      "main": "qwen3-8-27b-unleashed-ud-iq3-xxs",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-unleashed-ud-iq3-xxs--carwin-nano--1m",
+      "main": "qwen3-8-27b-unleashed-ud-iq3-xxs",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "qwen3-8-27b-unleashed-ud-iq3-xxs--auto--64k",
       "main": "qwen3-8-27b-unleashed-ud-iq3-xxs",
       "auxiliary": "auto",
@@ -2322,6 +3470,34 @@
       "id": "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--1m",
       "main": "qwen3-8-27b-unleashed-ud-q3-k-xl",
       "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-unleashed-ud-q3-k-xl--carwin-nano--64k",
+      "main": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-unleashed-ud-q3-k-xl--carwin-nano--128k",
+      "main": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-unleashed-ud-q3-k-xl--carwin-nano--262k",
+      "main": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-unleashed-ud-q3-k-xl--carwin-nano--1m",
+      "main": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+      "auxiliary": "carwin-nano",
       "context": 1048576,
       "status": "candidate"
     },

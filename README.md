@@ -39,7 +39,7 @@ Turbofit 2.3 retires DeepSeek V4 Flash 0731 from the active catalog and replaces
 | 16 GB | Qwen 3.8 27B Unleashed UD-IQ3_XXS |
 | 8 GB | Bonsai 27B |
 
-Auxiliary selection is **Ornith 1.5 35A3B** or **auto**. Scale-down offloads Ornith experts, then lowers context, then switches aux to auto, then a listed Unleashed quant, then Bonsai. API fallback is the five keyless Nous free models. NVIDIA NIM is not used.
+Auxiliary selection is **Ornith 1.5 35A3B** (default), optional **Carwin Nano**, or **auto**. Scale-down offloads Ornith experts, then lowers context, then switches aux to auto, then a listed Unleashed quant, then Bonsai. API fallback is the five keyless Nous free models. NVIDIA NIM is not used.
 
 The lineup is a product target, not fabricated benchmark evidence. Newly onboarded Qwen rows remain candidates until exact artifacts, contexts, topology, output, throughput, and cleanup pass the physical campaign; Auto continues on a proven safe rung until promotion completes.
 
