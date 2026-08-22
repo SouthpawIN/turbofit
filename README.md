@@ -43,7 +43,7 @@ Auxiliary selection is **Ornith 1.5 35A3B** (default), optional **Carwin Nano**,
 
 The lineup is a product target, not fabricated benchmark evidence. Newly onboarded Qwen rows remain candidates until exact artifacts, contexts, topology, output, throughput, and cleanup pass the physical campaign; Auto continues on a proven safe rung until promotion completes.
 
-![Turbofit 2.2 auto-fit model ladder from Binary Bonsai through Qwen 3.8 and DeepSeek V4 Flash](assets/turbofit-2.2-model-ladder.png)
+![Turbofit 2.3 auto-fit model ladder from Bonsai through Unleashed and Nous keyless free](assets/turbofit-2.3-model-ladder.png)
 
 ---
 
@@ -137,7 +137,15 @@ providers:
 
 fallback_providers:
   - provider: nous
-    model: Hermes-4-405B
+    model: stealth/ox-alpha
+  - provider: nous
+    model: stepfun/step-3.7-flash:free
+  - provider: nous
+    model: tencent/hy3:free
+  - provider: nous
+    model: poolside/laguna-s-2.1:free
+  - provider: nous
+    model: poolside/laguna-xs-2.1:free
   - provider: custom:turbofit
     model: auto
 ```
@@ -233,23 +241,25 @@ scripts/expand-multipart-artifacts
 
 Current generated scope:
 
-- **45 main configurations**
-- **9 auxiliary choices** including `auto`
+- **42 main configurations**
+- **3 auxiliary choices** (`ornith-1-5-35a3b`, `carwin-nano`, `auto`)
 - **4 exact context tiers**
-- **1,620 benchmark rows**
-- **47 pinned model/runtime variants** total, including two auxiliary-only Carwin modes
+- **504 benchmark rows**
+- DeepSeek V4 Flash 0731 is **not** in the active catalog
 
 ### Main configurations
 
-#### DeepSeek V4 Flash 0731
+#### Qwen 3.8 27B Unleashed
 
-The canonical upstream is the official [`deepseek-ai/DeepSeek-V4-Flash-0731`](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731) checkpoint, pinned at commit `7872f01b1d1fe23eabc4c98b48bffcef5a386062`. The deployable GGUFs and matching extracted 0731 DSpark sidecar come from `unsloth/DeepSeek-V4-Flash-0731-GGUF`, pinned at commit `fbbb5b93fb787c21338159b0af3318bb3f4d9768`. The native runtime is llama.cpp b10269 (`1c3c9674de4d455f1e571bed808252af54932767`), which avoids the upstream-documented b10259–b10268 DSpark loader regression window.
+The Auto chain prefers Unleashed before stock Qwen 3.8 27B. Deployable artifacts come from [`outsourc-e/Qwen3.8-27B-Unleashed-GGUF`](https://huggingface.co/outsourc-e/Qwen3.8-27B-Unleashed-GGUF), pinned at commit `67a999218fd7002f11bf82bc81d6289beea60841`:
 
-- Q8 + matching 0731 DSpark Q8
-- Q8 without DSpark
-- Q4 + matching 0731 DSpark Q8
-- Q4 without DSpark
-- Q2 DwarfStar + matching 0731 DSpark Q8
+- `UD-IQ3_XXS` for the 16 GB band
+- `UD-Q3_K_XL` for the 24–95 GB band
+- matching Unleashed F16 vision projector
+
+The 96 GB+ band stays on stock Qwen 3.8 27B 16-bit until an Unleashed FP16 GGUF is published. These rows remain catalog candidates until current-recipe physical evidence promotes them.
+
+![Turbofit 2.3 Unleashed + Qwen 3.8 27B lineup](assets/turbofit-2.3-unleashed-lineup.png)
 
 #### Qwen 3.8 27B
 
@@ -286,14 +296,8 @@ Only artifacts actually published by the pinned upstream revision enter the matr
 
 ### Auxiliary choices
 
-- Carwin MoE Nano with MTP
-- Carwin MoE Nano without MTP
-- Ternary Bonsai compact baseline
-- Ternary Bonsai + Q4 DSpark
-- Ternary Bonsai + BF16 DSpark
-- Binary Bonsai compact baseline
-- Binary Bonsai + Q4 DSpark
-- Binary Bonsai + BF16 DSpark
+- Ornith 1.5 35A3B (default MoE aux; scale-down offloads experts first)
+- Carwin MoE Nano
 - Automatic auxiliary selection
 
 Auxiliary recipes do not load vision projectors. Visual input is routed to the main model.
@@ -418,7 +422,7 @@ Turbofit scans total usable memory and platform support, then labels each option
 | Speech-to-text | Hermes local transcription; Parakeet TDT 0.6B v3; Nemotron 3.5 ASR 0.6B |
 | Text-to-speech | Edge TTS; Soprano TTS; Darwin TTS 1.7B Cross |
 
-### New multimodal candidates in 2.2
+### New multimodal candidates in 2.3
 
 - **MiniMax Music 3** is pinned to the official [`MiniMaxAI/MiniMax-Music3`](https://huggingface.co/MiniMaxAI/MiniMax-Music3) commit `fbdf52fbaaca799592917417eb05f1899f1255ec`. Its model card describes complete songs up to five minutes, an 8B global LLM plus 0.6B local LLM, 32 kHz 16-bit stereo output, a full-precision route under 24 GB VRAM, and streamed CPU offload down to 8 GB VRAM.
 - **NVIDIA Parakeet TDT 0.6B v3** is pinned to [`nvidia/parakeet-tdt-0.6b-v3`](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) commit `541d1f99c6b0c3cd0b11a95167540bb8edefd82b` as the new local speech-to-text candidate.
@@ -426,9 +430,9 @@ Turbofit scans total usable memory and platform support, then labels each option
 
 All three remain explicitly labeled `candidate` until their Turbofit adapter and physical generation/transcription receipt pass. A pinned entry is reproducible metadata, not a false claim of completed integration.
 
-![Turbofit 2.2 multimodal additions: MiniMax Music 3, NVIDIA Parakeet TDT 0.6B v3, and Soprano TTS](assets/turbofit-2.2-multimodal.png)
+![Turbofit 2.3 multimodal manager: MiniMax Music 3, Parakeet TDT 0.6B v3, Soprano TTS, and local MiniMax H3 video](assets/turbofit-2.3-multimodal.png)
 
-The MiniMax H3 repository is a roughly 498 GB BF16 audio/video model release, not a small image model. Its official full-precision workflow recommends four GPUs. Turbofit separately preserves the physically demonstrated local INT8 streamed host-offload route: 24 GB accelerator memory minimum, 96 GB host RAM minimum, and 192 GB host RAM recommended. The 2.1 promo uses only clips generated locally on this machine from the pinned H3 revision in six requested styles; no sample footage or output from another machine is used. Prompts, seeds, timings, logs, checksums, contact sheet, TTS, and ffmpeg/ffprobe evidence are under `promo/`.
+The MiniMax H3 repository is a roughly 498 GB BF16 audio/video model release, not a small image model. Its official full-precision workflow recommends four GPUs. Turbofit separately preserves the physically demonstrated local INT8 streamed host-offload route: 24 GB accelerator memory minimum, 96 GB host RAM minimum, and 192 GB host RAM recommended. The 2.3 promo uses only clips generated locally on this machine from the pinned H3 revision in six requested styles; no sample footage or output from another machine is used. Prompts, seeds, timings, logs, checksums, contact sheet, TTS, and ffmpeg/ffprobe evidence are under `promo/`.
 
 Catalog and pinned revisions: [`references/multimodal-models.json`](references/multimodal-models.json).
 
