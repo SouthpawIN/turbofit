@@ -726,8 +726,38 @@
       "projector": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B-Unleashed/mmproj-Unleashed-f16.gguf",
       "port": 11606,
       "large": false,
+      "gpu_layers": 99,
+      "fit": "off",
+      "batch_size": 2048,
+      "ubatch_size": 512,
       "native_context": 262144,
       "max_context": 1048576,
+      "context_scaling": {
+        "method": "yarn",
+        "scale": 4,
+        "original_context": 262144
+      },
+      "context_overrides": {
+        "65536": {
+          "gpu_layers": 99,
+          "fit": "off"
+        },
+        "131072": {
+          "gpu_layers": 99,
+          "fit": "off"
+        },
+        "262144": {
+          "gpu_layers": 99,
+          "fit": "off"
+        },
+        "1048576": {
+          "gpu": "0,1",
+          "split_mode": "layer",
+          "tensor_split": "1,1",
+          "gpu_layers": 99,
+          "fit": "off"
+        }
+      },
       "methods": {
         "65536": "baseline",
         "131072": "baseline",

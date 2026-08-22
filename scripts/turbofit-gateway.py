@@ -154,20 +154,78 @@ def provider_models():
     return models
 
 
+def _positive_context(value):
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed > 0 else None
+
+
+def _live_n_ctx(route):
+    """Read the running llama-server n_ctx. Main and aux must share this window."""
+    base_url = str((route or {}).get("base_url") or "").rstrip("/")
+    if not base_url:
+        return None
+    try:
+        with urlopen(base_url + "/props", timeout=1.5) as handle:
+            data = json.loads(handle.read().decode())
+        return _positive_context(
+            (data.get("default_generation_settings") or {}).get("n_ctx")
+        )
+    except Exception:
+        return None
+
+
 def active_context_length(default=65536):
-    """Return the active route's configured context, not the model's trained maximum."""
+    """Return the single shared main+aux context window.
+
+    Main and aux are required to use the same limit. Prefer an explicit
+    matching value from runtime state so tests stay offline; if state
+    omitted the window, probe the live servers and refuse to advertise
+    two different numbers.
+    """
+    stored = []
     try:
         with open(RUNTIME_STATE) as f:
             state = json.load(f)
-        route = (state.get("routes") or {}).get("main") or {}
-        value = route.get("context_length") or state.get("context_length")
-        if value is None:
+        routes = state.get("routes") or {}
+        for role in ("main", "aux"):
+            value = _positive_context((routes.get(role) or {}).get("context_length"))
+            if value:
+                stored.append(value)
+        shared = _positive_context(state.get("context_length"))
+        if shared:
+            stored.append(shared)
+        if not stored:
             profile = runtime_profiles().get(state.get("active")) or {}
-            value = profile.get("context")
-        value = int(value)
-        return value if value > 0 else default
+            value = _positive_context(profile.get("context"))
+            if value:
+                stored.append(value)
     except (OSError, TypeError, ValueError, json.JSONDecodeError):
-        return default
+        stored = []
+
+    unique_stored = set(stored)
+    if len(unique_stored) == 1:
+        return unique_stored.pop()
+    if len(unique_stored) > 1:
+        log.error("main/aux stored context mismatch: %s", sorted(unique_stored))
+
+    live = []
+    for resolver in (resolve_main, resolve_aux):
+        try:
+            value = _live_n_ctx(resolver())
+        except Exception:
+            value = None
+        if value:
+            live.append(value)
+    unique_live = set(live)
+    if len(unique_live) == 1:
+        return unique_live.pop()
+    if len(unique_live) > 1:
+        log.error("main/aux live context mismatch: %s", sorted(unique_live))
+        return live[0]
+    return default
 
 
 def parse_provider_model(model):

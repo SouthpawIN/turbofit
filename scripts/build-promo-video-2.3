@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+"""Build the Turbofit 2.3 promo exclusively from locally generated H3 clips."""
+from __future__ import annotations
+
+import argparse
+import json
+import shutil
+import subprocess
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / "promo" / "h3-local-2.3"
+VOICEOVER = ROOT / "promo" / "voiceover" / "turbofit-2.3-h3-voiceover.mp3"
+EVIDENCE = SOURCE / "generation-evidence.json"
+FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+CLIPS = (
+    ("bonsai-8gb", "ANIME", "8GB  •  BONSAI 27B"),
+    ("unleashed-16gb", "CINEMATIC CG", "16GB  •  UNLEASHED UD-IQ3_XXS"),
+    ("unleashed-24-95", "PHOTOREAL", "24–95GB  •  UNLEASHED UD-Q3_K_XL"),
+    ("ornith-aux", "CLAYMATION", "AUX  •  ORNITH 1.5 35A3B  OR  AUTO"),
+    ("scale-down", "WATERCOLOR", "EXPERTS  →  CONTEXT  →  AUTO  →  BONSAI"),
+    ("nous-keyless", "RETRO PIXEL ART", "NOUS KEYLESS FREE  •  NO NIM"),
+)
+
+
+def validate_sources() -> list[Path]:
+    if not EVIDENCE.is_file():
+        raise FileNotFoundError(f"missing local H3 generation evidence: {EVIDENCE}")
+    payload = json.loads(EVIDENCE.read_text(encoding="utf-8"))
+    if not payload.get("local_files_only"):
+        raise ValueError("promo evidence does not prove local-only H3 generation")
+    if payload.get("model") != "MiniMaxAI/MiniMax-H3":
+        raise ValueError("promo evidence is not MiniMax H3")
+    generated = {
+        row["id"]: Path(row["output"])
+        for row in payload.get("results", [])
+        if "-smoke" not in row["output"]
+    }
+    paths = []
+    for clip_id, _, _ in CLIPS:
+        path = generated.get(clip_id, SOURCE / f"{clip_id}.mp4")
+        if not path.is_file():
+            raise FileNotFoundError(f"missing locally generated H3 clip: {path}")
+        paths.append(path)
+    if not VOICEOVER.is_file():
+        raise FileNotFoundError(f"missing voiceover: {VOICEOVER}")
+    return paths
+
+
+def video_filter(index: int, label: str, caption: str, output: str, *, start: float, duration: float, intro: bool = False, montage: bool = False) -> str:
+    base = (
+        f"[{index}:v]trim=start={start}:duration={duration},setpts=PTS-STARTPTS,"
+        "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,fps=24,format=yuv420p"
+    )
+    if intro:
+        return (
+            base
+            + ",drawbox=x=0:y=0:w=iw:h=ih:color=0x070908@0.58:t=fill,"
+            + f"drawtext=fontfile={FONT}:text='TURBOFIT 2.3':fontcolor=0xC5A060:fontsize=68:"
+              "x=(w-text_w)/2:y=(h-text_h)/2-80,"
+            + f"drawtext=fontfile={FONT}:text='THE CHAIN THAT FITS THE MACHINE':fontcolor=0x00D68F:fontsize=28:"
+              "x=(w-text_w)/2:y=(h-text_h)/2+20,"
+            + f"drawtext=fontfile={FONT}:text='EVERY CLIP GENERATED LOCALLY WITH MINIMAX H3':"
+              "fontcolor=0xFFB627:fontsize=22:x=(w-text_w)/2:y=h-78"
+            + f"[{output}]"
+        )
+    if montage:
+        return (
+            base
+            + f",drawtext=fontfile={FONT}:text='LOCALLY GENERATED H3  •  {label}':fontcolor=white:fontsize=25:"
+              "box=1:boxcolor=black@0.58:boxborderw=12:x=(w-text_w)/2:y=h-72"
+            + f"[{output}]"
+        )
+    return (
+        base
+        + f",drawtext=fontfile={FONT}:text='{label}':fontcolor=0xC5A060:fontsize=36:"
+          "box=1:boxcolor=black@0.62:boxborderw=16:x=54:y=48,"
+        + f"drawtext=fontfile={FONT}:text='{caption}':fontcolor=white:fontsize=25:"
+          "box=1:boxcolor=black@0.62:boxborderw=13:x=(w-text_w)/2:y=h-76"
+        + f"[{output}]"
+    )
+
+
+def audio_filter(index: int, output: str, *, start: float, duration: float) -> str:
+    return (
+        f"[{index}:a]atrim=start={start}:duration={duration},asetpts=PTS-STARTPTS,"
+        f"aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume=0.10[{output}]"
+    )
+
+
+def build(output: Path) -> None:
+    if not shutil.which("ffmpeg"):
+        raise RuntimeError("ffmpeg is required")
+    paths = validate_sources()
+    inputs: list[str] = []
+    for path in paths:
+        inputs.extend(["-i", str(path)])
+    inputs.extend(["-i", str(VOICEOVER)])
+
+    filters: list[str] = []
+    segments: list[str] = []
+    filters.append(video_filter(0, "ANIME", "", "intro-v", start=0, duration=5, intro=True))
+    filters.append(audio_filter(0, "intro-a", start=0, duration=5))
+    segments.append("[intro-v][intro-a]")
+
+    for index, (_, label, caption) in enumerate(CLIPS):
+        filters.append(video_filter(index, label, caption, f"main-v-{index}", start=0, duration=8))
+        filters.append(audio_filter(index, f"main-a-{index}", start=0, duration=8))
+        segments.append(f"[main-v-{index}][main-a-{index}]")
+
+    for index, (_, label, _) in enumerate(CLIPS):
+        filters.append(video_filter(index, label, "", f"montage-v-{index}", start=2, duration=2.35, montage=True))
+        filters.append(audio_filter(index, f"montage-a-{index}", start=2, duration=2.35))
+        segments.append(f"[montage-v-{index}][montage-a-{index}]")
+
+    filters.append("".join(segments) + f"concat=n={len(segments)}:v=1:a=1[basev][native]")
+    filters.append("[6:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo[voice]")
+    filters.append("[native][voice]amix=inputs=2:duration=first:weights='0.20 1.0':normalize=0[outa]")
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    command = [
+        "ffmpeg", "-y", *inputs,
+        "-filter_complex", ";".join(filters),
+        "-map", "[basev]", "-map", "[outa]",
+        "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+        "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
+        str(output),
+    ]
+    subprocess.run(command, check=True)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, default=ROOT / "promo" / "turbofit-2.3-h3-local-promo.mp4")
+    args = parser.parse_args()
+    build(args.output)
+    print(args.output)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

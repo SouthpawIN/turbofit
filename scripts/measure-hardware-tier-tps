@@ -1,0 +1,355 @@
+#!/usr/bin/env python3
+"""Measure real llama-server decode TPS for 2.3 band models on THIS host.
+
+Does not claim smaller-card topology proof. Writes incremental JSON + markdown.
+"""
+from __future__ import annotations
+
+import json
+import os
+import signal
+import statistics
+import subprocess
+import time
+import urllib.error
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT_DIR = ROOT / "references" / "results"
+JSON_PATH = OUT_DIR / "hardware-tier-tps-2x24-20260822.json"
+MD_PATH = ROOT / "docs" / "hardware-tier-tps.md"
+PORT = 18101
+HOST = "127.0.0.1"
+
+MAINLINE = Path.home() / ".local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server"
+PRISM = Path.home() / ".local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server"
+MODELS = Path.home() / "Models/storage/gguf"
+
+EXPERIMENTS = [
+    {
+        "tier_band": "8GB-class model",
+        "id": "bonsai-27b-q1",
+        "binary": str(PRISM),
+        "model": str(MODELS / "Bonsai-27B/Bonsai-27B-Q1_0.gguf"),
+        "extra": [],
+    },
+    {
+        "tier_band": "24-95GB-class model",
+        "id": "qwen3.8-27b-q4-k-m",
+        "binary": str(MAINLINE),
+        "model": str(MODELS / "Qwen3.8-27B/Qwen3.8-27B-Q4_K_M.gguf"),
+        "extra": [],
+    },
+    {
+        "tier_band": "aux",
+        "id": "carwin-moe-nano",
+        "binary": str(MAINLINE),
+        "model": str(MODELS / "Carwin-MoE-Nano/carwin-moe-Nano.gguf"),
+        "extra": [],
+    },
+]
+
+VARIANTS = [
+    {
+        "name": "ceiling-ngl99-fa-b2048",
+        "args": ["-ngl", "99", "-fa", "on", "-b", "2048", "-ub", "512", "-c", "8192", "--parallel", "1"],
+    },
+    {
+        "name": "fit-on-fa-b2048",
+        "args": ["-ngl", "auto", "--fit", "on", "-fa", "on", "-b", "2048", "-ub", "512", "-c", "8192", "--parallel", "1"],
+    },
+]
+
+
+def request(url: str, payload: dict | None = None, timeout: int = 180) -> tuple[int, dict]:
+    data = None
+    headers = {}
+    method = "GET"
+    if payload is not None:
+        data = json.dumps(payload).encode()
+        headers["Content-Type"] = "application/json"
+        method = "POST"
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as handle:
+            return handle.status, json.loads(handle.read())
+    except urllib.error.HTTPError as exc:
+        return exc.code, {"error": exc.read().decode(errors="replace")}
+    except Exception as exc:
+        return 0, {"error": str(exc)}
+
+
+def wait_health(timeout: int = 180) -> bool:
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        status, body = request(f"http://{HOST}:{PORT}/health", timeout=3)
+        if status == 200 and body.get("status") in {"ok", "no slot available", True} or status == 200:
+            return True
+        time.sleep(1)
+    return False
+
+
+def gpu_snapshot() -> list[dict]:
+    try:
+        raw = subprocess.check_output(
+            [
+                "nvidia-smi",
+                "--query-gpu=index,name,memory.used,memory.total,utilization.gpu",
+                "--format=csv,noheader,nounits",
+            ],
+            text=True,
+            timeout=5,
+        )
+    except Exception:
+        return []
+    rows = []
+    for line in raw.splitlines():
+        fields = [item.strip() for item in line.split(",")]
+        if len(fields) == 5:
+            rows.append(
+                dict(
+                    zip(
+                        ("index", "name", "memory_used_mb", "memory_total_mb", "utilization_pct"),
+                        fields,
+                    )
+                )
+            )
+    return rows
+
+
+def kill_port() -> None:
+    try:
+        raw = subprocess.check_output(["ss", "-ltnp"], text=True, timeout=5)
+    except Exception:
+        return
+    for line in raw.splitlines():
+        if f":{PORT} " not in line and f":{PORT}\n" not in line:
+            continue
+        if "pid=" not in line:
+            continue
+        pid = line.split("pid=", 1)[1].split(",")[0]
+        try:
+            os.kill(int(pid), signal.SIGTERM)
+        except Exception:
+            pass
+
+
+def start_server(binary: str, model: str, extra: list[str], args: list[str], log_path: Path) -> subprocess.Popen:
+    kill_port()
+    time.sleep(1)
+    cmd = [
+        binary,
+        "-m",
+        model,
+        "--host",
+        HOST,
+        "--port",
+        str(PORT),
+        "--jinja",
+        *args,
+        *extra,
+    ]
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    handle = log_path.open("w", encoding="utf-8")
+    env = os.environ.copy()
+    env["CUDA_VISIBLE_DEVICES"] = "0"
+    proc = subprocess.Popen(
+        cmd,
+        stdout=handle,
+        stderr=subprocess.STDOUT,
+        stdin=subprocess.DEVNULL,
+        start_new_session=True,
+        env=env,
+    )
+    return proc
+
+
+def one_completion(n_predict: int = 128) -> dict:
+    status, body = request(
+        f"http://{HOST}:{PORT}/completion",
+        {
+            "prompt": "Write a short numbered list of four local inference serving tips.\n",
+            "n_predict": n_predict,
+            "temperature": 0,
+            "cache_prompt": False,
+        },
+        timeout=300,
+    )
+    timings = body.get("timings") if isinstance(body, dict) else None
+    return {
+        "http": status,
+        "predicted_n": None if not isinstance(timings, dict) else timings.get("predicted_n"),
+        "predicted_per_second": None if not isinstance(timings, dict) else timings.get("predicted_per_second"),
+        "prompt_per_second": None if not isinstance(timings, dict) else timings.get("prompt_per_second"),
+        "error": None if status == 200 else body,
+    }
+
+
+def median(values: list[float]) -> float | None:
+    clean = [float(item) for item in values if isinstance(item, (int, float))]
+    if not clean:
+        return None
+    return float(statistics.median(clean))
+
+
+def write_outputs(payload: dict) -> None:
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    MD_PATH.parent.mkdir(parents=True, exist_ok=True)
+    JSON_PATH.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    lines = [
+        "# Hardware-tier serving TPS",
+        "",
+        "Measured with live `llama-server /completion` timings. Medians of three 128-token generations after one warmup. No fabricated scores.",
+        "",
+        f"- Host topology: **2x24 GB NVIDIA GeForce RTX 3090** (`2x24`, 48 GB total), driver from `nvidia-smi`, 386861 MiB RAM.",
+        "- This is **not** physical proof of an 8 GB, 16 GB, or 96 GB card. Larger hardware is not smaller-tier evidence.",
+        "- GPU0 was isolated (`CUDA_VISIBLE_DEVICES=0`). GPU1 was left to the in-flight MiniMax H3 job.",
+        "- Unleashed `UD-IQ3_XXS` / `UD-Q3_K_XL` GGUFs were **not on disk**; 16 GB and 24-95 GB bands used the available Qwen 3.8 27B Q4_K_M stand-in and are labeled as such.",
+        f"- Captured: `{payload.get('generated_at')}`",
+        "",
+        "| Band | Model | Serving recipe | Decode tok/s median | Prefill tok/s median | Peak GPU0 MiB | Notes |",
+        "|---|---|---|---:|---:|---:|---|",
+    ]
+    for row in payload.get("rows", []):
+        lines.append(
+            "| {band} | `{model}` | `{recipe}` | {decode} | {prefill} | {vram} | {notes} |".format(
+                band=row.get("tier_band"),
+                model=row.get("id"),
+                recipe=row.get("variant"),
+                decode="—" if row.get("decode_tps_median") is None else f"{row['decode_tps_median']:.2f}",
+                prefill="—" if row.get("prefill_tps_median") is None else f"{row['prefill_tps_median']:.2f}",
+                vram=row.get("gpu0_peak_mb") or "—",
+                notes=row.get("notes") or "",
+            )
+        )
+    best = payload.get("best_per_band") or {}
+    if best:
+        lines.extend(["", "## Best measured decode on this host", ""])
+        for band, item in best.items():
+            lines.append(
+                f"- **{band}**: `{item['id']}` / `{item['variant']}` = **{item['decode_tps_median']:.2f} tok/s**"
+            )
+    lines.extend(
+        [
+            "",
+            f"Raw evidence: [`{JSON_PATH.relative_to(ROOT)}`]({JSON_PATH.relative_to(ROOT)})",
+            "",
+        ]
+    )
+    MD_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def main() -> int:
+    payload = {
+        "schema": "turbofit.hardware-tier-tps/v1",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "topology": "2x24",
+        "accelerators": gpu_snapshot(),
+        "host_ram_mb": 386861,
+        "context_tokens": 8192,
+        "generation_tokens": 128,
+        "repeats": 3,
+        "rows": [],
+        "missing": [
+            "Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf",
+            "Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+            "Ornith-1.5-35B-Q4_K_M.gguf",
+        ],
+    }
+    write_outputs(payload)
+    for spec in EXPERIMENTS:
+        if not Path(spec["model"]).is_file():
+            payload["rows"].append(
+                {
+                    "tier_band": spec["tier_band"],
+                    "id": spec["id"],
+                    "variant": "missing-artifact",
+                    "decode_tps_median": None,
+                    "notes": f"artifact missing: {spec['model']}",
+                }
+            )
+            write_outputs(payload)
+            continue
+        if not Path(spec["binary"]).is_file():
+            payload["rows"].append(
+                {
+                    "tier_band": spec["tier_band"],
+                    "id": spec["id"],
+                    "variant": "missing-binary",
+                    "decode_tps_median": None,
+                    "notes": f"binary missing: {spec['binary']}",
+                }
+            )
+            write_outputs(payload)
+            continue
+        for variant in VARIANTS:
+            log_path = ROOT / "logs" / f"tps-{spec['id']}-{variant['name']}.log"
+            proc = start_server(spec["binary"], spec["model"], spec["extra"], variant["args"], log_path)
+            row = {
+                "tier_band": spec["tier_band"],
+                "id": spec["id"],
+                "variant": variant["name"],
+                "command": [spec["binary"], "-m", spec["model"], *variant["args"]],
+                "pid": proc.pid,
+            }
+            try:
+                if not wait_health(240):
+                    row["notes"] = f"server failed health; see {log_path}"
+                    row["decode_tps_median"] = None
+                    payload["rows"].append(row)
+                    write_outputs(payload)
+                    continue
+                one_completion(32)
+                samples = [one_completion(128) for _ in range(3)]
+                row["samples"] = samples
+                row["decode_tps_median"] = median(
+                    [item.get("predicted_per_second") for item in samples]
+                )
+                row["prefill_tps_median"] = median(
+                    [item.get("prompt_per_second") for item in samples]
+                )
+                snap = gpu_snapshot()
+                row["gpu_after"] = snap
+                if snap:
+                    row["gpu0_peak_mb"] = snap[0].get("memory_used_mb")
+                row["notes"] = "live /completion timings"
+                payload["rows"].append(row)
+                write_outputs(payload)
+            finally:
+                try:
+                    os.killpg(proc.pid, signal.SIGTERM)
+                except Exception:
+                    proc.terminate()
+                try:
+                    proc.wait(timeout=20)
+                except Exception:
+                    proc.kill()
+                kill_port()
+                time.sleep(2)
+    best: dict[str, dict] = {}
+    for row in payload["rows"]:
+        tps = row.get("decode_tps_median")
+        if tps is None:
+            continue
+        current = best.get(row["tier_band"])
+        if current is None or tps > current["decode_tps_median"]:
+            best[row["tier_band"]] = row
+    payload["best_per_band"] = {
+        band: {
+            "id": item["id"],
+            "variant": item["variant"],
+            "decode_tps_median": item["decode_tps_median"],
+        }
+        for band, item in best.items()
+    }
+    payload["finished_at"] = datetime.now(timezone.utc).isoformat()
+    write_outputs(payload)
+    print(JSON_PATH)
+    print(MD_PATH)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,452 @@
+{
+  "schema": "turbofit.hardware-tier-tps/v1",
+  "generated_at": "2026-08-22T18:08:14.138242+00:00",
+  "topology": "2x24",
+  "accelerators": [
+    {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "memory_used_mb": "226",
+      "memory_total_mb": "24576",
+      "utilization_pct": "0"
+    },
+    {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 3090",
+      "memory_used_mb": "68",
+      "memory_total_mb": "24576",
+      "utilization_pct": "0"
+    }
+  ],
+  "host_ram_mb": 386861,
+  "context_tokens": 8192,
+  "generation_tokens": 128,
+  "repeats": 3,
+  "rows": [
+    {
+      "tier_band": "8GB-class model",
+      "id": "bonsai-27b-q1",
+      "variant": "ceiling-ngl99-fa-b2048",
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Bonsai-27B/Bonsai-27B-Q1_0.gguf",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "8192",
+        "--parallel",
+        "1"
+      ],
+      "pid": 1657013,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 65.05370742603317,
+          "prompt_per_second": 65.9493407602437,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 63.82177768581237,
+          "prompt_per_second": 65.86547230610218,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 62.56702737209687,
+          "prompt_per_second": 64.28069897843135,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 63.82177768581237,
+      "prefill_tps_median": 65.86547230610218,
+      "gpu_after": [
+        {
+          "index": "0",
+          "name": "NVIDIA GeForce RTX 3090",
+          "memory_used_mb": "4781",
+          "memory_total_mb": "24576",
+          "utilization_pct": "94"
+        },
+        {
+          "index": "1",
+          "name": "NVIDIA GeForce RTX 3090",
+          "memory_used_mb": "68",
+          "memory_total_mb": "24576",
+          "utilization_pct": "0"
+        }
+      ],
+      "gpu0_peak_mb": "4781",
+      "notes": "live /completion timings"
+    },
+    {
+      "tier_band": "8GB-class model",
+      "id": "bonsai-27b-q1",
+      "variant": "fit-on-fa-b2048",
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Bonsai-27B/Bonsai-27B-Q1_0.gguf",
+        "-ngl",
+        "auto",
+        "--fit",
+        "on",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "8192",
+        "--parallel",
+        "1"
+      ],
+      "pid": 1667579,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 63.24829402550685,
+          "prompt_per_second": 66.13251939463309,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 61.76619468608055,
+          "prompt_per_second": 64.36376419097223,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 61.02785206276524,
+          "prompt_per_second": 64.63352789682502,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 61.76619468608055,
+      "prefill_tps_median": 64.63352789682502,
+      "gpu_after": [
+        {
+          "index": "0",
+          "name": "NVIDIA GeForce RTX 3090",
+          "memory_used_mb": "4781",
+          "memory_total_mb": "24576",
+          "utilization_pct": "95"
+        },
+        {
+          "index": "1",
+          "name": "NVIDIA GeForce RTX 3090",
+          "memory_used_mb": "68",
+          "memory_total_mb": "24576",
+          "utilization_pct": "0"
+        }
+      ],
+      "gpu0_peak_mb": "4781",
+      "notes": "live /completion timings"
+    },
+    {
+      "tier_band": "24-95GB-class model",
+      "id": "qwen3.8-27b-q4-k-m",
+      "variant": "ceiling-ngl99-fa-b2048",
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B/Qwen3.8-27B-Q4_K_M.gguf",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "8192",
+        "--parallel",
+        "1"
+      ],
+      "pid": 1676953,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 37.71282333221668,
+          "prompt_per_second": 60.16875020249099,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 37.668596397469614,
+          "prompt_per_second": 58.7069125131526,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 37.479788731115896,
+          "prompt_per_second": 58.09588502377463,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 37.668596397469614,
+      "prefill_tps_median": 58.7069125131526,
+      "gpu_after": [
+        {
+          "index": "0",
+          "name": "NVIDIA GeForce RTX 3090",
+          "memory_used_mb": "18737",
+          "memory_total_mb": "24576",
+          "utilization_pct": "97"
+        },
+        {
+          "index": "1",
+          "name": "NVIDIA GeForce RTX 3090",
+          "memory_used_mb": "68",
+          "memory_total_mb": "24576",
+          "utilization_pct": "1"
+        }
+      ],
+      "gpu0_peak_mb": "18737",
+      "notes": "live /completion timings"
+    },
+    {
+      "tier_band": "24-95GB-class model",
+      "id": "qwen3.8-27b-q4-k-m",
+      "variant": "fit-on-fa-b2048",
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B/Qwen3.8-27B-Q4_K_M.gguf",
+        "-ngl",
+        "auto",
+        "--fit",
+        "on",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "8192",
+        "--parallel",
+        "1"
+      ],
+      "pid": 1739413,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 37.64278526026163,
+          "prompt_per_second": 59.642876805343995,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 37.44159257814031,
+          "prompt_per_second": 58.78841596874265,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 37.330147827385396,
+          "prompt_per_second": 58.132255352639206,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 37.44159257814031,
+      "prefill_tps_median": 58.78841596874265,
+      "gpu_after": [
+        {
+          "index": "0",
+          "name": "NVIDIA GeForce RTX 3090",
+          "memory_used_mb": "18737",
+          "memory_total_mb": "24576",
+          "utilization_pct": "97"
+        },
+        {
+          "index": "1",
+          "name": "NVIDIA GeForce RTX 3090",
+          "memory_used_mb": "68",
+          "memory_total_mb": "24576",
+          "utilization_pct": "0"
+        }
+      ],
+      "gpu0_peak_mb": "18737",
+      "notes": "live /completion timings"
+    },
+    {
+      "tier_band": "aux",
+      "id": "carwin-moe-nano",
+      "variant": "ceiling-ngl99-fa-b2048",
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "8192",
+        "--parallel",
+        "1"
+      ],
+      "pid": 1753015,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 133.83465564761335,
+          "prompt_per_second": 134.28503548223824,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 132.45663597398055,
+          "prompt_per_second": 137.31185635067334,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 130.5041129186837,
+          "prompt_per_second": 137.932497957538,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 132.45663597398055,
+      "prefill_tps_median": 137.31185635067334,
+      "gpu_after": [
+        {
+          "index": "0",
+          "name": "NVIDIA GeForce RTX 3090",
+          "memory_used_mb": "11535",
+          "memory_total_mb": "24576",
+          "utilization_pct": "88"
+        },
+        {
+          "index": "1",
+          "name": "NVIDIA GeForce RTX 3090",
+          "memory_used_mb": "68",
+          "memory_total_mb": "24576",
+          "utilization_pct": "0"
+        }
+      ],
+      "gpu0_peak_mb": "11535",
+      "notes": "live /completion timings"
+    },
+    {
+      "tier_band": "aux",
+      "id": "carwin-moe-nano",
+      "variant": "fit-on-fa-b2048",
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Carwin-MoE-Nano/carwin-moe-Nano.gguf",
+        "-ngl",
+        "auto",
+        "--fit",
+        "on",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "8192",
+        "--parallel",
+        "1"
+      ],
+      "pid": 1760775,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 134.25535998791702,
+          "prompt_per_second": 133.77100462024472,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 132.34419830950966,
+          "prompt_per_second": 138.05407471911306,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_n": 128,
+          "predicted_per_second": 131.67369612179817,
+          "prompt_per_second": 137.41200346701055,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 132.34419830950966,
+      "prefill_tps_median": 137.41200346701055,
+      "gpu_after": [
+        {
+          "index": "0",
+          "name": "NVIDIA GeForce RTX 3090",
+          "memory_used_mb": "11535",
+          "memory_total_mb": "24576",
+          "utilization_pct": "90"
+        },
+        {
+          "index": "1",
+          "name": "NVIDIA GeForce RTX 3090",
+          "memory_used_mb": "68",
+          "memory_total_mb": "24576",
+          "utilization_pct": "0"
+        }
+      ],
+      "gpu0_peak_mb": "11535",
+      "notes": "live /completion timings"
+    }
+  ],
+  "missing": [
+    "Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf",
+    "Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+    "Ornith-1.5-35B-Q4_K_M.gguf"
+  ],
+  "best_per_band": {
+    "8GB-class model": {
+      "id": "bonsai-27b-q1",
+      "variant": "ceiling-ngl99-fa-b2048",
+      "decode_tps_median": 63.82177768581237
+    },
+    "24-95GB-class model": {
+      "id": "qwen3.8-27b-q4-k-m",
+      "variant": "ceiling-ngl99-fa-b2048",
+      "decode_tps_median": 37.668596397469614
+    },
+    "aux": {
+      "id": "carwin-moe-nano",
+      "variant": "ceiling-ngl99-fa-b2048",
+      "decode_tps_median": 132.45663597398055
+    }
+  },
+  "finished_at": "2026-08-22T18:11:19.560986+00:00"
+}
