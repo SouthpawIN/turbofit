@@ -154,8 +154,8 @@ def test_every_resolved_component_has_bounded_turbohaul_microbatching() -> None:
     book = RecipeBook.load(RECIPES, platform_name="linux")
     cases = (
         row("Carwin Nano", "auto", 131_072),
-        row("qwen3-8-27b-q4-mtp", "Carwin Nano", 262_144),
-        row("DeepSeek V4 Flash 0731", "auto", 65_536),
+        row("qwen3-8-27b-q4-mtp", "ornith-1-5-35a3b", 262_144),
+        row("Qwen 3.8 27B Unleashed", "auto", 65_536),
     )
 
     for case in cases:
@@ -202,35 +202,38 @@ def test_every_catalog_configuration_compiles_to_an_actual_jinja_launch_recipe()
 
     resolved = [book.resolve_catalog_configuration(item) for item in matrix["rows"]]
 
-    assert len(resolved) == 1620
-    assert len({item.row_id for item in resolved}) == 1620
+    assert len(resolved) == 504
+    assert len({item.row_id for item in resolved}) == 504
     assert all(component.command and "--jinja" in component.command for item in resolved for component in item.components)
 
 
-def test_deepseek_v4_flash_q8_compiles_with_live_verified_hybrid_offload() -> None:
+def test_unleashed_q3_compiles_with_vision_projector() -> None:
     component = RecipeBook.load(RECIPES).resolve_catalog_configuration({
-        "id": "deepseek-v4-flash-0731-q8-dspark--auto--1m",
-        "main": "deepseek-v4-flash-0731-q8-dspark",
+        "id": "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k",
+        "main": "qwen3-8-27b-unleashed-ud-q3-k-xl",
         "auxiliary": "auto",
-        "context": 1_048_576,
+        "context": 262_144,
         "status": "candidate",
     }).components[0]
 
-    assert component.model_path.endswith("DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf")
-    assert component.command[0].endswith(
-        ".local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server"
-    )
-    draft_index = component.command.index("--model-draft")
-    assert component.command[draft_index + 1].endswith("dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf")
-    assert component.method == "dspark"
+    assert component.model_path.endswith("Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf")
+    assert component.projector_path.endswith("mmproj-Unleashed-f16.gguf")
+    assert component.method == "baseline"
     assert "--jinja" in component.command
-    assert component.command[component.command.index("--spec-type") + 1] == "draft-dspark"
-    assert component.command[component.command.index("--spec-draft-n-max") + 1] == "3"
-    assert component.command[component.command.index("-ngl") + 1] == "99"
-    assert component.command[component.command.index("-ngld") + 1] == "0"
-    assert component.command[component.command.index("--fit") + 1] == "off"
-    assert "--cpu-moe" in component.command
-    assert "--no-kv-offload" in component.command
+    assert "--host" in component.command
+
+
+def test_ornith_aux_compiles_with_expert_offload() -> None:
+    recipe = RecipeBook.load(RECIPES).resolve_catalog_configuration({
+        "id": "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--64k",
+        "main": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+        "auxiliary": "ornith-1-5-35a3b",
+        "context": 65_536,
+        "status": "candidate",
+    })
+    aux = next(item for item in recipe.components if item.role == "aux")
+    assert aux.model_path.endswith("Ornith-1.5-35B-Q4_K_M.gguf")
+    assert "--cpu-moe" in aux.command
 
 
 def test_catalog_variants_compile_distinct_artifacts_and_features() -> None:

@@ -1,7 +1,7 @@
 ---
 name: turbofit
 description: "Hardware-aware adaptive Hermes runtime using portable Turbofiles, total usable memory, owned native llama.cpp residency, stable auto/active:main/active:aux routes, and evidence-backed promotion. Use for recommending, activating, inspecting, testing, or troubleshooting Turbofit runtimes."
-version: 2.2.0
+version: 2.3.0
 author: SouthpawIN + Nous Girl
 license: MIT
 tags: [hermes-agent, llama-cpp, llm, accelerator, cpu, adaptive-runtime, turbofile]
@@ -9,9 +9,9 @@ tags: [hermes-agent, llama-cpp, llm, accelerator, cpu, adaptive-runtime, turbofi
 
 # Turbofit
 
-## 2.2 model authority
+## 2.3 model authority
 
-Qwen 3.8 27B replaces the retired GRM family through six pinned Q4/Q8/BF16 variants, with and without MTP, plus explicit vision projectors. Turbofit 2.2 also adds DeepSeek V4 Flash 0731 Q2 DwarfStar and pinned MiniMax Music 3, NVIDIA Parakeet TDT 0.6B v3, and Soprano TTS integration candidates. The exhaustive campaign contains 1,620 rows; new catalog entries remain candidates until current-recipe physical evidence promotes them.
+Main Auto chain: Bonsai 27B (8GB), Qwen 3.8 27B Unleashed UD-IQ3_XXS (16GB), UD-Q3_K_XL (24–95GB), and Qwen 3.8 27B 16-bit (96GB+) until an Unleashed FP16 GGUF is published. Auxiliary is Ornith 1.5 35A3B, optional Carwin Nano, or auto. DeepSeek V4 Flash 0731 is retired. API fallback is the five keyless Nous free models. New catalog entries remain candidates until current-recipe physical evidence promotes them.
 
 ## Use when
 

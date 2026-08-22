@@ -28,6 +28,13 @@ from turbofit_runtime.tailnet import publish_tailnet, tailnet_status
 
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8091/v1"
+NOUS_FREE_FALLBACK_CHAIN = [
+    {"provider": "nous", "model": "upstage/solar-pro4:free"},
+    {"provider": "nous", "model": "meituan/longcat-2.0:free"},
+    {"provider": "nous", "model": "tencent/hy3:free"},
+    {"provider": "nous", "model": "poolside/laguna-s-2.1:free"},
+    {"provider": "nous", "model": "stepfun/step-3.7-flash:free"},
+]
 SELECTION_PATH = Path(
     os.getenv(
         "TURBOFIT_SELECTION_STATE",
@@ -629,7 +636,7 @@ def apply_configuration(
             load_config(),
             primary=primary,
             fallback=fallback,
-            fallback_chain=fallback_chain,
+            fallback_chain=list(NOUS_FREE_FALLBACK_CHAIN) if fallback_chain is None else fallback_chain,
             base_url=effective_base_url,
         )
         if multimodal is not None:

@@ -192,9 +192,10 @@ def test_apply_configuration_can_publish_tailnet_and_use_remote_provider_url(mon
 
     assert result["tailnet"]["dashboard_url"] == "https://host.example.ts.net:9444/"
     assert saved[0]["providers"]["turbofit"]["api"] == "https://host.example.ts.net:9443/v1"
-    assert saved[0]["fallback_providers"][0] == {
-        "provider": "custom:turbofit", "model": "auto",
-    }
+    chain = saved[0]["fallback_providers"]
+    assert {"provider": "custom:turbofit", "model": "auto"} in chain
+    assert {"provider": "nous", "model": "upstage/solar-pro4:free"} in chain
+    assert {"provider": "nous", "model": "stepfun/step-3.7-flash:free"} in chain
 
 
 def test_install_sirvir_profile_copies_bundled_customer_service_profile(tmp_path: Path) -> None:

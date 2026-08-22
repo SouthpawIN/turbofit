@@ -21,8 +21,8 @@
         "physical 8 GB exact-topology promotion pending",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "bonsai-27b",
-      "basis": "Candidate only. Previous observations used a superseded runtime/validation recipe and are excluded from recommendations."
+      "candidate": "auto",
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
     },
     {
       "vram_gb": 16,
@@ -36,8 +36,8 @@
         "physical 16 GB exact-topology promotion pending",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "carwin-nano",
-      "basis": "Candidate only. Previous observations used a superseded runtime/validation recipe and are excluded from recommendations."
+      "candidate": "ornith-1-5-35a3b",
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
     },
     {
       "vram_gb": 24,
@@ -51,61 +51,60 @@
         "physical 24 GB exact-topology promotion pending",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "carwin-nano",
-      "basis": "Candidate only. Previous observations used a superseded runtime/validation recipe and are excluded from recommendations."
+      "candidate": "ornith-1-5-35a3b",
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
     },
     {
       "vram_gb": 48,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "candidates": [
+        "ornith-1-5-35a3b",
         "carwin-nano",
-        "ternary-bonsai-27b",
-        "bonsai-27b"
+        "auto"
       ],
       "main_control": null,
       "context": 65536,
       "limitations": [
         "physical 48 GB exact-topology promotion pending",
-        "current production-recipe intelligence and TPS evidence required",
-        "GRM control deferred; Qwen3.8-27B replacement pending"
+        "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "carwin-nano",
-      "basis": "Candidate only. Previous observations used a superseded runtime/validation recipe and are excluded from recommendations.",
+      "candidate": "ornith-1-5-35a3b",
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai.",
       "evidence": null,
       "decode_tps": null
     },
     {
       "vram_gb": 64,
       "best_auxiliary": null,
-      "status": "replacement-pending",
-      "candidate": null,
+      "status": "requires-current-recipe-validation",
+      "candidate": "ornith-1-5-35a3b",
       "artifact_gib": null,
       "capabilities": [],
       "limitations": [
-        "Qwen3.8-27B replacement artifacts and physical 64GB evidence required"
+        "physical exact-topology promotion pending"
       ],
-      "basis": "GRM candidate retired; no replacement is eligible until Qwen3.8-27B physical evidence exists.",
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai.",
       "evidence": null
     },
     {
       "vram_gb": 96,
       "best_auxiliary": null,
-      "status": "replacement-pending",
-      "candidate": null,
+      "status": "requires-current-recipe-validation",
+      "candidate": "ornith-1-5-35a3b",
       "artifact_gib": null,
       "capabilities": [],
       "limitations": [
-        "Qwen3.8-27B replacement artifacts and physical 96GB evidence required"
+        "physical exact-topology promotion pending"
       ],
-      "basis": "GRM candidate retired; no replacement is eligible until Qwen3.8-27B physical evidence exists.",
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai.",
       "evidence": null
     },
     {
       "vram_gb": 200,
       "best_auxiliary": null,
-      "status": "candidate-only",
-      "candidate": "minimax-m3-q4",
+      "status": "requires-current-recipe-validation",
+      "candidate": "ornith-1-5-35a3b",
       "capabilities": [
         "vision",
         "expert-offload"
@@ -113,20 +112,22 @@
       "limitations": [
         "246 GiB artifact requires system-RAM offload",
         "physical 200GB tournament pending"
-      ]
+      ],
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
     },
     {
       "vram_gb": 300,
       "best_auxiliary": null,
-      "status": "candidate-only",
-      "candidate": "minimax-m3-q4",
+      "status": "requires-current-recipe-validation",
+      "candidate": "ornith-1-5-35a3b",
       "capabilities": [
         "vision",
         "expert-offload"
       ],
       "limitations": [
         "physical 300GB tournament pending"
-      ]
+      ],
+      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B Unleashed quant, then Bonsai."
     }
   ]
 }

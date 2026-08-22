@@ -14,7 +14,7 @@
       "vram_gb": 8,
       "physical_evidence_required": true,
       "candidates": [
-        "bonsai-27b-dspark--auto--64k",
+        "bonsai-27b--auto--64k",
         "bonsai-27b--auto--128k"
       ],
       "winner": null
@@ -24,9 +24,9 @@
       "vram_gb": 16,
       "physical_evidence_required": true,
       "candidates": [
-        "bonsai-27b-dspark--auto--128k",
-        "ternary-bonsai-27b-dspark--auto--128k",
-        "bonsai-27b--auto--262k"
+        "qwen3-8-27b-unleashed-ud-iq3-xxs--auto--64k",
+        "qwen3-8-27b-unleashed-ud-iq3-xxs--ornith-1-5-35a3b--64k",
+        "qwen3-8-27b-unleashed-ud-iq3-xxs--auto--128k"
       ],
       "winner": null
     },
@@ -35,9 +35,9 @@
       "vram_gb": 24,
       "physical_evidence_required": true,
       "candidates": [
-        "qwen3-8-27b-q4-mtp--auto--64k",
-        "qwen3-8-27b-q4-mtp--auto--128k",
-        "ternary-bonsai-27b--auto--262k"
+        "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--64k",
+        "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--64k",
+        "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--128k"
       ],
       "winner": null
     },
@@ -46,12 +46,9 @@
       "vram_gb": 48,
       "physical_evidence_required": true,
       "candidates": [
-        "qwen3-8-27b-q4-mtp--carwin-nano--64k",
-        "qwen3-8-27b-q4-mtp--ternary-bonsai-27b--64k",
-        "qwen3-8-27b-q4-mtp--bonsai-27b--64k",
-        "qwen3-8-27b-q4-mtp--auto--262k",
-        "qwen3-8-27b-q8-mtp--auto--128k",
-        "qwen3-8-27b-q8-mtp--auto--262k"
+        "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--128k",
+        "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--64k",
+        "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k"
       ],
       "winner": null
     },
@@ -60,9 +57,9 @@
       "vram_gb": 64,
       "physical_evidence_required": true,
       "candidates": [
-        "qwen3-8-27b-q8-mtp--auto--262k",
-        "qwen3-8-27b-bf16-mtp--auto--64k",
-        "qwen3-8-27b-bf16-mtp--auto--128k"
+        "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--262k",
+        "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k",
+        "qwen3-8-27b-unleashed-ud-iq3-xxs--auto--262k"
       ],
       "winner": null
     },
@@ -71,9 +68,9 @@
       "vram_gb": 96,
       "physical_evidence_required": true,
       "candidates": [
-        "qwen3-8-27b-bf16-mtp--auto--128k",
-        "qwen3-8-27b-bf16-mtp--auto--262k",
-        "qwen3-8-27b-bf16-mtp--carwin-nano--128k"
+        "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--262k",
+        "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--1m",
+        "qwen3-8-27b-bf16--ornith-1-5-35a3b--262k"
       ],
       "winner": null
     },
@@ -82,9 +79,9 @@
       "vram_gb": 200,
       "physical_evidence_required": true,
       "candidates": [
-        "deepseek-v4-flash-0731-q8-dspark--auto--128k",
-        "deepseek-v4-flash-0731-q8-dspark--auto--262k",
-        "qwen3-8-27b-bf16-mtp--auto--1m"
+        "qwen3-8-27b-bf16--ornith-1-5-35a3b--1m",
+        "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--1m",
+        "qwen3-8-27b-bf16--auto--1m"
       ],
       "winner": null
     },
@@ -93,9 +90,9 @@
       "vram_gb": 300,
       "physical_evidence_required": true,
       "candidates": [
-        "deepseek-v4-flash-0731-q8-dspark--auto--262k",
-        "deepseek-v4-flash-0731-q8-dspark--auto--1m",
-        "deepseek-v4-flash-0731-q8-dspark--carwin-nano--262k"
+        "qwen3-8-27b-bf16--ornith-1-5-35a3b--1m",
+        "qwen3-8-27b-bf16-mtp--ornith-1-5-35a3b--1m",
+        "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--1m"
       ],
       "winner": null
     }

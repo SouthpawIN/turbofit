@@ -7,7 +7,7 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_VERSION = "2.2.0"
+RELEASE_VERSION = "2.3.0"
 
 
 def test_all_release_surfaces_use_release_version() -> None:
@@ -28,8 +28,8 @@ def test_all_release_surfaces_use_release_version() -> None:
 
 def test_release_readmes_show_every_new_2_2_model() -> None:
     required = {
-        "Qwen 3.8 27B",
-        "DeepSeek V4 Flash 0731 Q2 DwarfStar",
+        "Qwen 3.8 27B Unleashed",
+        "Ornith 1.5 35A3B",
         "MiniMax Music 3",
         "NVIDIA Parakeet TDT 0.6B v3",
         "Soprano TTS",
@@ -42,8 +42,9 @@ def test_release_readmes_show_every_new_2_2_model() -> None:
 def test_readme_qwen_variants_match_active_catalog() -> None:
     catalog = json.loads((ROOT / "references/model-catalog.json").read_text())
     qwen = [row for row in catalog["models"] if row["id"].startswith("qwen3-8-27b-")]
-    assert len(qwen) == 6
-    assert {row["quantization"] for row in qwen} == {"Q4_K_M", "Q8_0", "BF16"}
-    assert sum("mtp" in row["runtime_features"] for row in qwen) == 3
+    unleashed = [row for row in qwen if "unleashed" in row["id"]]
+    assert len(unleashed) == 2
+    assert {row["quantization"] for row in unleashed} == {"UD-IQ3_XXS", "UD-Q3_K_XL"}
     readme = (ROOT / "README.md").read_text()
-    assert "**6 active catalog candidates**" in readme
+    assert "Qwen 3.8 27B Unleashed" in readme
+    assert "Ornith 1.5 35A3B" in readme

@@ -17,31 +17,29 @@ Turbofit can be the primary provider, one entry in an ordered fallback chain, or
 
 > **Evidence policy:** catalog entries are candidates until they pass the physical benchmark campaign. A candidate is never presented as a winner merely because it compiles, downloads, or fits an estimated memory budget.
 
-## Turbofit 2.2 — new model release
+## Turbofit 2.3 — Unleashed / Ornith / Nous free fallback
 
-Turbofit 2.2 replaces every active GRM 2.6 variant with the released **Qwen 3.8 27B** family and adds the newly requested DeepSeek and multimodal model paths. GRM artifacts and routes are removed from active manifests; immutable historical evidence remains attached to the retired IDs and cannot satisfy Qwen's new recipe hashes.
+Turbofit 2.3 retires DeepSeek V4 Flash 0731 from the active catalog and replaces the Auto chain and API fallback.
 
 | New model | Turbofit entries | Capability | Current status |
 |---|---|---|---|
-| **Qwen 3.8 27B** | `Q4_K_M`, `Q8_0`, and `BF16`, each with or without MTP | Dense native image/video understanding, 262K native context, optional vision projector and MTP draft | **6 active catalog candidates** replacing the 6 retired GRM entries |
-| **DeepSeek V4 Flash 0731 Q2 DwarfStar** | `UD-Q2_K_XL + DSpark` | Large sparse main-model path with expert offload and speculative decoding | **Active catalog candidate** for high-memory systems |
+| **Qwen 3.8 27B Unleashed** | `UD-IQ3_XXS`, `UD-Q3_K_XL` | Uncensored dense 27B, 262K context, vision projector | **Active catalog candidates** |
+| **Ornith 1.5 35A3B** | `Q4_K_M` MoE | Auxiliary MoE with expert offload | **Active auxiliary candidate** |
+| **Qwen 3.8 27B** | `Q4_K_M`, `Q8_0`, and `BF16`, each with or without MTP | Dense native image/video understanding | **Active catalog candidates** |
 | **MiniMax Music 3** | `minimax-music3` | Full-song music generation | **Pinned integration candidate** |
 | **NVIDIA Parakeet TDT 0.6B v3** | `parakeet-tdt-0-6b-v3` | Local speech-to-text | **Pinned integration candidate** |
 | **Soprano TTS** | `soprano-tts` | Local text-to-speech | **Pinned integration candidate** |
 
 “Active catalog candidate” means the model is selectable by the catalog/campaign machinery, not that Turbofit has fabricated a benchmark winner. Automatic promotion still requires current-recipe physical and intelligence evidence.
 
-![Turbofit 2.2 Qwen 3.8 27B release lineup: Q4, Q8, and BF16 with optional MTP](assets/turbofit-2.2-qwen-lineup.png)
-
 | Usable memory band | Main model path |
 |---|---|
-| 256 GB and above | DeepSeek V4 Flash 0731 Q4 |
-| 128–256 GB | DeepSeek V4 Flash 0731 Q2 DwarfStar path |
-| 24–128 GB | Qwen 3.8 27B |
-| 16 GB | Ternary Bonsai 27B |
-| 8 GB | Binary Bonsai 27B |
+| 96 GB and above | Qwen 3.8 27B 16-bit until Unleashed FP16 GGUF is published |
+| 24–95 GB | Qwen 3.8 27B Unleashed UD-Q3_K_XL |
+| 16 GB | Qwen 3.8 27B Unleashed UD-IQ3_XXS |
+| 8 GB | Bonsai 27B |
 
-Auxiliary selection is intentionally smaller: **Carwin Nano**, **Ternary Bonsai**, or **Binary Bonsai**. Multimodal setup includes **MiniMax H3**, **MiniMax Music 3**, **NVIDIA Parakeet TDT 0.6B v3** speech-to-text, and **Soprano TTS**.
+Auxiliary selection is **Ornith 1.5 35A3B** (default), optional **Carwin Nano**, or **auto**. Scale-down offloads Ornith experts, then lowers context, then switches aux to auto, then a listed Unleashed quant, then Bonsai. API fallback is the five keyless Nous free models. NVIDIA NIM is not used.
 
 The lineup is a product target, not fabricated benchmark evidence. Newly onboarded Qwen rows remain candidates until exact artifacts, contexts, topology, output, throughput, and cleanup pass the physical campaign; Auto continues on a proven safe rung until promotion completes.
 

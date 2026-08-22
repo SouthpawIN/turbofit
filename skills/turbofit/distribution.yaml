@@ -7,8 +7,7 @@ description: >-
   model for your hardware — local or API — launches them detached, wires
   Hermes-Agent config, and adapts to live VRAM pressure via a scaling ladder.
   Three hardware tiers: Beefy (local+local), Modest (API+local), Thin (API+API).
-  `serve auto main` auto-detects GPU and suggests the right setup. API fallback
-  is always available (free: DeepSeek V4 Pro + MiniMax M3 via NVIDIA NIM).
+  API fallback is always available via the five keyless Nous free models.
   Dynamic model database auto-updates daily with real pricing from OpenRouter API.
   Replaces llama-launch, omni-va, and ad-hoc llama-server scripts.
 author: SouthpawIN
@@ -19,19 +18,8 @@ repo: https://github.com/SouthpawIN/turbofit
 # Hermes-Agent version requirement
 hermes_requires: ">=0.12.0"
 
-# Optional environment variables the user may set for API fallback mode
-env_requires:
-  - name: NVIDIA_API_KEY
-    description: >-
-      NVIDIA NIM API key for free-tier API fallback models
-      (DeepSeek V4 Pro, DS V4 Flash, MiniMax M3, Nemotron Ultra).
-      Sign up free at https://build.nvidia.com — ~1000 RPM, no credit card.
-    required: false
-  - name: OPENROUTER_API_KEY
-    description: >-
-      OpenRouter API key for API models. Only needed if using
-      API aux models not on NVIDIA NIM.
-    required: false
+# Optional environment variables the user may set for paid API extras
+env_requires: []
 
 # Files owned by this distribution — overwritten on update
 distribution_owned:
