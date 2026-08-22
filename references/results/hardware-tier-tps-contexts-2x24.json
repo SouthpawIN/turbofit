@@ -1,0 +1,914 @@
+{
+  "schema": "turbofit.hardware-tier-tps/v2",
+  "generated_at": "2026-08-22T19:30:25.572825+00:00",
+  "topology": "2x24",
+  "contexts": [
+    65536,
+    131072,
+    262144,
+    1048576
+  ],
+  "rows": [
+    {
+      "band": "8GB",
+      "id": "bonsai-27b-q1",
+      "context": 65536,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Bonsai-27B/Bonsai-27B-Q1_0.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "65536",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja"
+      ],
+      "pid": 1682419,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 60.553162601799094,
+          "prompt_per_second": 40.80133828389571,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 58.75111650071007,
+          "prompt_per_second": 40.2886683084299,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 57.158448130271246,
+          "prompt_per_second": 40.06410256410256,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 58.75111650071007,
+      "prefill_tps_median": 40.2886683084299,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "5687",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "5687+68",
+      "notes": "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+    },
+    {
+      "band": "8GB",
+      "id": "bonsai-27b-q1",
+      "context": 131072,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Bonsai-27B/Bonsai-27B-Q1_0.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "131072",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja"
+      ],
+      "pid": 1703351,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 59.621570711648666,
+          "prompt_per_second": 40.596772556581755,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 58.13119119893765,
+          "prompt_per_second": 40.58647455735376,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 58.068057578108345,
+          "prompt_per_second": 40.25339512229484,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 58.13119119893765,
+      "prefill_tps_median": 40.58647455735376,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "7159",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "7159+68",
+      "notes": "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+    },
+    {
+      "band": "8GB",
+      "id": "bonsai-27b-q1",
+      "context": 262144,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Bonsai-27B/Bonsai-27B-Q1_0.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "262144",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja"
+      ],
+      "pid": 1726880,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 58.98337544346973,
+          "prompt_per_second": 40.31750031498047,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 58.48407451236618,
+          "prompt_per_second": 39.61513892534032,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 58.169126735984875,
+          "prompt_per_second": 39.82239213109531,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 58.48407451236618,
+      "prefill_tps_median": 39.82239213109531,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "10103",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "10103+68",
+      "notes": "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+    },
+    {
+      "band": "8GB",
+      "id": "bonsai-27b-q1",
+      "context": 1048576,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Bonsai-27B/Bonsai-27B-Q1_0.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "1048576",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja",
+        "--rope-scaling",
+        "yarn",
+        "--rope-scale",
+        "4",
+        "--yarn-orig-ctx",
+        "262144",
+        "--no-kv-offload",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1"
+      ],
+      "pid": 1747861,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 9.528522739521751,
+          "prompt_per_second": 18.86485454018096,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 9.406526792103191,
+          "prompt_per_second": 19.134727617152368,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 8.770933236889613,
+          "prompt_per_second": 16.65057111458923,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 9.406526792103191,
+      "prefill_tps_median": 18.86485454018096,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "8579",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "8487",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "8579+8487",
+      "notes": "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+    },
+    {
+      "band": "16GB",
+      "id": "unleashed-ud-iq3-xxs",
+      "context": 65536,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "65536",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja"
+      ],
+      "pid": 1850592,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 42.151426758532864,
+          "prompt_per_second": 37.84653231147696,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 41.34706994428702,
+          "prompt_per_second": 37.69655217909632,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 40.47129250669714,
+          "prompt_per_second": 37.94724384424554,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 41.34706994428702,
+      "prefill_tps_median": 37.84653231147696,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "11965",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "11965+68",
+      "notes": "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+    },
+    {
+      "band": "16GB",
+      "id": "unleashed-ud-iq3-xxs",
+      "context": 131072,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "131072",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja"
+      ],
+      "pid": 1874747,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 41.46772818168865,
+          "prompt_per_second": 38.379612749707356,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 40.75560899068734,
+          "prompt_per_second": 38.4571011037188,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 39.94153239513223,
+          "prompt_per_second": 38.080368617968226,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 40.75560899068734,
+      "prefill_tps_median": 38.379612749707356,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "13437",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "13437+68",
+      "notes": "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+    },
+    {
+      "band": "16GB",
+      "id": "unleashed-ud-iq3-xxs",
+      "context": 262144,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "262144",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja"
+      ],
+      "pid": 1899053,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 41.694703397630406,
+          "prompt_per_second": 38.53935831968398,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 40.71461953704012,
+          "prompt_per_second": 37.78236413697996,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 40.34762483404893,
+          "prompt_per_second": 37.933029236882284,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 40.71461953704012,
+      "prefill_tps_median": 37.933029236882284,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "16381",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "16381+68",
+      "notes": "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+    },
+    {
+      "band": "16GB",
+      "id": "unleashed-ud-iq3-xxs",
+      "context": 1048576,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "1048576",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja",
+        "--rope-scaling",
+        "yarn",
+        "--rope-scale",
+        "4",
+        "--yarn-orig-ctx",
+        "262144",
+        "--no-kv-offload",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1"
+      ],
+      "pid": 1923476,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 9.234079761545619,
+          "prompt_per_second": 18.554123537993046,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 8.556768422628384,
+          "prompt_per_second": 18.56699901594905,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 8.621887048731853,
+          "prompt_per_second": 16.846432136253945,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 8.621887048731853,
+      "prefill_tps_median": 18.554123537993046,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "11061",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "12283",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "11061+12283",
+      "notes": "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+    },
+    {
+      "band": "24-95GB",
+      "id": "unleashed-ud-q3-k-xl",
+      "context": 65536,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "65536",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja"
+      ],
+      "pid": 2013497,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 40.83877744014886,
+          "prompt_per_second": 36.1310835711963,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 40.05199249275466,
+          "prompt_per_second": 34.95342456177144,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 39.30202067654744,
+          "prompt_per_second": 35.18231033436388,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 40.05199249275466,
+      "prefill_tps_median": 35.18231033436388,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "13989",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "13989+68",
+      "notes": "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+    },
+    {
+      "band": "24-95GB",
+      "id": "unleashed-ud-q3-k-xl",
+      "context": 131072,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "131072",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja"
+      ],
+      "pid": 2041348,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 40.73643842591856,
+          "prompt_per_second": 38.55050115651503,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 39.684717322348114,
+          "prompt_per_second": 38.169577892180484,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 39.05776796451357,
+          "prompt_per_second": 37.27032164287578,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 39.684717322348114,
+      "prefill_tps_median": 38.169577892180484,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "15461",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "15461+68",
+      "notes": "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+    },
+    {
+      "band": "24-95GB",
+      "id": "unleashed-ud-q3-k-xl",
+      "context": 262144,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "262144",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja"
+      ],
+      "pid": 2069103,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 40.85423655241311,
+          "prompt_per_second": 38.63054710512338,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 39.896394051697,
+          "prompt_per_second": 37.905529942999564,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 39.418187551736374,
+          "prompt_per_second": 37.38894315478555,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 39.896394051697,
+      "prefill_tps_median": 37.905529942999564,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "18405",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "68",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "18405+68",
+      "notes": "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+    },
+    {
+      "band": "24-95GB",
+      "id": "unleashed-ud-q3-k-xl",
+      "context": 1048576,
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "18101",
+        "-ngl",
+        "99",
+        "-fa",
+        "on",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "-c",
+        "1048576",
+        "--parallel",
+        "1",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--jinja",
+        "--rope-scaling",
+        "yarn",
+        "--rope-scale",
+        "4",
+        "--yarn-orig-ctx",
+        "262144",
+        "--no-kv-offload",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1"
+      ],
+      "pid": 2096804,
+      "samples": [
+        {
+          "http": 200,
+          "predicted_per_second": 8.843905958049623,
+          "prompt_per_second": 18.75565600251326,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 8.685099070517984,
+          "prompt_per_second": 18.445887835167547,
+          "error": null
+        },
+        {
+          "http": 200,
+          "predicted_per_second": 8.88323507989533,
+          "prompt_per_second": 16.94495220464419,
+          "error": null
+        }
+      ],
+      "decode_tps_median": 8.843905958049623,
+      "prefill_tps_median": 18.445887835167547,
+      "gpu": [
+        {
+          "index": "0",
+          "used": "12203",
+          "total": "24576"
+        },
+        {
+          "index": "1",
+          "used": "13167",
+          "total": "24576"
+        }
+      ],
+      "gpu_used": "12203+13167",
+      "notes": "live /completion; Unleashed Q3/IQ3; YaRN only at 1M"
+    }
+  ],
+  "best": {
+    "8GB @ 65536": {
+      "id": "bonsai-27b-q1",
+      "decode_tps_median": 58.75111650071007
+    },
+    "8GB @ 131072": {
+      "id": "bonsai-27b-q1",
+      "decode_tps_median": 58.13119119893765
+    },
+    "8GB @ 262144": {
+      "id": "bonsai-27b-q1",
+      "decode_tps_median": 58.48407451236618
+    },
+    "8GB @ 1048576": {
+      "id": "bonsai-27b-q1",
+      "decode_tps_median": 9.406526792103191
+    },
+    "16GB @ 65536": {
+      "id": "unleashed-ud-iq3-xxs",
+      "decode_tps_median": 41.34706994428702
+    },
+    "16GB @ 131072": {
+      "id": "unleashed-ud-iq3-xxs",
+      "decode_tps_median": 40.75560899068734
+    },
+    "16GB @ 262144": {
+      "id": "unleashed-ud-iq3-xxs",
+      "decode_tps_median": 40.71461953704012
+    },
+    "16GB @ 1048576": {
+      "id": "unleashed-ud-iq3-xxs",
+      "decode_tps_median": 8.621887048731853
+    },
+    "24-95GB @ 65536": {
+      "id": "unleashed-ud-q3-k-xl",
+      "decode_tps_median": 40.05199249275466
+    },
+    "24-95GB @ 131072": {
+      "id": "unleashed-ud-q3-k-xl",
+      "decode_tps_median": 39.684717322348114
+    },
+    "24-95GB @ 262144": {
+      "id": "unleashed-ud-q3-k-xl",
+      "decode_tps_median": 39.896394051697
+    },
+    "24-95GB @ 1048576": {
+      "id": "unleashed-ud-q3-k-xl",
+      "decode_tps_median": 8.843905958049623
+    }
+  },
+  "finished_at": "2026-08-22T19:38:52.621598+00:00",
+  "note": "Carwin aux 64K-1M still pending. Main Unleashed Q3/IQ3 and Bonsai complete."
+}
