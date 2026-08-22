@@ -6,5 +6,5 @@ license: MIT
 distribution_owned:
   - README.md
   - SOUL.md
-  - AGENTS.md
+  - INSTRUCTIONS.md
   - config.yaml

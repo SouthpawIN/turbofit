@@ -36,7 +36,8 @@ MODELS = [
 PROMPT = "Write a Python function that implements merge sort with type hints and docstrings."
 
 def kill_port():
-    os.system(f"fuser -k {PORT}/tcp 2>/dev/null; sleep 3")
+    subprocess.run(["fuser", "-k", f"{PORT}/tcp"], stderr=subprocess.DEVNULL)
+    time.sleep(3)
 
 def launch(model):
     binary = ATOMIC if model["binary"] == "atomic" else STOCK

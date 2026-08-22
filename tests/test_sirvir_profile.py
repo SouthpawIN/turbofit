@@ -9,7 +9,7 @@ SIRVIR = ROOT / "profiles" / "sirvir"
 
 def test_sirvir_is_local_only_customer_service_with_pr_suggestions() -> None:
     soul = (SIRVIR / "SOUL.md").read_text()
-    guide = (SIRVIR / "AGENTS.md").read_text()
+    guide = (SIRVIR / "INSTRUCTIONS.md").read_text()
     readme = (SIRVIR / "README.md").read_text()
     combined = "\n".join((soul, guide, readme)).lower()
 
@@ -46,7 +46,7 @@ def test_sirvir_distribution_owns_the_support_handbook() -> None:
     assert set(manifest["distribution_owned"]) == {
         "README.md",
         "SOUL.md",
-        "AGENTS.md",
+        "INSTRUCTIONS.md",
         "config.yaml",
     }
 
