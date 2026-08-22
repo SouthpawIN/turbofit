@@ -10,7 +10,7 @@ The canonical models in the TurboFit Check chain.
 
 Scans the user's hardware, then recommends and configures Hermes-Agent main and auxiliary models for that device.
 
-Low-VRAM Auto is **Bonsai 27B** (dense, all on GPU) or **Ornith 1.5 35A3B** with `--cpu-moe` and mmap. On 8 GB VRAM + <32 GB RAM, Ornith experts stream from disk — not a 9B shrink, and not a 32 GB RAM requirement.
+Low-VRAM dedicated Auto is **Bonsai 27B** or **Ornith 1.5 35A3B** (`--cpu-moe` + mmap). Apple Silicon uses **OrcaRouter Qwen3.8-27B-Uncensored MLX** (4/6/8-bit, never 2-bit). Integrated / unified (non-Apple) uses **Ornith 1.5**.
 
 Must account for:
 
@@ -61,5 +61,10 @@ TurboFit Check also recommends:
 ## Promo points
 
 - Uncensored Qwen 3.8 27B Unleashed, 262K context, single 24 GB GPU
+- Apple: OrcaRouter Uncensored MLX 4/6/8-bit
 - The entire fallback ladder, explained
 - Multimodal, explained
+
+## Not Auto yet
+
+`EschaLabs/Qwen3.8-27B-Escha-W2` (Asha mixed 2-bit, custom SGLang) is a research candidate only. One reviewer video is not TurboFit TPS. It does not replace Bonsai/Ornith at the bottom of the list until we have a pinned llama.cpp or TurboHaul recipe and 64K/128K/262K/1M numbers. OrcaRouter MLX 2-bit is banned (uploader: archival / quality collapse).

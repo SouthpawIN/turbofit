@@ -1,10 +1,15 @@
 """Canonical TurboFit Check / Auto lineup.
 
-A 9B must never be recommended. Low-VRAM machines run Bonsai 27B or
-Ornith 1.5 35A3B. Ornith experts stay off the GPU (`--cpu-moe`) and are
-mmapped so an 8 GB card with 8-16 GB RAM streams cold experts from disk
-instead of requiring 32 GB of host RAM. The 700B+ MoE class is out of
-Auto.
+A 9B must never be recommended. Routing:
+
+- Apple / Metal: OrcaRouter Qwen3.8-27B-Uncensored MLX (4/6/8-bit). Never the
+  MLX 2-bit build (uploader: archival, quality collapse).
+- Integrated / unified (non-Apple): Ornith 1.5 35A3B with --cpu-moe + mmap.
+- Dedicated 8 GB: Bonsai 27B and/or Ornith 1.5 streamed from disk.
+- Dedicated 16 GB+: Unleashed GGUF + Ornith aux.
+
+The Asha/Escha mixed 2-bit (EschaLabs/Qwen3.8-27B-Escha-W2) is a research
+candidate only: custom SGLang kernels, no llama.cpp recipe, no TurboFit TPS.
 """
 from __future__ import annotations
 
@@ -21,6 +26,9 @@ ALLOWED_MAIN = (
     "qwen3-8-27b-unleashed",
     "qwen3-8-27b-bf16",
     "qwen3-8-27b-q8",
+    "qwen3-8-27b-uncensored-mlx-4bit",
+    "qwen3-8-27b-uncensored-mlx-6bit",
+    "qwen3-8-27b-uncensored-mlx-8bit",
 )
 
 ALLOWED_AUX = (
@@ -30,8 +38,11 @@ ALLOWED_AUX = (
     "auto",
 )
 
+MLX_REPO = "orcarouter/Qwen3.8-27B-Uncensored-MLX"
+MLX_REVISION = "b4603df5fd2a51e7fed2560ee7090caa4e13e4b7"
+
 _BANNED = re.compile(
-    r"(?:^|[-_])9b(?:$|[-_])|ornith-9|qwen3\.5-9b|qwen3\.8-9b",
+    r"(?:^|[-_])9b(?:$|[-_])|ornith-9|qwen3\.5-9b|qwen3\.8-9b|mlx-2bit|uncensored-mlx-2",
     re.IGNORECASE,
 )
 
@@ -61,24 +72,20 @@ def is_allowed_aux(alias: str) -> bool:
 
 
 def expert_residency(*, host_ram_gb: float) -> dict[str, object]:
-    """How Ornith 1.5 experts live on a small box.
-
-    ram: host can hold the 21 GB Q4 experts.
-    disk: mmap + no mlock; cold experts stream from the drive.
-    """
     if host_ram_gb >= 32:
-        return {
-            "mode": "ram",
-            "cpu_moe": True,
-            "mmap": True,
-            "mlock": False,
-        }
-    return {
-        "mode": "disk",
-        "cpu_moe": True,
-        "mmap": True,
-        "mlock": False,
-    }
+        return {"mode": "ram", "cpu_moe": True, "mmap": True, "mlock": False}
+    return {"mode": "disk", "cpu_moe": True, "mmap": True, "mlock": False}
+
+
+def apple_mlx_main(*, unified_ram_gb: float) -> str:
+    """OrcaRouter Uncensored MLX. 2-bit is banned. Sub-24 GB Mac stays Ornith."""
+    if unified_ram_gb >= 48:
+        return "qwen3-8-27b-uncensored-mlx-8bit"
+    if unified_ram_gb >= 32:
+        return "qwen3-8-27b-uncensored-mlx-6bit"
+    if unified_ram_gb >= 24:
+        return "qwen3-8-27b-uncensored-mlx-4bit"
+    return "ornith-1-5-35a3b"
 
 
 def local_main_for_vram_gb(vram_gb: float) -> str:
@@ -92,23 +99,59 @@ def local_main_for_vram_gb(vram_gb: float) -> str:
 
 
 def local_aux_for_host(*, vram_gb: float, host_ram_gb: float) -> str:
-    """Ornith 1.5 is the aux MoE. On 8 GB VRAM it cannot share the card with
-    Bonsai, so aux becomes shared-main. On more VRAM, Ornith streams experts
-    from RAM or disk — never shrinks to a 9B.
-    """
     if vram_gb < 16:
         return "auto"
     return "ornith-1-5-35a3b"
 
 
 def low_vram_moe_main() -> str:
-    """8 GB MoE option: Ornith 1.5 with experts mmapped from disk or RAM."""
     return "ornith-1-5-35a3b"
 
 
-def check_local_options(*, vram_gb: float, host_ram_gb: float) -> list[dict[str, object]]:
-    """Ranked Check options. 8 GB boxes get Bonsai and disk-streamed Ornith."""
+def check_local_options(
+    *,
+    vram_gb: float,
+    host_ram_gb: float,
+    memory_pool: str = "dedicated",
+    backend: str = "cuda",
+    vendor: str = "nvidia",
+) -> list[dict[str, object]]:
     residency = expert_residency(host_ram_gb=host_ram_gb)
+    apple = vendor == "apple" or backend == "metal"
+    unified = memory_pool == "unified" or apple
+
+    if apple:
+        main = apple_mlx_main(unified_ram_gb=host_ram_gb)
+        return [
+            {
+                "role": "main",
+                "alias": main,
+                "engine": "mlx" if main.startswith("qwen3-8-27b-uncensored-mlx") else "llama.cpp",
+                "repo": MLX_REPO if main.startswith("qwen3-8-27b-uncensored-mlx") else None,
+                "revision": MLX_REVISION if main.startswith("qwen3-8-27b-uncensored-mlx") else None,
+                "why": (
+                    "Apple Silicon: OrcaRouter Uncensored MLX (4/6/8-bit). "
+                    "MLX 2-bit is banned."
+                    if main.startswith("qwen3-8-27b-uncensored-mlx")
+                    else "Apple under 24 GB unified: Ornith 1.5, not MLX 2-bit."
+                ),
+                "residency": residency if main == "ornith-1-5-35a3b" else None,
+            }
+        ]
+
+    if unified:
+        return [
+            {
+                "role": "main",
+                "alias": "ornith-1-5-35a3b",
+                "why": (
+                    "Integrated/unified memory: Ornith 1.5 35A3B with --cpu-moe "
+                    f"and mmap from {residency['mode']}."
+                ),
+                "residency": residency,
+            }
+        ]
+
     if vram_gb < 16:
         return [
             {
