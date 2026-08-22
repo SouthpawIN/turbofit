@@ -83,6 +83,54 @@ def test_configure_hermes_registers_named_provider_and_primary_model() -> None:
     assert original["custom_providers"][-1]["name"] == "other"
 
 
+def test_configure_hermes_writes_matching_main_aux_context() -> None:
+    from plugin_tools import configure_hermes
+
+    configured = configure_hermes(
+        {},
+        primary=True,
+        fallback=False,
+        base_url="http://127.0.0.1:8091/v1",
+        context_length=131072,
+    )
+
+    models = configured["providers"]["turbofit"]["models"]
+    assert models["auto"]["context_length"] == 131072
+    assert models["active:main"]["context_length"] == 131072
+    assert models["active:aux"]["context_length"] == 131072
+    assert configured["model"]["context_length"] == 131072
+    assert configured["auxiliary"]["compression"] == {
+        "provider": "custom:turbofit",
+        "model": "active:aux",
+        "context_length": 131072,
+    }
+
+
+def test_configure_hermes_rebinds_turbofit_compression_to_main_when_not_primary() -> None:
+    from plugin_tools import configure_hermes
+
+    configured = configure_hermes(
+        {
+            "model": {"provider": "xai-oauth", "default": "grok-4.6", "context_length": 500000},
+            "auxiliary": {
+                "compression": {
+                    "provider": "custom:turbofit",
+                    "model": "active:aux",
+                    "base_url": "http://127.0.0.1:8091/v1",
+                }
+            },
+        },
+        primary=False,
+        fallback=True,
+        base_url="http://127.0.0.1:8091/v1",
+    )
+
+    assert configured["auxiliary"]["compression"]["provider"] == "xai-oauth"
+    assert configured["auxiliary"]["compression"]["model"] == "grok-4.6"
+    assert configured["auxiliary"]["compression"]["context_length"] == 500000
+    assert "base_url" not in configured["auxiliary"]["compression"]
+
+
 def test_configure_hermes_fallback_is_idempotent_and_removable() -> None:
     from plugin_tools import configure_hermes
 
@@ -194,8 +242,13 @@ def test_apply_configuration_can_publish_tailnet_and_use_remote_provider_url(mon
     assert saved[0]["providers"]["turbofit"]["api"] == "https://host.example.ts.net:9443/v1"
     chain = saved[0]["fallback_providers"]
     assert {"provider": "custom:turbofit", "model": "auto"} in chain
-    assert {"provider": "nous", "model": "upstage/solar-pro4:free"} in chain
+    assert {"provider": "nous", "model": "stealth/ox-alpha"} in chain
     assert {"provider": "nous", "model": "stepfun/step-3.7-flash:free"} in chain
+    assert {"provider": "nous", "model": "tencent/hy3:free"} in chain
+    assert {"provider": "nous", "model": "poolside/laguna-s-2.1:free"} in chain
+    assert {"provider": "nous", "model": "poolside/laguna-xs-2.1:free"} in chain
+    assert not any("hermes" in str(item.get("model", "")).lower() for item in chain)
+    assert not any("nvidia" in str(item).lower() or "nim" in str(item).lower() for item in chain)
 
 
 def test_install_sirvir_profile_copies_bundled_customer_service_profile(tmp_path: Path) -> None:

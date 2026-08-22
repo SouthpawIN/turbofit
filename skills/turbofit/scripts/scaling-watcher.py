@@ -50,7 +50,7 @@ PREFS = os.environ.get("TURBOFIT_PREFS", f"{HOME}/.config/turbofit/preferences.y
 HERMES_HOME = os.environ.get("HERMES_HOME", f"{HOME}/.hermes")
 
 # ─── Defaults ─────────────────────────────────────────────────────────────────
-DEFAULT_MAIN_FALLBACK = "z-ai/glm-5.2"
+DEFAULT_MAIN_FALLBACK = "stealth/ox-alpha"
 DEFAULT_BASE_URL = "https://inference-api.nousresearch.com/v1"
 DEFAULT_PROVIDER = "nous"
 

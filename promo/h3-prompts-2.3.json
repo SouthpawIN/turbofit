@@ -1,0 +1,48 @@
+{
+  "schema": "turbofit.h3-promo-prompts/v1",
+  "model": "MiniMaxAI/MiniMax-H3",
+  "revision": "bfc8ed0353f5a9733be73e6b2c98ec0948195b86",
+  "workflow": "t2va",
+  "width": 640,
+  "height": 384,
+  "num_frames": 192,
+  "num_inference_steps": 20,
+  "clips": [
+    {
+      "id": "bonsai-8gb",
+      "label": "ANIME",
+      "seed": 2301,
+      "prompt": "integrated_multimodal_description: [Shot 1] Premium Japanese science-fiction anime, clean expressive line art, richly painted cel-shaded midnight laboratory. The same bright college-age woman engineer with short dark hair and a teal utility jacket from a continuing Turbofit commercial stands in a cramped 8-gigabyte hardware alcove. She plants a living luminous bonsai of gold-mint circuitry into a small crystalline socket; the tree takes root and glows without overflowing the tiny chamber. Camera: smooth arc from intimate close-up of her hands to a heroic low angle. Teal jacket and hair move in a soft energy wind. Coherent character, theatrical anime compositing, subtle film grain, teal and amber rim light, no readable text. overall_soundscape: Soft server fans, tiny soil-and-crystal settle, a single chime. non_diegetic_music: Intimate orchestral-electronic motif that will grow in later shots."
+    },
+    {
+      "id": "unleashed-16gb",
+      "label": "CINEMATIC CG",
+      "seed": 2302,
+      "prompt": "integrated_multimodal_description: [Shot 1] High-end cinematic three-dimensional C G continuing the same laboratory. The cramped alcove physically expands into a 16-gigabyte bay. The bonsai circuitry unfolds into a denser Unleashed crystal core, still the same gold-mint energy language. Brushed metal rails slide outward, more fiber optics ignite, the teal-jacketed engineer is visible as a reflected figure in the glass. Camera flies a continuous macro path through the growing chassis. Precise mechanical motion, ray-traced reflections, no readable text. overall_soundscape: Servo slides, magnetic locks, rising cooling airflow. non_diegetic_music: The same motif, now fuller and more confident."
+    },
+    {
+      "id": "unleashed-24-95",
+      "label": "PHOTOREAL",
+      "seed": 2303,
+      "prompt": "integrated_multimodal_description: [Shot 1] Photorealistic live-action cinematic footage in the same modern home studio at night. The same engineer, now photographed as a real person with short dark hair and a teal utility jacket, watches two desktop GPUs through a glass workstation case. Additional accelerator cards light in sequence as the Unleashed core fills a 24-to-95-gigabyte band. Practical teal and amber lighting, physically accurate reflections, shallow depth of field, restrained dolly, no readable text. overall_soundscape: Quiet room tone, workstation fans rising, a low power thrum. non_diegetic_music: Warm electronic continuation of the same motif."
+    },
+    {
+      "id": "ornith-aux",
+      "label": "CLAYMATION",
+      "seed": 2304,
+      "prompt": "integrated_multimodal_description: [Shot 1] Handcrafted stop-motion clay animation on the same miniature workbench language. A friendly cobalt clay robot and a small clay bird helper, Ornith, share the table. The bird is a mixture-of-experts: many tiny clay expert feathers. When space tightens, the robot offloads feathers one by one onto the bench, then shrinks the bird's nest, then tucks the bird away and keeps the main brain running. Visible fingerprints in the clay, teal felt cables, warm studio lighting, deliberate stop-motion cadence, no readable text. overall_soundscape: Soft clay taps, tiny wooden clicks, a birdlike mechanical chirp. non_diegetic_music: Playful pizzicato version of the same motif."
+    },
+    {
+      "id": "scale-down",
+      "label": "WATERCOLOR",
+      "seed": 2305,
+      "prompt": "integrated_multimodal_description: [Shot 1] Hand-painted watercolor and ink on textured cold-press paper, continuing the gold-mint and teal palette. A river of intelligence flows through the illustrated laboratory landscape. Dark storm clouds of memory pressure roll in. The river first sheds feathered expert tributaries, then narrows its channel, then becomes a single automatic current, then a smaller Unleashed stream, then the original bonsai pool. The flow never stops. Pigment blooms through wet paper, elegant ink contours, layered parallax, poetic camera drift, no readable text. overall_soundscape: Flowing water, soft paper brush, distant wind. non_diegetic_music: Airy piano restatement of the motif."
+    },
+    {
+      "id": "nous-keyless",
+      "label": "RETRO PIXEL ART",
+      "seed": 2306,
+      "prompt": "integrated_multimodal_description: [Shot 1] Polished sixteen-bit pixel-art animation, limited navy cyan gold and magenta palette, same technician avatar from the continuing commercial. A green NVIDIA NIM gate slams shut and darkens. Five keyless Nous portals open in a ring and stay lit without any keycard. The avatar walks through the ring; a Hermes plugin lock turns gold and opens. Smooth side-scrolling camera, dramatic parallax, particle sparks, no letters or text. overall_soundscape: Retro console power-up tones, a rejected buzz on the closed gate, five clean unlock chimes. non_diegetic_music: Triumphant chiptune of the same motif."
+    }
+  ]
+}

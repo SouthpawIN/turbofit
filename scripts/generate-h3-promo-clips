@@ -123,8 +123,9 @@ def build_pipeline(model_root: Path, device: str):
         offload_type="block_level", num_blocks_per_group=1, **offload
     )
     apply_group_offloading(pipe.text_encoder.model, offload_type="leaf_level", **offload)
-    pipe.vae.to(device)
-    pipe.audio_vae.to(device)
+    # Keep VAEs on CPU so H3 can share a GPU that already hosts llama-server.
+    pipe.vae.to("cpu")
+    pipe.audio_vae.to("cpu")
     return pipe
 
 
