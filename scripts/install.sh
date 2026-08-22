@@ -100,18 +100,18 @@ slots:
   main_api:
     description: API main picks — keyless Nous free models first.
     s:
-    - alias: solar-pro4-free
+    - alias: ox-alpha
       provider: nous
-      model_id: upstage/solar-pro4:free
-      why: Nous keyless free model.
+      model_id: stealth/ox-alpha
+      why: Official Nous Ox Alpha. $0/$0 curated. Same as OpenCode x-preview-f-free.
       vision: false
       free: true
     sf:
-    - alias: longcat-2-free
+    - alias: step-37-flash-free
       provider: nous
-      model_id: meituan/longcat-2.0:free
-      why: Nous keyless free model.
-      vision: false
+      model_id: stepfun/step-3.7-flash:free
+      why: Official StepFun free. Portal vision + compaction recommendation.
+      vision: true
       free: true
     f:
     - alias: hy3-free
@@ -127,6 +127,13 @@ slots:
       why: Nous keyless free model.
       vision: false
       free: true
+    xs:
+    - alias: laguna-xs-21-free
+      provider: nous
+      model_id: poolside/laguna-xs-2.1:free
+      why: Nous keyless free model.
+      vision: false
+      free: true
 
   # API AUX — vision-capable, keyless Nous first
   aux_api:
@@ -137,6 +144,13 @@ slots:
       model_id: stepfun/step-3.7-flash:free
       why: Nous keyless free vision/compaction model.
       vision: true
+      free: true
+    s:
+    - alias: ox-alpha
+      provider: nous
+      model_id: stealth/ox-alpha
+      why: Official Nous Ox Alpha. $0/$0 curated.
+      vision: false
       free: true
 YAML
     echo "✓ Created curated slots at ${TURBOFIT_CONFIG_DIR}/curated.yaml"

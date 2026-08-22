@@ -28,12 +28,18 @@ from turbofit_runtime.tailnet import publish_tailnet, tailnet_status
 
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8091/v1"
+# Looked up from Hermes-Agent, not guessed:
+# - stealth/ox-alpha is the official Nous curated "Ox Alpha" model
+#   ($0/$0 on the Portal; same weights as OpenCode Zen x-preview-f-free).
+# - The other four are live Portal freeRecommendedModels as of 2026-08-22
+#   that Hermes also documents as the free Portal tail (stepfun + hy3 +
+#   both Laguna :free slugs). No Hermes-branded models. No NVIDIA NIM.
 NOUS_FREE_FALLBACK_CHAIN = [
-    {"provider": "nous", "model": "upstage/solar-pro4:free"},
-    {"provider": "nous", "model": "meituan/longcat-2.0:free"},
+    {"provider": "nous", "model": "stealth/ox-alpha"},
+    {"provider": "nous", "model": "stepfun/step-3.7-flash:free"},
     {"provider": "nous", "model": "tencent/hy3:free"},
     {"provider": "nous", "model": "poolside/laguna-s-2.1:free"},
-    {"provider": "nous", "model": "stepfun/step-3.7-flash:free"},
+    {"provider": "nous", "model": "poolside/laguna-xs-2.1:free"},
 ]
 SELECTION_PATH = Path(
     os.getenv(
@@ -184,16 +190,89 @@ def _validated_base_url(value: str | None) -> str:
     return base_url if base_url.endswith("/v1") else f"{base_url}/v1"
 
 
-def provider_definition(base_url: str | None = None) -> dict[str, Any]:
+def _model_entry(context_length: int | None = None) -> dict[str, Any]:
+    if context_length is None:
+        return {}
+    parsed = int(context_length)
+    if parsed <= 0:
+        raise ValueError("context_length must be a positive integer")
+    return {"context_length": parsed}
+
+
+def provider_definition(
+    base_url: str | None = None,
+    context_length: int | None = None,
+) -> dict[str, Any]:
     """Return the canonical named custom-provider definition."""
+    entry = _model_entry(context_length)
     return {
         "name": "TurboFit",
         "api": _validated_base_url(base_url),
         "api_key": "not-needed",
         "transport": "chat_completions",
         "default_model": "auto",
-        "models": {"auto": {}, "active:main": {}, "active:aux": {}},
+        "models": {
+            "auto": dict(entry),
+            "active:main": dict(entry),
+            "active:aux": dict(entry),
+        },
     }
+
+
+def _is_turbofit_target(provider: Any, model: Any) -> bool:
+    provider_name = str(provider or "").strip().lower()
+    model_name = str(model or "").strip().lower()
+    return provider_name in {"custom:turbofit", "turbofit"} or model_name.startswith("active:")
+
+
+def _align_compression_context(
+    config: dict[str, Any],
+    *,
+    primary: bool,
+    context_length: int | None,
+) -> None:
+    """Keep auxiliary.compression on the same context window as main."""
+    raw_aux = config.get("auxiliary")
+    auxiliary: dict[str, Any] = copy.deepcopy(dict(raw_aux)) if isinstance(raw_aux, Mapping) else {}
+    raw_compression = auxiliary.get("compression")
+    compression: dict[str, Any] = (
+        copy.deepcopy(dict(raw_compression)) if isinstance(raw_compression, Mapping) else {}
+    )
+    raw_model = config.get("model")
+    model_cfg = raw_model if isinstance(raw_model, Mapping) else {}
+
+    if primary:
+        compression["provider"] = "custom:turbofit"
+        compression["model"] = "active:aux"
+        if context_length is not None:
+            compression["context_length"] = int(context_length)
+        auxiliary["compression"] = compression
+        config["auxiliary"] = auxiliary
+        return
+
+    if not compression:
+        return
+    if not _is_turbofit_target(compression.get("provider"), compression.get("model")):
+        if context_length is not None and compression.get("context_length") is None:
+            compression["context_length"] = int(context_length)
+            auxiliary["compression"] = compression
+            config["auxiliary"] = auxiliary
+        return
+
+    main_provider = str(model_cfg.get("provider") or "").strip()
+    main_model = str(model_cfg.get("default") or "").strip()
+    if not main_provider or not main_model:
+        return
+    compression["provider"] = main_provider
+    compression["model"] = main_model
+    compression.pop("base_url", None)
+    main_context = model_cfg.get("context_length")
+    if main_context is not None:
+        compression["context_length"] = int(main_context)
+    else:
+        compression.pop("context_length", None)
+    auxiliary["compression"] = compression
+    config["auxiliary"] = auxiliary
 
 
 def configure_hermes(
@@ -203,10 +282,17 @@ def configure_hermes(
     fallback: bool | None = None,
     fallback_chain: list[Mapping[str, Any]] | None = None,
     base_url: str | None = None,
+    context_length: int | None = None,
 ) -> dict[str, Any]:
-    """Return a copied Hermes config with Turbofit registered idempotently."""
+    """Return a copied Hermes config with Turbofit registered idempotently.
+
+    Main and aux always receive the same context_length. When Turbofit is
+    primary, compression is pinned to active:aux at that same window. When
+    it is not primary, a leftover Turbofit compression target is rebound
+    to the configured main model so the two limits cannot drift.
+    """
     updated = copy.deepcopy(dict(config))
-    provider = provider_definition(base_url)
+    provider = provider_definition(base_url, context_length=context_length)
 
     raw_providers = updated.get("providers")
     providers = copy.deepcopy(dict(raw_providers)) if isinstance(raw_providers, Mapping) else {}
@@ -231,7 +317,11 @@ def configure_hermes(
         model: dict[str, Any] = copy.deepcopy(dict(raw_model)) if isinstance(raw_model, Mapping) else {}
         model["provider"] = "custom:turbofit"
         model["default"] = "auto"
+        if context_length is not None:
+            model["context_length"] = int(context_length)
         updated["model"] = model
+
+    _align_compression_context(updated, primary=primary, context_length=context_length)
 
     if fallback_chain is not None:
         normalized_chain: list[dict[str, str]] = []
