@@ -332,7 +332,7 @@ function TurbofitPage() {
         ] }),
         jsxs('label', { className: 'flex items-center gap-2', children: [
           jsx('input', { type: 'checkbox', checked: installSirvir, onChange: (event) => setInstallSirvir(event.target.checked) }),
-          'Install or update bundled Sirvir customer service',
+          'Install or update GitHub-current Sirvir customer service',
         ] }),
         jsxs('label', { className: 'flex items-center gap-2', children: [
           jsx('input', { type: 'checkbox', checked: publishTailnet, onChange: (event) => setPublishTailnet(event.target.checked) }),

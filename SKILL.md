@@ -22,7 +22,7 @@ Use this bundled plugin skill when configuring or inspecting Turbofit for Hermes
 3. Set `primary: true` to use `custom:turbofit` with model `auto` as the main Hermes provider.
 4. Set `fallback: true` to append Turbofit to the canonical `fallback_providers` chain; set it false to remove only Turbofit while preserving other fallbacks.
 5. Set `publish_tailnet: true` to create private Tailscale Serve routes for the provider and dashboard; the returned HTTPS provider URL is registered automatically.
-6. Set `install_sirvir: true` to install or update the bundled Turbofit customer-service profile without replacing its memories or user state.
+6. Set `install_sirvir: true` to install or update the canonical `SouthpawIN/sirvir` GitHub profile without replacing its memories or user state.
 7. Start a new Hermes session after provider changes.
 
 The same controls are available in `hermes dashboard` under **Turbofit** and through `/turbofit status|tiers|setup`.

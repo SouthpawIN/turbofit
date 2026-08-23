@@ -68,7 +68,7 @@ TURBOFIT_CONFIGURE = {
             },
             "install_sirvir": {
                 "type": "boolean",
-                "description": "Install or update the bundled Sirvir Turbofit customer-service profile while preserving its user data.",
+                "description": "Install or update the current SouthpawIN/sirvir GitHub profile while preserving its user data.",
             },
             "install_desktop": {
                 "type": "boolean",

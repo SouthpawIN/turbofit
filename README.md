@@ -67,6 +67,24 @@ The lineup is a product target, not fabricated benchmark evidence. Newly onboard
 
 ---
 
+## Sirvir
+
+![Sirvir — GitHub-current Turbofit support](https://raw.githubusercontent.com/SouthpawIN/sirvir/main/assets/sirvir-hero.png)
+
+[Sirvir](https://github.com/SouthpawIN/sirvir) is Turbofit's GitHub-current customer-service and contribution profile. It compares the current Turbofit source with the user's machine, handles installation and configuration, answers Turbofit Q&A with source/commit citations, troubleshoots local runtime failures, and turns reusable support findings into focused tested pull requests for Turbofit.
+
+Turbofit includes an **Install Sirvir** option in `/turbofit setup`, Hermes Dashboard, and Hermes Desktop. That option installs or updates the canonical `SouthpawIN/sirvir` profile from GitHub rather than copying a bundled snapshot, so Sirvir stays independently updateable while its memories, sessions, credentials, and user-owned files remain preserved.
+
+The relationship is reciprocal: **Sirvir installs Turbofit when it is missing**, and Turbofit can install or update Sirvir. The supported Sirvir bootstrap is:
+
+```bash
+git clone https://github.com/SouthpawIN/sirvir.git
+cd sirvir
+scripts/install
+```
+
+---
+
 ## Install
 
 ### Hermes plugin

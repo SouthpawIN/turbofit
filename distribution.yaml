@@ -29,7 +29,6 @@ distribution_owned:
   - benchmarks/
   - docs/
   - research/
-  - profiles/sirvir/
   - promo/
   - runtime-profiles/
   - runtime-patches/
