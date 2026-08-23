@@ -207,7 +207,7 @@
             h("div", { className: "tf-two" },
               h(Field, {
                 id: "tf-selection-mode", label: "Runtime selection",
-                help: "Auto chooses the best evidence-backed fit. Manual exposes every exact validated combination.",
+                help: "Auto chooses an exact-hardware winner. Manual exposes physical-fit lanes and marks candidates that require an on-box benchmark.",
               },
                 h(Select, { id: "tf-selection-mode", value: selectionMode, onChange: (event) => setSelectionMode(event.target.value) },
                   h(SelectOption, { value: "auto" }, "Auto — recommended"),
@@ -267,7 +267,9 @@
                 h("strong", null, selectedCombination.profile),
                 h("p", { className: "tf-help" }, selectedCombination.main_quantization + " main · " + selectedCombination.aux_quantization + " auxiliary"),
                 h("p", { className: "tf-help" },
-                  selectedCombination.min_tps + " tok/s · " + selectedCombination.aux_mode + " · " + selectedCombination.confidence
+                  selectedCombination.validation_required
+                    ? "benchmark required · " + selectedCombination.aux_mode + " · " + selectedCombination.confidence
+                    : selectedCombination.min_tps + " tok/s · " + selectedCombination.aux_mode + " · " + selectedCombination.confidence
                 ),
                 h("p", { className: "tf-help" }, selectedCombination.fit_reason),
               ) : null,

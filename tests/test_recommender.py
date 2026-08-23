@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import runpy
 from pathlib import Path
+from types import SimpleNamespace
 
 from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
 
@@ -16,6 +17,8 @@ fit_requirements = MODULE["fit_requirements"]
 recommendation_sort_key = MODULE["recommendation_sort_key"]
 load_intelligence_scores = MODULE["load_intelligence_scores"]
 current_intelligence_recipes = MODULE["current_intelligence_recipes"]
+current_validated_profiles = MODULE["current_validated_profiles"]
+rank_profiles = MODULE["rank_profiles"]
 Recommendation = MODULE["Recommendation"]
 
 
@@ -103,6 +106,101 @@ def test_discrete_fit_uses_safe_system_ram_for_accelerator_spill() -> None:
 
     assert fit is True
     assert any("host spill" in reason for reason in reasons)
+
+
+def test_six_gb_card_with_fourteen_gb_ram_can_fit_bonsai_shared_main() -> None:
+    hardware = HardwareFingerprint(
+        "linux", "x86_64", 14_336,
+        devices=(AcceleratorDevice(0, "GPU-0", "RTX 2060", "nvidia", "cuda", 6_144, "7.5", "01"),),
+    )
+
+    fit, reasons = fit_requirements(
+        hardware=hardware,
+        requirements={0: 6_117, 1: 195},
+        available_budgets={0: 6_144},
+        shared_memory=False,
+        safety_floor_mb=1_024,
+    )
+
+    assert fit is True
+    assert any("safe host spill 1192/" in reason for reason in reasons)
+
+
+def test_missing_campaign_state_keeps_portable_fit_candidates_available(tmp_path) -> None:
+    missing = tmp_path / "catalog-campaign-state.json"
+
+    assert current_validated_profiles(missing, require_live_fingerprint=False) is None
+    assert current_validated_profiles(missing, require_live_fingerprint=True) == set()
+
+
+def test_portable_fit_lane_does_not_claim_source_machine_speed(monkeypatch, tmp_path) -> None:
+    profiles = tmp_path / "profiles.json"
+    scores = tmp_path / "scores.json"
+    profiles.write_text(__import__("json").dumps({"profiles": {
+        "binary-bonsai-27b-q1-0-auto-64k": {
+            "context": 65_536,
+            "evidence": "source-machine-evidence.json",
+            "expected": {
+                "main_alias": "bonsai-27b",
+                "aux_alias": "auto:bonsai-27b",
+                "aux_mode": "shared-main",
+            },
+            "metrics": {
+                "main_tps": 68.0,
+                "aux_tps": 66.0,
+                "gpu_peak_mb": {"0": 6_117, "1": 195},
+            },
+            "components": [{"role": "main", "gpu": "0", "command": ["llama-server"]}],
+        },
+        "binary-bonsai-27b-q1-0-bf16-vision-auto-64k": {
+            "context": 65_536,
+            "evidence": "source-machine-vision-evidence.json",
+            "expected": {
+                "main_alias": "bonsai-27b-compact-vision-bf16",
+                "aux_alias": "auto:bonsai-27b-compact-vision-bf16",
+                "aux_mode": "shared-main",
+            },
+            "metrics": {
+                "main_tps": 70.0,
+                "aux_tps": 69.0,
+                "gpu_peak_mb": {"0": 7_263, "1": 195},
+            },
+            "components": [{
+                "role": "main", "gpu": "0",
+                "command": ["llama-server", "--mmproj", "projector.gguf"],
+            }],
+        }
+    }}))
+    scores.write_text('{"records": []}')
+    six_gb = HardwareFingerprint(
+        "linux", "x86_64", 14_336,
+        devices=(AcceleratorDevice(0, "GPU-0", "RTX 2060", "nvidia", "cuda", 6_144, "7.5", "01"),),
+    )
+    monkeypatch.setitem(rank_profiles.__globals__, "probe_hardware", lambda: six_gb)
+    monkeypatch.setitem(rank_profiles.__globals__, "current_intelligence_recipes", lambda: {})
+    args = SimpleNamespace(
+        profiles=profiles,
+        intelligence_scores=scores,
+        campaign_state=tmp_path / "missing-state.json",
+        context=65_536,
+        vision=False,
+        live=False,
+        fit_only=True,
+        safety_floor_mb=1_024,
+        prefer="balanced",
+        evidence_scope="portable-fit",
+    )
+
+    rows = rank_profiles(args)
+
+    assert len(rows) == 2
+    assert rows[0].profile == "binary-bonsai-27b-q1-0-auto-64k"
+    assert rows[0].fit is True
+    assert rows[0].validation_required is True
+    assert rows[0].evidence_scope == "portable-fit"
+    assert rows[0].min_tps == 0
+    assert rows[0].source_min_tps == 66.0
+    assert rows[0].confidence == "portable-fit; benchmark-required"
 
 
 def _recommendation(name: str, *, tps: float, quality: int, context: int) -> object:

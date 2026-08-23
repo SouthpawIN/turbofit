@@ -31,6 +31,7 @@ def test_eight_gb_without_32gb_ram_still_offers_ornith_from_disk() -> None:
 
 def test_eight_gb_aux_does_not_stack_two_models() -> None:
     assert local_aux_for_host(vram_gb=8, host_ram_gb=16) == "auto"
+    assert is_allowed_aux("auto:bonsai-27b")
     assert local_aux_for_host(vram_gb=24, host_ram_gb=16) == "ornith-1-5-35a3b"
 
 

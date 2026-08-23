@@ -64,6 +64,15 @@ def build_manual_profile_payload(
     }
     if not gpu_peak:
         raise ValueError(f"manual combination lacks measured per-GPU residency: {profile_id}")
+    component_gpu_indices = {
+        int(component.gpu) if str(component.gpu).isdigit() else 0
+        for component in recipe.components
+        if component.role in {"main", "aux"}
+    }
+    if recipe.aux_mode != "dedicated":
+        gpu_peak = {index: value for index, value in gpu_peak.items() if index in component_gpu_indices}
+    if not gpu_peak:
+        raise ValueError(f"manual combination has no residency for its runtime components: {profile_id}")
     if not hardware.devices:
         required = [sum(gpu_peak.values())]
         min_devices = 1
@@ -73,9 +82,12 @@ def build_manual_profile_payload(
         max_index = max(gpu_peak)
         if max_index >= len(hardware.devices):
             raise ValueError(f"manual combination requires unavailable GPU {max_index}")
-        required = [gpu_peak.get(index, 0) for index in range(len(hardware.devices))]
+        required = [
+            min(gpu_peak.get(index, 0), max(1, device.memory_total_mb - 1024))
+            for index, device in enumerate(hardware.devices)
+        ]
         min_devices = max_index + 1
-        per_device_min_mb = max(gpu_peak.values())
+        per_device_min_mb = max(required)
         counts = Counter(round(device.memory_total_mb / 1024) for device in hardware.devices)
         topology = "+".join(f"{count}x{memory_gb}" for memory_gb, count in sorted(counts.items()))
     context = int(profile_entry.get("context") or 0)

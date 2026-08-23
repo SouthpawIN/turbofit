@@ -502,7 +502,17 @@ def combination_snapshot() -> dict[str, Any]:
     """Return every current exact configuration with fit or incompatibility evidence."""
     script = PLUGIN_ROOT / "scripts" / "turbofit-runtime-recommend"
     result = subprocess.run(
-        [sys.executable, str(script), "--json", "--limit", "10000", "--prefer", "balanced"],
+        [
+            sys.executable,
+            str(script),
+            "--json",
+            "--limit",
+            "10000",
+            "--prefer",
+            "balanced",
+            "--evidence-scope",
+            "portable-fit",
+        ],
         text=True,
         capture_output=True,
         timeout=180,
@@ -642,8 +652,46 @@ def recommendation_snapshot(
         recommendations[name] = payload if isinstance(payload, list) else []
         if result.returncode and not recommendations[name]:
             errors[name] = (result.stderr or "no evidence-backed configuration fits").strip()
+
+    portable_preference = requested or "balanced"
+    portable = subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--json",
+            "--fit-only",
+            "--limit",
+            str(limit),
+            "--prefer",
+            portable_preference,
+            "--evidence-scope",
+            "portable-fit",
+        ],
+        text=True,
+        capture_output=True,
+        timeout=90,
+        check=False,
+        env={**os.environ, "PYTHONPATH": str(SRC_ROOT)},
+    )
+    try:
+        portable_payload = json.loads(portable.stdout)
+    except ValueError:
+        portable_payload = []
+    exact_profiles = {
+        str(item.get("profile"))
+        for rows in recommendations.values()
+        for item in rows
+        if isinstance(item, Mapping)
+    }
+    compatible_lanes = [
+        item
+        for item in (portable_payload if isinstance(portable_payload, list) else [])
+        if isinstance(item, Mapping) and str(item.get("profile")) not in exact_profiles
+    ]
+    if portable.returncode and not compatible_lanes:
+        errors["portable_fit"] = (portable.stderr or "no portable local lane fits").strip()
     return {
-        "ok": any(recommendations.values()),
+        "ok": any(recommendations.values()) or bool(compatible_lanes),
         "hardware": {
             **asdict(hardware),
             "topology_key": hardware.topology_key,
@@ -653,6 +701,8 @@ def recommendation_snapshot(
         "requested_preference": requested,
         "preferences": list(preferences),
         "recommendations": recommendations,
+        "compatible_lanes": compatible_lanes,
+        "compatible_lane_policy": "physical-fit candidate; on-box benchmark required before Auto promotion",
         "errors": errors,
     }
 

@@ -11,7 +11,7 @@ tags: [hermes-agent, llama-cpp, llm, accelerator, cpu, adaptive-runtime, turbofi
 
 ## 2.3 model authority
 
-Main Auto chain: Bonsai 27B (8GB), Qwen 3.8 27B Unleashed UD-IQ3_XXS (16GB), UD-Q3_K_XL (24–95GB), and Qwen 3.8 27B 16-bit (96GB+) until an Unleashed FP16 GGUF is published. Auxiliary is Ornith 1.5 35A3B, optional Carwin Nano, or auto. DeepSeek V4 Flash 0731 is retired. API fallback is the five keyless Nous free models. New catalog entries remain candidates until current-recipe physical evidence promotes them.
+Main Auto chain: Bonsai 27B Q1 for the low-memory lane, Qwen 3.8 27B Unleashed UD-IQ3_XXS (16GB), UD-Q3_K_XL (24–95GB), and Qwen 3.8 27B 16-bit (96GB+) until an Unleashed FP16 GGUF is published. Below the proven 8GB tier, setup may expose Bonsai shared-main as a portable-fit lane with safe host spill, but it remains benchmark-required and cannot become Auto on that box until on-box validation passes. Auxiliary is Ornith 1.5 35A3B, optional Carwin Nano, or auto. API fallback is the five keyless Nous free models. New catalog entries remain candidates until current-recipe physical evidence promotes them.
 
 ## Use when
 
@@ -78,7 +78,7 @@ PYTHONPATH=src python3 scripts/turbofit-runtime-recommend --fit-only --json
 PYTHONPATH=src:. python3 -m pytest tests/test_runtime_profile.py tests/test_profile_io.py tests/test_hardware.py tests/test_recommend.py -q -o 'addopts='
 ```
 
-Topology matters: `1x48` and `2x24` are different classes. Unmeasured local classes remain API-only.
+Topology matters: `1x48` and `2x24` are different classes. Unmeasured classes keep API as the Auto safety rung while setup may expose separately labeled portable-fit local candidates for on-box validation.
 
 ## Pressure and adaptation checks
 

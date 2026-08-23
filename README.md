@@ -21,9 +21,9 @@ Turbofit can be the primary provider, one entry in an ordered fallback chain, or
 
 ## Turbofit 2.3 — Unleashed / Ornith / Nous free fallback
 
-Turbofit 2.3 retires DeepSeek V4 Flash 0731 from the active catalog and replaces the Auto chain and API fallback.
+Turbofit 2.3 centers Auto on Qwen 3.8 27B Unleashed, Ornith 1.5, Bonsai low-memory lanes, and a keyless Nous free API safety net.
 
-| New model | Turbofit entries | Capability | Current status |
+| Model | Turbofit entries | Capability | Current status |
 |---|---|---|---|
 | **Qwen 3.8 27B Unleashed** | `UD-IQ3_XXS`, `UD-Q3_K_XL` | Uncensored dense 27B, 262K context, vision projector | **Active catalog candidates** |
 | **Ornith 1.5 35A3B** | `Q4_K_M` MoE | Auxiliary MoE with expert offload | **Active auxiliary candidate** |
@@ -40,10 +40,11 @@ Turbofit 2.3 retires DeepSeek V4 Flash 0731 from the active catalog and replaces
 | 24–95 GB | Qwen 3.8 27B Unleashed UD-Q3_K_XL |
 | 16 GB | Qwen 3.8 27B Unleashed UD-IQ3_XXS |
 | 8 GB | Bonsai 27B |
+| Below 8 GB dedicated | Bonsai 27B Q1 shared-main with safe host spill; portable-fit until benchmarked on that exact box |
 
 Auxiliary selection is **Ornith 1.5 35A3B** (default), optional **Carwin Nano**, or **auto**. Scale-down offloads Ornith experts, then lowers context, then switches aux to auto, then a listed Unleashed quant, then Bonsai. API fallback is the five keyless Nous free models.
 
-The lineup is a product target, not fabricated benchmark evidence. Newly onboarded Qwen rows remain candidates until exact artifacts, contexts, topology, output, throughput, and cleanup pass the physical campaign; Auto continues on a proven safe rung until promotion completes.
+The lineup is a product target, not fabricated benchmark evidence. Newly onboarded rows remain candidates until exact artifacts, contexts, topology, output, throughput, and cleanup pass the physical campaign. Setup exposes physically compatible local lanes on unmeasured hardware, labels them **benchmark required**, and keeps Auto on the proven API safety rung until on-box promotion completes.
 
 ![Turbofit 2.3 auto-fit model ladder from Bonsai through Unleashed and Nous keyless free](assets/turbofit-2.3-model-ladder.png)
 
