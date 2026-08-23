@@ -8,10 +8,28 @@ from typing import Any, Mapping
 SCHEMA = "turbofit.intelligence-campaign-state/v1"
 LEVELS = ("screening", "promotion", "release")
 LEVEL_PARAMETERS = {
-    "screening": {"deepswe_tasks": 3, "deepswe_repetitions": 1, "agentic_repetitions": 1},
+    "screening": {"deepswe_tasks": 1, "deepswe_repetitions": 1, "agentic_repetitions": 1},
     "promotion": {"deepswe_tasks": 30, "deepswe_repetitions": 3, "agentic_repetitions": 3},
     "release": {"deepswe_tasks": 113, "deepswe_repetitions": 3, "agentic_repetitions": 5},
 }
+
+
+def select_turbofit_list_candidates(
+    configurations: Mapping[str, Any], tournaments: Mapping[str, Any], hardware_tier_gb: int,
+) -> dict[str, Any]:
+    rows = configurations.get("rows")
+    tiers = tournaments.get("tiers")
+    if not isinstance(rows, list) or not isinstance(tiers, list):
+        raise ValueError("configuration matrix and hardware tournaments must contain lists")
+    tier = next((item for item in tiers if item.get("vram_gb") == hardware_tier_gb), None)
+    if not isinstance(tier, Mapping):
+        raise ValueError(f"no TurboFit List tournament for {hardware_tier_gb} GB")
+    by_id = {str(row["id"]): row for row in rows if isinstance(row, Mapping)}
+    ordered_ids = list(dict.fromkeys(str(item) for item in tier.get("candidates") or []))
+    missing = [identifier for identifier in ordered_ids if identifier not in by_id]
+    if missing:
+        raise ValueError("tournament references unknown configurations: " + ", ".join(missing))
+    return {**dict(configurations), "rows": [dict(by_id[identifier]) for identifier in ordered_ids]}
 
 
 def build_state(configurations: Mapping[str, Any]) -> dict[str, Any]:
@@ -19,7 +37,7 @@ def build_state(configurations: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(rows, list) or not rows:
         raise ValueError("configuration matrix has no rows")
     runs: dict[str, dict[str, Any]] = {}
-    for row in rows:
+    for priority, row in enumerate(rows):
         configuration_id = str(row["id"])
         for level in LEVELS:
             run_id = f"{configuration_id}::{level}"
@@ -31,6 +49,7 @@ def build_state(configurations: Mapping[str, Any]) -> dict[str, Any]:
                 "auxiliary": str(row["auxiliary"]),
                 "context": int(row["context"]),
                 "level": level,
+                "priority": priority,
                 "parameters": dict(LEVEL_PARAMETERS[level]),
                 "status": status,
                 "attempts": 0,
@@ -52,7 +71,12 @@ def reconcile_state(state: dict[str, Any], configurations: Mapping[str, Any]) ->
     fresh["created_at"] = state.get("created_at") or fresh["created_at"]
     for key in tuple(fresh["runs"]):
         if key in existing:
-            fresh["runs"][key] = existing[key]
+            fresh["runs"][key] = {
+                **fresh["runs"][key],
+                **existing[key],
+                "priority": fresh["runs"][key]["priority"],
+                "parameters": fresh["runs"][key]["parameters"],
+            }
     refresh_dependencies(fresh)
     fresh["updated_at"] = datetime.now(timezone.utc).isoformat()
     return fresh
@@ -175,7 +199,7 @@ def next_ready_run(state: Mapping[str, Any]) -> dict[str, Any] | None:
     for level in LEVELS:
         ready = sorted(
             (run for run in runs.values() if run.get("level") == level and run.get("status") == "ready"),
-            key=lambda run: run["configuration_id"],
+            key=lambda run: (int(run.get("priority", 1 << 30)), run["configuration_id"]),
         )
         if ready:
             return ready[0]

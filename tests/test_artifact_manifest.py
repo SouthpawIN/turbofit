@@ -29,7 +29,7 @@ def test_artifact_manifest_covers_every_executable_matrix_file() -> None:
 
     assert payload["schema"] == "turbofit.artifact-manifest/v1"
     assert expected_destinations <= actual
-    assert len(actual) == 35
+    assert len(actual) == 36
     assert all(len(item["sha256"]) == 64 for item in payload["artifacts"])
     assert all(len(item["revision"]) == 40 for item in payload["artifacts"])
     assert all(item["size_bytes"] > 0 for item in payload["artifacts"])
@@ -38,7 +38,7 @@ def test_artifact_manifest_covers_every_executable_matrix_file() -> None:
 def test_model_catalog_pins_every_source_revision() -> None:
     catalog = ModelCatalog.load(ROOT / "references/model-catalog.json")
 
-    assert len(catalog.models) == 45
+    assert len(catalog.models) == 46
     assert all(len(model.revision) == 40 for model in catalog.models)
 
 
@@ -57,3 +57,16 @@ def test_unleashed_and_ornith_artifacts_are_pinned() -> None:
     assert ornith_artifacts
     assert any(item["path"] == "Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf" for item in unleashed_artifacts)
     assert any(item["path"] == "Ornith-1.5-35B-Q4_K_M.gguf" for item in ornith_artifacts)
+
+
+def test_qwen_dflash2_drafter_is_immutable_and_bonsai_specific_drafters_stay_separate() -> None:
+    manifest = json.loads((ROOT / "references/artifact-manifest.json").read_text())
+    dflash = next(item for item in manifest["artifacts"] if item["path"] == "Qwen3.8-27B-DFlash2-Q4_K_M.gguf")
+    bonsai = [item for item in manifest["artifacts"] if "Bonsai-27B-dspark" in item["path"]]
+
+    assert dflash["repo_id"] == "incoai/Qwen3.8-27B-DFlash2-GGUF"
+    assert dflash["revision"] == "6cb5872e2cee6b4e780a8414922350be8e42d65c"
+    assert dflash["sha256"] == "18a380efc9b7ed8d88677fc895f5c11ae170653434ee378f7348f715c14d0594"
+    assert dflash["families"] == ["qwen3-8-27b-q4-dflash2"]
+    assert bonsai
+    assert all("qwen3-8-27b" not in item["families"] for item in bonsai)

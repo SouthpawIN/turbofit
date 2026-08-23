@@ -244,6 +244,7 @@
       "destination": "Qwen3.8-27B/Qwen3.8-27B-Q4_K_M.gguf",
       "families": [
         "qwen3-8-27b-q4",
+        "qwen3-8-27b-q4-dflash2",
         "qwen3-8-27b-q4-mtp"
       ],
       "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
@@ -251,6 +252,17 @@
       "path": "Qwen3.8-27B-Q4_K_M.gguf",
       "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
       "size_bytes": 18973870432
+    },
+    {
+      "destination": "Qwen3.8-27B/Qwen3.8-27B-DFlash2-Q4_K_M.gguf",
+      "families": [
+        "qwen3-8-27b-q4-dflash2"
+      ],
+      "repo_id": "incoai/Qwen3.8-27B-DFlash2-GGUF",
+      "revision": "6cb5872e2cee6b4e780a8414922350be8e42d65c",
+      "path": "Qwen3.8-27B-DFlash2-Q4_K_M.gguf",
+      "sha256": "18a380efc9b7ed8d88677fc895f5c11ae170653434ee378f7348f715c14d0594",
+      "size_bytes": 1143006752
     },
     {
       "destination": "Qwen3.8-27B/Qwen3.8-27B-Q8_0.gguf",
@@ -280,6 +292,7 @@
       "destination": "Qwen3.8-27B/mmproj-Qwen3.8-27B-Q8_0.gguf",
       "families": [
         "qwen3-8-27b-q4",
+        "qwen3-8-27b-q4-dflash2",
         "qwen3-8-27b-q4-mtp",
         "qwen3-8-27b-q8",
         "qwen3-8-27b-q8-mtp"

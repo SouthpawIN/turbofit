@@ -51,6 +51,15 @@ def _intelligence_index(
     return result
 
 
+def _score_for_tier(
+    scores: dict[str, dict[str, Any]], identifier: str, capacity_gb: int,
+) -> dict[str, Any] | None:
+    score = scores.get(identifier)
+    if score is None or score.get("hardware_tier_gb") != capacity_gb:
+        return None
+    return score
+
+
 def _native_tier(hardware: HardwareFingerprint) -> int:
     capacity = hardware.total_usable_memory_mb if hardware.shared_memory_pool else hardware.total_vram_mb
     gb = capacity / 1024
@@ -117,7 +126,7 @@ def build_tier_report(root: str | Path, hardware: HardwareFingerprint) -> dict[s
             configuration = configurations_by_id[identifier]
             main = models[configuration["main"]]
             auxiliary = None if configuration["auxiliary"] == "auto" else models[configuration["auxiliary"]]
-            score = intelligence.get(identifier)
+            score = _score_for_tier(intelligence, identifier, capacity)
             auxiliary_name = "auto" if auxiliary is None else auxiliary["name"]
             display_id = MatrixRow.make_id(main["name"], auxiliary_name, int(configuration["context"]))
             catalog_configuration = dict(configuration)

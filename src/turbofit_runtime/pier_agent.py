@@ -7,9 +7,20 @@ from urllib.parse import urlsplit, urlunsplit
 
 from pier.agents.installed.mini_swe_agent import MiniSweAgent  # type: ignore[reportMissingImports]
 
+from .pier_limits import agent_step_limit_flag
+
 
 class TurbofitMiniSWEAgent(MiniSweAgent):
     """Route local OpenAI-compatible traffic through the active trial bridge."""
+
+    def __init__(self, step_limit: int = 16, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._turbofit_step_limit = step_limit
+
+    def _build_config_flags(self, *, custom_config_path: str | None = None) -> str:
+        return super()._build_config_flags(
+            custom_config_path=custom_config_path,
+        ) + agent_step_limit_flag(self._turbofit_step_limit)
 
     async def run(self, instruction, environment, context) -> None:
         result = await self.exec_as_agent(

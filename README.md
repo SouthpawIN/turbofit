@@ -17,6 +17,8 @@ model: auto
 
 Turbofit can be the primary provider, one entry in an ordered fallback chain, or both.
 
+**TurboFit Check** is the system scan-to-configuration process: it inventories the machine, compares it with exact hardware evidence, and applies Auto or a selected compatible lane. The **[TurboFit List](docs/turbofit-list.md)** is the separate evidence-only list of benchmark winners at each physical hardware level.
+
 > **Evidence policy:** catalog entries are candidates until they pass the physical benchmark campaign. A candidate is never presented as a winner merely because it compiles, downloads, or fits an estimated memory budget.
 
 ## Turbofit 2.3 — Unleashed / Ornith / Nous free fallback
@@ -72,6 +74,22 @@ Full boundary and evidence plan: [`docs/freetoken-runtime.md`](docs/freetoken-ru
 - Keeps main and auxiliary roles independent. Vision stays on the main model; auxiliary models handle tool calls and lightweight orchestration.
 - Manages image, video, music, speech-to-text, and text-to-speech recommendations from the same setup surfaces.
 - Publishes status, hardware, recommendations, benchmark evidence, configuration, fallbacks, and multimodal controls in Hermes Dashboard and Hermes Desktop.
+- Discovers public model candidates, routes already-pinned revisions into physical campaigns, benchmarks only the three TurboFit List candidates for the current exact hardware level, and leaves new/unpinned discoveries in a reviewable onboarding queue.
+
+### Benchmark-to-list pipeline
+
+```text
+discover models → strict onboarding/repin → physical runtime campaign
+→ DeepSWE + agentic-pair screening → exact-tier winner promotion
+→ TurboFit List → TurboFit Check configures the user's machine
+```
+
+Scores are rebuilt from hash-bound per-suite pass counts. A real zero in one suite remains visible but no longer erases non-zero measured capability from every other suite. DeepSWE evidence additionally requires proven model calls, agent steps, input/output tokens, and a container-route receipt; zero-call jobs are infrastructure-invalid, never zero intelligence. Real screening is intentionally cheap and bounded (one task, 16 agent steps); promotion and release expand to 30/113 tasks with larger step budgets.
+
+### Speculative drafters: DFlash2 and Bonsai
+
+- **Qwen 3.8 27B DFlash2** is a distinct catalog candidate using Inco AI's pinned 2B Q4_K_M drafter and the pinned llama.cpp DFlash2 PR runtime. It must beat its non-speculative Q4 target in a real on-box A/B before TurboFit List promotion. On this exact `2x24` RTX 3090 host at 64K, the first hash-bound A/B measured **52.64 tok/s vs 35.11 tok/s baseline (1.499×, +49.94%)**, accepted 105/150 draft tokens, and added 2,840 MiB peak GPU residency. Raw normalized evidence: [`references/results/qwen38-dflash2-2x24-20260823.json`](references/results/qwen38-dflash2-2x24-20260823.json).
+- **Bonsai never shares the Qwen drafter.** Bonsai's released, model-specific speculative implementation is Prism's dedicated DSpark sidecar and Prism runtime. No Bonsai-specific DFlash/DFlash2 checkpoint has been released; TurboFit refuses to relabel or reuse Qwen's checkpoint as Bonsai evidence. If a dedicated Bonsai DFlash checkpoint is released or trained, it enters as a separate immutable artifact and recipe.
 
 ---
 
@@ -127,7 +145,7 @@ The same controls are available in Hermes Desktop under **Turbofit**.
 ### Command-line setup
 
 ```bash
-# Hardware scan + all recommendation preferences
+# TurboFit Check: system scan + all recommendation preferences
 /turbofit
 
 # One recommendation preference
@@ -270,10 +288,10 @@ scripts/expand-multipart-artifacts
 
 Current generated scope:
 
-- **42 main configurations**
+- **43 main configurations**
 - **3 auxiliary choices** (`ornith-1-5-35a3b`, `carwin-nano`, `auto`)
 - **4 exact context tiers**
-- **504 benchmark rows**
+- **516 benchmark rows**
 - DeepSeek V4 Flash 0731 is **not** in the active catalog
 
 ### Main configurations

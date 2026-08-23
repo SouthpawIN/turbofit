@@ -15,6 +15,7 @@ from turbofit_runtime.intelligence import (
     canonical_intelligence_recipe,
     intelligence_score,
     rank_configurations,
+    refresh_score_payload,
     validate_measurement,
 )
 from turbofit_runtime.agentic_pair_benchmark import AgenticSuite, summarize_cases
@@ -68,11 +69,34 @@ def configuration(identifier: str, *, deep: float, agent: float, tps: float) -> 
     )
 
 
-def test_intelligence_score_is_equal_weight_geometric_mean_of_real_suites() -> None:
+def test_intelligence_score_is_equal_weight_arithmetic_mean_of_real_suites() -> None:
     item = configuration("pair-a", deep=0.25, agent=0.81, tps=20)
 
-    assert intelligence_score(item) == pytest.approx(45.0)
+    assert intelligence_score(item) == pytest.approx(53.0)
     assert item.coverage == "complete"
+
+
+def test_one_real_zero_suite_does_not_erase_other_measured_capability() -> None:
+    item = configuration("pair-zero", deep=0.0, agent=0.81, tps=20)
+
+    assert intelligence_score(item) == pytest.approx(40.5)
+
+
+def test_refresh_score_payload_rebuilds_stale_zero_composites_from_raw_suite_counts() -> None:
+    item = configuration("stale-zero", deep=0.0, agent=0.81, tps=20)
+    payload = {
+        **item.__dict__,
+        "measurements": [measurement.__dict__ for measurement in item.measurements],
+        "intelligence_score": 0.0,
+        "balanced_score": 0.0,
+        "benchmark_level": "screening",
+    }
+
+    refreshed = refresh_score_payload(payload)
+
+    assert refreshed["intelligence_score"] == 40.5
+    assert refreshed["balanced_score"] > 0
+    assert refreshed["benchmark_level"] == "screening"
 
 
 def test_intelligence_score_refuses_missing_required_suite() -> None:

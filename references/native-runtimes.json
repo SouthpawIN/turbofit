@@ -16,6 +16,14 @@
       "cuda_binary": "~/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server"
     },
     {
+      "id": "dflash2-llama.cpp",
+      "repository": "https://github.com/z-lab/llama.cpp-fork.git",
+      "revision": "1deefcca395743049c3820ab8f9b15043f3e9446",
+      "purpose": "Qwen 3.8 27B DFlash2 grouped convolution and candidate selector",
+      "status": "candidate-until-physically-validated",
+      "cuda_binary": "~/.local/share/turbofit/runtimes/dflash2-llama.cpp-1deefcca395743049c3820ab8f9b15043f3e9446/build-cuda/bin/llama-server"
+    },
+    {
       "id": "ik-llama.cpp",
       "repository": "https://github.com/ikawrakow/ik_llama.cpp.git",
       "revision": "f2328aa0c19954d0ab31a3de60fbf50e47c2429f",

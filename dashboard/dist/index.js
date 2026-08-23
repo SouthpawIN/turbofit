@@ -366,7 +366,7 @@
             ),
             h("div", { className: "tf-actions" },
               h(Button, { onClick: save, disabled: busy }, busy ? "Applying…" : "Apply configuration"),
-              h(Button, { variant: "outline", onClick: load, disabled: busy }, "Refresh"),
+              h(Button, { variant: "outline", onClick: load, disabled: busy }, "Run TurboFit Check"),
             ),
           ),
         ),

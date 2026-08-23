@@ -73,11 +73,17 @@ def pier_command(
     jobs_dir: Path,
     n_tasks: int,
     sample_seed: int,
+    agent_step_limit: int = 60,
+    max_output_tokens: int = 4096,
 ) -> tuple[list[str], dict[str, str]]:
     if n_tasks <= 0:
         raise ValueError("n_tasks must be positive")
     if sample_seed < 0:
         raise ValueError("sample_seed must be non-negative")
+    if agent_step_limit <= 0:
+        raise ValueError("agent_step_limit must be positive")
+    if max_output_tokens <= 0:
+        raise ValueError("max_output_tokens must be positive")
     if not model or any(character.isspace() for character in model):
         raise ValueError("model must be a non-empty token")
     if not base_url.startswith(("http://", "https://")):
@@ -91,7 +97,11 @@ def pier_command(
         "pier", "run", "-p", str(dataset),
         "--agent-import-path", "turbofit_runtime.pier_agent:TurbofitMiniSWEAgent",
         "--model", f"openai/{model}",
-        "--agent-kwarg", 'model_kwargs={"num_retries":0,"timeout":300}',
+        "--agent-kwarg", "model_kwargs=" + json.dumps(
+            {"num_retries": 0, "timeout": 300, "max_tokens": max_output_tokens},
+            separators=(",", ":"),
+        ),
+        "--agent-kwarg", f"step_limit={agent_step_limit}",
     ]
     for key, value in agent_environment.items():
         # Pier's --env-file affects host-side resolution only. The mini-swe-agent
@@ -108,6 +118,22 @@ def pier_command(
     environment.update(agent_environment)
     environment["PYTHONPATH"] = str(PROJECT_SRC) + os.pathsep + environment.get("PYTHONPATH", "")
     return command, environment
+
+
+def _model_calls(path: Path) -> int:
+    trajectory = path.parent / "agent" / "trajectory.json"
+    try:
+        payload = json.loads(trajectory.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return 0
+    steps = payload.get("steps") if isinstance(payload, dict) else None
+    if not isinstance(steps, list):
+        return 0
+    return sum(
+        int(step.get("llm_call_count") or 0)
+        for step in steps
+        if isinstance(step, dict)
+    )
 
 
 def summarize_job(
@@ -135,7 +161,8 @@ def summarize_job(
         agent_steps = int(agent_result.get("n_agent_steps") or payload.get("n_agent_steps") or 0)
         input_tokens = int(agent_result.get("n_input_tokens") or 0)
         output_tokens = int(agent_result.get("n_output_tokens") or 0)
-        token_execution_valid = agent_steps > 0 and input_tokens + output_tokens > 0
+        model_calls = _model_calls(path)
+        token_execution_valid = agent_steps > 0 and input_tokens + output_tokens > 0 and model_calls > 0
         route_path = path.parent / "agent" / "turbofit-route.json"
         route_evidence = None
         if route_path.is_file():
@@ -156,6 +183,7 @@ def summarize_job(
             "agent_steps": agent_steps,
             "input_tokens": input_tokens,
             "output_tokens": output_tokens,
+            "model_calls": model_calls,
             "exception": payload.get("exception_info"),
             "route_evidence": route_evidence,
         })
@@ -180,6 +208,11 @@ def summarize_job(
             "tasks_passed": passed,
             "score": passed / len(trials),
             "infrastructure_failures": invalid,
+            "model_calls": sum(item["model_calls"] for item in trials),
+            "agent_steps": sum(item["agent_steps"] for item in trials),
+            "input_tokens": sum(item["input_tokens"] for item in trials),
+            "output_tokens": sum(item["output_tokens"] for item in trials),
+            "model_failures": sum(item["execution_valid"] and not item["passed"] for item in trials),
         },
         "trials": trials,
     }
@@ -205,6 +238,8 @@ def main() -> int:
     parser.add_argument("--jobs-dir", type=Path, default=Path("references/results/deepswe"))
     parser.add_argument("--n-tasks", type=int, default=10)
     parser.add_argument("--sample-seed", type=int, default=0)
+    parser.add_argument("--agent-step-limit", type=int, default=60)
+    parser.add_argument("--max-output-tokens", type=int, default=4096)
     parser.add_argument("--configuration-id")
     parser.add_argument("--production-recipe-sha256")
     parser.add_argument("--summary-output", type=Path)
@@ -233,6 +268,8 @@ def main() -> int:
         jobs_dir=args.jobs_dir,
         n_tasks=args.n_tasks,
         sample_seed=args.sample_seed,
+        agent_step_limit=args.agent_step_limit,
+        max_output_tokens=args.max_output_tokens,
     )
     result = subprocess.run(command, env=environment, check=False)
     if result.returncode == 0 and args.summary_output:

@@ -16,7 +16,7 @@ from typing import Any, Iterable, Mapping, Sequence
 _HASH = re.compile(r"^sha256:[0-9a-f]{64}$")
 REQUIRED_BENCHMARKS = ("deep-swe", "agentic-pair")
 INTELLIGENCE_RECIPE_PROTOCOL = "turbofit.intelligence-recipe/v2"
-DEEPSWE_RUNNER_PROTOCOL = "turbofit.deepswe-pier/v3"
+DEEPSWE_RUNNER_PROTOCOL = "turbofit.deepswe-pier/v7"
 AGENTIC_PAIR_PROTOCOL = "turbofit.agentic-production-pair/v1"
 
 
@@ -146,10 +146,12 @@ def intelligence_score(item: ConfigurationIntelligence) -> float:
     missing = [name for name in REQUIRED_BENCHMARKS if name not in measurements]
     if missing:
         raise ValueError("missing required benchmark measurements: " + ", ".join(missing))
-    # Equal-weight geometric mean: a configuration cannot hide a weak agentic
-    # lane behind one strong benchmark. Scores remain an auditable 0-100 scale.
-    product = math.prod(float(measurements[name].score) for name in REQUIRED_BENCHMARKS)
-    return round(100.0 * product ** (1.0 / len(REQUIRED_BENCHMARKS)), 6)
+    # Equal-weight arithmetic mean preserves each real suite's contribution.
+    # A genuine 0/N result remains visible in its raw measurement, but it no
+    # longer erases non-zero measured capability from every other suite. Tier
+    # promotion can still enforce per-suite floors separately.
+    values = [float(measurements[name].score) for name in REQUIRED_BENCHMARKS]
+    return round(100.0 * sum(values) / len(values), 6)
 
 
 def rank_configurations(
@@ -163,6 +165,16 @@ def rank_configurations(
         "intelligence": sorted(items, key=lambda item: (item.intelligence, item.throughput_tps, stable(item)), reverse=True),
         "balanced": sorted(items, key=lambda item: (item.balanced, item.intelligence, item.throughput_tps, stable(item)), reverse=True),
         "speed": sorted(items, key=lambda item: (item.throughput_tps, item.intelligence, stable(item)), reverse=True),
+    }
+
+
+def refresh_score_payload(value: Mapping[str, object]) -> dict[str, object]:
+    """Recompute derived composite fields from hash-bound suite measurements."""
+    item = from_mapping(value)
+    return {
+        **dict(value),
+        "intelligence_score": item.intelligence,
+        "balanced_score": item.balanced,
     }
 
 

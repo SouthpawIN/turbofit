@@ -1,0 +1,228 @@
+{
+  "arms": {
+    "baseline": {
+      "aux": {
+        "content": "<think>\n\n</think>\n\n```python\nfrom typing import List, TypeVar, Callable\n\nT = TypeVar('T')\n\n\ndef merge_sort(arr: List[T], key: Callable[[T], T] = lambda x: x) -> List[T]:\n    \"\"\"\n    Sort a list using the merge sort algorithm.\n    \n    Args:\n        arr: The list to sort.\n        key: A function that extracts a comparison key from each element.\n    \n    Returns:\n        A new sorted list.\n    \"\"\"\n    if len(arr) <= 1:\n        return arr\n    \n    mid: int = len(arr)",
+        "timings": {
+          "cache_n": 22,
+          "predicted_ms": 3672.708,
+          "predicted_n": 128,
+          "predicted_per_second": 34.85166803350552,
+          "predicted_per_token_ms": 28.69303125,
+          "prompt_ms": 251.064,
+          "prompt_n": 4,
+          "prompt_per_second": 15.932192588344009,
+          "prompt_per_token_ms": 62.766
+        },
+        "usage": {
+          "completion_tokens": 128,
+          "prompt_tokens": 26,
+          "prompt_tokens_details": {
+            "cached_tokens": 22
+          },
+          "total_tokens": 154
+        }
+      },
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B/Qwen3.8-27B-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11605",
+        "--alias",
+        "qwen3-8-27b-q4",
+        "-c",
+        "65536",
+        "-ngl",
+        "auto",
+        "--fit",
+        "on",
+        "-fa",
+        "on",
+        "--jinja",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--parallel",
+        "1",
+        "--mmproj",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B/mmproj-Qwen3.8-27B-Q8_0.gguf"
+      ],
+      "gpu_peak_mb": {
+        "0": 439,
+        "1": 20341
+      },
+      "main": {
+        "content": "```python\nfrom typing import List, TypeVar, Callable\n\nT = TypeVar('T')\n\n\ndef merge_sort(arr: List[T], key: Callable[[T], T] = lambda x: x) -> List[T]:\n    \"\"\"\n    Sort a list using the merge sort algorithm.\n    \n    Args:\n        arr: The list to sort.\n        key: A function that extracts a comparison key from each element.\n    \n    Returns:\n        A new sorted list.\n    \"\"\"\n    if len(arr) <= 1:\n        return arr\n    \n    mid: int = len(arr)",
+        "timings": {
+          "cache_n": 0,
+          "predicted_ms": 3645.92,
+          "predicted_n": 128,
+          "predicted_per_second": 35.10773686751218,
+          "predicted_per_token_ms": 28.48375,
+          "prompt_ms": 256.9,
+          "prompt_n": 26,
+          "prompt_per_second": 101.20669521214481,
+          "prompt_per_token_ms": 9.88076923076923
+        },
+        "usage": {
+          "completion_tokens": 128,
+          "prompt_tokens": 26,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 154
+        }
+      },
+      "physical_fingerprint": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b",
+      "raw_result_sha256": "sha256:f9cb907d9e8a291752cd96e378f44dc93be342cf8fc300092f4ef8801b0d5086",
+      "recipe_sha256": "sha256:c35e7f8b7825c524741501db754e2b7a5600ec6e50bf3d4d7174e4feae2cf38c",
+      "row_id": "qwen-3-8-27b-q4-k-m-auto-64k",
+      "runtime_string": "turbofit-runtime use qwen-3-8-27b-q4-k-m-auto-64k"
+    },
+    "dflash2": {
+      "aux": {
+        "content": "<think>\n\n</think>\n\n```python\nfrom typing import List, TypeVar, Callable\n\nT = TypeVar('T')\n\n\ndef merge_sort(arr: List[T], key: Callable[[T], T] = lambda x: x) -> List[T]:\n    \"\"\"\n    Sort a list using the merge sort algorithm.\n    \n    Args:\n        arr: The list to be sorted.\n        key: A function that extracts a comparison key from each element.\n        \n    Returns:\n        A new sorted list.\n    \"\"\"\n    if len(arr) <= 1:\n        return arr\n    \n    mid: int = len(arr",
+        "timings": {
+          "cache_n": 22,
+          "draft_n": 150,
+          "draft_n_accepted": 105,
+          "predicted_ms": 2212.566,
+          "predicted_n": 128,
+          "predicted_per_second": 57.399417689687006,
+          "predicted_per_token_ms": 17.421779527559053,
+          "prompt_ms": 254.104,
+          "prompt_n": 4,
+          "prompt_per_second": 15.741586122217674,
+          "prompt_per_token_ms": 63.526
+        },
+        "usage": {
+          "completion_tokens": 128,
+          "prompt_tokens": 26,
+          "prompt_tokens_details": {
+            "cached_tokens": 22
+          },
+          "total_tokens": 154
+        }
+      },
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/dflash2-llama.cpp-1deefcca395743049c3820ab8f9b15043f3e9446/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B/Qwen3.8-27B-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11605",
+        "--alias",
+        "qwen3-8-27b-q4-dflash2",
+        "-c",
+        "65536",
+        "-ngl",
+        "auto",
+        "--fit",
+        "on",
+        "-fa",
+        "on",
+        "--jinja",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--parallel",
+        "1",
+        "--model-draft",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B/Qwen3.8-27B-DFlash2-Q4_K_M.gguf",
+        "--spec-type",
+        "draft-dflash",
+        "--spec-draft-n-max",
+        "7",
+        "-ngld",
+        "auto",
+        "--mmproj",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B/mmproj-Qwen3.8-27B-Q8_0.gguf"
+      ],
+      "gpu_peak_mb": {
+        "0": 440,
+        "1": 23181
+      },
+      "main": {
+        "content": "```python\nfrom typing import List, TypeVar, Callable\n\nT = TypeVar('T')\n\n\ndef merge_sort(arr: List[T], key: Callable[[T], T] = lambda x: x) -> List[T]:\n    \"\"\"\n    Sort a list using the merge sort algorithm.\n    \n    Args:\n        arr: The list to be sorted.\n        key: A function that extracts a comparison key from each element.\n        \n    Returns:\n        A new sorted list.\n    \"\"\"\n    if len(arr) <= 1:\n        return arr\n    \n    mid: int = len(arr",
+        "timings": {
+          "cache_n": 0,
+          "draft_n": 150,
+          "draft_n_accepted": 105,
+          "predicted_ms": 2412.579,
+          "predicted_n": 128,
+          "predicted_per_second": 52.64076326619771,
+          "predicted_per_token_ms": 18.99668503937008,
+          "prompt_ms": 667.632,
+          "prompt_n": 26,
+          "prompt_per_second": 38.94360965322214,
+          "prompt_per_token_ms": 25.678153846153844
+        },
+        "usage": {
+          "completion_tokens": 128,
+          "prompt_tokens": 26,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 154
+        }
+      },
+      "physical_fingerprint": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b",
+      "raw_result_sha256": "sha256:c921be2eb83c4f4a58cbd3bea3f67fb5f1e19d62e08e7555084ff356f1ab4598",
+      "recipe_sha256": "sha256:2cc2731bd24ef935511bbbe44221149ed45e7535e0b33c84097b937d3f8cf828",
+      "row_id": "qwen-3-8-27b-q4-k-m-dflash2-auto-64k",
+      "runtime_string": "turbofit-runtime use qwen-3-8-27b-q4-k-m-dflash2-auto-64k"
+    }
+  },
+  "comparison": {
+    "accepted_draft_tokens": 105,
+    "additional_peak_gpu_mb": 2840,
+    "baseline_main_tps": 35.10773686751218,
+    "completion_tokens_per_request": 128,
+    "dflash2_main_tps": 52.64076326619771,
+    "draft_acceptance_fraction": 0.7,
+    "draft_tokens": 150,
+    "percent_gain": 49.94063406835589,
+    "same_prompt": true,
+    "speedup": 1.499406340683559
+  },
+  "draft": {
+    "id": "qwen3-8-27b-q4-dflash2",
+    "repo": "incoai/Qwen3.8-27B-DFlash2-GGUF",
+    "revision": "6cb5872e2cee6b4e780a8414922350be8e42d65c",
+    "sha256": "18a380efc9b7ed8d88677fc895f5c11ae170653434ee378f7348f715c14d0594"
+  },
+  "evidence_sha256": "sha256:f8e050ce953bbc9bb52e0d058570e6a383add600423fd1fb588eba8783a247ec",
+  "hardware": {
+    "class": "2x24",
+    "gpus": [
+      "NVIDIA GeForce RTX 3090",
+      "NVIDIA GeForce RTX 3090"
+    ],
+    "topology_key": "2x24576mb"
+  },
+  "recorded_at": "2026-08-23T05:41:00Z",
+  "runtime": {
+    "binary_sha256": "337cb2163fb1137243822ae947ac34d87f2c724cf68e360dfd2afed5a9b2a796",
+    "id": "dflash2-llama.cpp",
+    "revision": "1deefcca395743049c3820ab8f9b15043f3e9446"
+  },
+  "schema": "turbofit.dflash2-ab/v1",
+  "target": {
+    "id": "qwen3-8-27b-q4",
+    "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34"
+  }
+}

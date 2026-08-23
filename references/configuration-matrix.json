@@ -170,6 +170,90 @@
       "status": "candidate"
     },
     {
+      "id": "qwen3-8-27b-q4-dflash2--ornith-1-5-35a3b--64k",
+      "main": "qwen3-8-27b-q4-dflash2",
+      "auxiliary": "ornith-1-5-35a3b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-dflash2--ornith-1-5-35a3b--128k",
+      "main": "qwen3-8-27b-q4-dflash2",
+      "auxiliary": "ornith-1-5-35a3b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-dflash2--ornith-1-5-35a3b--262k",
+      "main": "qwen3-8-27b-q4-dflash2",
+      "auxiliary": "ornith-1-5-35a3b",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-dflash2--ornith-1-5-35a3b--1m",
+      "main": "qwen3-8-27b-q4-dflash2",
+      "auxiliary": "ornith-1-5-35a3b",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-dflash2--carwin-nano--64k",
+      "main": "qwen3-8-27b-q4-dflash2",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-dflash2--carwin-nano--128k",
+      "main": "qwen3-8-27b-q4-dflash2",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-dflash2--carwin-nano--262k",
+      "main": "qwen3-8-27b-q4-dflash2",
+      "auxiliary": "carwin-nano",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-dflash2--carwin-nano--1m",
+      "main": "qwen3-8-27b-q4-dflash2",
+      "auxiliary": "carwin-nano",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-dflash2--auto--64k",
+      "main": "qwen3-8-27b-q4-dflash2",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-dflash2--auto--128k",
+      "main": "qwen3-8-27b-q4-dflash2",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-dflash2--auto--262k",
+      "main": "qwen3-8-27b-q4-dflash2",
+      "auxiliary": "auto",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "qwen3-8-27b-q4-dflash2--auto--1m",
+      "main": "qwen3-8-27b-q4-dflash2",
+      "auxiliary": "auto",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
       "id": "qwen3-8-27b-q8-mtp--ornith-1-5-35a3b--64k",
       "main": "qwen3-8-27b-q8-mtp",
       "auxiliary": "ornith-1-5-35a3b",

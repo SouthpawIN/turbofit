@@ -78,7 +78,7 @@ def register(ctx) -> None:
     ctx.register_command(
         "turbofit",
         _slash_turbofit,
-        description="Rescan hardware and recommend Turbofit model configurations",
+        description="Run TurboFit Check: scan this system and configure it from measured hardware winners",
         args_hint="[scan|status|tiers|intelligence|balanced|speed|setup]",
     )
     ctx.register_skill("turbofit", Path(__file__).parent / "SKILL.md")

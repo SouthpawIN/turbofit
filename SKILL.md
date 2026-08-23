@@ -35,6 +35,9 @@ The same controls are available in `hermes dashboard` under **Turbofit** and thr
 - Use `status`, `run-one`, or `run --limit N`; state is resumable in `references/intelligence-campaign-state.json`.
 - Scores require both benchmark suites and immutable raw evidence. Never replace missing scores with catalog tiers, parameter counts, or vendor benchmark claims.
 - `/turbofit tiers` and `scripts/turbofit-hardware-tiers` show every 8/16/24/48/64/96/200/300 GB class with pending versus measured intelligence and TPS.
+- `scripts/turbofit-intelligence-campaign` benchmarks only the current machine's TurboFit List tournament candidates. `rebuild-scores` recomputes derived composites from raw suite counts; zero-call/token trials remain invalid infrastructure.
+- `scripts/turbofit-promote-list-winner` promotes only an exact-tier candidate with current physical evidence, positive intelligence/TPS/balanced values, and matching recipe hashes. `scripts/turbofit-list` renders the global evidence-only List.
+- Qwen 3.8 DFlash2 is a separate candidate runtime/artifact pair (`dflash2-llama.cpp`, `Qwen3.8-27B-DFlash2-Q4_K_M.gguf`). Never attach that drafter to Bonsai. Bonsai uses its own released DSpark sidecar and Prism runtime until a dedicated Bonsai DFlash checkpoint exists.
 
 ## Portable memory allocation
 

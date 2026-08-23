@@ -93,9 +93,10 @@ def install(runtime: dict, *, backend: str, check_only: bool) -> dict:
 
 def select_native_runtimes(runtimes: list[dict], selected: set[str]) -> list[dict]:
     native = [item for item in runtimes if item.get("kind", "cmake-llama.cpp") != "python-cli"]
+    default_native = [item for item in native if not str(item.get("status", "")).startswith("candidate")]
     if "freetoken" in selected:
         raise ValueError("FreeToken uses scripts/install-freetoken-runtime, not install-native-runtimes")
-    rows = [item for item in native if not selected or item["id"] in selected]
+    rows = [item for item in native if item["id"] in selected] if selected else default_native
     missing = selected - {item["id"] for item in rows}
     if missing:
         raise ValueError(f"unknown native runtime ids: {sorted(missing)}")

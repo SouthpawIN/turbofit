@@ -1,14 +1,14 @@
-# TurboFit Check / TurboFit List
+# TurboFit Check and TurboFit List
 
 Canonical product brief. This is what ships, not a research note.
 
 ## TurboFit List
 
-The canonical models in the TurboFit Check chain.
+The evidence-only winners at each physical hardware level. A level remains blank until its current-recipe physical, throughput, and intelligence campaigns produce a hash-bound winner. Canonical generated view: [`turbofit-list.md`](turbofit-list.md).
 
 ## TurboFit Check
 
-Scans the user's hardware, then recommends and configures Hermes-Agent main and auxiliary models for that device.
+The system scan-to-configuration process. It scans the user's hardware, compares it with exact-tier winners and portable-fit candidates, then recommends and configures Hermes-Agent main and auxiliary models for that device.
 
 Low-VRAM dedicated Auto is **Bonsai 27B** or **Ornith 1.5 35A3B** (`--cpu-moe` + mmap). Apple Silicon uses **OrcaRouter Qwen3.8-27B-Uncensored MLX** (4/6/8-bit, never 2-bit). Integrated / unified (non-Apple) uses **Ornith 1.5**.
 

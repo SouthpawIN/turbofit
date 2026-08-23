@@ -1,0 +1,133 @@
+{
+  "checks": {
+    "main": {
+      "context": 262144,
+      "context_source": "readiness",
+      "health": {
+        "status": "ok"
+      },
+      "model": "qwen3-8-27b-unleashed-ud-q3-k-xl"
+    }
+  },
+  "components": [
+    {
+      "alias": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11605",
+        "--alias",
+        "qwen3-8-27b-unleashed-ud-q3-k-xl",
+        "-c",
+        "262144",
+        "-ngl",
+        "99",
+        "--fit",
+        "off",
+        "-fa",
+        "on",
+        "--jinja",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--parallel",
+        "1",
+        "--mmproj",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/mmproj-Unleashed-f16.gguf"
+      ],
+      "family": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+      "gpu": "1",
+      "kind": "process",
+      "method": "baseline",
+      "model_path": "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
+      "port": 11605,
+      "projector_path": "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/mmproj-Unleashed-f16.gguf",
+      "role": "main"
+    }
+  ],
+  "configuration": "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k",
+  "hardware_fingerprint": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b",
+  "hardware_tier_gb": 48,
+  "intelligence_evidence_sha256": "sha256:19758459d46791be0dfc146ba40d130c3901e8ce5b7624dbab02e85ec45c42f0",
+  "physical_evidence_sha256": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+  "physical_hardware": {
+    "captured_at": "2026-08-23T02:35:47.405736+00:00",
+    "fingerprint": {
+      "accelerator_memory_mb": 49152,
+      "architecture": "x86_64",
+      "devices": [
+        {
+          "backend": "cuda",
+          "bus_id": "00000000:04:00.0",
+          "compute_capability": "8.6",
+          "index": 0,
+          "memory_total_mb": 24576,
+          "name": "NVIDIA GeForce RTX 3090",
+          "uuid": "GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1",
+          "vendor": "nvidia"
+        },
+        {
+          "backend": "cuda",
+          "bus_id": "00000000:86:00.0",
+          "compute_capability": "8.6",
+          "index": 1,
+          "memory_total_mb": 24576,
+          "name": "NVIDIA GeForce RTX 3090",
+          "uuid": "GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1",
+          "vendor": "nvidia"
+        }
+      ],
+      "drivers": {
+        "GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1": "580.159.03",
+        "GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1": "580.159.03"
+      },
+      "os": "linux",
+      "recommendation_key": "linux:x86_64:cuda:2x24576mb:cap-8.6:ram-386861mb",
+      "system_ram_mb": 386861,
+      "topology_key": "2x24576mb",
+      "unified_memory": false
+    },
+    "fingerprint_sha256": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b",
+    "schema": "turbofit.physical-hardware/v1"
+  },
+  "recipe_sha256": "sha256:bb022eb4ec01660ac891fc99ad923f1010b568c869e0406c97bf1c75798da4f1",
+  "schema": "turbofit.hardware-tier-winner/v2",
+  "topology": "2x24",
+  "winner_metrics": {
+    "agentic_pair": {
+      "name": "agentic-pair",
+      "raw_result": "/tmp/turbofit_benchmark_repair/references/results/intelligence-campaign/qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k/screening/attempts/20260823T053113.248993Z/raw-aggregate.json",
+      "raw_result_sha256": "sha256:19758459d46791be0dfc146ba40d130c3901e8ce5b7624dbab02e85ec45c42f0",
+      "revision": "agentic-pair-v1",
+      "score": 0.9375,
+      "tasks_passed": 15,
+      "tasks_total": 16
+    },
+    "balanced_score": 58.77821,
+    "deep_swe": {
+      "name": "deep-swe",
+      "raw_result": "/tmp/turbofit_benchmark_repair/references/results/intelligence-campaign/qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k/screening/attempts/20260823T053113.248993Z/raw-aggregate.json",
+      "raw_result_sha256": "sha256:19758459d46791be0dfc146ba40d130c3901e8ce5b7624dbab02e85ec45c42f0",
+      "revision": "435ee89ec2f2e2289f33b0da4f992f0b7b7266b9",
+      "score": 0.0,
+      "tasks_passed": 0,
+      "tasks_total": 1
+    },
+    "gpu_peak_mb": {
+      "0": 563,
+      "1": 19391
+    },
+    "host_process_rss_peak_mb": 9405.19140625,
+    "intelligence_score": 46.875,
+    "quality_decode_tps_median": 39.39215795117914
+  }
+}

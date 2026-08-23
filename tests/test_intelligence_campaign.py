@@ -12,6 +12,7 @@ from turbofit_runtime.intelligence_campaign import (
     recover_interrupted,
     reconcile_state,
     refresh_runtime_status,
+    select_turbofit_list_candidates,
     next_ready_run,
 )
 
@@ -25,10 +26,33 @@ def matrix() -> dict:
     }
 
 
+def test_intelligence_campaign_selects_only_current_hardware_turbofit_list_candidates() -> None:
+    configurations = {
+        "schema": "matrix",
+        "rows": [
+            {"id": "eight-a", "main": "a", "auxiliary": "auto", "context": 65536},
+            {"id": "forty-eight-a", "main": "b", "auxiliary": "auto", "context": 131072},
+            {"id": "forty-eight-b", "main": "c", "auxiliary": "aux", "context": 65536},
+            {"id": "not-listed", "main": "d", "auxiliary": "auto", "context": 65536},
+        ],
+    }
+    tournaments = {
+        "tiers": [
+            {"vram_gb": 8, "candidates": ["eight-a"]},
+            {"vram_gb": 48, "candidates": ["forty-eight-b", "forty-eight-a", "forty-eight-b"]},
+        ]
+    }
+
+    selected = select_turbofit_list_candidates(configurations, tournaments, 48)
+
+    assert [item["id"] for item in selected["rows"]] == ["forty-eight-b", "forty-eight-a"]
+
+
 def test_intelligence_campaign_expands_every_configuration_into_reproducible_levels() -> None:
     state = build_state(matrix())
 
     assert len(state["runs"]) == 2 * len(LEVELS)
+    assert state["runs"]["a--auto--64k::screening"]["parameters"]["deepswe_tasks"] == 1
     assert {run["level"] for run in state["runs"].values()} == set(LEVELS)
     assert all(
         run["status"] == ("waiting-runtime" if run["level"] == "screening" else f"waiting-{LEVELS[LEVELS.index(run['level']) - 1]}")
@@ -118,6 +142,22 @@ def test_campaign_finishes_screening_before_promotion_and_release() -> None:
     assert selected["configuration_id"] == "b--aux--128k"
 
 
+def test_campaign_uses_matrix_priority_instead_of_alphabetical_model_ids() -> None:
+    state = build_state({
+        "rows": [
+            {"id": "z-current--auto--128k", "main": "z-current", "auxiliary": "auto", "context": 131072},
+            {"id": "a-legacy--auto--64k", "main": "a-legacy", "auxiliary": "auto", "context": 65536},
+        ]
+    })
+    state["runs"]["z-current--auto--128k::screening"]["status"] = "ready"
+    state["runs"]["a-legacy--auto--64k::screening"]["status"] = "ready"
+
+    selected = next_ready_run(state)
+
+    assert selected["configuration_id"] == "z-current--auto--128k"
+    assert selected["priority"] == 0
+
+
 def test_deferred_configuration_remains_accounted_and_can_be_reopened() -> None:
     state = build_state(matrix())
 
@@ -140,6 +180,7 @@ def test_deferred_configuration_remains_accounted_and_can_be_reopened() -> None:
 def test_reconcile_state_preserves_retained_runs_and_adds_replacement_rows() -> None:
     state = build_state(matrix())
     state["runs"]["a--auto--64k::screening"]["status"] = "success"
+    state["runs"]["a--auto--64k::screening"]["parameters"]["deepswe_tasks"] = 99
     replacement = {
         "rows": [
             {"id": "a--auto--64k", "main": "a", "auxiliary": "auto", "context": 65536},
@@ -150,5 +191,6 @@ def test_reconcile_state_preserves_retained_runs_and_adds_replacement_rows() -> 
     reconciled = reconcile_state(state, replacement)
 
     assert reconciled["runs"]["a--auto--64k::screening"]["status"] == "success"
+    assert reconciled["runs"]["a--auto--64k::screening"]["parameters"]["deepswe_tasks"] == 1
     assert reconciled["runs"]["qwen--auto--64k::screening"]["status"] == "waiting-runtime"
     assert not any(key.startswith("b--aux--128k::") for key in reconciled["runs"])

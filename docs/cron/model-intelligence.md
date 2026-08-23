@@ -14,9 +14,13 @@ PYTHONPATH=. python3 research/discover_api_models.py --provider openrouter --url
 
 All inputs are public, read-only endpoints. The scripts deliberately accept no token or credential argument and copy only allowlisted metadata. Every output remains `status: candidate` until the benchmark promotion gates pass.
 
-## Proposed Hermes jobs
+## Active scheduled refresh
 
-Do not create these jobs until the owner approves both schedule and delivery target. Cron sessions start without chat context, so each prompt below is self-contained. Set `workdir` to the absolute Turbofit repository and restrict tools to `terminal`.
+The approved local Hermes job runs `scripts/scheduled-refresh` every 12 hours. The script executes all public discovery collectors, updates tracked revisions, writes `research/benchmark-queue.json`, advances one serialized physical/intelligence batch when the campaign service is not already active, promotes an exact-tier winner when eligible, regenerates the hardware report, and rebuilds TurboFit List. It no longer treats every GPU PID as an automatic skip; campaign ownership and GPU-clear safety remain inside the benchmark runners.
+
+The long-running `turbofit-benchmark-campaign.service` is the continuous worker. Hermes cron performs a single safe batch only when that service is inactive, so the two schedulers cannot race.
+
+## Collector reference
 
 ### Hugging Face candidates
 
@@ -51,4 +55,4 @@ Run exactly `PYTHONPATH=. python3 research/discover_model_news.py --url https://
 Run exactly `PYTHONPATH=. python3 research/discover_api_models.py --provider openrouter --url https://openrouter.ai/api/v1/models` in this project. Report the JSON diff counts. Do not use credentials, call paid inference, edit runtime profiles, promote candidates, schedule jobs, or write anywhere except research/candidates.json.
 ```
 
-When approved, create jobs with Hermes `cronjob(action="create", schedule=..., prompt=..., workdir="/home/sovthpaw/projects/turbofit", enabled_toolsets=["terminal"], deliver=...)`. Explicitly choose a gateway-connected delivery target if notifications are wanted; this TUI has no live origin-delivery channel.
+Separate collector jobs are no longer needed on this host; `scripts/scheduled-refresh` owns the ordered discovery → queue → benchmark → List transaction. Use the snippets above only for manual collector debugging.
