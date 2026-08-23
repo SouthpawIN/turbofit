@@ -330,7 +330,7 @@
             h("div", { className: "tf-toggles" },
               h(Toggle, { checked: primary, onChange: setPrimary, label: "Use Turbofit as primary provider (model: auto)" }),
               h(Toggle, { checked: fallback, onChange: setFallback, label: "Add Turbofit to Hermes fallback providers" }),
-              h(Toggle, { checked: installSirvir, onChange: setInstallSirvir, label: "Install Sirvir customer service profile" }),
+              h(Toggle, { checked: installSirvir, onChange: setInstallSirvir, label: "Install or update GitHub-current Sirvir customer service" }),
               h(Toggle, { checked: installDesktop, onChange: setInstallDesktop, label: "Install native Hermes Desktop Turbofit page" }),
               servingBackend === "adaptive" ? h(Toggle, {
                 checked: installNative,

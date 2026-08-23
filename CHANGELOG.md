@@ -15,6 +15,7 @@
 
 ### Hermes plugin install
 
+- Turbofit's Sirvir setup option now installs or updates the canonical `SouthpawIN/sirvir` GitHub profile instead of copying a bundled snapshot; Sirvir's bootstrap reciprocally installs Turbofit first when it is missing.
 - Slimmed `distribution.yaml` so plugin install no longer ships benchmark result dumps as payload.
 
 ## 2.2 — Qwen 3.8 27B day-zero release

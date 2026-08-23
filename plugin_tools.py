@@ -15,6 +15,8 @@ from typing import Any, Mapping
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
+import yaml
+
 # Hermes loads directory plugins as packages without installing their Python
 # projects.  Make the repository's src-layout importable from that real load
 # path instead of relying on a developer-set PYTHONPATH.
@@ -59,24 +61,51 @@ _CONFIG_LOCK = threading.RLock()
 
 
 def install_sirvir_profile(*, hermes_home: Path | None = None) -> dict[str, Any]:
-    """Install or update Sirvir while preserving profile-owned user state."""
-    source = PLUGIN_ROOT / "profiles" / "sirvir"
-    if not source.is_dir():
-        raise FileNotFoundError(f"missing bundled Sirvir profile: {source}")
+    """Install or update Sirvir from its canonical GitHub distribution."""
+    executable = shutil.which("hermes")
+    if not executable:
+        raise FileNotFoundError("hermes executable is not available")
     root = Path(hermes_home or os.getenv("HERMES_HOME") or Path.home() / ".hermes")
     target = root / "profiles" / "sirvir"
-    updated = target.exists()
-    target.mkdir(parents=True, exist_ok=True)
-    for name in ("README.md", "SOUL.md", "INSTRUCTIONS.md", "config.yaml", "distribution.yaml"):
-        source_file = source / name
-        if not source_file.is_file():
-            raise FileNotFoundError(f"incomplete bundled Sirvir profile: {source_file}")
-        shutil.copyfile(source_file, target / name)
+    updated = (target / "distribution.yaml").is_file()
+    command = (
+        [executable, "profile", "update", "sirvir", "--yes"]
+        if updated else
+        [
+            executable,
+            "profile",
+            "install",
+            "SouthpawIN/sirvir",
+            "--name",
+            "sirvir",
+            "--yes",
+        ]
+    )
+    environment = {**os.environ, "HERMES_HOME": str(root)}
+    result = subprocess.run(
+        command,
+        text=True,
+        capture_output=True,
+        timeout=300,
+        check=False,
+        env=environment,
+    )
+    if result.returncode:
+        raise RuntimeError((result.stderr or result.stdout or "Sirvir profile installation failed").strip())
+    manifest_path = target / "distribution.yaml"
+    if not manifest_path.is_file():
+        raise RuntimeError("Hermes reported success but the Sirvir profile was not installed")
+    try:
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
+    except (OSError, ValueError) as exc:
+        raise RuntimeError("installed Sirvir distribution manifest is invalid") from exc
     return {
         "installed": True,
         "updated": updated,
         "profile": "sirvir",
         "path": str(target),
+        "source": "https://github.com/SouthpawIN/sirvir",
+        "version": str(manifest.get("version") or "unknown"),
     }
 
 

@@ -251,37 +251,69 @@ def test_apply_configuration_can_publish_tailnet_and_use_remote_provider_url(mon
     assert not any("nvidia" in str(item).lower() or "nim" in str(item).lower() for item in chain)
 
 
-def test_install_sirvir_profile_copies_bundled_customer_service_profile(tmp_path: Path) -> None:
-    from plugin_tools import install_sirvir_profile
+def test_install_sirvir_profile_uses_current_github_distribution(monkeypatch, tmp_path: Path) -> None:
+    import types
+    import plugin_tools
 
-    result = install_sirvir_profile(hermes_home=tmp_path)
+    calls = []
     profile = tmp_path / "profiles" / "sirvir"
+    monkeypatch.setattr(plugin_tools.shutil, "which", lambda name: "/usr/bin/hermes" if name == "hermes" else None)
 
-    assert result == {
-        "installed": True,
-        "updated": False,
-        "profile": "sirvir",
-        "path": str(profile),
-    }
-    assert "customer service" in (profile / "SOUL.md").read_text().lower()
-    assert "pull request" in (profile / "INSTRUCTIONS.md").read_text().lower()
-    assert (profile / "config.yaml").is_file()
+    def fake_run(command, **kwargs):
+        calls.append((command, kwargs))
+        profile.mkdir(parents=True)
+        (profile / "distribution.yaml").write_text("name: sirvir\nversion: 2.1.0\n")
+        return types.SimpleNamespace(returncode=0, stdout="installed", stderr="")
+
+    monkeypatch.setattr(plugin_tools.subprocess, "run", fake_run)
+
+    result = plugin_tools.install_sirvir_profile(hermes_home=tmp_path)
+
+    assert calls[0][0] == [
+        "/usr/bin/hermes", "profile", "install", "SouthpawIN/sirvir",
+        "--name", "sirvir", "--yes",
+    ]
+    assert calls[0][1]["env"]["HERMES_HOME"] == str(tmp_path)
+    assert result["source"] == "https://github.com/SouthpawIN/sirvir"
+    assert result["updated"] is False
+    assert result["version"] == "2.1.0"
 
 
-def test_install_sirvir_profile_updates_only_distribution_owned_files(tmp_path: Path) -> None:
-    from plugin_tools import install_sirvir_profile
+def test_install_sirvir_profile_updates_github_distribution_and_preserves_user_state(monkeypatch, tmp_path: Path) -> None:
+    import types
+    import plugin_tools
 
-    install_sirvir_profile(hermes_home=tmp_path)
+    calls = []
     profile = tmp_path / "profiles" / "sirvir"
+    profile.mkdir(parents=True)
+    (profile / "distribution.yaml").write_text("name: sirvir\nversion: 2.0.0\n")
     user_memory = profile / "memories" / "USER.md"
     user_memory.parent.mkdir()
     user_memory.write_text("keep me")
+    monkeypatch.setattr(plugin_tools.shutil, "which", lambda name: "/usr/bin/hermes" if name == "hermes" else None)
 
-    result = install_sirvir_profile(hermes_home=tmp_path)
+    def fake_run(command, **kwargs):
+        calls.append(command)
+        (profile / "distribution.yaml").write_text("name: sirvir\nversion: 2.1.0\n")
+        return types.SimpleNamespace(returncode=0, stdout="updated", stderr="")
 
-    assert result["installed"] is True
+    monkeypatch.setattr(plugin_tools.subprocess, "run", fake_run)
+
+    result = plugin_tools.install_sirvir_profile(hermes_home=tmp_path)
+
+    assert calls == [["/usr/bin/hermes", "profile", "update", "sirvir", "--yes"]]
     assert result["updated"] is True
+    assert result["version"] == "2.1.0"
     assert user_memory.read_text() == "keep me"
+
+
+def test_readme_prominently_includes_sirvir_and_reciprocal_install() -> None:
+    text = (ROOT / "README.md").read_text()
+
+    assert "## Sirvir" in text
+    assert "https://github.com/SouthpawIN/sirvir" in text
+    assert "Install Sirvir" in text
+    assert "Sirvir installs Turbofit when it is missing" in text
 
 
 def test_install_desktop_plugin_copies_native_desktop_surface(tmp_path: Path) -> None:
@@ -617,9 +649,8 @@ def test_dashboard_exposes_auxiliary_recommendations_by_tier() -> None:
     assert "Auxiliary candidates by hardware tier" in bundle
 
 
-def test_sirvir_sources_are_customer_service_not_autonomous_manager() -> None:
+def test_sirvir_references_are_customer_service_not_autonomous_manager() -> None:
     for path in (
-        ROOT / "profiles" / "sirvir" / "SOUL.md",
         ROOT / "references" / "SOUL.md",
         ROOT / "skills" / "turbofit" / "references" / "SOUL.md",
     ):
@@ -632,7 +663,7 @@ def test_dashboard_exposes_bundled_sirvir_install_option() -> None:
     bundle = (ROOT / "dashboard" / "dist" / "index.js").read_text()
 
     assert 'install_sirvir: installSirvir' in bundle
-    assert "Install Sirvir customer service profile" in bundle
+    assert "Install or update GitHub-current Sirvir customer service" in bundle
 
 
 def test_plugin_manifest_declares_registered_tools() -> None:
