@@ -41,6 +41,7 @@ def test_readme_separates_hermes_gateway_from_turbofit_8091() -> None:
     assert "## Tailscale" in readme
     assert "/turbofit serve" in readme
     assert "Funnel is never used" in readme or "never uses Funnel" in readme
-    assert "never from Sirvir" in skill
+    assert "never from Sirvir" not in skill
+    assert "Sirvir handles install" in readme or "Sirvir handles install and setup" in readme
     assert "WinError 10061" in windows
     assert "TurbofitGateway" in windows

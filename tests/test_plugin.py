@@ -198,6 +198,7 @@ def test_plain_http_provider_url_is_limited_to_loopback_or_tailnet() -> None:
 
 def test_status_includes_tailnet_publication_state(monkeypatch) -> None:
     import plugin_tools
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
 
     monkeypatch.setattr(plugin_tools, "tailnet_status", lambda: {
         "available": True,
@@ -216,6 +217,7 @@ def test_status_includes_tailnet_publication_state(monkeypatch) -> None:
 def test_apply_configuration_can_publish_tailnet_and_use_remote_provider_url(monkeypatch) -> None:
     import types
     import plugin_tools
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
 
     saved: list[dict] = []
     hermes_package = types.ModuleType("hermes_cli")
@@ -254,6 +256,7 @@ def test_apply_configuration_can_publish_tailnet_and_use_remote_provider_url(mon
 def test_install_sirvir_profile_uses_current_github_distribution(monkeypatch, tmp_path: Path) -> None:
     import types
     import plugin_tools
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
 
     calls = []
     profile = tmp_path / "profiles" / "sirvir"
@@ -282,6 +285,7 @@ def test_install_sirvir_profile_uses_current_github_distribution(monkeypatch, tm
 def test_install_sirvir_profile_updates_github_distribution_and_preserves_user_state(monkeypatch, tmp_path: Path) -> None:
     import types
     import plugin_tools
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
 
     calls = []
     profile = tmp_path / "profiles" / "sirvir"
@@ -359,6 +363,7 @@ def test_desktop_plugin_source_has_status_recommendation_and_fallback_controls()
 def test_apply_configuration_can_install_bundled_sirvir(monkeypatch) -> None:
     import types
     import plugin_tools
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
 
     hermes_package = types.ModuleType("hermes_cli")
     hermes_config = types.ModuleType("hermes_cli.config")
@@ -384,6 +389,7 @@ def test_apply_configuration_can_install_bundled_sirvir(monkeypatch) -> None:
 def test_apply_configuration_can_install_lemonade_runtime(monkeypatch) -> None:
     import types
     import plugin_tools
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
 
     hermes_package = types.ModuleType("hermes_cli")
     hermes_config = types.ModuleType("hermes_cli.config")
@@ -409,6 +415,7 @@ def test_apply_configuration_can_install_lemonade_runtime(monkeypatch) -> None:
 def test_apply_configuration_can_install_native_runtime(monkeypatch) -> None:
     import types
     import plugin_tools
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
 
     hermes_package = types.ModuleType("hermes_cli")
     hermes_config = types.ModuleType("hermes_cli.config")
@@ -431,6 +438,7 @@ def test_apply_configuration_can_install_native_runtime(monkeypatch) -> None:
 def test_apply_configuration_can_install_freetoken_candidate(monkeypatch) -> None:
     import types
     import plugin_tools
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
 
     hermes_package = types.ModuleType("hermes_cli")
     hermes_config = types.ModuleType("hermes_cli.config")
@@ -465,6 +473,7 @@ def test_apply_configuration_can_install_freetoken_candidate(monkeypatch) -> Non
 
 def test_handle_configure_rejects_string_booleans_before_side_effects(monkeypatch) -> None:
     import plugin_tools
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
 
     called = False
 
@@ -513,6 +522,7 @@ def test_plugin_registers_status_configure_and_slash_command() -> None:
 
 def test_combination_snapshot_requests_portable_fit_lanes(monkeypatch) -> None:
     import plugin_tools
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
 
     calls = []
 
@@ -536,6 +546,7 @@ def test_combination_snapshot_requests_portable_fit_lanes(monkeypatch) -> None:
 
 def test_recommendation_snapshot_exposes_unmeasured_compatible_lanes(monkeypatch) -> None:
     import plugin_tools
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
 
     calls = []
 
@@ -620,8 +631,10 @@ def test_slash_turbofit_setup_launches_the_setup_screen(monkeypatch) -> None:
 
 def test_launch_setup_screen_refreshes_desktop_surface(monkeypatch, tmp_path: Path) -> None:
     import plugin_tools
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
 
     monkeypatch.setattr(plugin_tools, "install_desktop_plugin", lambda **kwargs: {"installed": True, "path": str(tmp_path)})
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **kwargs: {"ok": True, "families": ["bonsai-27b"], "downloaded": 0, "verified": 1, "artifacts": []})
 
     result = plugin_tools.launch_setup_screen()
 
@@ -732,6 +745,7 @@ def test_plugin_loads_without_developer_pythonpath(monkeypatch) -> None:
 
 def test_select_profile_uses_running_hermes_python(monkeypatch) -> None:
     import plugin_tools
+    monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
 
     seen: list[list[str]] = []
 

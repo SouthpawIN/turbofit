@@ -105,12 +105,26 @@ def test_update_products_updates_plugin_desktop_and_sirvir(monkeypatch, tmp_path
         "install_sirvir_profile",
         lambda **kwargs: {"installed": True, "profile": "sirvir"},
     )
+    monkeypatch.setattr(
+        product_ops.plugin_tools,
+        "ensure_recommended_models",
+        lambda **kwargs: {"ok": True, "families": ["bonsai-27b"], "downloaded": 0, "verified": 1, "artifacts": []},
+    )
 
     result = product_ops.update_products(hermes_home=tmp_path)
 
     assert result["ok"] is True
     assert calls[0][:3] == ["/usr/bin/hermes", "plugins", "update"]
     assert result["sirvir"]["profile"] == "sirvir"
+
+
+def test_recommended_families_follow_auto_memory_bands() -> None:
+    import plugin_tools
+
+    assert plugin_tools.recommended_artifact_families(8 * 1024) == ["bonsai-27b", "ornith-1-5-35a3b"]
+    assert plugin_tools.recommended_artifact_families(16 * 1024)[0] == "qwen3-8-27b-unleashed-ud-iq3-xxs"
+    assert plugin_tools.recommended_artifact_families(24 * 1024)[0] == "qwen3-8-27b-unleashed-ud-q3-k-xl"
+    assert plugin_tools.recommended_artifact_families(96 * 1024)[0] == "qwen3-8-27b-bf16"
 
 
 def test_slash_update_and_shift_are_wired(monkeypatch) -> None:

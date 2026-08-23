@@ -48,6 +48,7 @@ def update_products(*, hermes_home: Path | None = None) -> dict[str, Any]:
             raise RuntimeError((plugin.stderr or plugin.stdout or "Turbofit plugin update failed").strip())
     desktop = plugin_tools.install_desktop_plugin(hermes_home=hermes_home)
     sirvir = plugin_tools.install_sirvir_profile(hermes_home=hermes_home)
+    models = plugin_tools.ensure_recommended_models()
     return {
         "ok": True,
         "updated": True,
@@ -57,6 +58,7 @@ def update_products(*, hermes_home: Path | None = None) -> dict[str, Any]:
         },
         "desktop": desktop,
         "sirvir": sirvir,
+        "models": models,
         "message": (
             "Turbofit plugin, Desktop surface, and Sirvir updated. "
             "Reload Desktop plugins and open Turbofit. Start a new session for provider changes."

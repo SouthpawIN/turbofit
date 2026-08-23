@@ -130,13 +130,15 @@ def install_desktop_plugin(*, hermes_home: Path | None = None) -> dict[str, Any]
 def launch_setup_screen() -> dict[str, Any]:
     """Refresh the Hermes Desktop Turbofit page. Dashboard is deprecated."""
     desktop = install_desktop_plugin()
+    models = ensure_recommended_models()
     return {
         "launched": True,
         "surface": "desktop",
         "path": "/turbofit",
         "page": "Turbofit",
         "desktop": desktop,
-        "message": "Open Hermes Desktop and go to Turbofit. Reload desktop plugins if the page is stale.",
+        "models": models,
+        "message": "Recommended models are downloading or verified. Open Hermes Desktop → Turbofit, or ask Sirvir to finish setup.",
     }
 
 
@@ -183,6 +185,56 @@ def install_native_runtime(backend: str = "auto") -> dict[str, Any]:
     if result.returncode:
         raise RuntimeError(payload.get("error") or "native runtime install failed")
     return payload
+
+
+def recommended_artifact_families(usable_memory_mb: int | None = None) -> list[str]:
+    """Auto-chain families for this machine, plus default Ornith auxiliary."""
+    if usable_memory_mb is None:
+        from turbofit_runtime.hardware import probe_hardware
+
+        usable_memory_mb = int(probe_hardware().total_usable_memory_mb)
+    if usable_memory_mb < 16 * 1024:
+        main = "bonsai-27b"
+    elif usable_memory_mb < 24 * 1024:
+        main = "qwen3-8-27b-unleashed-ud-iq3-xxs"
+    elif usable_memory_mb < 96 * 1024:
+        main = "qwen3-8-27b-unleashed-ud-q3-k-xl"
+    else:
+        main = "qwen3-8-27b-bf16"
+    return [main, "ornith-1-5-35a3b"]
+
+
+def ensure_recommended_models(
+    *,
+    families: list[str] | None = None,
+    usable_memory_mb: int | None = None,
+    download_fn=None,
+) -> dict[str, Any]:
+    """Download SHA-pinned recommended artifacts if they are missing."""
+    from importlib.machinery import SourceFileLoader
+    import importlib.util
+
+    script = PLUGIN_ROOT / "scripts" / "download-artifacts"
+    loader = SourceFileLoader("turbofit_download_artifacts", str(script))
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    if spec is None or spec.loader is None:
+        raise FileNotFoundError(f"missing artifact downloader: {script}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    wanted = set(families or recommended_artifact_families(usable_memory_mb))
+    payload = json.loads((PLUGIN_ROOT / "references" / "artifact-manifest.json").read_text(encoding="utf-8"))
+    rows = module.selected_artifacts(payload, wanted)
+    kwargs = {"root": module.model_root()}
+    if download_fn is not None:
+        kwargs["download_fn"] = download_fn
+    results = [module.install_artifact(item, **kwargs) for item in rows]
+    return {
+        "ok": True,
+        "families": sorted(wanted),
+        "downloaded": sum(1 for item in results if item.get("downloaded")),
+        "verified": sum(1 for item in results if item.get("verified")),
+        "artifacts": results,
+    }
 
 
 def install_freetoken_runtime() -> dict[str, Any]:
@@ -812,6 +864,7 @@ def apply_configuration(
         lemonade = install_lemonade_runtime() if install_lemonade else None
         native = install_native_runtime() if install_native else None
         freetoken = install_freetoken_runtime() if install_freetoken else None
+        models = ensure_recommended_models()
         selected = select_profile(profile) if profile else None
         publication = (
             publish_tailnet(
@@ -850,6 +903,7 @@ def apply_configuration(
         "lemonade": lemonade,
         "native_runtime": native,
         "freetoken_runtime": freetoken,
+        "models": models,
         "restart_required": True,
     }
 

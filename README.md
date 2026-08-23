@@ -42,20 +42,20 @@ Auxiliary is **Ornith 1.5 35A3B**, optional **Carwin Nano**, or **auto**. Pressu
 
 ## Install
 
-Plugin install registers tools, slash commands, and the provider schema. It does **not** download models or bind `:8091`.
+Plugin install registers tools and slash commands, then setup **downloads the recommended models for this machine if they are missing** and starts the local stack.
 
 | Layer | What | Starts when |
 |---|---|---|
 | Hermes messaging gateway | Discord / Telegram / cron | `hermes gateway …` |
-| Turbofit provider gateway | OpenAI `/v1` on **`127.0.0.1:8091`** | Desktop Apply, `/turbofit shift`, or native service |
-| Native model server | llama-server / backend | Turbofit selection |
+| Turbofit provider gateway | OpenAI `/v1` on **`127.0.0.1:8091`** | Setup / Apply / `/turbofit shift` / native service |
+| Native model server | llama-server / backend | Turbofit selection after artifacts land |
 | Tailscale Serve | Private HTTPS to other tailnet devices | `/turbofit serve` |
 
 ```bash
 hermes plugins install --enable https://github.com/SouthpawIN/Turbofit.git
 ```
 
-Use the **default** Hermes profile (not Sirvir). Fully quit Desktop or start a fresh CLI session so the plugin reloads.
+**Sirvir handles install and setup.** That is its job. After the plugin is present, start Sirvir and ask it to install Turbofit, download recommended models, and verify a real local completion. A bootstrap fallback exists only so Sirvir can talk while `:8091` is coming up.
 
 ```text
 /turbofit status
@@ -159,7 +159,7 @@ cd sirvir
 scripts/install
 ```
 
-Verify Turbofit from the **default profile first**. Sirvir cannot chat until `http://127.0.0.1:8091/v1/models` answers. Profile install must use `https://github.com/SouthpawIN/sirvir.git`.
+**Sirvir handles install and setup.** Verify a real local completion through Sirvir. Profile install must use `https://github.com/SouthpawIN/sirvir.git`. A bootstrap fallback exists only until `http://127.0.0.1:8091/v1/models` answers.
 
 ## How it adapts
 
