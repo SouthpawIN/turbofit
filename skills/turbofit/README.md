@@ -24,11 +24,15 @@ Turbofit is a first-class Hermes plugin and adaptive local-model runtime. It sca
 hermes plugins install --enable https://github.com/SouthpawIN/Turbofit.git
 ```
 
-Restart the gateway, then launch guided setup:
+Restart Hermes Desktop or start a fresh **default-profile** CLI session so plugin registrations reload. `/turbofit setup` only launches Dashboard; it does not start `:8091` by itself.
 
 ```text
 /turbofit setup
 ```
+
+Finish Apply on the Turbofit page, then verify `http://127.0.0.1:8091/v1/models` before opening Sirvir. Do not diagnose a refused 8091 from inside Sirvir, and do not restart the Hermes messaging gateway expecting the model endpoint to appear.
+
+When Dashboard/slash is unavailable on Windows, use [`docs/windows-native-install.md`](../../docs/windows-native-install.md).
 
 ## Daily commands
 

@@ -75,7 +75,7 @@ def install_sirvir_profile(*, hermes_home: Path | None = None) -> dict[str, Any]
             executable,
             "profile",
             "install",
-            "SouthpawIN/sirvir",
+            "https://github.com/SouthpawIN/sirvir.git",
             "--name",
             "sirvir",
             "--yes",
@@ -104,7 +104,7 @@ def install_sirvir_profile(*, hermes_home: Path | None = None) -> dict[str, Any]
         "updated": updated,
         "profile": "sirvir",
         "path": str(target),
-        "source": "https://github.com/SouthpawIN/sirvir",
+        "source": "https://github.com/SouthpawIN/sirvir.git",
         "version": str(manifest.get("version") or "unknown"),
     }
 

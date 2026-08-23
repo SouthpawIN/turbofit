@@ -27,3 +27,17 @@ def test_windows_installer_supports_one_step_cuda_cpu_gateway_and_uninstall() ->
     assert "TurbofitGateway" in text
     assert "turbofit-gateway.py" in text
     assert '"--alias", "bonsai-27b-1bit-128k-main"' in text
+
+
+def test_readme_separates_hermes_gateway_from_turbofit_8091() -> None:
+    readme = (ROOT / "README.md").read_text()
+    windows = (ROOT / "docs" / "windows-native-install.md").read_text()
+    skill = (ROOT / "SKILL.md").read_text()
+
+    assert "Hermes messaging gateway" in readme
+    assert "127.0.0.1:8091" in readme
+    assert "WinError 10061" in readme
+    assert "docs/windows-native-install.md" in readme
+    assert "never from Sirvir" in skill
+    assert "WinError 10061" in windows
+    assert "TurbofitGateway" in windows
