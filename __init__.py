@@ -17,9 +17,9 @@ from .plugin_tools import (
     launch_setup_screen,
     recommendation_snapshot,
 )
-from .product_ops import shift_configuration, update_products
+from .product_ops import serve_status, serve_tailnet, shift_configuration, update_products
 
-USAGE = "usage: /turbofit [scan|status|tiers|update|shift up|shift down|shift <model>|intelligence|balanced|speed|setup]"
+USAGE = "usage: /turbofit [scan|status|tiers|update|shift up|shift down|shift <model>|serve|intelligence|balanced|speed|setup]"
 
 
 def check_available() -> bool:
@@ -49,6 +49,16 @@ def _slash_turbofit(raw_args: str) -> str:
     if lowered == "update":
         try:
             return json.dumps(update_products())
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)})
+    if lowered in {"serve", "tailscale", "tailnet"}:
+        try:
+            return json.dumps(serve_tailnet())
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)})
+    if lowered in {"serve status", "tailscale status", "tailnet status"}:
+        try:
+            return json.dumps(serve_status())
         except Exception as exc:
             return json.dumps({"ok": False, "error": str(exc)})
     if lowered == "shift" or lowered.startswith("shift "):
@@ -90,8 +100,8 @@ def register(ctx) -> None:
     ctx.register_command(
         "turbofit",
         _slash_turbofit,
-        description="Scan, shift, or update Turbofit on this machine",
-        args_hint="[scan|status|tiers|update|shift up|shift down|shift <model>|setup]",
+        description="Scan, shift, serve, or update Turbofit on this machine",
+        args_hint="[scan|status|tiers|update|shift up|shift down|shift <model>|serve|setup]",
     )
     ctx.register_skill("turbofit", Path(__file__).parent / "SKILL.md")
 

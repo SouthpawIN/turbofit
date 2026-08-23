@@ -6,7 +6,8 @@
 
 - `/turbofit update` pulls the plugin and Sirvir onto the current device and refreshes the Desktop surface.
 - `/turbofit shift up|down|<model>|intelligence|balanced|speed` walks the same measured ladder the healer uses.
-- Guided setup now targets Hermes Desktop. Dashboard remains a backend API only.
+- `/turbofit serve` publishes `:8091` on Tailscale Serve so other tailnet devices can use the same local model server. Funnel is never used.
+- README slimmed; campaign/matrix/multimodal detail lives under `docs/`.
 
 
 - Documented the three gateways: Hermes messaging vs Turbofit `:8091` vs native model server. Plugin install and messaging-gateway restart do not start `:8091`.

@@ -186,3 +186,41 @@ def _shift_model(query: str) -> dict[str, Any]:
         reason=f"shift to the recommended combination for {query}",
         extra={"match": chosen.get("profile"), "query": query},
     )
+
+
+def serve_tailnet(
+    *,
+    dashboard_local_port: int = 9127,
+    provider_local_port: int = 8091,
+    dashboard_https_port: int = 9444,
+    provider_https_port: int = 9443,
+) -> dict[str, Any]:
+    """Publish the local Turbofit /v1 gateway on the private tailnet."""
+    from hermes_cli.config import load_config, save_config
+
+    publication = plugin_tools.publish_tailnet(
+        dashboard_local_port=dashboard_local_port,
+        provider_local_port=provider_local_port,
+        dashboard_https_port=dashboard_https_port,
+        provider_https_port=provider_https_port,
+    )
+    with plugin_tools._CONFIG_LOCK:
+        updated = plugin_tools.configure_hermes(
+            load_config(),
+            base_url=publication["provider_base_url"],
+        )
+        save_config(updated, merge_existing=False)
+    return {
+        "ok": True,
+        "served": True,
+        **publication,
+        "message": (
+            f"Models are on your tailnet at {publication['provider_base_url']}. "
+            "Other Tailscale devices use that OpenAI base URL. Serve is private; Funnel is never used."
+        ),
+    }
+
+
+def serve_status() -> dict[str, Any]:
+    status = plugin_tools.tailnet_status()
+    return {"ok": bool(status.get("connected")), **status}

@@ -26,7 +26,7 @@ Use this bundled plugin skill when configuring or inspecting Turbofit for Hermes
 7. Set `install_freetoken: true` only on Linux x86_64 + NVIDIA driver 580+ + CUDA toolkit 13+ to install pinned FreeToken 0.1.2 as a text-only MoE **candidate**. It never changes Auto until exact on-box campaigns promote a supported model recipe.
 8. Start a new Hermes session after provider changes.
 
-The same controls are available in Hermes Desktop under **Turbofit** and through `/turbofit status|update|shift|tiers|setup`.
+The same controls are available in Hermes Desktop under **Turbofit** and through `/turbofit status|update|shift|serve|tiers|setup`.
 
 `/turbofit setup` refreshes Hermes Desktop. A refused `http://127.0.0.1:8091/v1/models` means the Turbofit runtime is down — not the Hermes messaging gateway. Diagnose that from the default profile with `turbofit_status` / Desktop, never from Sirvir.
 

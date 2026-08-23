@@ -352,6 +352,8 @@ def test_desktop_plugin_source_has_status_recommendation_and_fallback_controls()
     assert "api.rest('/shift'" in text
     assert "api.rest('/update'" in text
     assert "Shift up" in text
+    assert "Serve on Tailscale" in text
+    assert "api.rest('/serve'" in text
 
 
 def test_apply_configuration_can_install_bundled_sirvir(monkeypatch) -> None:
