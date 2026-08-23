@@ -24,6 +24,7 @@ from plugin_tools import (  # noqa: E402
     recommendation_snapshot,
     status_snapshot,
 )
+from product_ops import shift_configuration, update_products  # noqa: E402
 
 
 router = APIRouter()
@@ -297,5 +298,25 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
             install_freetoken=install_freetoken,
             **ports,
         )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/update")
+async def post_update() -> dict[str, Any]:
+    try:
+        return await asyncio.to_thread(update_products)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/shift")
+async def post_shift(body: dict[str, Any] | None = None) -> dict[str, Any]:
+    payload = body or {}
+    target = payload.get("target") or payload.get("shift") or ""
+    if not isinstance(target, str):
+        raise HTTPException(status_code=422, detail="target must be a string")
+    try:
+        return await asyncio.to_thread(shift_configuration, target)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

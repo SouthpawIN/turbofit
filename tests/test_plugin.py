@@ -348,6 +348,10 @@ def test_desktop_plugin_source_has_status_recommendation_and_fallback_controls()
     assert "install_lemonade" in text
     assert "Dashboard Tailnet HTTPS port" in text
     assert "Provider Tailnet HTTPS port" in text
+    assert "ScoreBar" in text
+    assert "api.rest('/shift'" in text
+    assert "api.rest('/update'" in text
+    assert "Shift up" in text
 
 
 def test_apply_configuration_can_install_bundled_sirvir(monkeypatch) -> None:
@@ -612,22 +616,16 @@ def test_slash_turbofit_setup_launches_the_setup_screen(monkeypatch) -> None:
     assert payload["setup"]["launched"] is True
 
 
-def test_launch_setup_screen_starts_hermes_dashboard(monkeypatch) -> None:
+def test_launch_setup_screen_refreshes_desktop_surface(monkeypatch, tmp_path: Path) -> None:
     import plugin_tools
 
-    calls = []
-
-    class Process:
-        pid = 4321
-
-    monkeypatch.setattr(plugin_tools.shutil, "which", lambda name: "/usr/bin/hermes" if name == "hermes" else None)
-    monkeypatch.setattr(plugin_tools.subprocess, "Popen", lambda command, **kwargs: calls.append((command, kwargs)) or Process())
+    monkeypatch.setattr(plugin_tools, "install_desktop_plugin", lambda **kwargs: {"installed": True, "path": str(tmp_path)})
 
     result = plugin_tools.launch_setup_screen()
 
     assert result["launched"] is True
-    assert result["pid"] == 4321
-    assert calls[0][0] == ["/usr/bin/hermes", "dashboard"]
+    assert result["surface"] == "desktop"
+    assert result["path"] == "/turbofit"
 
 
 def test_dashboard_contract_is_installable() -> None:

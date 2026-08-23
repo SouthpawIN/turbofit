@@ -17,6 +17,9 @@ from .plugin_tools import (
     launch_setup_screen,
     recommendation_snapshot,
 )
+from .product_ops import shift_configuration, update_products
+
+USAGE = "usage: /turbofit [scan|status|tiers|update|shift up|shift down|shift <model>|intelligence|balanced|speed|setup]"
 
 
 def check_available() -> bool:
@@ -24,37 +27,46 @@ def check_available() -> bool:
 
 
 def _slash_turbofit(raw_args: str) -> str:
-    action = str(raw_args or "").strip().lower()
-    if action == "status":
+    action = str(raw_args or "").strip()
+    lowered = action.lower()
+    if lowered == "status":
         return handle_status({})
-    if action in {"", "scan", "rescan", "recommend"}:
+    if lowered in {"", "scan", "rescan", "recommend"}:
         try:
             return json.dumps(recommendation_snapshot())
         except Exception as exc:
             return json.dumps({"ok": False, "error": str(exc)})
-    if action in {"intelligence", "quality", "balanced", "context", "speed"}:
+    if lowered in {"intelligence", "quality", "balanced", "context", "speed"}:
         try:
-            return json.dumps(recommendation_snapshot(action))
+            return json.dumps(recommendation_snapshot(lowered))
         except Exception as exc:
             return json.dumps({"ok": False, "error": str(exc)})
-    if action in {"tiers", "hardware", "hardware-tiers"}:
+    if lowered in {"tiers", "hardware", "hardware-tiers"}:
         try:
             return json.dumps(hardware_tier_snapshot())
         except Exception as exc:
             return json.dumps({"ok": False, "error": str(exc)})
-    if action in {"setup", "configure"}:
+    if lowered == "update":
+        try:
+            return json.dumps(update_products())
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)})
+    if lowered == "shift" or lowered.startswith("shift "):
+        target = action[5:].strip() if lowered.startswith("shift") else ""
+        try:
+            return json.dumps(shift_configuration(target))
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)})
+    if lowered in {"setup", "configure"}:
         try:
             return json.dumps({
                 "ok": True,
                 "setup": launch_setup_screen(),
-                "message": "Hermes Dashboard launched. Open Turbofit to configure the provider, fallbacks, runtimes, and multimodal models.",
+                "message": "Open Hermes Desktop → Turbofit. Dashboard is deprecated.",
             })
         except Exception as exc:
             return json.dumps({"ok": False, "error": str(exc)})
-    return json.dumps({
-        "ok": False,
-        "error": "usage: /turbofit [scan|status|tiers|intelligence|balanced|speed|setup]",
-    })
+    return json.dumps({"ok": False, "error": USAGE})
 
 
 def register(ctx) -> None:
@@ -78,8 +90,8 @@ def register(ctx) -> None:
     ctx.register_command(
         "turbofit",
         _slash_turbofit,
-        description="Run TurboFit Check: scan this system and configure it from measured hardware winners",
-        args_hint="[scan|status|tiers|intelligence|balanced|speed|setup]",
+        description="Scan, shift, or update Turbofit on this machine",
+        args_hint="[scan|status|tiers|update|shift up|shift down|shift <model>|setup]",
     )
     ctx.register_skill("turbofit", Path(__file__).parent / "SKILL.md")
 

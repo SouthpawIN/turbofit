@@ -128,23 +128,15 @@ def install_desktop_plugin(*, hermes_home: Path | None = None) -> dict[str, Any]
 
 
 def launch_setup_screen() -> dict[str, Any]:
-    """Launch Hermes Dashboard so the Turbofit setup page can be opened."""
-    executable = shutil.which("hermes")
-    if not executable:
-        raise FileNotFoundError("hermes executable is not available")
-    process = subprocess.Popen(
-        [executable, "dashboard"],
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        start_new_session=True,
-        close_fds=True,
-    )
+    """Refresh the Hermes Desktop Turbofit page. Dashboard is deprecated."""
+    desktop = install_desktop_plugin()
     return {
         "launched": True,
-        "pid": process.pid,
-        "url": "http://127.0.0.1:9119/",
+        "surface": "desktop",
+        "path": "/turbofit",
         "page": "Turbofit",
+        "desktop": desktop,
+        "message": "Open Hermes Desktop and go to Turbofit. Reload desktop plugins if the page is stale.",
     }
 
 

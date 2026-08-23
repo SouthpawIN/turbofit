@@ -28,6 +28,42 @@ const buttonStyle = {
   cursor: 'pointer',
 }
 
+
+function ScoreBar({ label, value, max = 100 }) {
+  const numeric = Number(value) || 0
+  const ceiling = Number(max) || 100
+  const pct = Math.max(0, Math.min(100, (numeric / ceiling) * 100))
+  return jsxs('div', {
+    className: 'flex flex-col gap-1',
+    children: [
+      jsxs('div', {
+        className: 'flex justify-between text-xs',
+        style: { color: 'var(--ui-text-secondary)' },
+        children: [
+          jsx('span', { children: label }),
+          jsx('span', { children: Number.isFinite(numeric) ? String(value) : '—' }),
+        ],
+      }),
+      jsx('div', {
+        style: {
+          height: '7px',
+          borderRadius: '99px',
+          background: 'var(--ui-stroke-secondary)',
+          overflow: 'hidden',
+        },
+        children: jsx('div', {
+          style: {
+            width: `${pct}%`,
+            height: '100%',
+            borderRadius: '99px',
+            background: 'var(--ui-accent)',
+          },
+        }),
+      }),
+    ],
+  })
+}
+
 function Field({ label, children, help }) {
   return jsxs('label', {
     className: 'flex flex-col gap-1 text-xs',
@@ -166,6 +202,34 @@ function TurbofitPage() {
     }
   }
 
+  async function runShift(target) {
+    setBusy(true)
+    setMessage('')
+    try {
+      const result = await api.rest('/shift', { method: 'POST', body: { target } })
+      setMessage(result.reason || result.error || (result.shifted ? `Shifted to ${result.profile}` : 'Shift complete'))
+      await refresh()
+    } catch (error) {
+      setMessage(String(error && error.message || error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function runUpdate() {
+    setBusy(true)
+    setMessage('')
+    try {
+      const result = await api.rest('/update', { method: 'POST', body: {} })
+      setMessage(result.message || 'Updated Turbofit and Sirvir on this device.')
+      await refresh()
+    } catch (error) {
+      setMessage(String(error && error.message || error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const choices = ((recommendations && recommendations.recommendations) || {})[preference] || []
   const compatibleLanes = (recommendations && recommendations.compatible_lanes) || []
   const hardware = (recommendations && recommendations.hardware) || {}
@@ -191,6 +255,15 @@ function TurbofitPage() {
         style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '8px' },
         children: message,
       }) : null,
+      jsxs('div', {
+        className: 'flex flex-wrap gap-2',
+        children: [
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: () => runShift('up'), children: 'Shift up' }),
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: () => runShift('down'), children: 'Shift down' }),
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: () => runShift(preference), children: `Shift ${preference}` }),
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runUpdate, children: 'Update Turbofit + Sirvir' }),
+        ],
+      }),
       jsxs('div', {
         className: 'grid grid-cols-1 gap-3 md:grid-cols-2',
         children: [
@@ -407,6 +480,21 @@ function TurbofitPage() {
               style: { color: 'var(--ui-text-tertiary)' },
               children: `${item.context} ctx · ${item.min_tps} tok/s · ${item.aux_mode} · ${item.confidence}`,
             }),
+            jsxs('div', {
+              className: 'grid grid-cols-1 gap-2 md:grid-cols-3',
+              children: [
+                jsx(ScoreBar, { label: 'Context', value: item.context, max: 1048576 }),
+                jsx(ScoreBar, { label: 'tok/s', value: item.min_tps, max: 80 }),
+                jsx(ScoreBar, { label: 'Confidence', value: item.confidence === 'measured' ? 100 : item.confidence === 'portable-fit' ? 55 : 25, max: 100 }),
+              ],
+            }),
+            jsx('button', {
+              type: 'button',
+              disabled: busy,
+              style: { ...buttonStyle, marginTop: '6px' },
+              onClick: () => runShift(item.profile),
+              children: 'Shift to this combination',
+            }),
           ],
         })) : jsx('div', {
           style: { color: 'var(--ui-text-tertiary)' },
@@ -460,6 +548,24 @@ export default {
         data: {
           id: 'turbofit.open',
           label: 'Open Turbofit',
+          run: () => host.navigate('/turbofit'),
+        },
+      },
+      {
+        id: 'shift-up',
+        area: PALETTE_AREA,
+        data: {
+          id: 'turbofit.shift-up',
+          label: 'Turbofit: shift up',
+          run: () => host.navigate('/turbofit'),
+        },
+      },
+      {
+        id: 'update',
+        area: PALETTE_AREA,
+        data: {
+          id: 'turbofit.update',
+          label: 'Turbofit: update plugin and Sirvir',
           run: () => host.navigate('/turbofit'),
         },
       },

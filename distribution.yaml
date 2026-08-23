@@ -20,6 +20,7 @@ distribution_owned:
   - __init__.py
   - schemas.py
   - plugin_tools.py
+  - product_ops.py
   - dashboard/
   - desktop/
   - SKILL.md
