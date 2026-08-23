@@ -30,3 +30,9 @@ def test_sirvir_install_tool_is_github_current() -> None:
 
     assert "SouthpawIN/sirvir" in description
     assert "bundled" not in description.lower()
+
+
+def test_sirvir_github_install_uses_full_git_url() -> None:
+    source = (ROOT / "plugin_tools.py").read_text()
+    assert '"https://github.com/SouthpawIN/sirvir.git"' in source
+    assert '"SouthpawIN/sirvir"' not in source

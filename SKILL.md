@@ -28,6 +28,8 @@ Use this bundled plugin skill when configuring or inspecting Turbofit for Hermes
 
 The same controls are available in `hermes dashboard` under **Turbofit** and through `/turbofit status|tiers|setup`.
 
+`/turbofit setup` launches Dashboard only. A refused `http://127.0.0.1:8091/v1/models` means the Turbofit runtime is down — not the Hermes messaging gateway. Diagnose that from the default profile with `turbofit_status` / Dashboard, never from Sirvir.
+
 ## Intelligence benchmarks
 
 - `scripts/turbofit-catalog-campaign` proves native runtime fit and TPS; it does not produce intelligence scores.

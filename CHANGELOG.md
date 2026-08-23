@@ -2,6 +2,13 @@
 
 ## 2.3 — Unleashed / Ornith / Nous free fallback
 
+### Setup / troubleshooting
+
+- Documented the three gateways: Hermes messaging vs Turbofit `:8091` vs native model server. Plugin install and messaging-gateway restart do not start `:8091`.
+- `/turbofit setup` is documented as Dashboard-only. Headless Windows path is linked from README to `docs/windows-native-install.md`.
+- Sirvir GitHub install now uses `https://github.com/SouthpawIN/sirvir.git` so Hermes 0.20.0 on Windows can resolve it.
+- Support text now forbids diagnosing a dead `:8091` from inside Sirvir.
+
 ### Recommendations
 
 - Auto/Check will never recommend a 9B. Low-VRAM dedicated devices get Bonsai 27B and/or Ornith 1.5 35A3B. Ornith experts mmap from disk when host RAM is under 32 GB. Apple Silicon uses OrcaRouter Uncensored MLX 4/6/8-bit (never 2-bit). Integrated/unified non-Apple uses Ornith 1.5.

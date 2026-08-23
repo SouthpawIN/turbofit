@@ -133,6 +133,8 @@ No collector may modify runtime profiles, routes, or credentials. Live cron sche
 6. Acceptance record blockers
 7. Focused tests, then full `scripts/release-check`
 
+If `http://127.0.0.1:8091/v1/models` is connection-refused, the Turbofit provider gateway is not running. That is setup missing. Do not restart the Hermes messaging gateway, do not start with a firewall hunt when nothing listens, and do not invoke Sirvir until the endpoint answers.
+
 If the platform reports a driver/runtime mismatch, stop the real pressure test. Do not attempt blind driver reloads or disruptive accelerator work.
 
 Full architecture and schema: `README.md`.

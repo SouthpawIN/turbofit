@@ -270,11 +270,11 @@ def test_install_sirvir_profile_uses_current_github_distribution(monkeypatch, tm
     result = plugin_tools.install_sirvir_profile(hermes_home=tmp_path)
 
     assert calls[0][0] == [
-        "/usr/bin/hermes", "profile", "install", "SouthpawIN/sirvir",
+        "/usr/bin/hermes", "profile", "install", "https://github.com/SouthpawIN/sirvir.git",
         "--name", "sirvir", "--yes",
     ]
     assert calls[0][1]["env"]["HERMES_HOME"] == str(tmp_path)
-    assert result["source"] == "https://github.com/SouthpawIN/sirvir"
+    assert result["source"] == "https://github.com/SouthpawIN/sirvir.git"
     assert result["updated"] is False
     assert result["version"] == "2.1.0"
 

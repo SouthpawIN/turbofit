@@ -101,7 +101,7 @@ Scores are rebuilt from hash-bound per-suite pass counts. A real zero in one sui
 
 Turbofit includes an **Install Sirvir** option in `/turbofit setup`, Hermes Dashboard, and Hermes Desktop. That option installs or updates the canonical `SouthpawIN/sirvir` profile from GitHub rather than copying a bundled snapshot, so Sirvir stays independently updateable while its memories, sessions, credentials, and user-owned files remain preserved.
 
-The relationship is reciprocal: **Sirvir installs Turbofit when it is missing**, and Turbofit can install or update Sirvir. The supported Sirvir bootstrap is:
+The relationship is reciprocal: **Sirvir installs Turbofit when it is missing**, and Turbofit can install or update Sirvir. Install and verify Turbofit from the **default Hermes profile first**. Sirvir cannot chat until `http://127.0.0.1:8091/v1/models` answers. Dashboard/Desktop install uses the full git URL `https://github.com/SouthpawIN/sirvir.git` (Hermes 0.20.0 on Windows rejects `SouthpawIN/sirvir` shorthand).
 
 ```bash
 git clone https://github.com/SouthpawIN/sirvir.git
@@ -113,23 +113,32 @@ scripts/install
 
 ## Install
 
+Plugin install registers tools, slash commands, and the `custom:turbofit` provider schema. It does **not** download models, install llama.cpp, or bind `127.0.0.1:8091`. Restarting the **Hermes messaging gateway** (`hermes gateway restart`) only reloads Discord/Telegram/cron adapters. It will never make `http://127.0.0.1:8091/v1/models` answer.
+
+| Layer | What it is | Starts when |
+|---|---|---|
+| Hermes messaging gateway | Discord/Telegram/cron | `hermes gateway …` |
+| Turbofit provider gateway | OpenAI-compatible local proxy on **`127.0.0.1:8091`** | Dashboard **Apply**, `/turbofit setup` finish, or Windows native service |
+| Native model server | llama-server / backend on another local port | Turbofit selection / native installer |
+
 ### Hermes plugin
 
 ```bash
 hermes plugins install --enable https://github.com/SouthpawIN/Turbofit.git
 ```
 
-Restart the Hermes gateway after installation so provider, tool, slash-command, skill, and dashboard registrations are reloaded.
+Fully quit Hermes Desktop (or start a fresh CLI session) so plugin registrations reload. Do this from the **default** profile, not Sirvir.
 
 ### Guided setup
 
-From Hermes:
+From a **default** Hermes session:
 
 ```text
+/turbofit status
 /turbofit setup
 ```
 
-That launches Hermes Dashboard. Open **Turbofit** to:
+`/turbofit setup` only launches Hermes Dashboard (`hermes dashboard` → typically `http://127.0.0.1:9119/`). Open **Turbofit** to:
 
 1. rescan physical hardware;
 2. compare intelligence, balanced, and speed recommendations;
@@ -140,11 +149,23 @@ That launches Hermes Dashboard. Open **Turbofit** to:
 7. choose multimodal models by modality;
 8. apply the configuration transactionally.
 
-The same controls are available in Hermes Desktop under **Turbofit**.
+If Desktop slash autocomplete has no `/turbofit` after a full quit, use `hermes dashboard` or call `turbofit_status` / `turbofit_configure` from a default-profile agent session.
+
+### Verify the real contract
+
+```bash
+curl -fsS http://127.0.0.1:8091/v1/models
+```
+
+Success is JSON listing `auto` / active routes. Connection refused (`WinError 10061` on Windows) means the Turbofit stack is not running — not a firewall miss, and not a Hermes messaging-gateway problem.
+
+Only after `/v1/models` answers should you open Sirvir (`hermes -p sirvir`). Sirvir has no non-local provider and cannot diagnose a dead 8091 from inside itself.
 
 ### Command-line setup
 
-```bash
+Slash commands still require a loaded plugin session. They do not start the model gateway by themselves:
+
+```text
 # TurboFit Check: system scan + all recommendation preferences
 /turbofit
 
@@ -161,6 +182,19 @@ The plugin also registers:
 
 - `turbofit_status`
 - `turbofit_configure`
+
+### Headless Windows path
+
+When Desktop slash is missing or Dashboard is blocked, use the documented one-shot native installer:
+
+See [`docs/windows-native-install.md`](docs/windows-native-install.md).
+
+```powershell
+cd $env:LOCALAPPDATA\hermes\plugins\turbofit
+python scripts\download-artifacts --family bonsai-27b
+powershell -ExecutionPolicy Bypass -File scripts\install-windows-native-service.ps1 -Backend cuda
+curl.exe -s http://127.0.0.1:8091/v1/models
+```
 
 ---
 
