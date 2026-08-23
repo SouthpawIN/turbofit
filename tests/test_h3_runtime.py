@@ -39,3 +39,4 @@ def test_h3_launch_recipe_is_the_portable_verify_command() -> None:
     assert recipe["revision"] == "bfc8ed0353f5a9733be73e6b2c98ec0948195b86"
     assert recipe["vae_dtype"] == "float32"
     assert recipe["verify"] == ["scripts/verify-h3-live", "--smoke", "--device", "cuda:1"]
+    assert recipe["launch"][0] == "systemd-run"

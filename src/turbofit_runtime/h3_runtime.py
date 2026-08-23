@@ -55,6 +55,16 @@ def h3_launch_recipe(*, device: str = "cuda:0") -> dict[str, object]:
         "vae_dtype": "float32",
         "vae_device": device,
         "verify": ["scripts/verify-h3-live", "--smoke", "--device", device],
+        "launch": [
+            "systemd-run",
+            "--user",
+            "--unit=turbofit-h3-verify",
+            "--property=WorkingDirectory=%h/projects/turbofit",
+            "scripts/verify-h3-live",
+            "--smoke",
+            "--device",
+            device,
+        ],
         "minimum_accelerator_memory_mb": H3_MINIMUM_ACCELERATOR_MB,
         "minimum_memory_mb": H3_MINIMUM_HOST_RAM_MB,
     }
