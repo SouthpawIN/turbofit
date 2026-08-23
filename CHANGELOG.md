@@ -4,8 +4,13 @@
 
 ### Setup / troubleshooting
 
+- `/turbofit update` pulls the plugin and Sirvir onto the current device and refreshes the Desktop surface.
+- `/turbofit shift up|down|<model>|intelligence|balanced|speed` walks the same measured ladder the healer uses.
+- Guided setup now targets Hermes Desktop. Dashboard remains a backend API only.
+
+
 - Documented the three gateways: Hermes messaging vs Turbofit `:8091` vs native model server. Plugin install and messaging-gateway restart do not start `:8091`.
-- `/turbofit setup` is documented as Dashboard-only. Headless Windows path is linked from README to `docs/windows-native-install.md`.
+- `/turbofit setup` refreshes Hermes Desktop. Headless Windows path is linked from README to `docs/windows-native-install.md`.
 - Sirvir GitHub install now uses `https://github.com/SouthpawIN/sirvir.git` so Hermes 0.20.0 on Windows can resolve it.
 - Support text now forbids diagnosing a dead `:8091` from inside Sirvir.
 

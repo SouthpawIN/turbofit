@@ -16,7 +16,7 @@ DeepSeek V4 Flash 0731 is retired. API fallback is the five keyless Nous free mo
 
 The canonical model IDs, source revisions, artifacts, sizes, and hashes are in `references/model-catalog.json`, `references/artifact-manifest.json`, and `references/multimodal-models.json` at the repository root.
 
-Turbofit is a first-class Hermes plugin and adaptive local-model runtime. It scans physical hardware and total usable memory, recommends evidence-backed main/auxiliary configurations, exposes one OpenAI-compatible provider, and manages setup through Hermes Dashboard and Hermes Desktop.
+Turbofit is a first-class Hermes plugin and adaptive local-model runtime. It scans physical hardware and total usable memory, recommends evidence-backed main/auxiliary configurations, exposes one OpenAI-compatible provider, and manages setup through Hermes Desktop.
 
 ## Install
 
@@ -24,7 +24,7 @@ Turbofit is a first-class Hermes plugin and adaptive local-model runtime. It sca
 hermes plugins install --enable https://github.com/SouthpawIN/Turbofit.git
 ```
 
-Restart Hermes Desktop or start a fresh **default-profile** CLI session so plugin registrations reload. `/turbofit setup` only launches Dashboard; it does not start `:8091` by itself.
+Restart Hermes Desktop or start a fresh **default-profile** CLI session so plugin registrations reload. `/turbofit setup` refreshes the Desktop Turbofit page; it does not start `:8091` by itself.
 
 ```text
 /turbofit setup
@@ -38,9 +38,13 @@ When Dashboard/slash is unavailable on Windows, use [`docs/windows-native-instal
 
 ```text
 /turbofit                 # rescan + intelligence/balanced/speed recommendations
-/turbofit intelligence    # quality-first recommendation
-/turbofit balanced        # context/balance recommendation
-/turbofit speed           # throughput-first recommendation
+/turbofit update          # update Turbofit plugin + Sirvir on this device
+/turbofit shift up        # next smarter measured configuration
+/turbofit shift down      # next lighter measured configuration
+/turbofit shift <model>   # recommended combination for that model
+/turbofit intelligence    # quality-first recommendation (scan)
+/turbofit balanced        # context/balance recommendation (scan)
+/turbofit speed           # throughput-first recommendation (scan)
 /turbofit status          # provider, route, runtime, and gateway state
 ```
 

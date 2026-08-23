@@ -118,7 +118,7 @@ Plugin install registers tools, slash commands, and the `custom:turbofit` provid
 | Layer | What it is | Starts when |
 |---|---|---|
 | Hermes messaging gateway | Discord/Telegram/cron | `hermes gateway …` |
-| Turbofit provider gateway | OpenAI-compatible local proxy on **`127.0.0.1:8091`** | Dashboard **Apply**, `/turbofit setup` finish, or Windows native service |
+| Turbofit provider gateway | OpenAI-compatible local proxy on **`127.0.0.1:8091`** | Desktop **Apply**, `/turbofit shift`, or Windows native service |
 | Native model server | llama-server / backend on another local port | Turbofit selection / native installer |
 
 ### Hermes plugin
@@ -138,7 +138,7 @@ From a **default** Hermes session:
 /turbofit setup
 ```
 
-`/turbofit setup` only launches Hermes Dashboard (`hermes dashboard` → typically `http://127.0.0.1:9119/`). Open **Turbofit** to:
+`/turbofit setup` refreshes the Hermes **Desktop** Turbofit page. Dashboard is deprecated. Open Desktop → **Turbofit** to:
 
 1. rescan physical hardware;
 2. compare intelligence, balanced, and speed recommendations;
@@ -149,7 +149,16 @@ From a **default** Hermes session:
 7. choose multimodal models by modality;
 8. apply the configuration transactionally.
 
-If Desktop slash autocomplete has no `/turbofit` after a full quit, use `hermes dashboard` or call `turbofit_status` / `turbofit_configure` from a default-profile agent session.
+If Desktop slash autocomplete has no `/turbofit` after a full quit, open Hermes Desktop → Turbofit or call `turbofit_status` / `turbofit_configure` from a default-profile agent session.
+
+```text
+/turbofit update              # pull latest Turbofit plugin + Sirvir on this device
+/turbofit shift up            # next smarter measured configuration
+/turbofit shift down          # next lighter measured configuration
+/turbofit shift bonsai        # recommended combination for that model
+/turbofit shift intelligence  # apply the intelligence recommendation
+```
+
 
 ### Verify the real contract
 
