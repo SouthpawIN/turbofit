@@ -60,6 +60,29 @@ def _score_for_tier(
     return score
 
 
+def _durable_winner_is_current(
+    root: Path,
+    winner: dict[str, Any],
+    evidence_index: dict[str, Any],
+    expected_recipe: str,
+) -> bool:
+    entry = evidence_index.get(str(winner.get("evidence"))) or {}
+    if not str(entry.get("status", "")).startswith("validated"):
+        return False
+    source = entry.get("source")
+    if not source or not (root / source).is_file():
+        return False
+    try:
+        payload = json.loads((root / source).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return (
+        payload.get("recipe_sha256") == expected_recipe
+        and payload.get("hardware_fingerprint") == winner.get("hardware_fingerprint")
+        and payload.get("physical_evidence_sha256") == winner.get("evidence")
+    )
+
+
 def _native_tier(hardware: HardwareFingerprint) -> int:
     capacity = hardware.total_usable_memory_mb if hardware.shared_memory_pool else hardware.total_vram_mb
     gb = capacity / 1024
@@ -139,6 +162,10 @@ def build_tier_report(root: str | Path, hardware: HardwareFingerprint) -> dict[s
                 campaign_record.get("status") == "success"
                 and campaign_record.get("recipe_sha256") == expected_recipe
             )
+            if winner and winner["configuration"] == identifier:
+                current_physical = current_physical or _durable_winner_is_current(
+                    root, winner, evidence_index, expected_recipe,
+                )
             physical = bool(
                 winner and winner["configuration"] == identifier and current_physical
                 and _exact_physical_topology(hardware, constraint)

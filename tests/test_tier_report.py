@@ -5,6 +5,7 @@ from pathlib import Path
 
 from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
 from turbofit_runtime.tier_report import (
+    _durable_winner_is_current,
     _exact_physical_topology,
     _score_for_tier,
     build_tier_report,
@@ -56,6 +57,29 @@ def test_tier_report_covers_exact_project_tiers_and_current_machine() -> None:
     assert report["current_hardware"]["system_ram_mb"] == 393216
     assert report["current_hardware"]["memory_pool_kind"] == "dedicated"
     assert report["current_hardware"]["host_usable_memory_mb"] == 385024
+
+
+def test_durable_winner_survives_fresh_checkout_without_campaign_scratch(tmp_path: Path) -> None:
+    source = tmp_path / "winner.json"
+    source.write_text(json.dumps({
+        "recipe_sha256": "sha256:" + "a" * 64,
+        "hardware_fingerprint": "sha256:" + "b" * 64,
+        "physical_evidence_sha256": "sha256:" + "c" * 64,
+    }))
+    winner = {
+        "evidence": "sha256:" + "c" * 64,
+        "hardware_fingerprint": "sha256:" + "b" * 64,
+    }
+    index = {
+        winner["evidence"]: {
+            "status": "validated-native-tournament",
+            "source": "winner.json",
+        }
+    }
+
+    assert _durable_winner_is_current(
+        tmp_path, winner, index, "sha256:" + "a" * 64,
+    )
 
 
 def test_intelligence_scores_never_transfer_between_hardware_levels() -> None:
