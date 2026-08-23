@@ -28,7 +28,7 @@ Use this bundled plugin skill when configuring or inspecting Turbofit for Hermes
 
 The same controls are available in Hermes Desktop under **Turbofit** and through `/turbofit status|update|shift|serve|tiers|setup`.
 
-`/turbofit setup` refreshes Hermes Desktop. A refused `http://127.0.0.1:8091/v1/models` means the Turbofit runtime is down — not the Hermes messaging gateway. Diagnose that from the default profile with `turbofit_status` / Desktop, never from Sirvir.
+`/turbofit setup` refreshes Hermes Desktop. A refused `http://127.0.0.1:8091/v1/models` means the Turbofit runtime is down — not the Hermes messaging gateway. Diagnose that from Sirvir or Desktop with `turbofit_status`. Setup downloads recommended models if they are missing.
 
 ## Intelligence benchmarks
 
