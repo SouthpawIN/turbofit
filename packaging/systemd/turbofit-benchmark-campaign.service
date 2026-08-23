@@ -6,7 +6,7 @@ After=default.target
 Type=simple
 WorkingDirectory=%h/projects/turbofit
 Environment=PYTHONPATH=%h/projects/turbofit/src:%h/projects/turbofit
-ExecStart=%h/projects/turbofit/scripts/turbofit-benchmark-orchestrator --catalog-batch 50 --intelligence-batch 1 --idle-seconds 15
+ExecStart=%h/projects/turbofit/scripts/turbofit-benchmark-orchestrator --catalog-batch 4 --intelligence-batch 1 --idle-seconds 30
 Restart=on-failure
 RestartSec=30
 Nice=10

@@ -28,6 +28,22 @@
         "1048576": "baseline"
       }
     },
+    "qwen3-8-27b-q4-dflash2": {
+      "family": "Qwen 3.8 27B",
+      "alias": "qwen3-8-27b-q4-dflash2",
+      "binary": "~/.local/share/turbofit/runtimes/dflash2-llama.cpp-1deefcca395743049c3820ab8f9b15043f3e9446/build-cuda/bin/llama-server",
+      "model": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B/Qwen3.8-27B-Q4_K_M.gguf",
+      "projector": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B/mmproj-Qwen3.8-27B-Q8_0.gguf",
+      "draft": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B/Qwen3.8-27B-DFlash2-Q4_K_M.gguf",
+      "dflash_target_family": "Qwen 3.8 27B",
+      "draft_n_max": 7,
+      "methods": {
+        "65536": "dflash2",
+        "131072": "dflash2",
+        "262144": "dflash2",
+        "1048576": "dflash2"
+      }
+    },
     "qwen3-8-27b-q8-mtp": {
       "family": "Qwen 3.8 27B",
       "alias": "qwen3-8-27b-q8-mtp",

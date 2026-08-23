@@ -37,6 +37,7 @@ jobs:
           python research/discover_api_models.py --provider openrouter --url https://openrouter.ai/api/v1/models
           python research/discover_external_benchmarks.py
           python research/render_external_benchmarks.py
+          PYTHONPATH=src:. scripts/turbofit-discovery-queue
       - name: Validate normalized evidence
         env:
           PYTHONPATH: src:.
@@ -47,13 +48,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --quiet -- research/candidates.json research/external-benchmarks.json references/external-benchmarks.md; then
+          if git diff --quiet -- research/candidates.json research/benchmark-queue.json research/external-benchmarks.json references/external-benchmarks.md; then
             echo "No intelligence changes."
             exit 0
           fi
           branch=automation/model-intelligence
           git checkout -B "$branch" origin/main
-          git add research/candidates.json research/external-benchmarks.json references/external-benchmarks.md
+          git add research/candidates.json research/benchmark-queue.json research/external-benchmarks.json references/external-benchmarks.md
           git config user.name "turbofit-model-intelligence"
           git config user.email "turbofit-model-intelligence@users.noreply.github.com"
           git commit -m "chore: refresh model intelligence"

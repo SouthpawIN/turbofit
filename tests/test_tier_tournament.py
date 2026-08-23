@@ -8,7 +8,7 @@ import pytest
 from turbofit_runtime.model_catalog import ModelCatalog
 from turbofit_runtime.catalog_campaign import build_selected_campaign_matrix
 from turbofit_runtime.schema import load_matrix
-from turbofit_runtime.tier_tournament import candidate_ids, load_tournaments, validate_tournaments
+from turbofit_runtime.tier_tournament import candidate_ids, candidate_ids_for_tier, load_tournaments, validate_tournaments
 
 ROOT = Path(__file__).parents[1]
 
@@ -26,7 +26,23 @@ def test_hardware_tournaments_cover_every_physical_tier_and_valid_configuration(
     assert [item["vram_gb"] for item in tournaments["tiers"]] == [8, 16, 24, 48, 64, 96, 200, 300]
     assert len(matrix.rows) == len(selected)
     winners = {item["id"]: item["winner"] for item in tournaments["tiers"]}
-    assert all(winner is None for winner in winners.values())
+    assert winners["hardware-48gb"]["configuration"] == "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k"
+    assert all(winner is None for tier, winner in winners.items() if tier != "hardware-48gb")
+
+
+def test_candidate_ids_for_tier_preserves_tournament_priority() -> None:
+    configurations = json.loads((ROOT / "references/configuration-matrix.json").read_text())
+    tournaments = load_tournaments(ROOT / "references/hardware-tier-tournaments.json", configurations)
+    expected = next(item["candidates"] for item in tournaments["tiers"] if item["vram_gb"] == 48)
+
+    assert candidate_ids_for_tier(tournaments, 48) == tuple(expected)
+
+
+def test_48gb_tier_includes_qwen_38_dflash2_candidate() -> None:
+    configurations = json.loads((ROOT / "references/configuration-matrix.json").read_text())
+    tournaments = load_tournaments(ROOT / "references/hardware-tier-tournaments.json", configurations)
+
+    assert candidate_ids_for_tier(tournaments, 48)[0] == "qwen3-8-27b-q4-dflash2--auto--64k"
 
 
 def test_64_and_96gb_unleashed_candidates_are_active_but_unpromoted() -> None:

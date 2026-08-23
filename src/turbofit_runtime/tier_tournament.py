@@ -55,6 +55,13 @@ def validate_tournaments(payload: Mapping[str, Any], configurations: Mapping[str
             raise ValueError(f"winner hardware fingerprint is required: {expected_id}")
 
 
+def candidate_ids_for_tier(payload: Mapping[str, Any], hardware_tier_gb: int) -> tuple[str, ...]:
+    tier = next((item for item in payload["tiers"] if item["vram_gb"] == hardware_tier_gb), None)
+    if tier is None:
+        raise ValueError(f"unknown hardware tier: {hardware_tier_gb}")
+    return tuple(str(item) for item in tier["candidates"])
+
+
 def candidate_ids(payload: Mapping[str, Any]) -> tuple[str, ...]:
     seen: set[str] = set()
     result = []

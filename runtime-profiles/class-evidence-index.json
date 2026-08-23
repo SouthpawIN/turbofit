@@ -55,6 +55,13 @@
     "source": "runtime-profiles/class-status/a769fae7216a889322744cca24848be166492e31f76e1f73e329fb7e613724d9.json",
     "status": "unproven-local"
   },
+  "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f": {
+    "profiles": [
+      "hardware-48gb"
+    ],
+    "source": "references/results/hardware-tier-winner-48gb-qwen38-unleashed-20260823.json",
+    "status": "validated-native-tournament"
+  },
   "sha256:ee78b9da9b3a984c62232ec08a928cd294948f4471e665be9a04d3a1e17e685f": {
     "profiles": [
       "hardware-300gb"

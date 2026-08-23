@@ -4,7 +4,11 @@ import json
 from pathlib import Path
 
 from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
-from turbofit_runtime.tier_report import _exact_physical_topology, build_tier_report
+from turbofit_runtime.tier_report import (
+    _exact_physical_topology,
+    _score_for_tier,
+    build_tier_report,
+)
 
 
 ROOT = Path(__file__).parents[1]
@@ -54,7 +58,20 @@ def test_tier_report_covers_exact_project_tiers_and_current_machine() -> None:
     assert report["current_hardware"]["host_usable_memory_mb"] == 385024
 
 
-def test_tier_candidates_reject_stale_winner_and_keep_requirements_separate() -> None:
+def test_intelligence_scores_never_transfer_between_hardware_levels() -> None:
+    scores = {
+        "same-config": {
+            "configuration_id": "same-config",
+            "hardware_tier_gb": 48,
+            "intelligence_score": 61.5,
+        }
+    }
+
+    assert _score_for_tier(scores, "same-config", 48)["intelligence_score"] == 61.5
+    assert _score_for_tier(scores, "same-config", 8) is None
+
+
+def test_tier_candidates_publish_current_exact_winner_and_keep_requirements_separate() -> None:
     report = build_tier_report(ROOT, host())
     tier48 = next(tier for tier in report["tiers"] if tier["capacity_gb"] == 48)
     candidate = next(
@@ -62,16 +79,19 @@ def test_tier_candidates_reject_stale_winner_and_keep_requirements_separate() ->
         if item["configuration_id"] == "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k"
     )
 
-    assert tier48["recommendations"]["measured_winner"] is None
-    assert tier48["status"] == "catalog-candidates-only"
+    assert tier48["recommendations"]["measured_winner"]["configuration_id"] == candidate["configuration_id"]
+    assert tier48["status"] == "physically-validated"
     assert candidate["artifact_storage_bytes"] > 0
     assert candidate["host_memory_requirement"]["inferred_artifact_load_floor_gb"] > 8
-    assert candidate["host_memory_requirement"]["physically_measured_peak_gb"] is None
+    assert candidate["host_memory_requirement"]["physically_measured_peak_gb"] > 0
+    assert candidate["host_memory_requirement"]["status"] == "measured-runtime-rss"
     assert candidate["accelerator_requirement"]["aggregate_gb"] == 48
     assert candidate["accelerator_requirement"]["per_device_min_gb"] == 24
     assert candidate["fit"]["inferred"] is True
-    assert candidate["fit"]["physically_demonstrated"] is False
-    assert candidate["intelligence_score"] is None
+    assert candidate["fit"]["physically_demonstrated"] is True
+    assert candidate["intelligence_score"] == 46.875
+    assert candidate["intelligence_level"] == "screening"
+    assert candidate["measured_tps"] > 0
 
 
 def test_unproven_tier_is_not_misrepresented_as_measured_recommendation() -> None:

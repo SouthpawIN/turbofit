@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from turbofit_runtime.recipes import RecipeBook, resolve_native_backend
 from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
 from turbofit_runtime.schema import MatrixRow
@@ -116,6 +118,64 @@ def test_qwen_262k_uses_pinned_mtp_sidecar_and_projector() -> None:
     assert main.command[main.command.index("--spec-type") + 1] == "draft-mtp"
 
 
+def test_qwen_38_dflash2_uses_pinned_runtime_and_dedicated_drafter() -> None:
+    component = RecipeBook.load(RECIPES, platform_name="linux").resolve_catalog_configuration({
+        "id": "qwen3-8-27b-q4-dflash2--auto--64k",
+        "main": "qwen3-8-27b-q4-dflash2",
+        "auxiliary": "auto",
+        "context": 65_536,
+        "status": "candidate",
+    }).components[0]
+
+    assert component.method == "dflash2"
+    assert component.command[0].endswith(
+        "dflash2-llama.cpp-1deefcca395743049c3820ab8f9b15043f3e9446/build-cuda/bin/llama-server"
+    )
+    assert component.command[component.command.index("--model-draft") + 1].endswith(
+        "Qwen3.8-27B-DFlash2-Q4_K_M.gguf"
+    )
+    assert component.command[component.command.index("--spec-type") + 1] == "draft-dflash"
+    assert component.command[component.command.index("--spec-draft-n-max") + 1] == "7"
+
+
+def test_bonsai_speculation_never_reuses_qwen_dflash2_drafter() -> None:
+    component = RecipeBook.load(RECIPES, platform_name="linux").resolve_catalog_configuration({
+        "id": "bonsai-27b-dspark--auto--64k",
+        "main": "bonsai-27b-dspark",
+        "auxiliary": "auto",
+        "context": 65_536,
+        "status": "candidate",
+    }).components[0]
+
+    assert component.method == "dspark"
+    assert component.command[component.command.index("--model-draft") + 1].endswith(
+        "Bonsai-27B-dspark-Q4_1.gguf"
+    )
+    assert "Qwen3.8-27B-DFlash2" not in " ".join(component.command)
+
+
+def test_recipe_rejects_cross_family_qwen_dflash2_on_bonsai(tmp_path: Path) -> None:
+    data = json.loads(RECIPES.read_text())
+    data["variants"]["bonsai-invalid-dflash2"] = {
+        "family": "1 Bit Bonsai",
+        "alias": "bonsai-invalid-dflash2",
+        "model": "Bonsai-27B-Q1_0.gguf",
+        "draft": "Qwen3.8-27B-DFlash2-Q4_K_M.gguf",
+        "methods": {"65536": "dflash2"},
+    }
+    path = tmp_path / "recipes.json"
+    path.write_text(json.dumps(data))
+
+    with pytest.raises(ValueError, match="dedicated DFlash2"):
+        RecipeBook.load(path, platform_name="linux").resolve_catalog_configuration({
+            "id": "bonsai-invalid-dflash2--auto--64k",
+            "main": "bonsai-invalid-dflash2",
+            "auxiliary": "auto",
+            "context": 65_536,
+            "status": "candidate",
+        })
+
+
 def test_one_million_context_applies_matching_four_x_yarn_to_both_models() -> None:
     resolved = RecipeBook.load(RECIPES, platform_name="linux").resolve(
         row("qwen3-8-27b-q4-mtp", "Carwin Nano", 1_048_576)
@@ -202,8 +262,8 @@ def test_every_catalog_configuration_compiles_to_an_actual_jinja_launch_recipe()
 
     resolved = [book.resolve_catalog_configuration(item) for item in matrix["rows"]]
 
-    assert len(resolved) == 504
-    assert len({item.row_id for item in resolved}) == 504
+    assert len(resolved) == 516
+    assert len({item.row_id for item in resolved}) == 516
     assert all(component.command and "--jinja" in component.command for item in resolved for component in item.components)
 
 

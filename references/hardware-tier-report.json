@@ -36,14 +36,12 @@
       },
       "candidates": [
         {
-          "configuration_id": "bonsai-27b-dspark--auto--64k",
+          "configuration_id": "bonsai-27b--auto--64k",
           "main": {
-            "id": "bonsai-27b-dspark",
-            "name": "Binary Bonsai 27B Q1_0 + Q4 DSpark",
+            "id": "bonsai-27b",
+            "name": "Binary Bonsai 27B Q1_0",
             "quantization": "Q1_0",
-            "runtime_features": [
-              "dspark"
-            ]
+            "runtime_features": []
           },
           "auxiliary": {
             "id": "auto",
@@ -52,11 +50,11 @@
             "runtime_features": []
           },
           "context": 65536,
-          "artifact_storage_bytes": 6220168128,
+          "artifact_storage_bytes": 4432699360,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 14,
-            "inferred_recommended_gb": 24,
+            "inferred_artifact_load_floor_gb": 13,
+            "inferred_recommended_gb": 22,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -71,8 +69,59 @@
           "offload_quantization_mode": {
             "main_quantization": "Q1_0",
             "auxiliary_quantization": "route-to-main",
+            "features": []
+          },
+          "fit": {
+            "inferred": true,
+            "physically_demonstrated": false,
+            "evidence": null,
+            "hardware_fingerprint": null
+          },
+          "intelligence_score": null,
+          "intelligence_level": null,
+          "measured_tps": null,
+          "balanced_score": null
+        },
+        {
+          "configuration_id": "bonsai-27b--ornith-1-5-35a3b--64k",
+          "main": {
+            "id": "bonsai-27b",
+            "name": "Binary Bonsai 27B Q1_0",
+            "quantization": "Q1_0",
+            "runtime_features": []
+          },
+          "auxiliary": {
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "quantization": "Q4_K_M",
+            "runtime_features": [
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "context": 65536,
+          "artifact_storage_bytes": 27048984224,
+          "host_memory_requirement": {
+            "declared_minimum_gb": null,
+            "inferred_artifact_load_floor_gb": 34,
+            "inferred_recommended_gb": 48,
+            "physically_measured_peak_gb": null,
+            "status": "inferred-until-rss-telemetry",
+            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
+          },
+          "accelerator_requirement": {
+            "aggregate_gb": 8,
+            "device_count": 1,
+            "per_device_min_gb": 8,
+            "topology": "1x8",
+            "backend": "llama.cpp-local"
+          },
+          "offload_quantization_mode": {
+            "main_quantization": "Q1_0",
+            "auxiliary_quantization": "Q4_K_M",
             "features": [
-              "dspark"
+              "expert-offload",
+              "vision-projector"
             ]
           },
           "fit": {
@@ -155,13 +204,13 @@
       },
       "candidates": [
         {
-          "configuration_id": "bonsai-27b-dspark--auto--128k",
+          "configuration_id": "qwen3-8-27b-unleashed-ud-iq3-xxs--auto--64k",
           "main": {
-            "id": "bonsai-27b-dspark",
-            "name": "Binary Bonsai 27B Q1_0 + Q4 DSpark",
-            "quantization": "Q1_0",
+            "id": "qwen3-8-27b-unleashed-ud-iq3-xxs",
+            "name": "Qwen 3.8 27B Unleashed UD-IQ3_XXS",
+            "quantization": "UD-IQ3_XXS",
             "runtime_features": [
-              "dspark"
+              "vision-projector"
             ]
           },
           "auxiliary": {
@@ -170,12 +219,12 @@
             "quantization": "route-to-main",
             "runtime_features": []
           },
-          "context": 131072,
-          "artifact_storage_bytes": 6220168128,
+          "context": 65536,
+          "artifact_storage_bytes": 11899182976,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 14,
-            "inferred_recommended_gb": 24,
+            "inferred_artifact_load_floor_gb": 20,
+            "inferred_recommended_gb": 30,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -188,10 +237,10 @@
             "backend": "llama.cpp-local"
           },
           "offload_quantization_mode": {
-            "main_quantization": "Q1_0",
+            "main_quantization": "UD-IQ3_XXS",
             "auxiliary_quantization": "route-to-main",
             "features": [
-              "dspark"
+              "vision-projector"
             ]
           },
           "fit": {
@@ -206,27 +255,30 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "ternary-bonsai-27b-dspark--auto--128k",
+          "configuration_id": "qwen3-8-27b-unleashed-ud-iq3-xxs--ornith-1-5-35a3b--64k",
           "main": {
-            "id": "ternary-bonsai-27b-dspark",
-            "name": "Ternary Bonsai 27B Q2_0 + Q4 DSpark",
-            "quantization": "Q2_0",
+            "id": "qwen3-8-27b-unleashed-ud-iq3-xxs",
+            "name": "Qwen 3.8 27B Unleashed UD-IQ3_XXS",
+            "quantization": "UD-IQ3_XXS",
             "runtime_features": [
-              "dspark"
+              "vision-projector"
             ]
           },
           "auxiliary": {
-            "id": "auto",
-            "name": "Route auxiliary tasks to main",
-            "quantization": "route-to-main",
-            "runtime_features": []
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "quantization": "Q4_K_M",
+            "runtime_features": [
+              "expert-offload",
+              "vision-projector"
+            ]
           },
-          "context": 131072,
-          "artifact_storage_bytes": 10042660928,
+          "context": 65536,
+          "artifact_storage_bytes": 34515467840,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 18,
-            "inferred_recommended_gb": 28,
+            "inferred_artifact_load_floor_gb": 41,
+            "inferred_recommended_gb": 57,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -239,10 +291,11 @@
             "backend": "llama.cpp-local"
           },
           "offload_quantization_mode": {
-            "main_quantization": "Q2_0",
-            "auxiliary_quantization": "route-to-main",
+            "main_quantization": "UD-IQ3_XXS",
+            "auxiliary_quantization": "Q4_K_M",
             "features": [
-              "dspark"
+              "expert-offload",
+              "vision-projector"
             ]
           },
           "fit": {
@@ -257,12 +310,14 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "bonsai-27b--auto--262k",
+          "configuration_id": "qwen3-8-27b-unleashed-ud-iq3-xxs--auto--128k",
           "main": {
-            "id": "bonsai-27b",
-            "name": "Binary Bonsai 27B Q1_0",
-            "quantization": "Q1_0",
-            "runtime_features": []
+            "id": "qwen3-8-27b-unleashed-ud-iq3-xxs",
+            "name": "Qwen 3.8 27B Unleashed UD-IQ3_XXS",
+            "quantization": "UD-IQ3_XXS",
+            "runtime_features": [
+              "vision-projector"
+            ]
           },
           "auxiliary": {
             "id": "auto",
@@ -270,12 +325,12 @@
             "quantization": "route-to-main",
             "runtime_features": []
           },
-          "context": 262144,
-          "artifact_storage_bytes": 4432699360,
+          "context": 131072,
+          "artifact_storage_bytes": 11899182976,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 13,
-            "inferred_recommended_gb": 22,
+            "inferred_artifact_load_floor_gb": 20,
+            "inferred_recommended_gb": 30,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -288,9 +343,11 @@
             "backend": "llama.cpp-local"
           },
           "offload_quantization_mode": {
-            "main_quantization": "Q1_0",
+            "main_quantization": "UD-IQ3_XXS",
             "auxiliary_quantization": "route-to-main",
-            "features": []
+            "features": [
+              "vision-projector"
+            ]
           },
           "fit": {
             "inferred": true,
@@ -325,13 +382,12 @@
       },
       "candidates": [
         {
-          "configuration_id": "qwen3-8-27b-q4-mtp--auto--64k",
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--64k",
           "main": {
-            "id": "qwen3-8-27b-q4-mtp",
-            "name": "Qwen 3.8 27B Q4_K_M + MTP",
-            "quantization": "Q4_K_M",
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
             "runtime_features": [
-              "mtp",
               "vision-projector"
             ]
           },
@@ -342,11 +398,11 @@
             "runtime_features": []
           },
           "context": 65536,
-          "artifact_storage_bytes": 21283389088,
+          "artifact_storage_bytes": 14154215296,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 28,
-            "inferred_recommended_gb": 41,
+            "inferred_artifact_load_floor_gb": 22,
+            "inferred_recommended_gb": 33,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -359,10 +415,9 @@
             "backend": "llama.cpp-local"
           },
           "offload_quantization_mode": {
-            "main_quantization": "Q4_K_M",
+            "main_quantization": "UD-Q3_K_XL",
             "auxiliary_quantization": "route-to-main",
             "features": [
-              "mtp",
               "vision-projector"
             ]
           },
@@ -378,13 +433,67 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "qwen3-8-27b-q4-mtp--auto--128k",
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--64k",
           "main": {
-            "id": "qwen3-8-27b-q4-mtp",
-            "name": "Qwen 3.8 27B Q4_K_M + MTP",
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
+            "runtime_features": [
+              "vision-projector"
+            ]
+          },
+          "auxiliary": {
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
-              "mtp",
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "context": 65536,
+          "artifact_storage_bytes": 36770500160,
+          "host_memory_requirement": {
+            "declared_minimum_gb": null,
+            "inferred_artifact_load_floor_gb": 43,
+            "inferred_recommended_gb": 59,
+            "physically_measured_peak_gb": null,
+            "status": "inferred-until-rss-telemetry",
+            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
+          },
+          "accelerator_requirement": {
+            "aggregate_gb": 24,
+            "device_count": 1,
+            "per_device_min_gb": 24,
+            "topology": "1x24",
+            "backend": "llama.cpp-local"
+          },
+          "offload_quantization_mode": {
+            "main_quantization": "UD-Q3_K_XL",
+            "auxiliary_quantization": "Q4_K_M",
+            "features": [
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "fit": {
+            "inferred": true,
+            "physically_demonstrated": false,
+            "evidence": null,
+            "hardware_fingerprint": null
+          },
+          "intelligence_score": null,
+          "intelligence_level": null,
+          "measured_tps": null,
+          "balanced_score": null
+        },
+        {
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--128k",
+          "main": {
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
+            "runtime_features": [
               "vision-projector"
             ]
           },
@@ -395,11 +504,11 @@
             "runtime_features": []
           },
           "context": 131072,
-          "artifact_storage_bytes": 21283389088,
+          "artifact_storage_bytes": 14154215296,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 28,
-            "inferred_recommended_gb": 41,
+            "inferred_artifact_load_floor_gb": 22,
+            "inferred_recommended_gb": 33,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -412,59 +521,11 @@
             "backend": "llama.cpp-local"
           },
           "offload_quantization_mode": {
-            "main_quantization": "Q4_K_M",
+            "main_quantization": "UD-Q3_K_XL",
             "auxiliary_quantization": "route-to-main",
             "features": [
-              "mtp",
               "vision-projector"
             ]
-          },
-          "fit": {
-            "inferred": true,
-            "physically_demonstrated": false,
-            "evidence": null,
-            "hardware_fingerprint": null
-          },
-          "intelligence_score": null,
-          "intelligence_level": null,
-          "measured_tps": null,
-          "balanced_score": null
-        },
-        {
-          "configuration_id": "ternary-bonsai-27b--auto--262k",
-          "main": {
-            "id": "ternary-bonsai-27b",
-            "name": "Ternary Bonsai 27B Q2_0",
-            "quantization": "Q2_0",
-            "runtime_features": []
-          },
-          "auxiliary": {
-            "id": "auto",
-            "name": "Route auxiliary tasks to main",
-            "quantization": "route-to-main",
-            "runtime_features": []
-          },
-          "context": 262144,
-          "artifact_storage_bytes": 8096267360,
-          "host_memory_requirement": {
-            "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 16,
-            "inferred_recommended_gb": 26,
-            "physically_measured_peak_gb": null,
-            "status": "inferred-until-rss-telemetry",
-            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
-          },
-          "accelerator_requirement": {
-            "aggregate_gb": 24,
-            "device_count": 1,
-            "per_device_min_gb": 24,
-            "topology": "1x24",
-            "backend": "llama.cpp-local"
-          },
-          "offload_quantization_mode": {
-            "main_quantization": "Q2_0",
-            "auxiliary_quantization": "route-to-main",
-            "features": []
           },
           "fit": {
             "inferred": true,
@@ -490,185 +551,15 @@
         "accelerator": "llama.cpp-local",
         "topology": "2x24"
       },
-      "status": "catalog-candidates-only",
+      "status": "physically-validated",
       "recommendations": {
-        "measured_winner": null,
-        "smartest": null,
-        "fastest": null,
-        "balanced": null
-      },
-      "candidates": [
-        {
-          "configuration_id": "qwen3-8-27b-q4-mtp--carwin-nano--64k",
+        "measured_winner": {
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k",
           "main": {
-            "id": "qwen3-8-27b-q4-mtp",
-            "name": "Qwen 3.8 27B Q4_K_M + MTP",
-            "quantization": "Q4_K_M",
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
             "runtime_features": [
-              "mtp",
-              "vision-projector"
-            ]
-          },
-          "auxiliary": {
-            "id": "carwin-nano",
-            "name": "Carwin MoE Nano MTP",
-            "quantization": "native",
-            "runtime_features": [
-              "mtp",
-              "expert-offload"
-            ]
-          },
-          "context": 65536,
-          "artifact_storage_bytes": 33618893984,
-          "host_memory_requirement": {
-            "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 40,
-            "inferred_recommended_gb": 56,
-            "physically_measured_peak_gb": null,
-            "status": "inferred-until-rss-telemetry",
-            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
-          },
-          "accelerator_requirement": {
-            "aggregate_gb": 48,
-            "device_count": 2,
-            "per_device_min_gb": 24,
-            "topology": "2x24",
-            "backend": "llama.cpp-local"
-          },
-          "offload_quantization_mode": {
-            "main_quantization": "Q4_K_M",
-            "auxiliary_quantization": "native",
-            "features": [
-              "expert-offload",
-              "mtp",
-              "vision-projector"
-            ]
-          },
-          "fit": {
-            "inferred": true,
-            "physically_demonstrated": false,
-            "evidence": null,
-            "hardware_fingerprint": null
-          },
-          "intelligence_score": null,
-          "intelligence_level": null,
-          "measured_tps": null,
-          "balanced_score": null
-        },
-        {
-          "configuration_id": "qwen3-8-27b-q4-mtp--ternary-bonsai-27b--64k",
-          "main": {
-            "id": "qwen3-8-27b-q4-mtp",
-            "name": "Qwen 3.8 27B Q4_K_M + MTP",
-            "quantization": "Q4_K_M",
-            "runtime_features": [
-              "mtp",
-              "vision-projector"
-            ]
-          },
-          "auxiliary": {
-            "id": "ternary-bonsai-27b",
-            "name": "Ternary Bonsai 27B Q2_0",
-            "quantization": "Q2_0",
-            "runtime_features": []
-          },
-          "context": 65536,
-          "artifact_storage_bytes": 29379656448,
-          "host_memory_requirement": {
-            "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 36,
-            "inferred_recommended_gb": 51,
-            "physically_measured_peak_gb": null,
-            "status": "inferred-until-rss-telemetry",
-            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
-          },
-          "accelerator_requirement": {
-            "aggregate_gb": 48,
-            "device_count": 2,
-            "per_device_min_gb": 24,
-            "topology": "2x24",
-            "backend": "llama.cpp-local"
-          },
-          "offload_quantization_mode": {
-            "main_quantization": "Q4_K_M",
-            "auxiliary_quantization": "Q2_0",
-            "features": [
-              "mtp",
-              "vision-projector"
-            ]
-          },
-          "fit": {
-            "inferred": true,
-            "physically_demonstrated": false,
-            "evidence": null,
-            "hardware_fingerprint": null
-          },
-          "intelligence_score": null,
-          "intelligence_level": null,
-          "measured_tps": null,
-          "balanced_score": null
-        },
-        {
-          "configuration_id": "qwen3-8-27b-q4-mtp--bonsai-27b--64k",
-          "main": {
-            "id": "qwen3-8-27b-q4-mtp",
-            "name": "Qwen 3.8 27B Q4_K_M + MTP",
-            "quantization": "Q4_K_M",
-            "runtime_features": [
-              "mtp",
-              "vision-projector"
-            ]
-          },
-          "auxiliary": {
-            "id": "bonsai-27b",
-            "name": "Binary Bonsai 27B Q1_0",
-            "quantization": "Q1_0",
-            "runtime_features": []
-          },
-          "context": 65536,
-          "artifact_storage_bytes": 25716088448,
-          "host_memory_requirement": {
-            "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 32,
-            "inferred_recommended_gb": 46,
-            "physically_measured_peak_gb": null,
-            "status": "inferred-until-rss-telemetry",
-            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
-          },
-          "accelerator_requirement": {
-            "aggregate_gb": 48,
-            "device_count": 2,
-            "per_device_min_gb": 24,
-            "topology": "2x24",
-            "backend": "llama.cpp-local"
-          },
-          "offload_quantization_mode": {
-            "main_quantization": "Q4_K_M",
-            "auxiliary_quantization": "Q1_0",
-            "features": [
-              "mtp",
-              "vision-projector"
-            ]
-          },
-          "fit": {
-            "inferred": true,
-            "physically_demonstrated": false,
-            "evidence": null,
-            "hardware_fingerprint": null
-          },
-          "intelligence_score": null,
-          "intelligence_level": null,
-          "measured_tps": null,
-          "balanced_score": null
-        },
-        {
-          "configuration_id": "qwen3-8-27b-q4-mtp--auto--262k",
-          "main": {
-            "id": "qwen3-8-27b-q4-mtp",
-            "name": "Qwen 3.8 27B Q4_K_M + MTP",
-            "quantization": "Q4_K_M",
-            "runtime_features": [
-              "mtp",
               "vision-projector"
             ]
           },
@@ -679,7 +570,214 @@
             "runtime_features": []
           },
           "context": 262144,
-          "artifact_storage_bytes": 21283389088,
+          "artifact_storage_bytes": 14154215296,
+          "host_memory_requirement": {
+            "declared_minimum_gb": null,
+            "inferred_artifact_load_floor_gb": 22,
+            "inferred_recommended_gb": 33,
+            "physically_measured_peak_gb": 9.18,
+            "status": "measured-runtime-rss",
+            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
+          },
+          "accelerator_requirement": {
+            "aggregate_gb": 48,
+            "device_count": 2,
+            "per_device_min_gb": 24,
+            "topology": "2x24",
+            "backend": "llama.cpp-local"
+          },
+          "offload_quantization_mode": {
+            "main_quantization": "UD-Q3_K_XL",
+            "auxiliary_quantization": "route-to-main",
+            "features": [
+              "vision-projector"
+            ]
+          },
+          "fit": {
+            "inferred": true,
+            "physically_demonstrated": true,
+            "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+            "hardware_fingerprint": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+          },
+          "intelligence_score": 46.875,
+          "intelligence_level": "screening",
+          "measured_tps": 39.39215795117914,
+          "balanced_score": 58.778209660040595
+        },
+        "smartest": {
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k",
+          "main": {
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
+            "runtime_features": [
+              "vision-projector"
+            ]
+          },
+          "auxiliary": {
+            "id": "auto",
+            "name": "Route auxiliary tasks to main",
+            "quantization": "route-to-main",
+            "runtime_features": []
+          },
+          "context": 262144,
+          "artifact_storage_bytes": 14154215296,
+          "host_memory_requirement": {
+            "declared_minimum_gb": null,
+            "inferred_artifact_load_floor_gb": 22,
+            "inferred_recommended_gb": 33,
+            "physically_measured_peak_gb": 9.18,
+            "status": "measured-runtime-rss",
+            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
+          },
+          "accelerator_requirement": {
+            "aggregate_gb": 48,
+            "device_count": 2,
+            "per_device_min_gb": 24,
+            "topology": "2x24",
+            "backend": "llama.cpp-local"
+          },
+          "offload_quantization_mode": {
+            "main_quantization": "UD-Q3_K_XL",
+            "auxiliary_quantization": "route-to-main",
+            "features": [
+              "vision-projector"
+            ]
+          },
+          "fit": {
+            "inferred": true,
+            "physically_demonstrated": true,
+            "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+            "hardware_fingerprint": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+          },
+          "intelligence_score": 46.875,
+          "intelligence_level": "screening",
+          "measured_tps": 39.39215795117914,
+          "balanced_score": 58.778209660040595
+        },
+        "fastest": {
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k",
+          "main": {
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
+            "runtime_features": [
+              "vision-projector"
+            ]
+          },
+          "auxiliary": {
+            "id": "auto",
+            "name": "Route auxiliary tasks to main",
+            "quantization": "route-to-main",
+            "runtime_features": []
+          },
+          "context": 262144,
+          "artifact_storage_bytes": 14154215296,
+          "host_memory_requirement": {
+            "declared_minimum_gb": null,
+            "inferred_artifact_load_floor_gb": 22,
+            "inferred_recommended_gb": 33,
+            "physically_measured_peak_gb": 9.18,
+            "status": "measured-runtime-rss",
+            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
+          },
+          "accelerator_requirement": {
+            "aggregate_gb": 48,
+            "device_count": 2,
+            "per_device_min_gb": 24,
+            "topology": "2x24",
+            "backend": "llama.cpp-local"
+          },
+          "offload_quantization_mode": {
+            "main_quantization": "UD-Q3_K_XL",
+            "auxiliary_quantization": "route-to-main",
+            "features": [
+              "vision-projector"
+            ]
+          },
+          "fit": {
+            "inferred": true,
+            "physically_demonstrated": true,
+            "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+            "hardware_fingerprint": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+          },
+          "intelligence_score": 46.875,
+          "intelligence_level": "screening",
+          "measured_tps": 39.39215795117914,
+          "balanced_score": 58.778209660040595
+        },
+        "balanced": {
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k",
+          "main": {
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
+            "runtime_features": [
+              "vision-projector"
+            ]
+          },
+          "auxiliary": {
+            "id": "auto",
+            "name": "Route auxiliary tasks to main",
+            "quantization": "route-to-main",
+            "runtime_features": []
+          },
+          "context": 262144,
+          "artifact_storage_bytes": 14154215296,
+          "host_memory_requirement": {
+            "declared_minimum_gb": null,
+            "inferred_artifact_load_floor_gb": 22,
+            "inferred_recommended_gb": 33,
+            "physically_measured_peak_gb": 9.18,
+            "status": "measured-runtime-rss",
+            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
+          },
+          "accelerator_requirement": {
+            "aggregate_gb": 48,
+            "device_count": 2,
+            "per_device_min_gb": 24,
+            "topology": "2x24",
+            "backend": "llama.cpp-local"
+          },
+          "offload_quantization_mode": {
+            "main_quantization": "UD-Q3_K_XL",
+            "auxiliary_quantization": "route-to-main",
+            "features": [
+              "vision-projector"
+            ]
+          },
+          "fit": {
+            "inferred": true,
+            "physically_demonstrated": true,
+            "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+            "hardware_fingerprint": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+          },
+          "intelligence_score": 46.875,
+          "intelligence_level": "screening",
+          "measured_tps": 39.39215795117914,
+          "balanced_score": 58.778209660040595
+        }
+      },
+      "candidates": [
+        {
+          "configuration_id": "qwen3-8-27b-q4-dflash2--auto--64k",
+          "main": {
+            "id": "qwen3-8-27b-q4-dflash2",
+            "name": "Qwen 3.8 27B Q4_K_M + DFlash2",
+            "quantization": "Q4_K_M",
+            "runtime_features": [
+              "dflash2",
+              "vision-projector"
+            ]
+          },
+          "auxiliary": {
+            "id": "auto",
+            "name": "Route auxiliary tasks to main",
+            "quantization": "route-to-main",
+            "runtime_features": []
+          },
+          "context": 65536,
+          "artifact_storage_bytes": 20746124192,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
             "inferred_artifact_load_floor_gb": 28,
@@ -699,7 +797,7 @@
             "main_quantization": "Q4_K_M",
             "auxiliary_quantization": "route-to-main",
             "features": [
-              "mtp",
+              "dflash2",
               "vision-projector"
             ]
           },
@@ -715,28 +813,30 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "qwen3-8-27b-q8-mtp--auto--128k",
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--128k",
           "main": {
-            "id": "qwen3-8-27b-q8-mtp",
-            "name": "Qwen 3.8 27B Q8_0 + MTP",
-            "quantization": "Q8_0",
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
             "runtime_features": [
-              "mtp",
               "vision-projector"
             ]
           },
           "auxiliary": {
-            "id": "auto",
-            "name": "Route auxiliary tasks to main",
-            "quantization": "route-to-main",
-            "runtime_features": []
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "quantization": "Q4_K_M",
+            "runtime_features": [
+              "expert-offload",
+              "vision-projector"
+            ]
           },
           "context": 131072,
-          "artifact_storage_bytes": 32389017248,
+          "artifact_storage_bytes": 36770500160,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 39,
-            "inferred_recommended_gb": 54,
+            "inferred_artifact_load_floor_gb": 43,
+            "inferred_recommended_gb": 59,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -749,10 +849,10 @@
             "backend": "llama.cpp-local"
           },
           "offload_quantization_mode": {
-            "main_quantization": "Q8_0",
-            "auxiliary_quantization": "route-to-main",
+            "main_quantization": "UD-Q3_K_XL",
+            "auxiliary_quantization": "Q4_K_M",
             "features": [
-              "mtp",
+              "expert-offload",
               "vision-projector"
             ]
           },
@@ -768,13 +868,67 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "qwen3-8-27b-q8-mtp--auto--262k",
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--64k",
           "main": {
-            "id": "qwen3-8-27b-q8-mtp",
-            "name": "Qwen 3.8 27B Q8_0 + MTP",
-            "quantization": "Q8_0",
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
             "runtime_features": [
-              "mtp",
+              "vision-projector"
+            ]
+          },
+          "auxiliary": {
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "quantization": "Q4_K_M",
+            "runtime_features": [
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "context": 65536,
+          "artifact_storage_bytes": 36770500160,
+          "host_memory_requirement": {
+            "declared_minimum_gb": null,
+            "inferred_artifact_load_floor_gb": 43,
+            "inferred_recommended_gb": 59,
+            "physically_measured_peak_gb": null,
+            "status": "inferred-until-rss-telemetry",
+            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
+          },
+          "accelerator_requirement": {
+            "aggregate_gb": 48,
+            "device_count": 2,
+            "per_device_min_gb": 24,
+            "topology": "2x24",
+            "backend": "llama.cpp-local"
+          },
+          "offload_quantization_mode": {
+            "main_quantization": "UD-Q3_K_XL",
+            "auxiliary_quantization": "Q4_K_M",
+            "features": [
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "fit": {
+            "inferred": true,
+            "physically_demonstrated": false,
+            "evidence": null,
+            "hardware_fingerprint": null
+          },
+          "intelligence_score": null,
+          "intelligence_level": null,
+          "measured_tps": null,
+          "balanced_score": null
+        },
+        {
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k",
+          "main": {
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
+            "runtime_features": [
               "vision-projector"
             ]
           },
@@ -785,13 +939,13 @@
             "runtime_features": []
           },
           "context": 262144,
-          "artifact_storage_bytes": 32389017248,
+          "artifact_storage_bytes": 14154215296,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 39,
-            "inferred_recommended_gb": 54,
-            "physically_measured_peak_gb": null,
-            "status": "inferred-until-rss-telemetry",
+            "inferred_artifact_load_floor_gb": 22,
+            "inferred_recommended_gb": 33,
+            "physically_measured_peak_gb": 9.18,
+            "status": "measured-runtime-rss",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
           },
           "accelerator_requirement": {
@@ -802,23 +956,22 @@
             "backend": "llama.cpp-local"
           },
           "offload_quantization_mode": {
-            "main_quantization": "Q8_0",
+            "main_quantization": "UD-Q3_K_XL",
             "auxiliary_quantization": "route-to-main",
             "features": [
-              "mtp",
               "vision-projector"
             ]
           },
           "fit": {
             "inferred": true,
-            "physically_demonstrated": false,
-            "evidence": null,
-            "hardware_fingerprint": null
+            "physically_demonstrated": true,
+            "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+            "hardware_fingerprint": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
           },
-          "intelligence_score": null,
-          "intelligence_level": null,
-          "measured_tps": null,
-          "balanced_score": null
+          "intelligence_score": 46.875,
+          "intelligence_level": "screening",
+          "measured_tps": 39.39215795117914,
+          "balanced_score": 58.778209660040595
         }
       ]
     },
@@ -842,13 +995,67 @@
       },
       "candidates": [
         {
-          "configuration_id": "qwen3-8-27b-q8-mtp--auto--262k",
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--262k",
           "main": {
-            "id": "qwen3-8-27b-q8-mtp",
-            "name": "Qwen 3.8 27B Q8_0 + MTP",
-            "quantization": "Q8_0",
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
             "runtime_features": [
-              "mtp",
+              "vision-projector"
+            ]
+          },
+          "auxiliary": {
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "quantization": "Q4_K_M",
+            "runtime_features": [
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "context": 262144,
+          "artifact_storage_bytes": 36770500160,
+          "host_memory_requirement": {
+            "declared_minimum_gb": null,
+            "inferred_artifact_load_floor_gb": 43,
+            "inferred_recommended_gb": 59,
+            "physically_measured_peak_gb": null,
+            "status": "inferred-until-rss-telemetry",
+            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
+          },
+          "accelerator_requirement": {
+            "aggregate_gb": 64,
+            "device_count": 2,
+            "per_device_min_gb": 32,
+            "topology": "2x32",
+            "backend": "llama.cpp-local"
+          },
+          "offload_quantization_mode": {
+            "main_quantization": "UD-Q3_K_XL",
+            "auxiliary_quantization": "Q4_K_M",
+            "features": [
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "fit": {
+            "inferred": true,
+            "physically_demonstrated": false,
+            "evidence": null,
+            "hardware_fingerprint": null
+          },
+          "intelligence_score": null,
+          "intelligence_level": null,
+          "measured_tps": null,
+          "balanced_score": null
+        },
+        {
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k",
+          "main": {
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
+            "runtime_features": [
               "vision-projector"
             ]
           },
@@ -859,11 +1066,11 @@
             "runtime_features": []
           },
           "context": 262144,
-          "artifact_storage_bytes": 32389017248,
+          "artifact_storage_bytes": 14154215296,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 39,
-            "inferred_recommended_gb": 54,
+            "inferred_artifact_load_floor_gb": 22,
+            "inferred_recommended_gb": 33,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -876,10 +1083,9 @@
             "backend": "llama.cpp-local"
           },
           "offload_quantization_mode": {
-            "main_quantization": "Q8_0",
+            "main_quantization": "UD-Q3_K_XL",
             "auxiliary_quantization": "route-to-main",
             "features": [
-              "mtp",
               "vision-projector"
             ]
           },
@@ -895,13 +1101,12 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "qwen3-8-27b-bf16-mtp--auto--64k",
+          "configuration_id": "qwen3-8-27b-unleashed-ud-iq3-xxs--auto--262k",
           "main": {
-            "id": "qwen3-8-27b-bf16-mtp",
-            "name": "Qwen 3.8 27B BF16 + MTP",
-            "quantization": "BF16",
+            "id": "qwen3-8-27b-unleashed-ud-iq3-xxs",
+            "name": "Qwen 3.8 27B Unleashed UD-IQ3_XXS",
+            "quantization": "UD-IQ3_XXS",
             "runtime_features": [
-              "mtp",
               "vision-projector"
             ]
           },
@@ -911,12 +1116,12 @@
             "quantization": "route-to-main",
             "runtime_features": []
           },
-          "context": 65536,
-          "artifact_storage_bytes": 60685437728,
+          "context": 262144,
+          "artifact_storage_bytes": 11899182976,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 65,
-            "inferred_recommended_gb": 87,
+            "inferred_artifact_load_floor_gb": 20,
+            "inferred_recommended_gb": 30,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -929,63 +1134,9 @@
             "backend": "llama.cpp-local"
           },
           "offload_quantization_mode": {
-            "main_quantization": "BF16",
+            "main_quantization": "UD-IQ3_XXS",
             "auxiliary_quantization": "route-to-main",
             "features": [
-              "mtp",
-              "vision-projector"
-            ]
-          },
-          "fit": {
-            "inferred": true,
-            "physically_demonstrated": false,
-            "evidence": null,
-            "hardware_fingerprint": null
-          },
-          "intelligence_score": null,
-          "intelligence_level": null,
-          "measured_tps": null,
-          "balanced_score": null
-        },
-        {
-          "configuration_id": "qwen3-8-27b-bf16-mtp--auto--128k",
-          "main": {
-            "id": "qwen3-8-27b-bf16-mtp",
-            "name": "Qwen 3.8 27B BF16 + MTP",
-            "quantization": "BF16",
-            "runtime_features": [
-              "mtp",
-              "vision-projector"
-            ]
-          },
-          "auxiliary": {
-            "id": "auto",
-            "name": "Route auxiliary tasks to main",
-            "quantization": "route-to-main",
-            "runtime_features": []
-          },
-          "context": 131072,
-          "artifact_storage_bytes": 60685437728,
-          "host_memory_requirement": {
-            "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 65,
-            "inferred_recommended_gb": 87,
-            "physically_measured_peak_gb": null,
-            "status": "inferred-until-rss-telemetry",
-            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
-          },
-          "accelerator_requirement": {
-            "aggregate_gb": 64,
-            "device_count": 2,
-            "per_device_min_gb": 32,
-            "topology": "2x32",
-            "backend": "llama.cpp-local"
-          },
-          "offload_quantization_mode": {
-            "main_quantization": "BF16",
-            "auxiliary_quantization": "route-to-main",
-            "features": [
-              "mtp",
               "vision-projector"
             ]
           },
@@ -1022,81 +1173,30 @@
       },
       "candidates": [
         {
-          "configuration_id": "qwen3-8-27b-bf16-mtp--auto--128k",
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--262k",
           "main": {
-            "id": "qwen3-8-27b-bf16-mtp",
-            "name": "Qwen 3.8 27B BF16 + MTP",
-            "quantization": "BF16",
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
             "runtime_features": [
-              "mtp",
               "vision-projector"
             ]
           },
           "auxiliary": {
-            "id": "auto",
-            "name": "Route auxiliary tasks to main",
-            "quantization": "route-to-main",
-            "runtime_features": []
-          },
-          "context": 131072,
-          "artifact_storage_bytes": 60685437728,
-          "host_memory_requirement": {
-            "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 65,
-            "inferred_recommended_gb": 87,
-            "physically_measured_peak_gb": null,
-            "status": "inferred-until-rss-telemetry",
-            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
-          },
-          "accelerator_requirement": {
-            "aggregate_gb": 96,
-            "device_count": 4,
-            "per_device_min_gb": 24,
-            "topology": "4x24",
-            "backend": "llama.cpp-local"
-          },
-          "offload_quantization_mode": {
-            "main_quantization": "BF16",
-            "auxiliary_quantization": "route-to-main",
-            "features": [
-              "mtp",
-              "vision-projector"
-            ]
-          },
-          "fit": {
-            "inferred": true,
-            "physically_demonstrated": false,
-            "evidence": null,
-            "hardware_fingerprint": null
-          },
-          "intelligence_score": null,
-          "intelligence_level": null,
-          "measured_tps": null,
-          "balanced_score": null
-        },
-        {
-          "configuration_id": "qwen3-8-27b-bf16-mtp--auto--262k",
-          "main": {
-            "id": "qwen3-8-27b-bf16-mtp",
-            "name": "Qwen 3.8 27B BF16 + MTP",
-            "quantization": "BF16",
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "quantization": "Q4_K_M",
             "runtime_features": [
-              "mtp",
+              "expert-offload",
               "vision-projector"
             ]
-          },
-          "auxiliary": {
-            "id": "auto",
-            "name": "Route auxiliary tasks to main",
-            "quantization": "route-to-main",
-            "runtime_features": []
           },
           "context": 262144,
-          "artifact_storage_bytes": 60685437728,
+          "artifact_storage_bytes": 36770500160,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 65,
-            "inferred_recommended_gb": 87,
+            "inferred_artifact_load_floor_gb": 43,
+            "inferred_recommended_gb": 59,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -1109,10 +1209,10 @@
             "backend": "llama.cpp-local"
           },
           "offload_quantization_mode": {
-            "main_quantization": "BF16",
-            "auxiliary_quantization": "route-to-main",
+            "main_quantization": "UD-Q3_K_XL",
+            "auxiliary_quantization": "Q4_K_M",
             "features": [
-              "mtp",
+              "expert-offload",
               "vision-projector"
             ]
           },
@@ -1128,31 +1228,85 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "qwen3-8-27b-bf16-mtp--carwin-nano--128k",
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--1m",
           "main": {
-            "id": "qwen3-8-27b-bf16-mtp",
-            "name": "Qwen 3.8 27B BF16 + MTP",
-            "quantization": "BF16",
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
             "runtime_features": [
-              "mtp",
               "vision-projector"
             ]
           },
           "auxiliary": {
-            "id": "carwin-nano",
-            "name": "Carwin MoE Nano MTP",
-            "quantization": "native",
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "quantization": "Q4_K_M",
             "runtime_features": [
-              "mtp",
-              "expert-offload"
+              "expert-offload",
+              "vision-projector"
             ]
           },
-          "context": 131072,
-          "artifact_storage_bytes": 73020942624,
+          "context": 1048576,
+          "artifact_storage_bytes": 36770500160,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 77,
-            "inferred_recommended_gb": 102,
+            "inferred_artifact_load_floor_gb": 43,
+            "inferred_recommended_gb": 59,
+            "physically_measured_peak_gb": null,
+            "status": "inferred-until-rss-telemetry",
+            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
+          },
+          "accelerator_requirement": {
+            "aggregate_gb": 96,
+            "device_count": 4,
+            "per_device_min_gb": 24,
+            "topology": "4x24",
+            "backend": "llama.cpp-local"
+          },
+          "offload_quantization_mode": {
+            "main_quantization": "UD-Q3_K_XL",
+            "auxiliary_quantization": "Q4_K_M",
+            "features": [
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "fit": {
+            "inferred": true,
+            "physically_demonstrated": false,
+            "evidence": null,
+            "hardware_fingerprint": null
+          },
+          "intelligence_score": null,
+          "intelligence_level": null,
+          "measured_tps": null,
+          "balanced_score": null
+        },
+        {
+          "configuration_id": "qwen3-8-27b-bf16--ornith-1-5-35a3b--262k",
+          "main": {
+            "id": "qwen3-8-27b-bf16",
+            "name": "Qwen 3.8 27B BF16",
+            "quantization": "BF16",
+            "runtime_features": [
+              "vision-projector"
+            ]
+          },
+          "auxiliary": {
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "quantization": "Q4_K_M",
+            "runtime_features": [
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "context": 262144,
+          "artifact_storage_bytes": 77355712704,
+          "host_memory_requirement": {
+            "declared_minimum_gb": null,
+            "inferred_artifact_load_floor_gb": 81,
+            "inferred_recommended_gb": 107,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -1166,10 +1320,9 @@
           },
           "offload_quantization_mode": {
             "main_quantization": "BF16",
-            "auxiliary_quantization": "native",
+            "auxiliary_quantization": "Q4_K_M",
             "features": [
               "expert-offload",
-              "mtp",
               "vision-projector"
             ]
           },
@@ -1206,119 +1359,122 @@
       },
       "candidates": [
         {
-          "configuration_id": "deepseek-v4-flash-0731-q8-dspark--auto--128k",
+          "configuration_id": "qwen3-8-27b-bf16--ornith-1-5-35a3b--1m",
           "main": {
-            "id": "deepseek-v4-flash-0731-q8-dspark",
-            "name": "DeepSeek V4 Flash 0731 Q8 + DSpark",
-            "quantization": "UD-Q8_K_XL",
-            "runtime_features": [
-              "dspark",
-              "expert-offload"
-            ]
-          },
-          "auxiliary": {
-            "id": "auto",
-            "name": "Route auxiliary tasks to main",
-            "quantization": "route-to-main",
-            "runtime_features": []
-          },
-          "context": 131072,
-          "artifact_storage_bytes": 172765672960,
-          "host_memory_requirement": {
-            "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 169,
-            "inferred_recommended_gb": 218,
-            "physically_measured_peak_gb": null,
-            "status": "inferred-until-rss-telemetry",
-            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
-          },
-          "accelerator_requirement": {
-            "aggregate_gb": 200,
-            "device_count": 2,
-            "per_device_min_gb": 100,
-            "topology": "2x100",
-            "backend": "llama.cpp-local"
-          },
-          "offload_quantization_mode": {
-            "main_quantization": "UD-Q8_K_XL",
-            "auxiliary_quantization": "route-to-main",
-            "features": [
-              "dspark",
-              "expert-offload"
-            ]
-          },
-          "fit": {
-            "inferred": true,
-            "physically_demonstrated": false,
-            "evidence": null,
-            "hardware_fingerprint": null
-          },
-          "intelligence_score": null,
-          "intelligence_level": null,
-          "measured_tps": null,
-          "balanced_score": null
-        },
-        {
-          "configuration_id": "deepseek-v4-flash-0731-q8-dspark--auto--262k",
-          "main": {
-            "id": "deepseek-v4-flash-0731-q8-dspark",
-            "name": "DeepSeek V4 Flash 0731 Q8 + DSpark",
-            "quantization": "UD-Q8_K_XL",
-            "runtime_features": [
-              "dspark",
-              "expert-offload"
-            ]
-          },
-          "auxiliary": {
-            "id": "auto",
-            "name": "Route auxiliary tasks to main",
-            "quantization": "route-to-main",
-            "runtime_features": []
-          },
-          "context": 262144,
-          "artifact_storage_bytes": 172765672960,
-          "host_memory_requirement": {
-            "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 169,
-            "inferred_recommended_gb": 218,
-            "physically_measured_peak_gb": null,
-            "status": "inferred-until-rss-telemetry",
-            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
-          },
-          "accelerator_requirement": {
-            "aggregate_gb": 200,
-            "device_count": 2,
-            "per_device_min_gb": 100,
-            "topology": "2x100",
-            "backend": "llama.cpp-local"
-          },
-          "offload_quantization_mode": {
-            "main_quantization": "UD-Q8_K_XL",
-            "auxiliary_quantization": "route-to-main",
-            "features": [
-              "dspark",
-              "expert-offload"
-            ]
-          },
-          "fit": {
-            "inferred": true,
-            "physically_demonstrated": false,
-            "evidence": null,
-            "hardware_fingerprint": null
-          },
-          "intelligence_score": null,
-          "intelligence_level": null,
-          "measured_tps": null,
-          "balanced_score": null
-        },
-        {
-          "configuration_id": "qwen3-8-27b-bf16-mtp--auto--1m",
-          "main": {
-            "id": "qwen3-8-27b-bf16-mtp",
-            "name": "Qwen 3.8 27B BF16 + MTP",
+            "id": "qwen3-8-27b-bf16",
+            "name": "Qwen 3.8 27B BF16",
             "quantization": "BF16",
             "runtime_features": [
-              "mtp",
+              "vision-projector"
+            ]
+          },
+          "auxiliary": {
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "quantization": "Q4_K_M",
+            "runtime_features": [
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "context": 1048576,
+          "artifact_storage_bytes": 77355712704,
+          "host_memory_requirement": {
+            "declared_minimum_gb": null,
+            "inferred_artifact_load_floor_gb": 81,
+            "inferred_recommended_gb": 107,
+            "physically_measured_peak_gb": null,
+            "status": "inferred-until-rss-telemetry",
+            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
+          },
+          "accelerator_requirement": {
+            "aggregate_gb": 200,
+            "device_count": 2,
+            "per_device_min_gb": 100,
+            "topology": "2x100",
+            "backend": "llama.cpp-local"
+          },
+          "offload_quantization_mode": {
+            "main_quantization": "BF16",
+            "auxiliary_quantization": "Q4_K_M",
+            "features": [
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "fit": {
+            "inferred": true,
+            "physically_demonstrated": false,
+            "evidence": null,
+            "hardware_fingerprint": null
+          },
+          "intelligence_score": null,
+          "intelligence_level": null,
+          "measured_tps": null,
+          "balanced_score": null
+        },
+        {
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--1m",
+          "main": {
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
+            "runtime_features": [
+              "vision-projector"
+            ]
+          },
+          "auxiliary": {
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "quantization": "Q4_K_M",
+            "runtime_features": [
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "context": 1048576,
+          "artifact_storage_bytes": 36770500160,
+          "host_memory_requirement": {
+            "declared_minimum_gb": null,
+            "inferred_artifact_load_floor_gb": 43,
+            "inferred_recommended_gb": 59,
+            "physically_measured_peak_gb": null,
+            "status": "inferred-until-rss-telemetry",
+            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
+          },
+          "accelerator_requirement": {
+            "aggregate_gb": 200,
+            "device_count": 2,
+            "per_device_min_gb": 100,
+            "topology": "2x100",
+            "backend": "llama.cpp-local"
+          },
+          "offload_quantization_mode": {
+            "main_quantization": "UD-Q3_K_XL",
+            "auxiliary_quantization": "Q4_K_M",
+            "features": [
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "fit": {
+            "inferred": true,
+            "physically_demonstrated": false,
+            "evidence": null,
+            "hardware_fingerprint": null
+          },
+          "intelligence_score": null,
+          "intelligence_level": null,
+          "measured_tps": null,
+          "balanced_score": null
+        },
+        {
+          "configuration_id": "qwen3-8-27b-bf16--auto--1m",
+          "main": {
+            "id": "qwen3-8-27b-bf16",
+            "name": "Qwen 3.8 27B BF16",
+            "quantization": "BF16",
+            "runtime_features": [
               "vision-projector"
             ]
           },
@@ -1329,11 +1485,11 @@
             "runtime_features": []
           },
           "context": 1048576,
-          "artifact_storage_bytes": 60685437728,
+          "artifact_storage_bytes": 54739427840,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 65,
-            "inferred_recommended_gb": 87,
+            "inferred_artifact_load_floor_gb": 59,
+            "inferred_recommended_gb": 80,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -1349,7 +1505,6 @@
             "main_quantization": "BF16",
             "auxiliary_quantization": "route-to-main",
             "features": [
-              "mtp",
               "vision-projector"
             ]
           },
@@ -1386,81 +1541,30 @@
       },
       "candidates": [
         {
-          "configuration_id": "deepseek-v4-flash-0731-q8-dspark--auto--262k",
+          "configuration_id": "qwen3-8-27b-bf16--ornith-1-5-35a3b--1m",
           "main": {
-            "id": "deepseek-v4-flash-0731-q8-dspark",
-            "name": "DeepSeek V4 Flash 0731 Q8 + DSpark",
-            "quantization": "UD-Q8_K_XL",
+            "id": "qwen3-8-27b-bf16",
+            "name": "Qwen 3.8 27B BF16",
+            "quantization": "BF16",
             "runtime_features": [
-              "dspark",
-              "expert-offload"
+              "vision-projector"
             ]
           },
           "auxiliary": {
-            "id": "auto",
-            "name": "Route auxiliary tasks to main",
-            "quantization": "route-to-main",
-            "runtime_features": []
-          },
-          "context": 262144,
-          "artifact_storage_bytes": 172765672960,
-          "host_memory_requirement": {
-            "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 169,
-            "inferred_recommended_gb": 218,
-            "physically_measured_peak_gb": null,
-            "status": "inferred-until-rss-telemetry",
-            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
-          },
-          "accelerator_requirement": {
-            "aggregate_gb": 300,
-            "device_count": 3,
-            "per_device_min_gb": 100,
-            "topology": "3x100",
-            "backend": "llama.cpp-local"
-          },
-          "offload_quantization_mode": {
-            "main_quantization": "UD-Q8_K_XL",
-            "auxiliary_quantization": "route-to-main",
-            "features": [
-              "dspark",
-              "expert-offload"
-            ]
-          },
-          "fit": {
-            "inferred": true,
-            "physically_demonstrated": false,
-            "evidence": null,
-            "hardware_fingerprint": null
-          },
-          "intelligence_score": null,
-          "intelligence_level": null,
-          "measured_tps": null,
-          "balanced_score": null
-        },
-        {
-          "configuration_id": "deepseek-v4-flash-0731-q8-dspark--auto--1m",
-          "main": {
-            "id": "deepseek-v4-flash-0731-q8-dspark",
-            "name": "DeepSeek V4 Flash 0731 Q8 + DSpark",
-            "quantization": "UD-Q8_K_XL",
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "quantization": "Q4_K_M",
             "runtime_features": [
-              "dspark",
-              "expert-offload"
+              "expert-offload",
+              "vision-projector"
             ]
-          },
-          "auxiliary": {
-            "id": "auto",
-            "name": "Route auxiliary tasks to main",
-            "quantization": "route-to-main",
-            "runtime_features": []
           },
           "context": 1048576,
-          "artifact_storage_bytes": 172765672960,
+          "artifact_storage_bytes": 77355712704,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 169,
-            "inferred_recommended_gb": 218,
+            "inferred_artifact_load_floor_gb": 81,
+            "inferred_recommended_gb": 107,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -1473,11 +1577,11 @@
             "backend": "llama.cpp-local"
           },
           "offload_quantization_mode": {
-            "main_quantization": "UD-Q8_K_XL",
-            "auxiliary_quantization": "route-to-main",
+            "main_quantization": "BF16",
+            "auxiliary_quantization": "Q4_K_M",
             "features": [
-              "dspark",
-              "expert-offload"
+              "expert-offload",
+              "vision-projector"
             ]
           },
           "fit": {
@@ -1492,31 +1596,31 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "deepseek-v4-flash-0731-q8-dspark--carwin-nano--262k",
+          "configuration_id": "qwen3-8-27b-bf16-mtp--ornith-1-5-35a3b--1m",
           "main": {
-            "id": "deepseek-v4-flash-0731-q8-dspark",
-            "name": "DeepSeek V4 Flash 0731 Q8 + DSpark",
-            "quantization": "UD-Q8_K_XL",
+            "id": "qwen3-8-27b-bf16-mtp",
+            "name": "Qwen 3.8 27B BF16 + MTP",
+            "quantization": "BF16",
             "runtime_features": [
-              "dspark",
-              "expert-offload"
+              "mtp",
+              "vision-projector"
             ]
           },
           "auxiliary": {
-            "id": "carwin-nano",
-            "name": "Carwin MoE Nano MTP",
-            "quantization": "native",
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "quantization": "Q4_K_M",
             "runtime_features": [
-              "mtp",
-              "expert-offload"
+              "expert-offload",
+              "vision-projector"
             ]
           },
-          "context": 262144,
-          "artifact_storage_bytes": 185101177856,
+          "context": 1048576,
+          "artifact_storage_bytes": 83301722592,
           "host_memory_requirement": {
             "declared_minimum_gb": null,
-            "inferred_artifact_load_floor_gb": 181,
-            "inferred_recommended_gb": 232,
+            "inferred_artifact_load_floor_gb": 86,
+            "inferred_recommended_gb": 113,
             "physically_measured_peak_gb": null,
             "status": "inferred-until-rss-telemetry",
             "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
@@ -1529,12 +1633,67 @@
             "backend": "llama.cpp-local"
           },
           "offload_quantization_mode": {
-            "main_quantization": "UD-Q8_K_XL",
-            "auxiliary_quantization": "native",
+            "main_quantization": "BF16",
+            "auxiliary_quantization": "Q4_K_M",
             "features": [
-              "dspark",
               "expert-offload",
-              "mtp"
+              "mtp",
+              "vision-projector"
+            ]
+          },
+          "fit": {
+            "inferred": true,
+            "physically_demonstrated": false,
+            "evidence": null,
+            "hardware_fingerprint": null
+          },
+          "intelligence_score": null,
+          "intelligence_level": null,
+          "measured_tps": null,
+          "balanced_score": null
+        },
+        {
+          "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--ornith-1-5-35a3b--1m",
+          "main": {
+            "id": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+            "name": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+            "quantization": "UD-Q3_K_XL",
+            "runtime_features": [
+              "vision-projector"
+            ]
+          },
+          "auxiliary": {
+            "id": "ornith-1-5-35a3b",
+            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "quantization": "Q4_K_M",
+            "runtime_features": [
+              "expert-offload",
+              "vision-projector"
+            ]
+          },
+          "context": 1048576,
+          "artifact_storage_bytes": 36770500160,
+          "host_memory_requirement": {
+            "declared_minimum_gb": null,
+            "inferred_artifact_load_floor_gb": 43,
+            "inferred_recommended_gb": 59,
+            "physically_measured_peak_gb": null,
+            "status": "inferred-until-rss-telemetry",
+            "formula": "artifact GiB + 8 GiB floor; artifact GiB \u00d7 1.25 + 16 GiB recommended"
+          },
+          "accelerator_requirement": {
+            "aggregate_gb": 300,
+            "device_count": 3,
+            "per_device_min_gb": 100,
+            "topology": "3x100",
+            "backend": "llama.cpp-local"
+          },
+          "offload_quantization_mode": {
+            "main_quantization": "UD-Q3_K_XL",
+            "auxiliary_quantization": "Q4_K_M",
+            "features": [
+              "expert-offload",
+              "vision-projector"
             ]
           },
           "fit": {

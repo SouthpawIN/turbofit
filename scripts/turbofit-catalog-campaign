@@ -28,7 +28,8 @@ from turbofit_runtime.hardware import probe_hardware
 from turbofit_runtime.model_catalog import ModelCatalog
 from turbofit_runtime.recipes import RecipeBook
 from turbofit_runtime.registry import ProfileRegistry
-from turbofit_runtime.schema import load_matrix
+from turbofit_runtime.schema import MatrixRow, load_matrix
+from turbofit_runtime.tier_tournament import candidate_ids_for_tier, load_tournaments
 
 CATALOG = ROOT / "references/model-catalog.json"
 CONFIGURATIONS = ROOT / "references/configuration-matrix.json"
@@ -45,6 +46,7 @@ WIKI = Path(os.environ.get(
     str(Path.home() / ".hermes/wiki/topics/turbofit/catalog-configuration-checklist.md"),
 ))
 EVIDENCE = WIKI.parent / "evidence"
+TOURNAMENTS = ROOT / "references/hardware-tier-tournaments.json"
 
 
 def canonical() -> tuple[ModelCatalog, dict]:
@@ -204,6 +206,34 @@ def run_id(row_id: str) -> int:
     return 0 if outcome.status == "success" else 1
 
 
+def current_hardware_tier() -> int:
+    hardware = probe_hardware()
+    capacity = hardware.total_usable_memory_mb if hardware.shared_memory_pool else hardware.total_vram_mb
+    return max(tier for tier in (8, 16, 24, 48, 64, 96, 200, 300) if tier <= max(8, round(capacity / 1024)))
+
+
+def run_list_candidate() -> int:
+    runner = build_runner()
+    pending = {row.id: row for row in runner.pending_rows()}
+    catalog, configurations = canonical()
+    tournaments = load_tournaments(TOURNAMENTS, configurations)
+    raw_ids = candidate_ids_for_tier(tournaments, current_hardware_tier())
+    by_model = {item.id: item for item in catalog.models}
+    by_raw = {item["id"]: item for item in configurations["rows"]}
+    for raw_id in raw_ids:
+        item = by_raw[raw_id]
+        aux = "auto" if item["auxiliary"] == "auto" else by_model[item["auxiliary"]].name
+        display_id = MatrixRow.make_id(by_model[item["main"]].name, aux, int(item["context"]))
+        row = pending.get(display_id)
+        if row is None:
+            continue
+        outcome = runner.run_row(row)
+        print(json.dumps({"row_id": outcome.row_id, "status": outcome.status, "error": outcome.error}, indent=2))
+        return 0 if outcome.status == "success" else 1
+    print(json.dumps({"status": "idle", "reason": "current-tier TurboFit List candidates are resolved or retry-waiting"}))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -211,6 +241,7 @@ def main() -> int:
     dry = sub.add_parser("dry-run")
     dry.add_argument("--limit", type=int, default=10)
     sub.add_parser("run-one")
+    sub.add_parser("run-list-candidate")
     selected = sub.add_parser("run-id")
     selected.add_argument("row_id")
     run = sub.add_parser("run")
@@ -231,6 +262,8 @@ def main() -> int:
         return 0
     if args.command == "run-id":
         return run_id(args.row_id)
+    if args.command == "run-list-candidate":
+        return run_list_candidate()
     if args.command == "classify-hardware-incompatible":
         build_runner().mark_hardware_incompatible(args.row_id, args.evidence)
         print(json.dumps({

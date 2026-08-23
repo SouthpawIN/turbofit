@@ -52,6 +52,26 @@
       "upstream_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"
     },
     {
+      "id": "qwen3-8-27b-q4-dflash2",
+      "name": "Qwen 3.8 27B Q4_K_M + DFlash2",
+      "family": "Qwen 3.8 27B",
+      "source": "https://huggingface.co/ggml-org/Qwen3.8-27B-GGUF",
+      "artifact": "Qwen3.8-27B-Q4_K_M.gguf",
+      "quantization": "Q4_K_M",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "dflash2",
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B",
+      "upstream_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"
+    },
+    {
       "id": "qwen3-8-27b-q8-mtp",
       "name": "Qwen 3.8 27B Q8_0 + MTP",
       "family": "Qwen 3.8 27B",

@@ -394,7 +394,7 @@ function TurbofitPage() {
       ] }),
       jsxs('div', { className: 'flex gap-2', children: [
         jsx('button', { type: 'button', onClick: save, disabled: busy, style: buttonStyle, children: busy ? 'Working…' : 'Apply' }),
-        jsx('button', { type: 'button', onClick: refresh, disabled: busy, style: buttonStyle, children: 'Rescan' }),
+        jsx('button', { type: 'button', onClick: refresh, disabled: busy, style: buttonStyle, children: 'Run TurboFit Check' }),
       ] }),
       jsxs('section', { className: 'flex flex-col gap-2', children: [
         jsx('h2', { className: 'font-semibold', children: `${preference} recommendations` }),

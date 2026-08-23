@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""Promote the current machine's exact benchmark winner into TurboFit List."""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.executor import capture_physical_hardware, production_recipe_sha256  # noqa: E402
+from turbofit_runtime.hardware import probe_hardware  # noqa: E402
+from turbofit_runtime.intelligence import canonical_intelligence_recipe, refresh_score_payload  # noqa: E402
+from turbofit_runtime.list_promotion import select_tier_winner  # noqa: E402
+from turbofit_runtime.model_catalog import ModelCatalog  # noqa: E402
+from turbofit_runtime.recipes import RecipeBook  # noqa: E402
+from turbofit_runtime.schema import MatrixRow  # noqa: E402
+
+TIERS = (8, 16, 24, 48, 64, 96, 200, 300)
+
+
+def atomic_json(path: Path, payload: dict) -> None:
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(temporary, path)
+
+
+def current_tier() -> int:
+    hardware = probe_hardware()
+    capacity = hardware.total_usable_memory_mb if hardware.shared_memory_pool else hardware.total_vram_mb
+    return max(tier for tier in TIERS if tier <= max(8, round(capacity / 1024)))
+
+
+def main() -> int:
+    tier_gb = current_tier()
+    configurations = json.loads((ROOT / "references/configuration-matrix.json").read_text())
+    tournaments_path = ROOT / "references/hardware-tier-tournaments.json"
+    tournaments = json.loads(tournaments_path.read_text())
+    catalog = ModelCatalog.load(ROOT / "references/model-catalog.json")
+    by_model = {item.id: item for item in catalog.models}
+    recipes = RecipeBook.load(ROOT / "references/model-recipes.json", hardware=probe_hardware())
+    state_path = ROOT / "references/catalog-campaign-state.json"
+    runtime_rows = (json.loads(state_path.read_text()).get("rows") or {}) if state_path.is_file() else {}
+    live_fingerprint = str(capture_physical_hardware()["fingerprint_sha256"])
+    physical: dict[str, dict] = {}
+    intelligence: dict[str, dict] = {}
+    score_path = ROOT / "references/intelligence-scores.json"
+    if score_path.is_file():
+        for payload in json.loads(score_path.read_text()).get("records") or []:
+            try:
+                refreshed = dict(refresh_score_payload(payload))
+            except (ValueError, TypeError):
+                continue
+            intelligence[str(refreshed["configuration_id"])] = refreshed
+    config_by_id = {item["id"]: item for item in configurations["rows"]}
+    tier = next(item for item in tournaments["tiers"] if item["vram_gb"] == tier_gb)
+    for identifier in tier["candidates"]:
+        configuration = config_by_id[identifier]
+        main = by_model[configuration["main"]]
+        auxiliary_name = "auto" if configuration["auxiliary"] == "auto" else by_model[configuration["auxiliary"]].name
+        display_id = MatrixRow.make_id(main.name, auxiliary_name, int(configuration["context"]))
+        catalog_configuration = dict(configuration)
+        catalog_configuration["id"] = display_id
+        recipe = recipes.resolve_catalog_configuration(catalog_configuration)
+        expected_runtime = production_recipe_sha256(recipe, catalog_configuration)
+        record = runtime_rows.get(display_id) or {}
+        raw_path = Path(str(record.get("raw_result_path") or ""))
+        if not raw_path.is_absolute():
+            raw_path = ROOT / raw_path
+        evidence = str(record.get("raw_result_sha256") or "")
+        checksum_ok = False
+        if raw_path.is_file() and evidence.startswith("sha256:"):
+            checksum_ok = "sha256:" + hashlib.sha256(raw_path.read_bytes()).hexdigest() == evidence
+        physical[identifier] = {
+            "status": record.get("status") if checksum_ok and record.get("physical_fingerprint") == live_fingerprint else "invalid",
+            "current_recipe": record.get("recipe_sha256") == expected_runtime,
+            "evidence": evidence,
+            "hardware_fingerprint": record.get("physical_fingerprint"),
+        }
+        score = intelligence.get(identifier)
+        if score is not None:
+            expected_intelligence = canonical_intelligence_recipe(configuration, recipes.resolve_catalog_configuration(configuration))[0]
+            if score.get("production_recipe_sha256") != expected_intelligence:
+                intelligence.pop(identifier, None)
+    winner = select_tier_winner(
+        tier["candidates"], physical, intelligence, hardware_tier_gb=tier_gb,
+    )
+    tier["winner"] = winner
+    atomic_json(tournaments_path, tournaments)
+    print(json.dumps({
+        "status": "winner" if winner else "pending-benchmarks",
+        "hardware_tier_gb": tier_gb,
+        "winner": winner,
+    }, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

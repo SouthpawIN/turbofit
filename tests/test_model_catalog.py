@@ -19,7 +19,7 @@ MATRIX_PATH = ROOT / "references" / "configuration-matrix.json"
 
 def test_catalog_has_every_requested_main_and_auxiliary_variant() -> None:
     catalog = ModelCatalog.load(CATALOG_PATH)
-    assert len(catalog.main_models) == 42
+    assert len(catalog.main_models) == 43
     unleashed = next(item for item in catalog.main_models if item.id == "qwen3-8-27b-unleashed-ud-q3-k-xl")
     assert unleashed.source == "https://huggingface.co/outsourc-e/Qwen3.8-27B-Unleashed-GGUF"
     assert unleashed.upstream_source == "https://huggingface.co/JonathanColetti/Qwen3.8-27B-Uncensored"
@@ -38,7 +38,7 @@ def test_complete_matrix_is_generated_not_hand_maintained() -> None:
     matrix = json.loads(MATRIX_PATH.read_text())
     validate_configuration_matrix(matrix, catalog)
     expected = len(catalog.main_models) * len(catalog.auxiliary_options) * len(CONTEXTS)
-    assert expected == 504
+    assert expected == 516
     assert len(matrix["rows"]) == expected
     assert len({item["id"] for item in matrix["rows"]}) == expected
     assert {item["context"] for item in matrix["rows"]} == set(CONTEXTS)

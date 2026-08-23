@@ -137,7 +137,7 @@ class RecipeBook:
         port_override: int | None = None,
         alias_override: str | None = None,
     ) -> ResolvedComponent:
-        _, spec = self._spec(family)
+        resolved_family, spec = self._spec(family)
         if self.hardware is not None:
             available = {str(device.index) for device in self.hardware.devices}
             requested = [item for item in gpu.split(",") if item in available]
@@ -263,14 +263,17 @@ class RecipeBook:
                 "--spec-type",
                 "mtp:n_max=4,p_min=0.5" if runtime_flavor == "ik" else "draft-mtp",
             ])
-        if method == "dspark":
+        if method in {"dspark", "dflash2"}:
             draft = artifact(str(spec.get("draft", ""))) if spec.get("draft") else ""
+            label = "DFlash2" if method == "dflash2" else "DSpark"
             if not draft:
-                raise ValueError(f"DSpark recipe for {family} requires a draft model")
+                raise ValueError(f"{label} recipe for {family} requires a draft model")
+            if method == "dflash2" and spec.get("dflash_target_family") != resolved_family:
+                raise ValueError(f"{family} requires a dedicated DFlash2 checkpoint bound to its target family")
             command.extend([
                 "--model-draft", draft,
-                "--spec-type", "draft-dspark",
-                "--spec-draft-n-max", str(spec.get("draft_n_max", 4)),
+                "--spec-type", "draft-dflash" if method == "dflash2" else "draft-dspark",
+                "--spec-draft-n-max", str(spec.get("draft_n_max", 7 if method == "dflash2" else 4)),
                 "-ngld", str(
                     0 if self.backend_name == "cpu"
                     else context_override.get("draft_gpu_layers", "auto")

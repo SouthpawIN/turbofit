@@ -61,12 +61,16 @@ def main() -> int:
             print(json.dumps({"status": "already-running", "lock": str(LOCK)}))
             return 0
         while not STOP.exists():
-            if not catalog_complete() and args.catalog_batch:
-                run([str(ROOT / "scripts/turbofit-catalog-campaign"), "run", "--limit", str(args.catalog_batch)])
             run([str(ROOT / "scripts/turbofit-intelligence-campaign"), "init"])
             if intelligence_has_ready() and args.intelligence_batch:
                 run([str(ROOT / "scripts/turbofit-intelligence-campaign"), "run", "--limit", str(args.intelligence_batch)])
+                run([str(ROOT / "scripts/turbofit-promote-list-winner")])
                 run([str(ROOT / "scripts/turbofit-hardware-tiers"), "--output", "references/hardware-tier-report.json"])
+                run([str(ROOT / "scripts/turbofit-list")])
+            if not catalog_complete() and args.catalog_batch:
+                run([str(ROOT / "scripts/turbofit-catalog-campaign"), "run-list-candidate"])
+                if args.catalog_batch > 1:
+                    run([str(ROOT / "scripts/turbofit-catalog-campaign"), "run", "--limit", str(args.catalog_batch - 1)])
             if catalog_complete() and not intelligence_has_ready():
                 print(json.dumps({"status": "complete-or-blocked", "reason": "no runnable production configurations remain"}), flush=True)
                 return 0

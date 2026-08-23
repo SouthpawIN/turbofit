@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""Build the TurboFit List from exact hardware-tier benchmark winners."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.turbofit_list import build_turbofit_list, render_turbofit_list  # noqa: E402
+
+
+def atomic_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(content, encoding="utf-8")
+    os.replace(temporary, path)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--report", type=Path, default=ROOT / "references/hardware-tier-report.json")
+    parser.add_argument("--json-output", type=Path, default=ROOT / "references/turbofit-list.json")
+    parser.add_argument("--markdown-output", type=Path, default=ROOT / "docs/turbofit-list.md")
+    args = parser.parse_args()
+    report = json.loads(args.report.read_text(encoding="utf-8"))
+    payload = build_turbofit_list(report)
+    atomic_text(args.json_output, json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    atomic_text(args.markdown_output, render_turbofit_list(payload))
+    print(json.dumps({
+        "status": "updated",
+        "winners": sum(item["winner"] is not None for item in payload["levels"]),
+        "pending": sum(item["winner"] is None for item in payload["levels"]),
+        "json": str(args.json_output),
+        "markdown": str(args.markdown_output),
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

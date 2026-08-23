@@ -1,0 +1,67 @@
+{
+  "generated_at": "2026-08-23T05:47:39.321368+00:00",
+  "levels": [
+    {
+      "hardware_level_gb": 8,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-8gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 16,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-16gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 24,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-24gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 48,
+      "status": "winner",
+      "tier_id": "hardware-48gb",
+      "winner": {
+        "auxiliary": "Route auxiliary tasks to main",
+        "balanced_score": 58.778209660040595,
+        "configuration_id": "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k",
+        "context": 262144,
+        "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+        "hardware_fingerprint": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b",
+        "intelligence_score": 46.875,
+        "main": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+        "measured_tps": 39.39215795117914
+      }
+    },
+    {
+      "hardware_level_gb": 64,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-64gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 96,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-96gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 200,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-200gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 300,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-300gb",
+      "winner": null
+    }
+  ],
+  "name": "TurboFit List",
+  "policy": "exact hardware + current recipe + physical evidence + intelligence + TPS",
+  "schema": "turbofit.list/v1",
+  "source_schema": "turbofit.hardware-tier-report/v1"
+}

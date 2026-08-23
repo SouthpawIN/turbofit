@@ -664,7 +664,7 @@ def recommendation_snapshot(
     *,
     limit: int = 3,
 ) -> dict[str, Any]:
-    """Rescan physical hardware and return evidence-backed user choices."""
+    """Run TurboFit Check: scan physical hardware and return evidence-backed choices."""
     from turbofit_runtime.hardware import probe_hardware
 
     requested = str(preference or "").strip().lower() or None
@@ -749,6 +749,7 @@ def recommendation_snapshot(
         errors["portable_fit"] = (portable.stderr or "no portable local lane fits").strip()
     return {
         "ok": any(recommendations.values()) or bool(compatible_lanes),
+        "process": "TurboFit Check",
         "hardware": {
             **asdict(hardware),
             "topology_key": hardware.topology_key,

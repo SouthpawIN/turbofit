@@ -31,11 +31,11 @@ from turbofit_runtime.executor import (
 from turbofit_runtime.hardware import probe_hardware
 from turbofit_runtime.intelligence import (
     BenchmarkMeasurement, ConfigurationIntelligence, canonical_intelligence_recipe,
-    intelligence_score,
+    intelligence_score, refresh_score_payload,
 )
 from turbofit_runtime.intelligence_campaign import (
     apply_deferred_configurations, build_state, complete_run, mark_running, next_ready_run, reconcile_state, recover_interrupted,
-    refresh_runtime_status, retry_failed, summary,
+    refresh_runtime_status, retry_failed, select_turbofit_list_candidates, summary,
 )
 from turbofit_runtime.model_catalog import ModelCatalog
 from turbofit_runtime.recipes import RecipeBook
@@ -49,6 +49,7 @@ STATE = ROOT / "references/intelligence-campaign-state.json"
 RESULTS = ROOT / "references/results/intelligence-campaign"
 SCORES = ROOT / "references/intelligence-scores.json"
 POLICY = ROOT / "references/catalog-campaign-policy.json"
+TOURNAMENTS = ROOT / "references/hardware-tier-tournaments.json"
 AGENTIC_SUITE = ROOT / "references/benchmarks/agentic-pair-v1.json"
 DEEPSWE = ROOT / "scripts/turbofit-deepswe"
 DEEPSWE_ROOT = Path.home() / ".local/share/turbofit/benchmarks"
@@ -117,26 +118,29 @@ def atomic_json(path: Path, value: Any) -> None:
 
 
 def load_inputs() -> tuple[dict[str, Any], ModelCatalog, RecipeBook, dict[str, dict[str, Any]], dict[str, str]]:
-    configurations = json.loads(CONFIGURATIONS.read_text(encoding="utf-8"))
+    all_configurations = json.loads(CONFIGURATIONS.read_text(encoding="utf-8"))
+    tournaments = json.loads(TOURNAMENTS.read_text(encoding="utf-8"))
+    configurations = select_turbofit_list_candidates(
+        all_configurations, tournaments, hardware_tier_gb(),
+    )
     catalog = ModelCatalog.load(CATALOG)
     recipes = RecipeBook.load(RECIPES, hardware=probe_hardware())
-    index = build_configuration_index(configurations, catalog)
+    full_index = build_configuration_index(all_configurations, catalog)
     by_model = {item.id: item for item in catalog.models}
     display_ids = {}
     for row in configurations["rows"]:
         main = by_model[row["main"]]
         aux = "auto" if row["auxiliary"] == "auto" else by_model[row["auxiliary"]].name
         display_ids[row["id"]] = MatrixRow.make_id(main.name, aux, int(row["context"]))
+    index = {display_id: full_index[display_id] for display_id in display_ids.values()}
     return configurations, catalog, recipes, index, display_ids
 
 
 def load_or_create_state(configurations: dict[str, Any]) -> dict[str, Any]:
     if STATE.exists():
         state = json.loads(STATE.read_text(encoding="utf-8"))
-        expected = {f"{row['id']}::{level}" for row in configurations["rows"] for level in ("screening", "promotion", "release")}
-        if set(state.get("runs", {})) != expected:
-            state = reconcile_state(state, configurations)
-            atomic_json(STATE, state)
+        state = reconcile_state(state, configurations)
+        atomic_json(STATE, state)
         return state
     state = build_state(configurations)
     atomic_json(STATE, state)
@@ -299,6 +303,8 @@ def benchmark_run(run: dict[str, Any], catalog: ModelCatalog, recipes: RecipeBoo
                 str(DEEPSWE), "run", "--dataset", str(dataset), "--model", "auto",
                 "--base-url", f"http://127.0.0.1:{GATEWAY_PORT}/main/v1",
                 "--jobs-dir", str(jobs), "--n-tasks", str(parameters["deepswe_tasks"]),
+                "--agent-step-limit", str({"screening": 16, "promotion": 80, "release": 120}[run["level"]]),
+                "--max-output-tokens", str(1024 if run["level"] == "screening" else 4096),
                 "--sample-seed", str(repetition), "--configuration-id", run["configuration_id"],
                 "--production-recipe-sha256", recipe_sha, "--summary-output", str(output),
             ]
@@ -379,20 +385,39 @@ def benchmark_run(run: dict[str, Any], catalog: ModelCatalog, recipes: RecipeBoo
         subprocess.run(["systemctl", "--user", "start", "turbofit-gateway.service"], capture_output=True, text=True)
 
 
-def rebuild_scores(state: dict[str, Any]) -> None:
-    records = []
-    for run in state["runs"].values():
-        if run["status"] == "success" and run.get("result"):
-            path = Path(run["result"])
-            if path.is_file():
-                payload = json.loads(path.read_text(encoding="utf-8"))
-                records.append(payload)
+def rebuild_scores(state: dict[str, Any] | None = None) -> int:
+    """Recompute derived scores from immutable suite counts, never stale composites."""
+    by_configuration: dict[str, dict[str, Any]] = {}
+    level_rank = {"screening": 0, "promotion": 1, "release": 2}
+    paths: set[Path] = set()
+    if state is not None:
+        for run in state["runs"].values():
+            if run["status"] == "success" and run.get("result"):
+                paths.add(Path(run["result"]))
+    paths.update(RESULTS.glob("**/intelligence.json"))
+    refreshed_count = 0
+    for path in sorted(paths):
+        if not path.is_file():
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            refreshed = dict(refresh_score_payload(payload))
+        except (OSError, ValueError, TypeError):
+            continue
+        if refreshed != payload:
+            atomic_json(path, refreshed)
+            refreshed_count += 1
+        identifier = str(refreshed["configuration_id"])
+        current = by_configuration.get(identifier)
+        if current is None or level_rank.get(str(refreshed.get("benchmark_level")), -1) > level_rank.get(str(current.get("benchmark_level")), -1):
+            by_configuration[identifier] = refreshed
     atomic_json(SCORES, {
         "schema": "turbofit.intelligence-scores/v1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "required_benchmarks": ["deep-swe", "agentic-pair"],
-        "records": records,
+        "records": sorted(by_configuration.values(), key=lambda item: str(item["configuration_id"])),
     })
+    return refreshed_count
 
 
 def run_one(state: dict[str, Any], catalog: ModelCatalog, recipes: RecipeBook) -> int:
@@ -425,11 +450,16 @@ def main() -> int:
     sub.add_parser("init")
     sub.add_parser("status")
     sub.add_parser("run-one")
+    sub.add_parser("rebuild-scores")
     run = sub.add_parser("run")
     run.add_argument("--limit", type=int, default=1)
     retry = sub.add_parser("retry-failed")
     retry.add_argument("--limit", type=int)
     args = parser.parse_args()
+    if args.command == "rebuild-scores":
+        refreshed = rebuild_scores()
+        print(json.dumps({"status": "rebuilt", "refreshed": refreshed, "scores": str(SCORES)}, indent=2))
+        return 0
     configurations, catalog, recipes, configuration_index, display_ids = load_inputs()
     state = load_or_create_state(configurations)
     recover_interrupted(state)
