@@ -16,7 +16,7 @@ if str(SRC) not in sys.path:
 from turbofit_runtime.executor import capture_physical_hardware, production_recipe_sha256  # noqa: E402
 from turbofit_runtime.hardware import probe_hardware  # noqa: E402
 from turbofit_runtime.intelligence import canonical_intelligence_recipe, refresh_score_payload  # noqa: E402
-from turbofit_runtime.list_promotion import select_tier_winner  # noqa: E402
+from turbofit_runtime.list_promotion import retain_or_replace_winner, select_tier_winner  # noqa: E402
 from turbofit_runtime.model_catalog import ModelCatalog  # noqa: E402
 from turbofit_runtime.recipes import RecipeBook  # noqa: E402
 from turbofit_runtime.schema import MatrixRow  # noqa: E402
@@ -87,9 +87,10 @@ def main() -> int:
             expected_intelligence = canonical_intelligence_recipe(configuration, recipes.resolve_catalog_configuration(configuration))[0]
             if score.get("production_recipe_sha256") != expected_intelligence:
                 intelligence.pop(identifier, None)
-    winner = select_tier_winner(
+    selected = select_tier_winner(
         tier["candidates"], physical, intelligence, hardware_tier_gb=tier_gb,
     )
+    winner = retain_or_replace_winner(tier.get("winner"), selected, tier["candidates"])
     tier["winner"] = winner
     atomic_json(tournaments_path, tournaments)
     print(json.dumps({
