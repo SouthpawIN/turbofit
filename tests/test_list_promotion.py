@@ -1,4 +1,21 @@
-from turbofit_runtime.list_promotion import select_tier_winner
+from turbofit_runtime.list_promotion import retain_or_replace_winner, select_tier_winner
+
+
+def test_promotion_preserves_committed_winner_when_local_campaign_state_is_absent() -> None:
+    existing = {
+        "configuration": "a",
+        "evidence": "sha256:" + "a" * 64,
+        "hardware_fingerprint": "fp-a",
+    }
+
+    assert retain_or_replace_winner(existing, None, ["a", "b"]) == existing
+
+
+def test_promotion_replaces_existing_winner_only_with_new_eligible_evidence() -> None:
+    existing = {"configuration": "a", "evidence": "sha256:" + "a" * 64, "hardware_fingerprint": "fp-a"}
+    selected = {"configuration": "b", "evidence": "sha256:" + "b" * 64, "hardware_fingerprint": "fp-b"}
+
+    assert retain_or_replace_winner(existing, selected, ["a", "b"]) == selected
 
 
 def test_list_winner_requires_physical_and_same_tier_intelligence() -> None:

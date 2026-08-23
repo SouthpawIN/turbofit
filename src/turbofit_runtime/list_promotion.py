@@ -7,6 +7,19 @@ from typing import Any, Mapping, Sequence
 _SHA = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 
+def retain_or_replace_winner(
+    existing: Mapping[str, Any] | None,
+    selected: Mapping[str, Any] | None,
+    candidates: Sequence[str],
+) -> dict[str, str] | None:
+    """Never erase committed evidence merely because local scratch state is absent."""
+    if selected is not None:
+        return {key: str(selected[key]) for key in ("configuration", "evidence", "hardware_fingerprint")}
+    if existing is not None and existing.get("configuration") in candidates:
+        return {key: str(existing[key]) for key in ("configuration", "evidence", "hardware_fingerprint")}
+    return None
+
+
 def select_tier_winner(
     candidates: Sequence[str],
     physical: Mapping[str, Mapping[str, Any]],
