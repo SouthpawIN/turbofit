@@ -23,7 +23,8 @@ Use this bundled plugin skill when configuring or inspecting Turbofit for Hermes
 4. Set `fallback: true` to append Turbofit to the canonical `fallback_providers` chain; set it false to remove only Turbofit while preserving other fallbacks.
 5. Set `publish_tailnet: true` to create private Tailscale Serve routes for the provider and dashboard; the returned HTTPS provider URL is registered automatically.
 6. Set `install_sirvir: true` to install or update the canonical `SouthpawIN/sirvir` GitHub profile without replacing its memories or user state.
-7. Start a new Hermes session after provider changes.
+7. Set `install_freetoken: true` only on Linux x86_64 + NVIDIA driver 580+ + CUDA toolkit 13+ to install pinned FreeToken 0.1.2 as a text-only MoE **candidate**. It never changes Auto until exact on-box campaigns promote a supported model recipe.
+8. Start a new Hermes session after provider changes.
 
 The same controls are available in `hermes dashboard` under **Turbofit** and through `/turbofit status|tiers|setup`.
 
@@ -46,6 +47,7 @@ The same controls are available in `hermes dashboard` under **Turbofit** and thr
 ## Invariants
 
 - Stable model IDs are `auto`, `active:main`, and `active:aux`.
+- FreeToken support is candidate-only: no active Qwen 3.8/Ornith replacement, no source TPS inheritance, and no Auto promotion without exact hardware/model evidence.
 - External GPU processes are read-only pressure signals and are never terminated or signaled.
 - The hardware recommendation remains the healing ceiling; transient pressure changes only the effective rung.
 - Runtime activation and model lifecycle remain owned by `NativeRuntimeBackend`, which signals only PID-verified children it launched.

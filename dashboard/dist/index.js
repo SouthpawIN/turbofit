@@ -67,6 +67,7 @@
     const [installDesktop, setInstallDesktop] = useState(true);
     const [installLemonade, setInstallLemonade] = useState(false);
     const [installNative, setInstallNative] = useState(false);
+    const [installFreeToken, setInstallFreeToken] = useState(false);
     const [dashboardLocalPort, setDashboardLocalPort] = useState("9127");
     const [providerLocalPort, setProviderLocalPort] = useState("8091");
     const [dashboardHttpsPort, setDashboardHttpsPort] = useState("9444");
@@ -158,6 +159,7 @@
             install_desktop: installDesktop,
             install_lemonade: installLemonade,
             install_native: installNative,
+            install_freetoken: installFreeToken,
             dashboard_local_port: Number(dashboardLocalPort),
             provider_local_port: Number(providerLocalPort),
             dashboard_https_port: Number(dashboardHttpsPort),
@@ -195,6 +197,7 @@
           statusBadge(Boolean(tailnet.connected), "Tailnet connected", "Tailnet unavailable"),
           statusBadge(Boolean(value(status, "provider.registered", false)), "Provider registered", "Not registered"),
           statusBadge(Boolean(value(backends, "lemonade.available", false)), "Lemonade online", "Lemonade optional"),
+          statusBadge(Boolean(value(backends, "freetoken.available", false)), "FreeToken candidate online", "FreeToken candidate gated"),
         ),
       ),
 
@@ -337,6 +340,11 @@
                 onChange: setInstallNative,
                 label: "Build or check the pinned native llama.cpp runtime",
               }) : null,
+              h(Toggle, {
+                checked: installFreeToken,
+                onChange: setInstallFreeToken,
+                label: "Install FreeToken candidate (NVIDIA, CUDA 13+, text-only MoE)",
+              }),
               servingBackend === "lemonade" ? h(Toggle, {
                 checked: installLemonade,
                 onChange: setInstallLemonade,

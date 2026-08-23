@@ -344,6 +344,7 @@ def test_desktop_plugin_source_has_status_recommendation_and_fallback_controls()
     assert "publish_tailnet" in text
     assert "install_sirvir" in text
     assert "install_native" in text
+    assert "install_freetoken" in text
     assert "install_lemonade" in text
     assert "Dashboard Tailnet HTTPS port" in text
     assert "Provider Tailnet HTTPS port" in text
@@ -419,6 +420,41 @@ def test_apply_configuration_can_install_native_runtime(monkeypatch) -> None:
     )
 
     assert result["native_runtime"] == {"status": "verified", "backend": "cuda"}
+
+
+def test_apply_configuration_can_install_freetoken_candidate(monkeypatch) -> None:
+    import types
+    import plugin_tools
+
+    hermes_package = types.ModuleType("hermes_cli")
+    hermes_config = types.ModuleType("hermes_cli.config")
+    setattr(hermes_config, "load_config", lambda: {})
+    setattr(hermes_config, "save_config", lambda *_args, **_kwargs: None)
+    monkeypatch.setitem(sys.modules, "hermes_cli", hermes_package)
+    monkeypatch.setitem(sys.modules, "hermes_cli.config", hermes_config)
+    monkeypatch.setattr(
+        plugin_tools,
+        "install_freetoken_runtime",
+        lambda: {
+            "status": "verified-candidate",
+            "version": "0.1.2",
+            "auto_promote": False,
+        },
+    )
+
+    result = plugin_tools.apply_configuration(
+        primary=False,
+        fallback=None,
+        profile=None,
+        base_url=None,
+        install_freetoken=True,
+    )
+
+    assert result["freetoken_runtime"] == {
+        "status": "verified-candidate",
+        "version": "0.1.2",
+        "auto_promote": False,
+    }
 
 
 def test_handle_configure_rejects_string_booleans_before_side_effects(monkeypatch) -> None:

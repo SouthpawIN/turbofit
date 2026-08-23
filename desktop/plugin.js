@@ -61,6 +61,7 @@ function TurbofitPage() {
   const [publishTailnet, setPublishTailnet] = useState(false)
   const [installSirvir, setInstallSirvir] = useState(false)
   const [installNative, setInstallNative] = useState(false)
+  const [installFreeToken, setInstallFreeToken] = useState(false)
   const [installLemonade, setInstallLemonade] = useState(false)
   const [dashboardLocalPort, setDashboardLocalPort] = useState('9127')
   const [providerLocalPort, setProviderLocalPort] = useState('8091')
@@ -148,6 +149,7 @@ function TurbofitPage() {
           publish_tailnet: publishTailnet,
           install_sirvir: installSirvir,
           install_native: installNative,
+          install_freetoken: installFreeToken,
           install_lemonade: installLemonade,
           dashboard_local_port: Number(dashboardLocalPort),
           provider_local_port: Number(providerLocalPort),
@@ -325,6 +327,10 @@ function TurbofitPage() {
         jsxs('label', { className: 'flex items-center gap-2', children: [
           jsx('input', { type: 'checkbox', checked: installNative, onChange: (event) => setInstallNative(event.target.checked) }),
           'Install or verify the native adaptive runtime',
+        ] }),
+        jsxs('label', { className: 'flex items-center gap-2', children: [
+          jsx('input', { type: 'checkbox', checked: installFreeToken, onChange: (event) => setInstallFreeToken(event.target.checked) }),
+          'Install FreeToken candidate (NVIDIA, CUDA 13+, text-only MoE)',
         ] }),
         jsxs('label', { className: 'flex items-center gap-2', children: [
           jsx('input', { type: 'checkbox', checked: installLemonade, onChange: (event) => setInstallLemonade(event.target.checked) }),

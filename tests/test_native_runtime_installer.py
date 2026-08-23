@@ -26,3 +26,14 @@ def test_native_installer_generates_backend_specific_cmake_configuration() -> No
     assert module.cmake_configuration("metal") == ("build-metal", "-DGGML_METAL=ON")
     assert module.cmake_configuration("vulkan") == ("build-vulkan", "-DGGML_VULKAN=ON")
     assert module.cmake_configuration("cpu") == ("build-cpu", "-DGGML_NATIVE=ON")
+
+
+def test_native_installer_excludes_separate_freetoken_candidate() -> None:
+    module = _module()
+    manifest = __import__("json").loads((ROOT / "references/native-runtimes.json").read_text())
+
+    selected = module.select_native_runtimes(manifest["runtimes"], set())
+
+    assert {item["id"] for item in selected} == {
+        "mainline-llama.cpp", "prism-llama.cpp", "ik-llama.cpp"
+    }

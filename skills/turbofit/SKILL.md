@@ -41,6 +41,8 @@ heal; manual selection changes only the healing ceiling.
 
 Use only stable provider IDs: `auto`, `active:main`, and `active:aux`.
 
+FreeToken 0.1.2 at revision `0ab982f10905fa775962a4eddcb44caa50065251` is an optional NVIDIA/CUDA-13 text-only MoE candidate. Install or probe with `scripts/install-freetoken-runtime`; never expose it as an Auto rung, inherit its published TPS, or replace active Qwen 3.8/Ornith authority until an exact supported model recipe passes the full physical and intelligence campaigns.
+
 ## Runtime authorities
 
 1. Turbofile: portable recommendation and ordered rung policy.

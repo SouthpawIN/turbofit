@@ -91,6 +91,17 @@ def install(runtime: dict, *, backend: str, check_only: bool) -> dict:
     }
 
 
+def select_native_runtimes(runtimes: list[dict], selected: set[str]) -> list[dict]:
+    native = [item for item in runtimes if item.get("kind", "cmake-llama.cpp") != "python-cli"]
+    if "freetoken" in selected:
+        raise ValueError("FreeToken uses scripts/install-freetoken-runtime, not install-native-runtimes")
+    rows = [item for item in native if not selected or item["id"] in selected]
+    missing = selected - {item["id"] for item in rows}
+    if missing:
+        raise ValueError(f"unknown native runtime ids: {sorted(missing)}")
+    return rows
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime", action="append", help="runtime id; repeat to select several")
@@ -99,10 +110,7 @@ def main() -> int:
     args = parser.parse_args()
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     selected = set(args.runtime or [])
-    runtimes = [item for item in manifest["runtimes"] if not selected or item["id"] in selected]
-    missing = selected - {item["id"] for item in runtimes}
-    if missing:
-        raise ValueError(f"unknown runtime ids: {sorted(missing)}")
+    runtimes = select_native_runtimes(manifest["runtimes"], selected)
     backend = args.backend or detect_backend()
     records = [install(item, backend=backend, check_only=args.check_only) for item in runtimes]
     print(json.dumps({"schema": "turbofit.native-runtime-verification/v1", "runtimes": records}, indent=2))

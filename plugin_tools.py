@@ -193,6 +193,34 @@ def install_native_runtime(backend: str = "auto") -> dict[str, Any]:
     return payload
 
 
+def install_freetoken_runtime() -> dict[str, Any]:
+    """Install the pinned FreeToken candidate only on its supported hardware contract."""
+    script = PLUGIN_ROOT / "scripts" / "install-freetoken-runtime"
+    if not script.is_file():
+        raise FileNotFoundError(f"missing FreeToken installer: {script}")
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = os.pathsep.join(
+        value for value in (str(SRC_ROOT), environment.get("PYTHONPATH", "")) if value
+    )
+    result = subprocess.run(
+        [sys.executable, str(script), "--json"],
+        text=True,
+        capture_output=True,
+        timeout=3600,
+        check=False,
+        env=environment,
+    )
+    try:
+        payload = json.loads(result.stdout or result.stderr)
+    except ValueError as exc:
+        raise RuntimeError((result.stdout or result.stderr).strip() or "FreeToken install failed") from exc
+    if result.returncode:
+        blockers = payload.get("blockers") or []
+        detail = "; ".join(str(item) for item in blockers) or payload.get("error") or "FreeToken install failed"
+        raise RuntimeError(detail)
+    return payload
+
+
 def _is_local_or_tailnet(hostname: str) -> bool:
     host = hostname.strip().lower().rstrip(".")
     if host == "localhost" or host.endswith(".localhost") or host.endswith(".ts.net"):
@@ -776,6 +804,7 @@ def apply_configuration(
     install_desktop: bool = False,
     install_lemonade: bool = False,
     install_native: bool = False,
+    install_freetoken: bool = False,
     publish_tailnet_routes: bool = False,
     dashboard_local_port: int = 9127,
     provider_local_port: int = 8091,
@@ -789,6 +818,7 @@ def apply_configuration(
         desktop = install_desktop_plugin() if install_desktop else None
         lemonade = install_lemonade_runtime() if install_lemonade else None
         native = install_native_runtime() if install_native else None
+        freetoken = install_freetoken_runtime() if install_freetoken else None
         selected = select_profile(profile) if profile else None
         publication = (
             publish_tailnet(
@@ -826,6 +856,7 @@ def apply_configuration(
         "desktop_plugin": desktop,
         "lemonade": lemonade,
         "native_runtime": native,
+        "freetoken_runtime": freetoken,
         "restart_required": True,
     }
 
@@ -848,6 +879,7 @@ def handle_configure(args: dict[str, Any], **_: Any) -> str:
         install_desktop = args.get("install_desktop", False)
         install_lemonade = args.get("install_lemonade", False)
         install_native = args.get("install_native", False)
+        install_freetoken = args.get("install_freetoken", False)
         if (
             not isinstance(primary, bool)
             or (fallback is not None and not isinstance(fallback, bool))
@@ -856,6 +888,7 @@ def handle_configure(args: dict[str, Any], **_: Any) -> str:
             or not isinstance(install_desktop, bool)
             or not isinstance(install_lemonade, bool)
             or not isinstance(install_native, bool)
+            or not isinstance(install_freetoken, bool)
         ):
             raise ValueError("setup switches must be booleans")
         profile = args.get("profile")
@@ -893,6 +926,7 @@ def handle_configure(args: dict[str, Any], **_: Any) -> str:
             install_desktop=install_desktop,
             install_lemonade=install_lemonade,
             install_native=install_native,
+            install_freetoken=install_freetoken,
             **ports,
         )
         return json.dumps(result)
