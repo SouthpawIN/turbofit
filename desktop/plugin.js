@@ -165,6 +165,7 @@ function TurbofitPage() {
   }
 
   const choices = ((recommendations && recommendations.recommendations) || {})[preference] || []
+  const compatibleLanes = (recommendations && recommendations.compatible_lanes) || []
   const hardware = (recommendations && recommendations.hardware) || {}
 
   const mainModels = [...new Set(combinations.map((item) => item.main))]
@@ -206,7 +207,7 @@ function TurbofitPage() {
           }),
           jsx(Field, {
             label: 'Runtime selection',
-            help: 'Auto chooses the best evidence-backed fit. Manual exposes every exact validated combination.',
+            help: 'Auto chooses an exact-hardware winner. Manual exposes physical-fit lanes and clearly marks those that still need an on-box benchmark.',
             children: jsxs('select', {
               value: selectionMode,
               onChange: (event) => setSelectionMode(event.target.value),
@@ -279,7 +280,7 @@ function TurbofitPage() {
             children: jsxs('div', { className: 'flex flex-col gap-1 text-xs', children: [
               jsx('span', { className: 'font-medium', children: selectedCombination.profile }),
               jsx('span', { children: `${selectedCombination.main_quantization} main · ${selectedCombination.aux_quantization} auxiliary` }),
-              jsx('span', { children: `${selectedCombination.min_tps} tok/s · ${selectedCombination.aux_mode} · ${selectedCombination.confidence}` }),
+              jsx('span', { children: `${selectedCombination.validation_required ? 'benchmark required' : `${selectedCombination.min_tps} tok/s`} · ${selectedCombination.aux_mode} · ${selectedCombination.confidence}` }),
               jsx('span', { children: selectedCombination.intelligence_score == null ? 'Intelligence pending' : `Intelligence ${selectedCombination.intelligence_score} · ${selectedCombination.intelligence_level}` }),
               jsx('span', { style: { color: selectedCombination.fit ? 'var(--ui-text-tertiary)' : 'var(--ui-error)' }, children: selectedCombination.fit_reason }),
             ] }),
@@ -406,9 +407,25 @@ function TurbofitPage() {
           children: 'No evidence-backed configuration currently fits this hardware.',
         }),
       ] }),
+      compatibleLanes.length ? jsxs('section', { className: 'flex flex-col gap-2', children: [
+        jsx('h2', { className: 'font-semibold', children: 'Compatible local lanes — benchmark required' }),
+        jsx('div', {
+          style: { color: 'var(--ui-text-tertiary)' },
+          children: 'These lanes fit the physical memory envelope, including safe host spill. Their source-machine speed is not claimed for this box; select one manually to validate it here.',
+        }),
+        ...compatibleLanes.map((item) => jsxs('div', {
+          key: item.profile,
+          style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' },
+          children: [
+            jsx('div', { className: 'font-medium', children: item.profile }),
+            jsx('div', { style: { color: 'var(--ui-text-tertiary)' }, children: `${item.context} ctx · ${item.aux_mode} · ${item.confidence}` }),
+            jsx('div', { style: { color: 'var(--ui-text-quaternary)' }, children: item.fit_reason }),
+          ],
+        })),
+      ] }) : null,
       jsx('div', {
         style: { color: 'var(--ui-text-quaternary)' },
-        children: `Gateway ${status && status.gateway && status.gateway.reachable ? 'online' : 'offline'} · recommendations use physical capacity, measured evidence, and current backend support.`,
+        children: `Gateway ${status && status.gateway && status.gateway.reachable ? 'online' : 'offline'} · exact recommendations use measured evidence; portable lanes require an on-box benchmark.`,
       }),
     ],
   })

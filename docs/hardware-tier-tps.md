@@ -23,5 +23,5 @@ Updated: `2026-08-22T21:22:27.728816+00:00`
 
 8 GB without 32 GB RAM: Bonsai (dense) or Ornith 1.5 with `--cpu-moe` + mmap. Never a 9B.
 
-Raw: [`references/results/hardware-tier-tps-contexts-2x24.json`](references/results/hardware-tier-tps-contexts-2x24.json)
+Raw: [`references/results/hardware-tier-tps-contexts-2x24.json`](../references/results/hardware-tier-tps-contexts-2x24.json)
 

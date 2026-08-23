@@ -437,6 +437,59 @@ def test_plugin_registers_status_configure_and_slash_command() -> None:
     assert ctx.skills == [("turbofit", ROOT / "SKILL.md")]
 
 
+def test_combination_snapshot_requests_portable_fit_lanes(monkeypatch) -> None:
+    import plugin_tools
+
+    calls = []
+
+    class Result:
+        stdout = "[]"
+        stderr = ""
+        returncode = 0
+
+    monkeypatch.setattr(
+        plugin_tools.subprocess,
+        "run",
+        lambda command, **kwargs: calls.append(command) or Result(),
+    )
+
+    payload = plugin_tools.combination_snapshot()
+
+    assert payload["ok"] is True
+    assert "--evidence-scope" in calls[0]
+    assert calls[0][calls[0].index("--evidence-scope") + 1] == "portable-fit"
+
+
+def test_recommendation_snapshot_exposes_unmeasured_compatible_lanes(monkeypatch) -> None:
+    import plugin_tools
+
+    calls = []
+
+    class Result:
+        stderr = ""
+
+        def __init__(self, command):
+            self.returncode = 0 if "portable-fit" in command else 1
+            self.stdout = (
+                '[{"profile":"binary-bonsai-27b-q1-0-auto-64k",'
+                '"fit":true,"validation_required":true,"min_tps":0}]'
+                if self.returncode == 0 else "[]"
+            )
+
+    monkeypatch.setattr(
+        plugin_tools.subprocess,
+        "run",
+        lambda command, **kwargs: calls.append(command) or Result(command),
+    )
+
+    payload = plugin_tools.recommendation_snapshot("balanced")
+
+    assert payload["recommendations"]["balanced"] == []
+    assert payload["compatible_lanes"][0]["validation_required"] is True
+    assert payload["ok"] is True
+    assert any("portable-fit" in command for command in calls)
+
+
 def test_slash_turbofit_rescans_hardware_and_returns_multiple_preferences(monkeypatch) -> None:
     plugin = _load_plugin_module()
     monkeypatch.setattr(plugin, "recommendation_snapshot", lambda preference=None: {

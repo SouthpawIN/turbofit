@@ -59,7 +59,7 @@ def test_tier_candidates_reject_stale_winner_and_keep_requirements_separate() ->
     tier48 = next(tier for tier in report["tiers"] if tier["capacity_gb"] == 48)
     candidate = next(
         item for item in tier48["candidates"]
-        if item["configuration_id"] == "qwen3-8-27b-q8-mtp--auto--262k"
+        if item["configuration_id"] == "qwen3-8-27b-unleashed-ud-q3-k-xl--auto--262k"
     )
 
     assert tier48["recommendations"]["measured_winner"] is None

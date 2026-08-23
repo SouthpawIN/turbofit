@@ -203,9 +203,15 @@ def evidence_metrics(path: Path) -> dict[str, Any]:
     }
 
 
-def current_validated_profiles(path: Path | None) -> set[str] | None:
+def current_validated_profiles(
+    path: Path | None,
+    *,
+    require_live_fingerprint: bool = True,
+) -> set[str] | None:
     if path is None:
         return None
+    if not path.is_file():
+        return set() if require_live_fingerprint else None
     try:
         state = json.loads(path.read_text(encoding="utf-8")).get("rows") or {}
         configurations = json.loads((ROOT / "references/configuration-matrix.json").read_text(encoding="utf-8"))
@@ -225,6 +231,9 @@ def current_validated_profiles(path: Path | None) -> set[str] | None:
             recipes.resolve_catalog_configuration(configuration), configuration,
         )
         if record.get("status") != "success" or record.get("recipe_sha256") != expected:
+            continue
+        if not require_live_fingerprint:
+            current.add(profile_name)
             continue
         profile = profiles.get(profile_name) or {}
         raw_path = Path(str(profile.get("raw_result", "")))
@@ -313,6 +322,9 @@ class Recommendation:
     confidence: str
     command: str
     evidence: str
+    evidence_scope: str = "exact-hardware"
+    validation_required: bool = False
+    source_min_tps: float | None = None
     intelligence_score: float | None = None
     intelligence_level: str | None = None
     intelligence_evidence: str | None = None
@@ -340,7 +352,11 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
     intelligence_scores = load_intelligence_scores(
         args.intelligence_scores, current_intelligence_recipes(),
     )
-    current_profiles = current_validated_profiles(getattr(args, "campaign_state", None))
+    portable_fit = getattr(args, "evidence_scope", "exact-hardware") == "portable-fit"
+    current_profiles = current_validated_profiles(
+        getattr(args, "campaign_state", None),
+        require_live_fingerprint=not portable_fit,
+    )
     hardware = probe_hardware()
     physical_budgets, shared_memory = hardware_memory_budgets(hardware)
     live_nvidia = nvidia_memory() if args.live and "cuda" in hardware.backends else {}
@@ -388,34 +404,45 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
         aux_mode = str(expected.get("aux_mode", "dedicated"))
         stored_tps = [float(stored_metrics.get(key) or 0.0) for key in ("main_tps", "aux_tps")]
         if all(value > 0 for value in stored_tps):
-            min_tps = min(stored_tps)
+            source_min_tps = min(stored_tps)
         else:
             tps_values = metrics.get("throughput") or []
-            min_tps = min(tps_values[:2]) if len(tps_values) >= 2 else (tps_values[0] if tps_values else 0.0)
+            source_min_tps = min(tps_values[:2]) if len(tps_values) >= 2 else (tps_values[0] if tps_values else 0.0)
+        min_tps = 0.0 if portable_fit else source_min_tps
+        if portable_fit:
+            confidence = "portable-fit; benchmark-required"
         methods = sorted(set(speculative_method(component) for component in components))
         context_surplus = max(0.0, (context - args.context) / max(args.context, 1))
-        intelligence = intelligence_scores.get((main, aux, context))
+        intelligence = None if portable_fit else intelligence_scores.get((main, aux, context))
         measured_score = float(intelligence["score"]) if intelligence else 0.0
-        score = measured_score + min_tps
-        score += 12 if aux_mode == "dedicated" else 4
-        score += 8 if vision else 0
-        score += 6 if any(method != "baseline" for method in methods) else 0
-        score += 8 if confidence.startswith("measured") else 0
-        score -= context_surplus * 6
+        if portable_fit:
+            # Portability is a safety ordering, not a transferred benchmark. Prefer
+            # one-process/shared-main lanes and the smallest measured residency.
+            score = (100_000 if aux_mode == "shared-main" else 0) - sum(requirements.values())
+        else:
+            score = measured_score + min_tps
+            score += 12 if aux_mode == "dedicated" else 4
+            score += 8 if vision else 0
+            score += 6 if any(method != "baseline" for method in methods) else 0
+            score += 8 if confidence.startswith("measured") else 0
+            score -= context_surplus * 6
+            if args.prefer == "speed":
+                score += min_tps * 1.5
+            elif args.prefer == "intelligence":
+                score += measured_score * 2
+            elif args.prefer == "context":
+                score += min(context / 65536, 16) * 4
         if not fit:
             score -= 1000
-        if args.prefer == "speed":
-            score += min_tps * 1.5
-        elif args.prefer == "intelligence":
-            score += measured_score * 2
-        elif args.prefer == "context":
-            score += min(context / 65536, 16) * 4
         ranked.append(Recommendation(
             profile=name, score=round(score, 2), quality_points=measured_score, context=context,
             main=main, aux=aux, aux_mode=aux_mode, min_tps=round(min_tps, 2),
             vision=vision, methods=methods, gpu_requirements_mb=requirements,
             fit=fit, fit_reason="; ".join(reasons), confidence=confidence,
             command=f"turbofit-runtime use {name}", evidence=str(evidence),
+            evidence_scope=("portable-fit" if portable_fit else "exact-hardware"),
+            validation_required=portable_fit,
+            source_min_tps=round(source_min_tps, 2),
             intelligence_score=(measured_score if intelligence else None),
             intelligence_level=(str(intelligence["level"]) if intelligence else None),
             intelligence_evidence=(str(intelligence["recipe"]) if intelligence else None),
@@ -434,6 +461,12 @@ def main() -> int:
     parser.add_argument("--catalog", type=Path, default=DEFAULT_CATALOG)
     parser.add_argument("--intelligence-scores", type=Path, default=DEFAULT_INTELLIGENCE_SCORES)
     parser.add_argument("--campaign-state", type=Path, default=DEFAULT_CAMPAIGN_STATE)
+    parser.add_argument(
+        "--evidence-scope",
+        choices=("exact-hardware", "portable-fit"),
+        default="exact-hardware",
+        help="exact hardware winners or portable physical-fit lanes requiring on-box validation",
+    )
     parser.add_argument("--context", type=int, default=65536)
     parser.add_argument("--vision", action="store_true")
     parser.add_argument("--live", action="store_true", help="fit against current free VRAM instead of clear-card total")

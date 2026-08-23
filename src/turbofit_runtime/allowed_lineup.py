@@ -5,7 +5,7 @@ A 9B must never be recommended. Routing:
 - Apple / Metal: OrcaRouter Qwen3.8-27B-Uncensored MLX (4/6/8-bit). Never the
   MLX 2-bit build (uploader: archival, quality collapse).
 - Integrated / unified (non-Apple): Ornith 1.5 35A3B with --cpu-moe + mmap.
-- Dedicated 8 GB: Bonsai 27B and/or Ornith 1.5 streamed from disk.
+- Low-memory dedicated: Bonsai 27B Q1 with safe host spill and/or Ornith 1.5 streamed from disk.
 - Dedicated 16 GB+: Unleashed GGUF + Ornith aux.
 
 The Asha/Escha mixed 2-bit (EschaLabs/Qwen3.8-27B-Escha-W2) is a research
@@ -68,7 +68,12 @@ def is_allowed_aux(alias: str) -> bool:
     if is_banned(token):
         return False
     allowed = {normalize(item) for item in ALLOWED_AUX}
-    return token in allowed or token.startswith("ornith-1-5") or token.startswith("carwin")
+    return (
+        token in allowed
+        or token.startswith("auto-")
+        or token.startswith("ornith-1-5")
+        or token.startswith("carwin")
+    )
 
 
 def expert_residency(*, host_ram_gb: float) -> dict[str, object]:
@@ -157,14 +162,14 @@ def check_local_options(
             {
                 "role": "main",
                 "alias": "bonsai-27b",
-                "why": "Dense 27B that fits an 8 GB card without offload.",
+                "why": "Bonsai 27B Q1 shared-main lane with safe host spill when full GPU residency is unavailable.",
             },
             {
                 "role": "main",
                 "alias": "ornith-1-5-35a3b",
                 "why": (
                     "35A3B MoE. Experts stay off GPU (--cpu-moe) and mmap "
-                    f"from {residency['mode']} so 8 GB VRAM + <32 GB RAM still works."
+                    f"from {residency['mode']} so constrained VRAM and host RAM remain a testable lane."
                 ),
                 "residency": residency,
             },
