@@ -24,7 +24,7 @@ from plugin_tools import (  # noqa: E402
     recommendation_snapshot,
     status_snapshot,
 )
-from product_ops import shift_configuration, update_products  # noqa: E402
+from product_ops import serve_status, serve_tailnet, shift_configuration, update_products  # noqa: E402
 
 
 router = APIRouter()
@@ -318,5 +318,28 @@ async def post_shift(body: dict[str, Any] | None = None) -> dict[str, Any]:
         raise HTTPException(status_code=422, detail="target must be a string")
     try:
         return await asyncio.to_thread(shift_configuration, target)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/serve")
+async def post_serve(body: dict[str, Any] | None = None) -> dict[str, Any]:
+    payload = body or {}
+    try:
+        return await asyncio.to_thread(
+            serve_tailnet,
+            dashboard_local_port=int(payload.get("dashboard_local_port") or 9127),
+            provider_local_port=int(payload.get("provider_local_port") or 8091),
+            dashboard_https_port=int(payload.get("dashboard_https_port") or 9444),
+            provider_https_port=int(payload.get("provider_https_port") or 9443),
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/serve")
+async def get_serve() -> dict[str, Any]:
+    try:
+        return await asyncio.to_thread(serve_status)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

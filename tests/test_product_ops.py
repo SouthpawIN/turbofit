@@ -131,3 +131,44 @@ def test_slash_update_and_shift_are_wired(monkeypatch) -> None:
     assert json.loads(plugin._slash_turbofit("update"))["updated"] is True
     assert json.loads(plugin._slash_turbofit("shift up"))["profile"] == "up"
     assert json.loads(plugin._slash_turbofit("shift bonsai"))["profile"] == "bonsai"
+    monkeypatch.setattr(plugin, "serve_tailnet", lambda: {"ok": True, "served": True, "provider_base_url": "https://host.ts.net:9443/v1"})
+    assert json.loads(plugin._slash_turbofit("serve"))["served"] is True
+
+
+def test_serve_tailnet_publishes_provider_url(monkeypatch) -> None:
+    monkeypatch.setattr(
+        product_ops.plugin_tools,
+        "publish_tailnet",
+        lambda **kwargs: {
+            "ok": True,
+            "dns_name": "box.tailnet.ts.net",
+            "provider_base_url": "https://box.tailnet.ts.net:9443/v1",
+            "dashboard_url": "https://box.tailnet.ts.net:9444/",
+        },
+    )
+    saved = {}
+
+    class Lock:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr(product_ops.plugin_tools, "_CONFIG_LOCK", Lock())
+    monkeypatch.setattr(product_ops.plugin_tools, "configure_hermes", lambda config, **kwargs: saved.setdefault("url", kwargs.get("base_url")) or config)
+    import types
+    hermes_cli = types.ModuleType("hermes_cli")
+    config = types.ModuleType("hermes_cli.config")
+    config.load_config = lambda: {}
+    config.save_config = lambda *a, **k: saved.setdefault("saved", True)
+    monkeypatch.setitem(__import__("sys").modules, "hermes_cli", hermes_cli)
+    monkeypatch.setitem(__import__("sys").modules, "hermes_cli.config", config)
+
+    result = product_ops.serve_tailnet()
+
+    assert result["served"] is True
+    assert result["provider_base_url"].endswith(":9443/v1")
+    assert saved["url"] == "https://box.tailnet.ts.net:9443/v1"
+    assert saved["saved"] is True
+

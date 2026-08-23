@@ -230,6 +230,20 @@ function TurbofitPage() {
     }
   }
 
+  async function runServe() {
+    setBusy(true)
+    setMessage('')
+    try {
+      const result = await api.rest('/serve', { method: 'POST', body: {} })
+      setMessage(result.message || result.provider_base_url || 'Published on Tailscale Serve.')
+      await refresh()
+    } catch (error) {
+      setMessage(String(error && error.message || error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const choices = ((recommendations && recommendations.recommendations) || {})[preference] || []
   const compatibleLanes = (recommendations && recommendations.compatible_lanes) || []
   const hardware = (recommendations && recommendations.hardware) || {}
@@ -262,6 +276,7 @@ function TurbofitPage() {
           jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: () => runShift('down'), children: 'Shift down' }),
           jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: () => runShift(preference), children: `Shift ${preference}` }),
           jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runUpdate, children: 'Update Turbofit + Sirvir' }),
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runServe, children: 'Serve on Tailscale' }),
         ],
       }),
       jsxs('div', {
