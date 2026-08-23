@@ -7,11 +7,15 @@ import hashlib
 import json
 import os
 import platform
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
 DEFAULT_MODEL = Path.home() / "Models/storage/hf/MiniMax-H3"
 DEFAULT_PROMPTS = ROOT / "promo/h3-prompts.json"
 DEFAULT_OUTPUT = ROOT / "promo/h3-local"
@@ -123,23 +127,8 @@ def build_pipeline(model_root: Path, device: str):
         offload_type="block_level", num_blocks_per_group=1, **offload
     )
     apply_group_offloading(pipe.text_encoder.model, offload_type="leaf_level", **offload)
-    # VAE encoder/decoder/quant convs must stay float32. Decode latents arrive
-    # as CUDA float16; cast them to the VAE module dtype/device instead of
-    # flattening the VAE with .to(dtype=float16).
-    def _align_decode(module):
-        original = module.decode
-
-        def decode(latents, *args, **kwargs):
-            target = next(module.parameters())
-            return original(latents.to(device=target.device, dtype=target.dtype), *args, **kwargs)
-
-        module.decode = decode
-
-    pipe.vae.to(device=device)
-    pipe.audio_vae.to(device=device)
-    _align_decode(pipe.vae)
-    _align_decode(pipe.audio_vae)
-    return pipe
+    from turbofit_runtime.h3_runtime import place_h3_vaes
+    return place_h3_vaes(pipe, device)
 
 
 def main() -> int:

@@ -95,6 +95,14 @@ def test_configure_multimodal_sets_supported_hermes_voice_providers_and_preserve
     assert configured["turbofit"]["multimodal"]["selected"]["music"] == "acestep-1-5-2b"
 
 
+def test_configure_h3_writes_the_launch_recipe() -> None:
+    catalog = MultimodalCatalog.load(CATALOG)
+    configured = configure_multimodal({}, selections={"video": "minimax-h3"}, catalog=catalog)
+    recipe = configured["turbofit"]["multimodal"]["h3"]
+    assert recipe["schema"] == "turbofit.h3-launch/v1"
+    assert recipe["verify"][0] == "scripts/verify-h3-live"
+
+
 def test_candidate_soprano_does_not_claim_a_nonexistent_hermes_provider() -> None:
     catalog = MultimodalCatalog.load(CATALOG)
     configured = configure_multimodal(

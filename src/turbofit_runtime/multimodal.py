@@ -217,6 +217,11 @@ def configure_multimodal(
         tts = copy.deepcopy(dict(tts)) if isinstance(tts, Mapping) else {}
         tts["provider"] = "edge"
         updated["tts"] = tts
+    if normalized.get("video") == "minimax-h3":
+        from .h3_runtime import h3_launch_recipe
+        multimodal["h3"] = h3_launch_recipe()
+        turbofit["multimodal"] = multimodal
+        updated["turbofit"] = turbofit
     if normalized.get("stt") == "hermes-local-stt":
         stt = updated.get("stt")
         stt = copy.deepcopy(dict(stt)) if isinstance(stt, Mapping) else {}

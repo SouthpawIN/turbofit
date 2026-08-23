@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+"""Prove MiniMax H3 can decode on THIS machine with the TurboFit recipe.
+
+Other machines must pass this before TurboFit says H3 is ready.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.h3_runtime import H3_REVISION, H3_SOURCE, h3_launch_recipe  # noqa: E402
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--device", default="cuda:0")
+    parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--model-root", type=Path, default=Path.home() / "Models/storage/hf/MiniMax-H3")
+    parser.add_argument("--output", type=Path, default=ROOT / "references/results/h3-live.json")
+    args = parser.parse_args()
+    recipe = h3_launch_recipe(device=args.device)
+    if not args.smoke:
+        raise SystemExit("verify-h3-live currently requires --smoke")
+    os.environ["PYTHONPATH"] = str(SRC) + os.pathsep + os.environ.get("PYTHONPATH", "")
+    generator = ROOT / "scripts/generate-h3-promo-clips"
+    out_dir = ROOT / "promo/h3-verify"
+    command = [
+        sys.executable, str(generator),
+        "--device", args.device,
+        "--model-root", str(args.model_root),
+        "--prompts", str(ROOT / "promo/h3-prompts-2.3.json"),
+        "--output-dir", str(out_dir),
+        "--smoke",
+        "--clip", "bonsai-8gb",
+    ]
+    import subprocess
+    result = subprocess.run(command, cwd=ROOT)
+    clip = out_dir / "bonsai-8gb-smoke.mp4"
+    payload = {
+        "schema": "turbofit.h3-live/v1",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "source": H3_SOURCE,
+        "revision": H3_REVISION,
+        "recipe": recipe,
+        "command": command,
+        "exit_code": result.returncode,
+        "clip": str(clip) if clip.is_file() else None,
+        "ok": result.returncode == 0 and clip.is_file() and clip.stat().st_size > 0,
+    }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    print(args.output)
+    print("ok" if payload["ok"] else "FAIL")
+    return 0 if payload["ok"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

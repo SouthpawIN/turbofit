@@ -5,6 +5,7 @@
 ### Recommendations
 
 - Auto/Check will never recommend a 9B. Low-VRAM dedicated devices get Bonsai 27B and/or Ornith 1.5 35A3B. Ornith experts mmap from disk when host RAM is under 32 GB. Apple Silicon uses OrcaRouter Uncensored MLX 4/6/8-bit (never 2-bit). Integrated/unified non-Apple uses Ornith 1.5.
+- MiniMax H3 is no longer a recommendation-only row. Selecting it writes `turbofit.h3-launch/v1` and other machines must pass `scripts/verify-h3-live --smoke`. VAE stays float32 on the generation device; decode latents are aligned. That is the failure that blocked the 2.3 promo.
 
 ### Model runtime
 
