@@ -21,6 +21,26 @@
       "revision": "f2328aa0c19954d0ab31a3de60fbf50e47c2429f",
       "purpose": "GLM 5.2 IQ2_KL, DSA, IndexShare, graph split, and MTP",
       "cuda_binary": "~/.local/share/turbofit/runtimes/ik-llama.cpp-f2328aa0c19954d0ab31a3de60fbf50e47c2429f/build-cuda/bin/llama-server"
+    },
+    {
+      "id": "freetoken",
+      "kind": "python-cli",
+      "repository": "https://github.com/FlashML-org/FreeToken.git",
+      "revision": "0ab982f10905fa775962a4eddcb44caa50065251",
+      "version": "0.1.2",
+      "purpose": "candidate NVIDIA MoE runtime with bandwidth-adaptive CPU-GPU execution",
+      "status": "candidate",
+      "auto_promote": false,
+      "executable": "~/.local/share/turbofit/runtimes/freetoken-0ab982f10905fa775962a4eddcb44caa50065251/.venv/bin/ft",
+      "requirements": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "backend": "cuda",
+        "driver_min": 580,
+        "cuda_toolkit_min": "13.0",
+        "multimodal": false,
+        "model_format": "hf-safetensors-or-ftw"
+      }
     }
   ]
 }

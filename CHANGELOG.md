@@ -16,6 +16,7 @@
 
 ### Hermes plugin install
 
+- Added pinned FreeToken 0.1.2 (`0ab982f…`) as an optional Linux x86_64 / NVIDIA driver 580+ / CUDA toolkit 13+ text-only MoE candidate, with setup controls, loopback command/client contracts, compatibility gating, and no Auto promotion before exact physical evidence.
 - Turbofit's Sirvir setup option now installs or updates the canonical `SouthpawIN/sirvir` GitHub profile instead of copying a bundled snapshot; Sirvir's bootstrap reciprocally installs Turbofit first when it is missing.
 - Slimmed `distribution.yaml` so plugin install no longer ships benchmark result dumps as payload.
 

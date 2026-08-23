@@ -78,6 +78,14 @@ TURBOFIT_CONFIGURE = {
                 "type": "boolean",
                 "description": "Install or start the digest-pinned loopback Lemonade Server runtime.",
             },
+            "install_native": {
+                "type": "boolean",
+                "description": "Install or verify the pinned native adaptive runtime.",
+            },
+            "install_freetoken": {
+                "type": "boolean",
+                "description": "Install pinned FreeToken 0.1.2 as an NVIDIA/CUDA-13 text-only MoE candidate; never auto-promotes without on-box evidence.",
+            },
             "dashboard_local_port": {"type": "integer", "minimum": 1, "maximum": 65535},
             "provider_local_port": {"type": "integer", "minimum": 1, "maximum": 65535},
             "dashboard_https_port": {"type": "integer", "minimum": 1, "maximum": 65535},

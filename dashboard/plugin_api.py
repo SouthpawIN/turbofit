@@ -59,6 +59,7 @@ def _profile_rows() -> list[dict[str, Any]]:
 
 def _backend_status() -> dict[str, Any]:
     from turbofit_runtime.hardware import probe_hardware
+    from turbofit_runtime.freetoken import FreeTokenClient, probe_freetoken_compatibility
     from turbofit_runtime.runtime_backends import LemonadeClient
 
     try:
@@ -74,12 +75,30 @@ def _backend_status() -> dict[str, Any]:
         lemonade = {"available": True, "health": LemonadeClient().health()}
     except Exception as exc:
         lemonade = {"available": False, "error": type(exc).__name__}
+    compatibility = probe_freetoken_compatibility()
+    try:
+        freetoken = {
+            "available": True,
+            "status": "candidate",
+            "health": FreeTokenClient().health(),
+            "compatibility": asdict(compatibility),
+            "auto_promote": False,
+        }
+    except Exception as exc:
+        freetoken = {
+            "available": False,
+            "status": compatibility.status,
+            "error": type(exc).__name__,
+            "compatibility": asdict(compatibility),
+            "auto_promote": False,
+        }
     return {
         "hardware": hardware,
         "hardware_error": hardware_error,
         "local_backend": local_backend,
         "lemonade": lemonade,
-        "supported": ["cuda", "rocm", "metal", "cpu", "lemonade"],
+        "freetoken": freetoken,
+        "supported": ["cuda", "rocm", "metal", "cpu", "lemonade", "freetoken-candidate"],
     }
 
 
@@ -232,6 +251,7 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
     install_desktop = body.get("install_desktop", False)
     install_lemonade = body.get("install_lemonade", False)
     install_native = body.get("install_native", False)
+    install_freetoken = body.get("install_freetoken", False)
     port_defaults = {
         "dashboard_local_port": 9127,
         "provider_local_port": 8091,
@@ -247,6 +267,7 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
         or not isinstance(install_desktop, bool)
         or not isinstance(install_lemonade, bool)
         or not isinstance(install_native, bool)
+        or not isinstance(install_freetoken, bool)
     ):
         raise HTTPException(status_code=422, detail="setup switches must be booleans")
     if profile is not None and not isinstance(profile, str):
@@ -273,6 +294,7 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
             install_desktop=install_desktop,
             install_lemonade=install_lemonade,
             install_native=install_native,
+            install_freetoken=install_freetoken,
             **ports,
         )
     except Exception as exc:

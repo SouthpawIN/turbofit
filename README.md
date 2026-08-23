@@ -48,6 +48,14 @@ The lineup is a product target, not fabricated benchmark evidence. Newly onboard
 
 ![Turbofit 2.3 auto-fit model ladder from Bonsai through Unleashed and Nous keyless free](assets/turbofit-2.3-model-ladder.png)
 
+### Optional FreeToken candidate runtime
+
+[FreeToken](https://github.com/FlashML-org/FreeToken) is now integrated as a pinned, optional **candidate backend** for supported NVIDIA MoE checkpoints. Its bandwidth-adaptive CPU/GPU expert execution, semantic cache reuse, live expert/KV pool resizing, OpenAI/Anthropic APIs, and tool-call support are a strong architectural fit for future TurboFit MoE lanes.
+
+It is deliberately **not an Auto rung**. FreeToken 0.1.2 requires Linux x86_64, NVIDIA driver 580+, CUDA toolkit 13+, HF safetensors/FTW weights, and text-only serving. At the pinned revision it does not list TurboFit's active Qwen 3.8 Unleashed or Ornith checkpoints, so no current model is replaced and no benchmark is inherited. Install/verify it from setup or with `scripts/install-freetoken-runtime --json`; promotion still requires the exact model, machine, context, tool-call, performance, intelligence, pressure, and rollback campaigns.
+
+Full boundary and evidence plan: [`docs/freetoken-runtime.md`](docs/freetoken-runtime.md).
+
 ---
 
 ## What it does
