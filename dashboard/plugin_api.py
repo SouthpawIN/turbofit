@@ -25,9 +25,15 @@ from plugin_tools import (  # noqa: E402
     status_snapshot,
 )
 from product_ops import serve_status, serve_tailnet, shift_configuration, update_products  # noqa: E402
+from benchmark_ops import DEFAULT_BASE_URL, RUNTIME_MUTATION_LOCK, benchmark_candidates  # noqa: E402
 
 
 router = APIRouter()
+
+
+def _locked_call(function: Any, *args: Any, **kwargs: Any) -> Any:
+    with RUNTIME_MUTATION_LOCK:
+        return function(*args, **kwargs)
 
 
 def _config() -> dict[str, Any]:
@@ -283,6 +289,7 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
         raise HTTPException(status_code=422, detail="Tailscale ports must be integers from 1 to 65535")
     try:
         return await asyncio.to_thread(
+            _locked_call,
             apply_configuration,
             primary=primary,
             fallback=fallback,
@@ -302,6 +309,25 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+@router.post("/benchmark")
+async def post_benchmark(body: dict[str, Any] | None = None) -> dict[str, Any]:
+    payload = body or {}
+    base_url = payload.get("base_url") or DEFAULT_BASE_URL
+    if not isinstance(base_url, str):
+        raise HTTPException(status_code=422, detail="base_url must be a string")
+    try:
+        return await asyncio.to_thread(
+            benchmark_candidates,
+            base_url=base_url,
+            limit=payload.get("limit", 3),
+            timeout_seconds=payload.get("timeout_seconds", 120.0),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception:
+        raise HTTPException(status_code=503, detail="local benchmark failed; inspect Turbofit logs") from None
+
+
 @router.post("/update")
 async def post_update() -> dict[str, Any]:
     try:
@@ -317,7 +343,7 @@ async def post_shift(body: dict[str, Any] | None = None) -> dict[str, Any]:
     if not isinstance(target, str):
         raise HTTPException(status_code=422, detail="target must be a string")
     try:
-        return await asyncio.to_thread(shift_configuration, target)
+        return await asyncio.to_thread(_locked_call, shift_configuration, target)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

@@ -105,6 +105,7 @@ function TurbofitPage() {
   const [providerHttpsPort, setProviderHttpsPort] = useState('9443')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
+  const [benchmark, setBenchmark] = useState(null)
 
   const refresh = useCallback(async () => {
     setBusy(true)
@@ -244,6 +245,24 @@ function TurbofitPage() {
     }
   }
 
+  async function runBenchmark() {
+    setBusy(true)
+    setMessage('Benchmarking physically compatible local candidates…')
+    setBenchmark(null)
+    try {
+      const result = await api.rest('/benchmark', {
+        method: 'POST',
+        body: { base_url: baseUrl, limit: 3, timeout_seconds: 120 },
+      })
+      setBenchmark(result)
+      setMessage(result.best ? `Best measured fit: ${result.best.profile}` : 'Benchmark completed without a passing candidate.')
+    } catch (error) {
+      setMessage(String(error && error.message || error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const choices = ((recommendations && recommendations.recommendations) || {})[preference] || []
   const compatibleLanes = (recommendations && recommendations.compatible_lanes) || []
   const hardware = (recommendations && recommendations.hardware) || {}
@@ -277,6 +296,7 @@ function TurbofitPage() {
           jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: () => runShift(preference), children: `Shift ${preference}` }),
           jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runUpdate, children: 'Update Turbofit + Sirvir' }),
           jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runServe, children: 'Serve on Tailscale' }),
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runBenchmark, children: 'Benchmark compatible models' }),
         ],
       }),
       jsxs('div', {
@@ -529,6 +549,18 @@ function TurbofitPage() {
             jsx('div', { className: 'font-medium', children: item.profile }),
             jsx('div', { style: { color: 'var(--ui-text-tertiary)' }, children: `${item.context} ctx · ${item.aux_mode} · ${item.confidence}` }),
             jsx('div', { style: { color: 'var(--ui-text-quaternary)' }, children: item.fit_reason }),
+          ],
+        })),
+      ] }) : null,
+      benchmark ? jsxs('section', { className: 'flex flex-col gap-2', children: [
+        jsx('h2', { className: 'font-semibold', children: 'Local benchmark results' }),
+        jsx('p', { style: { color: 'var(--ui-text-tertiary)' }, children: 'Measured on this machine. Results are not promoted automatically.' }),
+        (benchmark.candidates || []).map((item) => jsxs('div', {
+          key: item.profile,
+          style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '8px' },
+          children: [
+            jsx('div', { className: 'font-medium', children: item.profile }),
+            jsx('div', { style: { color: 'var(--ui-text-tertiary)' }, children: item.error || `${item.status} · ${((item.summary || {}).effective_output_tokens_per_second || '—')} tok/s` }),
           ],
         })),
       ] }) : null,

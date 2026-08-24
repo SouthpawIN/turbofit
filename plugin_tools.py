@@ -679,7 +679,7 @@ def select_profile(profile: str) -> dict[str, Any]:
         raise RuntimeError(payload.get("error") or payload.get("output") or "profile selection failed")
     if combination_id is not None:
         payload["combination_id"] = combination_id
-        active = subprocess.run(
+        active = os.name != "nt" and bool(shutil.which("systemctl")) and subprocess.run(
             ["systemctl", "--user", "is-active", "--quiet", "turbofit-controller.service"],
             check=False,
             timeout=15,

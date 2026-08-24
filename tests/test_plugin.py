@@ -361,6 +361,25 @@ def test_desktop_plugin_source_has_status_recommendation_and_fallback_controls()
     assert "Shift up" in text
     assert "Serve on Tailscale" in text
     assert "api.rest('/serve'" in text
+    assert "api.rest('/benchmark'" in text
+    assert "Benchmark compatible models" in text
+    assert "Results are not promoted automatically" in text
+
+
+def test_benchmark_candidates_rejects_unbounded_limits() -> None:
+    from benchmark_ops import benchmark_candidates
+    import pytest
+
+    with pytest.raises(ValueError, match="limit"):
+        benchmark_candidates(limit=0)
+    with pytest.raises(ValueError, match="limit"):
+        benchmark_candidates(limit=9)
+    with pytest.raises(ValueError, match="loopback"):
+        benchmark_candidates(base_url="http://example.com/v1")
+    with pytest.raises(ValueError, match="loopback"):
+        benchmark_candidates(base_url="https://169.254.169.254/v1")
+    with pytest.raises(ValueError, match="finite"):
+        benchmark_candidates(timeout_seconds=float("nan"))
 
 
 def test_apply_configuration_can_install_bundled_sirvir(monkeypatch) -> None:
