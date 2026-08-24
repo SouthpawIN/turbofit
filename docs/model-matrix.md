@@ -48,6 +48,14 @@ The deployable llama.cpp artifacts come from [`ggml-org/Qwen3.8-27B-GGUF`](https
 
 Every file is bound to its Hugging Face LFS SHA-256 and exact byte size in [`references/artifact-manifest.json`](references/artifact-manifest.json). The MTP compiler attaches the sidecar with `--model-draft`; non-MTP variants do not inherit one.
 
+#### Qwen 3.8 27B NVFP4 + DFlash2 on SGLang (Spark candidate)
+
+A separate Spark/SGLang lane is now tracked alongside the llama.cpp Q4 DFlash2 lane. The reported configuration uses `RadixArk/Qwen3.8-27B-NVFP4` revision `554ebba`, `z-lab/Qwen3.8-27B-DFlash2` revision `50307d4c4cde6860d4eee73e2547cd786fe8e8a4`, and `weschera/qwen38-27b-dflash2:2026-08-19`. It reported **116 aggregate output tok/s at concurrency 10** with a configured **262,144-token context**.
+
+This is promising throughput evidence, but it is not compared directly with the existing hash-bound llama.cpp single-stream result. It remains a candidate until the raw harness output, exact Spark topology/fingerprint, immutable container digest, workload shape, latency distribution, DFlash2 acceptance, and a same-SGLang baseline with speculation disabled are attached. The complete launch vector and qualification gaps are preserved in [`references/results/qwen38-nvfp4-dflash2-sglang-spark-c10-20260824.json`](../references/results/qwen38-nvfp4-dflash2-sglang-spark-c10-20260824.json).
+
+The runtime path is grounded in SGLang's upstream DFlash2 merge [`c14312a66420b75ca9a11bf1817c4db1fa26b097`](https://github.com/sgl-project/sglang/commit/c14312a66420b75ca9a11bf1817c4db1fa26b097) and the reference DGX Spark deployment at [`MiaAI-Lab/Qwen3.8-27B-SGLang-DGX-Spark`](https://github.com/MiaAI-Lab/Qwen3.8-27B-SGLang-DGX-Spark). It is not yet an Auto or TurboFit List winner.
+
 #### Ternary Bonsai 27B
 
 Every valid Cartesian combination of:

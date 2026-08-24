@@ -23,6 +23,7 @@
 
 ### Model runtime
 
+- Added a separate evidence record for the reported Spark/SGLang Qwen 3.8 27B NVFP4 + DFlash2 lane: 116 aggregate output tok/s at concurrency 10 and 262K configured context. It remains non-promotable until raw harness, exact topology, immutable image digest, workload/latency details, acceptance statistics, and a same-runtime baseline are attached.
 - Added an evidence-gated Qwen 3.8 27B DFlash2 candidate: pinned Inco Q4_K_M draft artifact, pinned z-lab llama.cpp PR runtime, 64K/128K/262K/1M recipes, and a hard no-cross-family guard preserving Bonsai's own DSpark sidecar.
 - Removed DeepSeek V4 Flash 0731 from the active catalog, recipes, downloads, and hardware-tier candidates.
 - Main Auto chain is now Bonsai 27B at 8GB, Qwen 3.8 27B Unleashed UD-IQ3_XXS at 16GB, UD-Q3_K_XL at 24–95GB, and the existing Qwen 3.8 27B 16-bit recipe at 96GB+ until an Unleashed FP16 GGUF is published.
