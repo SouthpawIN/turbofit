@@ -30,18 +30,18 @@ scripts/install-dspark-runtime install --backend rocm --amdgpu-targets gfx1100
 
 Use the GFX target for the physical AMD GPU. The generated process environment never mixes CUDA and ROCm visibility variables.
 
-## DeepSeek V4 Flash 0731 Q8 plus DSpark
+## Qwen 3.8 Q4 plus DFlash2
 
-The six-file group is revision-pinned and SHA-256-pinned in `runtime-profiles/downloads.json`:
+The active Qwen 3.8 main, projector, and DFlash2 sidecar are revision-pinned and SHA-256-pinned in `runtime-profiles/downloads.json`:
 
 ```bash
 scripts/download-models.py \
-  --group deepseek-v4-flash-0731-q8-dspark \
-  --base-dir "$HOME/Models/storage/gguf/DeepSeek-V4-Flash-0731" \
-  --receipt references/results/deepseek-v4-download-verification.json
+  --group qwen3-8-27b-q4-dflash2 \
+  --base-dir "$HOME/Models/storage/gguf" \
+  --receipt references/results/qwen38-download-verification.json
 ```
 
-The launch recipe uses the static runtime, the first of five main-model shards, the DSpark sidecar, `--spec-type draft-dspark`, `--spec-draft-n-max 3`, automatic CPU/GPU fit, and `--jinja`.
+The launch recipe uses the pinned DFlash2 llama.cpp fork, Qwen Q4_K_M main model, matching vision projector, DFlash2 sidecar, `--spec-type draft-dflash`, `--spec-draft-n-max 7`, automatic CPU/GPU fit, and `--jinja`. Bonsai remains on its own family-matched DSpark sidecar; speculative sidecars are never shared across model families.
 
 ## Lemonade
 
@@ -60,7 +60,7 @@ lemonade backends install vllm:rocm
 
 ## Benchmarking and evidence
 
-- `scripts/turbofit-catalog-campaign` runs the canonical generated main × auxiliary × context matrix (currently 1,620 rows), including all valid pinned DeepSeek, Qwen 3.8, Ternary Bonsai, and Binary Bonsai add-on combinations.
+- `scripts/turbofit-catalog-campaign` runs the canonical generated main × auxiliary × context matrix (currently 516 rows), including all valid pinned Qwen 3.8, Ternary Bonsai, and Binary Bonsai add-on combinations.
 - `scripts/turbofit-deepswe` prepares a pinned DeepSWE/Pier checkout and runs selected finalists against an OpenAI-compatible endpoint.
 - `research/discover_external_benchmarks.py` binds imported DeepSWE evidence to the source artifact SHA-256. External evidence informs discovery but cannot promote a local runtime profile.
 - `scripts/turbofit-completion-check` reports every executable completion gate without converting a failed or missing live run into a success claim.

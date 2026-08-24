@@ -12,6 +12,13 @@ scripts/install-native-runtimes
 scripts/install-native-runtimes --check-only
 
 PYTHONPATH=src:. scripts/turbofit-catalog-campaign run
+
+# After matching baseline and DFlash2 rows succeed, export a comparable,
+# self-hashed A/B record from their immutable campaign results.
+scripts/turbofit-dflash2-ab-evidence \
+  --baseline-row qwen-3-8-27b-q4-k-m-auto-64k \
+  --dflash2-row qwen-3-8-27b-q4-k-m-dflash2-auto-64k \
+  --output references/results/qwen38-dflash2-2x24-YYYYMMDD.json
 ```
 
 Mainline `llama.cpp` serves standard GGUFs, the pinned PrismML fork serves Bonsai/Ternary custom Q1/Q2 and DSpark artifacts, and pinned `ik_llama.cpp` serves GLM 5.2 IQ2_KL with DSA, IndexShare, CPU-MoE, and native MTP. Runtime revisions and binary paths are canonical in [`references/native-runtimes.json`](references/native-runtimes.json). Validate each artifact with its required parser using `scripts/verify-gguf-artifacts`; parsing all artifacts with mainline `llama.cpp` is intentionally invalid because the custom quantization formats require their matching runtimes.
@@ -22,7 +29,7 @@ Inspect progress:
 PYTHONPATH=src:. scripts/turbofit-catalog-campaign status
 ```
 
-Status separates `current_recipe` coverage—whose `pending + resolved + deferred` always equals all 1,620 active rows—from `historical_attempts`, which may contain obsolete runtime failures or successes and is never release eligibility. Deferred rows remain explicit and are never counted as resolved.
+Status separates `current_recipe` coverage—whose `pending + resolved + deferred` always equals all 516 active rows—from `historical_attempts`, which may contain obsolete runtime failures or successes and is never release eligibility. Deferred rows remain explicit and are never counted as resolved.
 
 The campaign is resumable and records failed attempts rather than silently dropping them. Runtime failures preserve command lines, tracebacks, component/gateway logs, telemetry, and hashes in a unique immutable directory under `references/results/catalog-campaign/failures/<row>/<timestamp>/`. State records pin the canonical production-recipe and validation-protocol SHA-256; changing a runtime, artifact, offload policy, command, smoke-request length, or shared-route scheduling automatically requeues stale successes and resets the attempt budget. Each row acquires an exclusive production-service lease before the first GPU-clear gate: Turbofit's controller/gateway are paused, benchmark components run without a port/GPU race, post-run GPU clear is verified, and only services that were previously active are restored. Every successful row requires:
 
@@ -53,7 +60,7 @@ Raw evidence and resumable state live under [`references/results/catalog-campaig
 Runtime fit and decode speed do **not** imply intelligence. Turbofit therefore runs a second durable campaign against each exact production configuration after its native runtime row passes:
 
 ```bash
-# Initialize or inspect all 1,620 configurations × three benchmark levels
+# Initialize or inspect all 516 configurations × three benchmark levels
 PYTHONPATH=src:. scripts/turbofit-intelligence-campaign init
 PYTHONPATH=src:. scripts/turbofit-intelligence-campaign status
 
