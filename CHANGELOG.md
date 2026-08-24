@@ -23,6 +23,7 @@
 
 ### Model runtime
 
+- Re-ran the canonical Qwen 3.8 Q4 baseline/DFlash2 pair on the same dual-RTX-3090 fingerprint: 35.79 versus 45.60 tok/s, 1.273993× speedup, 70% draft acceptance, and 2,839 MiB additional aggregate peak GPU residency. Added a deterministic exporter that refuses mismatched hardware, context, prompt shape, raw hashes, or invalid acceptance counters before emitting self-hashed A/B evidence.
 - Added a separate evidence record for the reported Spark/SGLang Qwen 3.8 27B NVFP4 + DFlash2 lane: 116 aggregate output tok/s at concurrency 10 and 262K configured context. It remains non-promotable until raw harness, exact topology, immutable image digest, workload/latency details, acceptance statistics, and a same-runtime baseline are attached.
 - Added an evidence-gated Qwen 3.8 27B DFlash2 candidate: pinned Inco Q4_K_M draft artifact, pinned z-lab llama.cpp PR runtime, 64K/128K/262K/1M recipes, and a hard no-cross-family guard preserving Bonsai's own DSpark sidecar.
 - Removed DeepSeek V4 Flash 0731 from the active catalog, recipes, downloads, and hardware-tier candidates.
