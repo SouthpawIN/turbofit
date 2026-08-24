@@ -87,6 +87,13 @@ def install_artifact(
     try:
         os.link(cached, destination)
     except OSError:
+        # Another concurrent setup can materialize the same hard link after
+        # the preflight check. Verify that winner instead of copying over an
+        # identical inode, which raises shutil.SameFileError on Windows.
+        if destination.is_file():
+            if destination.stat().st_size != expected_size or sha256_file(destination) != expected_hash:
+                raise RuntimeError(f"existing artifact does not match manifest: {destination}")
+            return {"destination": str(destination), "downloaded": False, "verified": True}
         shutil.copyfile(cached, destination)
     return {"destination": str(destination), "downloaded": True, "verified": True}
 
