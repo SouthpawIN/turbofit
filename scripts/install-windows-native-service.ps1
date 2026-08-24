@@ -118,12 +118,12 @@ $gatewayLauncher = $gatewayLauncher.Replace("__ROUTES__", $RoutePath).Replace("_
 Set-Content -LiteralPath $GatewayLauncherPath -Value $gatewayLauncher -Encoding UTF8
 
 $PowerShell = (Get-Command powershell.exe).Source
-$Action = New-ScheduledTaskAction -Execute $PowerShell -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$LauncherPath`""
+$Action = New-ScheduledTaskAction -Execute $PowerShell -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$LauncherPath`""
 $Trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $Settings = New-ScheduledTaskSettingsSet -RestartCount 5 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit (New-TimeSpan -Days 3650)
 $Principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -Settings $Settings -Principal $Principal -Force | Out-Null
-$GatewayAction = New-ScheduledTaskAction -Execute $PowerShell -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$GatewayLauncherPath`""
+$GatewayAction = New-ScheduledTaskAction -Execute $PowerShell -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$GatewayLauncherPath`""
 Register-ScheduledTask -TaskName $GatewayTaskName -Action $GatewayAction -Trigger $Trigger -Settings $Settings -Principal $Principal -Force | Out-Null
 Start-ScheduledTask -TaskName $TaskName
 Start-ScheduledTask -TaskName $GatewayTaskName

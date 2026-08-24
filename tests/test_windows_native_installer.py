@@ -9,6 +9,7 @@ def test_windows_installer_is_user_scoped_jinja_and_health_verified() -> None:
     text = SCRIPT.read_text(encoding="utf-8")
 
     assert "Register-ScheduledTask" in text
+    assert "-WindowStyle Hidden" in text
     assert "-RunLevel Limited" in text
     assert '"--jinja"' in text
     assert '"--fit", "on"' in text
