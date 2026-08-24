@@ -78,8 +78,12 @@ $arguments = @(
     "--jinja",
     "--metrics"
 )
+$nativeErrorPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 & $config.binary @arguments *>> $config.log
-exit $LASTEXITCODE
+$exitCode = $LASTEXITCODE
+$ErrorActionPreference = $nativeErrorPreference
+exit $exitCode
 '@
 $launcher = $launcher.Replace("__CONFIG__", $ConfigPath.Replace("'", "''"))
 Set-Content -LiteralPath $LauncherPath -Value $launcher -Encoding UTF8
@@ -103,8 +107,12 @@ $env:TURBOFIT_RUNTIME_STATE = "__ROUTES__"
 $env:TURBOFIT_GATEWAY_PORT = "__PORT__"
 $env:TURBOFIT_GATEWAY_HOST = "__HOST__"
 $env:TURBOFIT_ALLOW_API = "0"
+$nativeErrorPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 & "__PYTHON__" "__GATEWAY__" *>> "__LOG__"
-exit $LASTEXITCODE
+$exitCode = $LASTEXITCODE
+$ErrorActionPreference = $nativeErrorPreference
+exit $exitCode
 '@
 $gatewayLauncher = $gatewayLauncher.Replace("__ROUTES__", $RoutePath).Replace("__PORT__", [string]$GatewayPort).Replace("__HOST__", $GatewayHost).Replace("__PYTHON__", $Python).Replace("__GATEWAY__", $GatewayScript).Replace("__LOG__", $GatewayLogPath)
 Set-Content -LiteralPath $GatewayLauncherPath -Value $gatewayLauncher -Encoding UTF8

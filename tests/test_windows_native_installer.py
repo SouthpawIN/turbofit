@@ -30,6 +30,14 @@ def test_windows_installer_supports_one_step_cuda_cpu_gateway_and_uninstall() ->
     assert '"--alias", "bonsai-27b-1bit-128k-main"' in text
 
 
+def test_windows_installer_does_not_treat_native_stderr_as_a_powershell_failure() -> None:
+    text = SCRIPT.read_text(encoding="utf-8")
+
+    assert text.count('$ErrorActionPreference = "Continue"') >= 2
+    assert text.count("$exitCode = $LASTEXITCODE") >= 2
+    assert text.count("exit $exitCode") >= 2
+
+
 def test_readme_separates_hermes_gateway_from_turbofit_8091() -> None:
     readme = (ROOT / "README.md").read_text()
     windows = (ROOT / "docs" / "windows-native-install.md").read_text()
