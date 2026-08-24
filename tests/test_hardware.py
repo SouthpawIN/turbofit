@@ -11,6 +11,7 @@ from turbofit_runtime.hardware import (
     _run_command,
     parse_nvidia_inventory_csv,
     parse_rocm_smi_json,
+    parse_vulkaninfo_text,
     probe_hardware,
 )
 
@@ -182,6 +183,41 @@ def test_probe_falls_back_to_rocm_when_nvidia_is_absent() -> None:
     assert commands[1][0] == "rocm-smi"
     assert fingerprint.backends == ("rocm",)
     assert fingerprint.total_vram_mb == 24576
+
+
+def test_probe_falls_back_to_vulkan_on_windows_with_dedicated_heap_capacity() -> None:
+    raw = """GPU0:
+    vendorID           = 0x1002
+    deviceName         = AMD Radeon RX 6600
+    deviceUUID         = 00112233-4455-6677-8899-aabbccddeeff
+    memoryHeaps: count = 2
+    memoryHeaps[0]:
+        size   = 8304721920
+        budget = 6937617920
+        flags: count = 1
+            MEMORY_HEAP_DEVICE_LOCAL_BIT
+    memoryHeaps[1]:
+        size   = 34317664256
+        budget = 33512374272
+        flags:
+            None
+    memoryTypes: count = 2
+"""
+
+    devices = parse_vulkaninfo_text(raw)
+    fingerprint = probe_hardware(
+        command_runner=lambda command: (_ for _ in ()).throw(FileNotFoundError(command[0]))
+        if command[0] == "nvidia-smi" else raw,
+        os_name="Windows",
+        architecture="amd64",
+        system_ram_mb=65536,
+    )
+
+    assert devices[0].vendor == "amd"
+    assert devices[0].backend == "vulkan"
+    assert devices[0].memory_total_mb == 7920
+    assert fingerprint.topology_key == "1x7920mb"
+    assert fingerprint.backends == ("vulkan",)
 
 
 def test_probe_apple_silicon_exposes_unified_memory_as_metal_capacity() -> None:
