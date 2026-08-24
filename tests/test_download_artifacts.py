@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 from importlib.machinery import SourceFileLoader
+import os
 from pathlib import Path
 
 import pytest
@@ -79,6 +80,34 @@ def test_install_artifact_materializes_cached_symlink_target_not_the_symlink(tmp
     assert destination.is_file()
     assert not destination.is_symlink()
     assert destination.read_bytes() == b"pinned-model"
+
+
+def test_install_artifact_accepts_a_valid_destination_created_during_link(tmp_path: Path, monkeypatch) -> None:
+    module = load_script()
+    cached = tmp_path / "cache" / "model.gguf"
+    cached.parent.mkdir()
+    cached.write_bytes(b"pinned-model")
+    item = {
+        "destination": "family/model.gguf",
+        "repo_id": "owner/repo",
+        "revision": "a" * 40,
+        "path": "remote/model.gguf",
+        "size_bytes": cached.stat().st_size,
+        "sha256": hashlib.sha256(cached.read_bytes()).hexdigest(),
+    }
+    destination = tmp_path / "models" / item["destination"]
+    real_link = os.link
+
+    def link_after_race(source, target):
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        real_link(source, target)
+        raise FileExistsError("another installer already materialized this artifact")
+
+    monkeypatch.setattr(module.os, "link", link_after_race)
+
+    result = module.install_artifact(item, root=tmp_path / "models", download_fn=lambda **_: str(cached))
+
+    assert result == {"destination": str(destination), "downloaded": False, "verified": True}
 
 
 def test_destination_cannot_escape_model_root(tmp_path: Path) -> None:
