@@ -54,6 +54,20 @@ python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1
 
 Success = JSON listing `auto` / active routes. `WinError 10061` = nothing is listening on 8091. That is setup missing, not a firewall rule.
 
+If another machine on the LAN should use this box, persist the gateway on all interfaces and point the **remote** Hermes at the Windows LAN URL. Keep `custom:turbofit` / `auto`. Do not set `model.provider custom` or a GGUF filename.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows-native-service.ps1 -Backend vulkan -Binary C:\path\to\llama-server.exe -GatewayHost 0.0.0.0
+```
+
+On the **other** Hermes machine (not the Windows GPU box):
+
+```text
+/turbofit serve
+```
+
+or `turbofit_configure` with `base_url=http://192.168.1.101:8091/v1`. The Windows Sirvir profile stays on `http://127.0.0.1:8091/v1`.
+
 ## Uninstall services
 
 ```powershell

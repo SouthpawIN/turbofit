@@ -274,7 +274,7 @@ def _is_local_or_tailnet(hostname: str) -> bool:
     except ValueError:
         return False
     tailnet = ipaddress.ip_network("100.64.0.0/10")
-    return address.is_loopback or address in tailnet
+    return address.is_loopback or address.is_private or address in tailnet
 
 
 def _validated_base_url(value: str | None) -> str:

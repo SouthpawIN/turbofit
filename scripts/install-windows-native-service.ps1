@@ -4,9 +4,10 @@ param(
     [Parameter(Mandatory = $false)] [string] $Model,
     [ValidateRange(1, 65535)] [int] $Port = 8092,
     [ValidateRange(1, 65535)] [int] $GatewayPort = 8091,
-    [ValidateSet("cuda", "cpu")] [string] $Backend = "cuda",
+    [ValidateSet("cuda", "vulkan", "cpu")] [string] $Backend = "cuda",
     [ValidateRange(4096, 1048576)] [int] $Context = 131072,
     [string] $InstallRoot = "$env:LOCALAPPDATA\Turbofit",
+    [string] $GatewayHost = "127.0.0.1",
     [switch] $Uninstall
 )
 
@@ -25,6 +26,9 @@ $Python = (Get-Command python.exe -ErrorAction SilentlyContinue).Source
 if (-not $Python) { $Python = (Get-Command python -ErrorAction SilentlyContinue).Source }
 if (-not $Python) { throw "Python 3 is required for the runtime and gateway" }
 if (-not $Binary) {
+    if ($Backend -eq "vulkan") {
+        throw "Vulkan needs -Binary pointing at the working llama-server.exe. install-dspark-runtime does not build Vulkan."
+    }
     $Installer = Join-Path $PSScriptRoot "install-dspark-runtime"
     & $Python $Installer install --backend $Backend
     if ($LASTEXITCODE -ne 0) { throw "Pinned llama.cpp runtime installation failed" }
@@ -97,11 +101,12 @@ $gatewayLauncher = @'
 $ErrorActionPreference = "Stop"
 $env:TURBOFIT_RUNTIME_STATE = "__ROUTES__"
 $env:TURBOFIT_GATEWAY_PORT = "__PORT__"
+$env:TURBOFIT_GATEWAY_HOST = "__HOST__"
 $env:TURBOFIT_ALLOW_API = "0"
 & "__PYTHON__" "__GATEWAY__" *>> "__LOG__"
 exit $LASTEXITCODE
 '@
-$gatewayLauncher = $gatewayLauncher.Replace("__ROUTES__", $RoutePath).Replace("__PORT__", [string]$GatewayPort).Replace("__PYTHON__", $Python).Replace("__GATEWAY__", $GatewayScript).Replace("__LOG__", $GatewayLogPath)
+$gatewayLauncher = $gatewayLauncher.Replace("__ROUTES__", $RoutePath).Replace("__PORT__", [string]$GatewayPort).Replace("__HOST__", $GatewayHost).Replace("__PYTHON__", $Python).Replace("__GATEWAY__", $GatewayScript).Replace("__LOG__", $GatewayLogPath)
 Set-Content -LiteralPath $GatewayLauncherPath -Value $gatewayLauncher -Encoding UTF8
 
 $PowerShell = (Get-Command powershell.exe).Source
