@@ -189,8 +189,11 @@ def test_plain_http_provider_url_is_limited_to_loopback_or_tailnet() -> None:
     with pytest.raises(ValueError, match="Tailscale"):
         configure_hermes({}, base_url="http://example.com/v1")
     with pytest.raises(ValueError, match="Tailscale"):
-        configure_hermes({}, base_url="http://172.20.0.1:8091/v1")
+        configure_hermes({}, base_url="http://8.8.8.8:8091/v1")
 
+    assert configure_hermes({}, base_url="http://192.168.1.101:8091/v1")[
+        "providers"
+    ]["turbofit"]["api"] == "http://192.168.1.101:8091/v1"
     assert configure_hermes({}, base_url="http://100.100.10.20:8091/v1")[
         "providers"
     ]["turbofit"]["api"] == "http://100.100.10.20:8091/v1"

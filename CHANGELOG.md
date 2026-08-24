@@ -8,6 +8,7 @@
 - `/turbofit shift up|down|<model>|intelligence|balanced|speed` walks the same measured ladder the healer uses.
 - `/turbofit serve` publishes `:8091` on Tailscale Serve so other tailnet devices can use the same local model server. Funnel is never used.
 - Setup downloads the Auto-chain artifacts for this machine if they are missing. Sirvir owns install and setup, with a bootstrap fallback only until `:8091` answers.
+- Private-LAN HTTP (`192.168.x`) is a valid Turbofit provider URL. Windows scheduled tasks accept Vulkan and `-GatewayHost 0.0.0.0` for remote Hermes.
 
 
 - Documented the three gateways: Hermes messaging vs Turbofit `:8091` vs native model server. Plugin install and messaging-gateway restart do not start `:8091`.

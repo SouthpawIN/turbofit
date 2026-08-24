@@ -21,7 +21,8 @@ def test_windows_installer_is_user_scoped_jinja_and_health_verified() -> None:
 def test_windows_installer_supports_one_step_cuda_cpu_gateway_and_uninstall() -> None:
     text = SCRIPT.read_text(encoding="utf-8")
 
-    assert '[ValidateSet("cuda", "cpu")]' in text
+    assert '[ValidateSet("cuda", "vulkan", "cpu")]' in text
+    assert "TURBOFIT_GATEWAY_HOST" in text
     assert "Unregister-ScheduledTask" in text
     assert "install-dspark-runtime" in text
     assert "TurbofitGateway" in text
