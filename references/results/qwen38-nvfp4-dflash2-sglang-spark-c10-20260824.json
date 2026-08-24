@@ -1,0 +1,123 @@
+{
+  "schema": "turbofit.reported-throughput/v1",
+  "status": "candidate-user-reported",
+  "recorded_at": "2026-08-24T02:49:50-05:00",
+  "source": {
+    "kind": "user-report",
+    "channel": "discord",
+    "raw_harness_attached": false,
+    "notes": "Reported immediately after a fresh benchmark. Keep separate from hash-bound physical evidence and TurboFit List winners until the raw harness output and hardware fingerprint are attached."
+  },
+  "hardware": {
+    "reported_label": "spark",
+    "class": "unresolved-spark-topology",
+    "device_count": null,
+    "physical_fingerprint": null
+  },
+  "target": {
+    "id": "qwen3-8-27b-radixark-nvfp4",
+    "repo": "RadixArk/Qwen3.8-27B-NVFP4",
+    "reported_revision": "554ebba",
+    "format": "safetensors",
+    "quantization": "NVFP4",
+    "local_mount": "/model"
+  },
+  "draft": {
+    "id": "qwen3-8-27b-dflash2-z-lab",
+    "repo": "z-lab/Qwen3.8-27B-DFlash2",
+    "revision": "50307d4c4cde6860d4eee73e2547cd786fe8e8a4",
+    "reported_size_gb_decimal": 3.85,
+    "local_mount": "/draft"
+  },
+  "runtime": {
+    "id": "sglang-dflash2",
+    "engine": "sglang",
+    "container_image": "weschera/qwen38-27b-dflash2:2026-08-19",
+    "container_digest": null,
+    "upstream_dflash2_merge": "c14312a66420b75ca9a11bf1817c4db1fa26b097",
+    "reference_deployment_repo": "https://github.com/MiaAI-Lab/Qwen3.8-27B-SGLang-DGX-Spark",
+    "reference_deployment_revision": "c90d8c34cf795185ee8de736b7ded9bca3fe0de1"
+  },
+  "launch": {
+    "served_model_name": "qwen38-27b",
+    "host": "0.0.0.0",
+    "port": 30000,
+    "context_length": 262144,
+    "max_running_requests": 10,
+    "arguments": [
+      "python3",
+      "-m",
+      "sglang.launch_server",
+      "--model-path",
+      "/model",
+      "--served-model-name",
+      "qwen38-27b",
+      "--trust-remote-code",
+      "--mem-fraction-static",
+      "0.95",
+      "--attention-backend",
+      "flashinfer",
+      "--chunked-prefill-size",
+      "8192",
+      "--disable-prefill-cuda-graph",
+      "--kv-cache-dtype",
+      "fp8_e4m3",
+      "--mamba-ssm-dtype",
+      "bfloat16",
+      "--mamba-radix-cache-strategy",
+      "extra_buffer",
+      "--context-length",
+      "262144",
+      "--speculative-algorithm",
+      "DFLASH",
+      "--speculative-draft-model-path",
+      "/draft",
+      "--speculative-num-draft-tokens",
+      "8",
+      "--reasoning-parser",
+      "qwen3",
+      "--tool-call-parser",
+      "qwen3_coder",
+      "--sampling-defaults",
+      "model",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "30000",
+      "--max-prefill-tokens",
+      "16384",
+      "--mamba-full-memory-ratio",
+      "4.21",
+      "--max-mamba-cache-size",
+      "40",
+      "--max-running-requests",
+      "10",
+      "--enable-metrics"
+    ]
+  },
+  "measurement": {
+    "metric": "aggregate_output_throughput",
+    "tokens_per_second": 116.0,
+    "concurrency": 10,
+    "context_configured": 262144,
+    "per_request_tokens_per_second": null,
+    "prompt_shape": null,
+    "output_tokens_per_request": null,
+    "duration_seconds": null,
+    "baseline_arm": null,
+    "draft_acceptance": null
+  },
+  "promotion": {
+    "eligible": false,
+    "reason": "Promising reported candidate, but not comparable with TurboFit's hash-bound single-stream llama.cpp A/B and not eligible for Auto/List promotion without raw benchmark output, exact Spark topology/fingerprint, immutable container digest, workload shape, and a same-runtime non-speculative baseline.",
+    "required_next_evidence": [
+      "raw benchmark output",
+      "exact hardware topology and physical fingerprint",
+      "immutable container image digest",
+      "prompt and output-token workload shape",
+      "per-request latency and throughput distribution",
+      "DFlash2 acceptance statistics",
+      "same SGLang NVFP4 target with speculation disabled"
+    ]
+  }
+}
