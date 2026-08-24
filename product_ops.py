@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -231,3 +232,13 @@ def serve_tailnet(
 def serve_status() -> dict[str, Any]:
     status = plugin_tools.tailnet_status()
     return {"ok": bool(status.get("connected")), **status}
+
+
+def smoke_local_runtime(*, timeout_seconds: float = 300.0) -> dict[str, Any]:
+    """Slash/Desktop loopback smoke. Does not shift or promote."""
+    dashboard = Path(__file__).resolve().parent / "dashboard"
+    if str(dashboard) not in sys.path:
+        sys.path.insert(0, str(dashboard))
+    from smoke_ops import smoke_local_runtime as run_smoke
+
+    return run_smoke(timeout_seconds=timeout_seconds)

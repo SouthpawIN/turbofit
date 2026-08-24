@@ -361,6 +361,9 @@ def test_desktop_plugin_source_has_status_recommendation_and_fallback_controls()
     assert "Shift up" in text
     assert "Serve on Tailscale" in text
     assert "api.rest('/serve'" in text
+    assert "api.rest('/smoke'" in text
+    assert "Smoke local runtime" in text
+    assert "This is not a promotion benchmark" in text
 
 
 def test_apply_configuration_can_install_bundled_sirvir(monkeypatch) -> None:
@@ -787,3 +790,29 @@ def test_select_profile_uses_running_hermes_python(monkeypatch) -> None:
 
     assert plugin_tools.select_profile("auto")["configured"] is True
     assert seen == [[sys.executable, str(ROOT / "scripts" / "turbofit-runtime"), "set", "auto"]]
+
+
+def test_select_profile_skips_systemctl_on_windows(monkeypatch) -> None:
+    import plugin_tools
+
+    seen: list[list[str]] = []
+
+    class Result:
+        returncode = 0
+        stdout = '{"configured": true}'
+        stderr = ""
+
+    def run(command, **_kwargs):
+        seen.append(list(command))
+        return Result()
+
+    monkeypatch.setattr(plugin_tools.os, "name", "nt")
+    monkeypatch.setattr(plugin_tools.shutil, "which", lambda _name: "/usr/bin/systemctl")
+    monkeypatch.setattr(plugin_tools, "prepare_manual_profile", lambda _profile: "manual-x")
+    monkeypatch.setattr(plugin_tools.subprocess, "run", run)
+
+    payload = plugin_tools.select_profile("exact-combo")
+
+    assert payload["configured"] is True
+    assert payload["controller_restarted"] is False
+    assert all(command[0] != "systemctl" for command in seen)

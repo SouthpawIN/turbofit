@@ -220,6 +220,41 @@ def test_probe_falls_back_to_vulkan_on_windows_with_dedicated_heap_capacity() ->
     assert fingerprint.backends == ("vulkan",)
 
 
+def test_probe_falls_back_to_vulkan_on_linux_when_cuda_and_rocm_are_absent() -> None:
+    raw = """GPU0:
+    vendorID           = 0x1002
+    deviceName         = AMD Radeon RX 6600
+    deviceUUID         = 00112233-4455-6677-8899-aabbccddeeff
+    memoryHeaps: count = 2
+    memoryHeaps[0]:
+        size   = 8304721920
+        budget = 6937617920
+        flags: count = 1
+            MEMORY_HEAP_DEVICE_LOCAL_BIT
+    memoryHeaps[1]:
+        size   = 34317664256
+        budget = 33512374272
+        flags:
+            None
+    memoryTypes: count = 2
+"""
+
+    def run(command: list[str]) -> str:
+        if command[0] in {"nvidia-smi", "rocm-smi"}:
+            raise FileNotFoundError(command[0])
+        return raw
+
+    fingerprint = probe_hardware(
+        command_runner=run,
+        os_name="linux",
+        architecture="x86_64",
+        system_ram_mb=65536,
+    )
+
+    assert fingerprint.backends == ("vulkan",)
+    assert fingerprint.topology_key == "1x7920mb"
+
+
 def test_probe_apple_silicon_exposes_unified_memory_as_metal_capacity() -> None:
     def missing(_command: list[str]) -> str:
         raise FileNotFoundError("nvidia-smi")
@@ -304,6 +339,19 @@ def test_run_command_retries_nvidia_smi_with_loaded_kernel_compatibility_library
     assert calls[1]["LD_LIBRARY_PATH"].startswith(
         "/home/test/.local/lib/nvidia-580.159.03/usr/lib/x86_64-linux-gnu"
     )
+
+
+def test_run_command_gives_vulkaninfo_a_longer_timeout() -> None:
+    seen: list[int] = []
+
+    def check_output(_command: list[str], *, text: bool, timeout: int, stderr: int) -> str:
+        seen.append(timeout)
+        return "GPU0:\n"
+
+    _run_command(["vulkaninfo"], check_output=check_output)
+    _run_command(["nvidia-smi"], check_output=check_output)
+
+    assert seen == [30, 5]
 
 
 @pytest.mark.parametrize(
