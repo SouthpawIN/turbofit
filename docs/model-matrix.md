@@ -56,6 +56,8 @@ This is promising throughput evidence, but it is not compared directly with the 
 
 The runtime path is grounded in SGLang's upstream DFlash2 merge [`c14312a66420b75ca9a11bf1817c4db1fa26b097`](https://github.com/sgl-project/sglang/commit/c14312a66420b75ca9a11bf1817c4db1fa26b097) and the reference DGX Spark deployment at [`MiaAI-Lab/Qwen3.8-27B-SGLang-DGX-Spark`](https://github.com/MiaAI-Lab/Qwen3.8-27B-SGLang-DGX-Spark). It is not yet an Auto or TurboFit List winner.
 
+The independently runnable llama.cpp lane now also has a fresh same-host A/B on the canonical dual-RTX-3090 fingerprint at 64K context. The stock Q4 row measured **35.79 tok/s** and the DFlash2 row measured **45.60 tok/s**, a hash-bound **1.273993× / 27.3993%** gain with **105/150 draft tokens accepted (70%)** and **2,839 MiB** additional aggregate peak GPU residency. Both arms used the same 26-token prompt, 128-token completion, hardware fingerprint, and configured context. The exporter verifies both raw-result hashes before producing the self-hashed evidence record at [`references/results/qwen38-dflash2-2x24-20260824.json`](../references/results/qwen38-dflash2-2x24-20260824.json).
+
 #### Ternary Bonsai 27B
 
 Every valid Cartesian combination of:

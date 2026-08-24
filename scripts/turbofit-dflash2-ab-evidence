@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+"""Export a comparable, hash-bound DFlash2 A/B from catalog campaign rows."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+from typing import Any
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(8 * 1024 * 1024), b""):
+            digest.update(block)
+    return "sha256:" + digest.hexdigest()
+
+
+def _load(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"expected JSON object: {path}")
+    return payload
+
+
+def _arm(state_row: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    if state_row.get("status") != "success":
+        raise ValueError("A/B rows must both have successful campaign status")
+    raw_path = Path(str(state_row.get("raw_result_path", "")))
+    if not raw_path.is_file():
+        raise ValueError(f"raw result is unavailable: {raw_path}")
+    actual_sha = sha256(raw_path)
+    if actual_sha != state_row.get("raw_result_sha256"):
+        raise ValueError(f"raw result SHA-256 mismatch: {raw_path}")
+    raw = _load(raw_path)
+    result = (raw.get("results") or {}).get("main") or {}
+    timings = result.get("timings") or {}
+    usage = result.get("usage") or {}
+    if float(timings.get("predicted_per_second", 0)) <= 0:
+        raise ValueError("A/B row has no positive main throughput")
+    summary = {
+        "row_id": (raw.get("row") or {}).get("id"),
+        "context": (raw.get("row") or {}).get("context"),
+        "main_tps": timings.get("predicted_per_second"),
+        "prompt_tokens": usage.get("prompt_tokens"),
+        "completion_tokens": usage.get("completion_tokens"),
+        "gpu_peak_mb": raw.get("gpu_peak_mb") or {},
+        "raw_result_sha256": actual_sha,
+        "recipe_sha256": state_row.get("recipe_sha256"),
+        "runtime_command": next(
+            (component.get("command") for component in raw.get("components", []) if component.get("role") == "main"),
+            None,
+        ),
+    }
+    return summary, raw
+
+
+def build_evidence(state_path: Path, baseline_id: str, dflash2_id: str) -> dict[str, Any]:
+    state = _load(Path(state_path))
+    rows = state.get("rows") or {}
+    if baseline_id not in rows or dflash2_id not in rows:
+        raise ValueError("both requested A/B rows must exist in campaign state")
+    baseline_state = rows[baseline_id]
+    dflash2_state = rows[dflash2_id]
+    baseline, baseline_raw = _arm(baseline_state)
+    dflash2, dflash2_raw = _arm(dflash2_state)
+
+    baseline_fingerprint = baseline_state.get("physical_fingerprint")
+    dflash2_fingerprint = dflash2_state.get("physical_fingerprint")
+    if not baseline_fingerprint or baseline_fingerprint != dflash2_fingerprint:
+        raise ValueError("A/B rows have different physical fingerprints")
+    for label, raw, expected in (
+        ("baseline", baseline_raw, baseline_fingerprint),
+        ("DFlash2", dflash2_raw, dflash2_fingerprint),
+    ):
+        embedded = (raw.get("physical_hardware") or {}).get("fingerprint_sha256")
+        if embedded != expected:
+            raise ValueError(f"{label} embedded physical fingerprint disagrees with campaign state")
+    if baseline["context"] != dflash2["context"]:
+        raise ValueError("A/B rows have different configured contexts")
+    for field in ("prompt_tokens", "completion_tokens"):
+        if baseline[field] != dflash2[field]:
+            raise ValueError(f"A/B rows have different {field}")
+
+    timings = ((dflash2_raw.get("results") or {}).get("main") or {}).get("timings") or {}
+    draft_tokens = int(timings.get("draft_n", 0))
+    accepted = int(timings.get("draft_n_accepted", 0))
+    if draft_tokens <= 0 or not 0 < accepted <= draft_tokens:
+        raise ValueError("DFlash2 row has invalid draft acceptance counters")
+
+    baseline_tps = float(baseline["main_tps"])
+    dflash2_tps = float(dflash2["main_tps"])
+    speedup = round(dflash2_tps / baseline_tps, 6)
+    baseline_peak = sum(int(value) for value in baseline["gpu_peak_mb"].values())
+    dflash2_peak = sum(int(value) for value in dflash2["gpu_peak_mb"].values())
+    hardware = dflash2_raw.get("physical_hardware") or baseline_raw.get("physical_hardware") or {}
+    payload: dict[str, Any] = {
+        "schema": "turbofit.dflash2-ab/v2",
+        "recorded_at": hardware.get("captured_at"),
+        "hardware": {
+            "fingerprint_sha256": baseline_fingerprint,
+            "topology_key": (hardware.get("fingerprint") or {}).get("topology_key"),
+            "devices": (hardware.get("fingerprint") or {}).get("devices"),
+        },
+        "arms": {"baseline": baseline, "dflash2": dflash2},
+        "comparison": {
+            "baseline_main_tps": baseline_tps,
+            "dflash2_main_tps": dflash2_tps,
+            "speedup": speedup,
+            "percent_gain": round((speedup - 1.0) * 100.0, 6),
+            "additional_peak_gpu_mb": dflash2_peak - baseline_peak,
+            "draft_tokens": draft_tokens,
+            "accepted_draft_tokens": accepted,
+            "draft_acceptance_fraction": accepted / draft_tokens,
+            "same_prompt": True,
+            "same_context": True,
+            "same_hardware": True,
+        },
+        "promotion": {
+            "eligible": dflash2_tps > baseline_tps and accepted > 0,
+            "reason": "same-hardware, same-prompt, hash-bound physical A/B",
+        },
+    }
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    payload["evidence_sha256"] = "sha256:" + hashlib.sha256(canonical).hexdigest()
+    return payload
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--state", type=Path, default=Path("references/catalog-campaign-state.json"))
+    parser.add_argument("--baseline-row", required=True)
+    parser.add_argument("--dflash2-row", required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    payload = build_evidence(args.state, args.baseline_row, args.dflash2_row)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps({"status": "written", "output": str(args.output), "evidence_sha256": payload["evidence_sha256"]}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

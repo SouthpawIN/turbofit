@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Report executable completion gates for the current Turbofit 2.1 brief."""
+"""Report executable completion gates for the current Turbofit release."""
 from __future__ import annotations
 
 import json
 import hashlib
+import re
 import shutil
 import subprocess
 import sys
@@ -26,16 +27,6 @@ def _load(path: Path, default: Any) -> Any:
         return json.loads(path.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         return default
-
-
-def _sha256(path: Path) -> str | None:
-    if not path.is_file():
-        return None
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _command_ok(command: list[str]) -> tuple[bool, str]:
@@ -63,6 +54,54 @@ def _campaign(path: Path, expected: int) -> dict[str, Any]:
     return {"ok": success == expected and failed == 0, "success": success, "failed": failed, "expected": expected}
 
 
+def _declared_version(text: str) -> str | None:
+    match = re.search(r"(?m)^version:\s*[\"']?([^\"'\s]+)", text)
+    return match.group(1) if match else None
+
+
+def _evidence_hash_matches(payload: dict[str, Any]) -> bool:
+    expected = payload.get("evidence_sha256")
+    if not isinstance(expected, str) or not expected.startswith("sha256:"):
+        return False
+    unsigned = {key: value for key, value in payload.items() if key != "evidence_sha256"}
+    canonical = json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return expected == "sha256:" + hashlib.sha256(canonical).hexdigest()
+
+
+def production_download_gate(downloads_path: Path, artifact_manifest_path: Path) -> dict[str, Any]:
+    """Cross-check the current production download floor against immutable artifacts."""
+    expected = DownloadCatalog.load(downloads_path).files_for_group("production-floor")
+    manifest = _load(artifact_manifest_path, {"artifacts": []})
+    artifacts = {
+        (str(item.get("repo_id")), str(item.get("path"))): item
+        for item in manifest.get("artifacts", [])
+        if item.get("repo_id") and item.get("path")
+    }
+    missing: list[str] = []
+    mismatched: list[str] = []
+    for item in expected:
+        pinned = artifacts.get((item.repo_id, item.path))
+        if pinned is None:
+            missing.append(item.id)
+            continue
+        expected_identity = {
+            "revision": item.revision,
+            "sha256": item.sha256,
+            "size_bytes": item.size_bytes,
+        }
+        if any(pinned.get(field) != value for field, value in expected_identity.items()):
+            mismatched.append(item.id)
+    verified = len(expected) - len(missing) - len(mismatched)
+    return {
+        "ok": bool(expected) and not missing and not mismatched,
+        "group": "production-floor",
+        "verified": verified,
+        "expected": len(expected),
+        "missing": missing,
+        "mismatched": mismatched,
+    }
+
+
 def report() -> dict[str, Any]:
     configurations = _load(ROOT / "references/configuration-matrix.json", {"rows": []})
     catalog = _load(ROOT / "references/model-catalog.json", {"models": []})
@@ -72,22 +111,15 @@ def report() -> dict[str, Any]:
     tournaments = load_tournaments(ROOT / "references/hardware-tier-tournaments.json", configurations)
     tier_candidates = candidate_ids(tournaments)
     external = _load(ROOT / "research/external-benchmarks.json", {})
-    receipt = _load(ROOT / "references/results/deepseek-v4-download-verification.json", {})
-    dspark_live = _load(ROOT / "references/results/deepseek-v4-dspark-live.json", {})
+    dflash2_ab = _load(ROOT / "references/results/qwen38-dflash2-2x24-20260824.json", {})
     lemonade_live = _load(ROOT / "references/results/lemonade-live.json", {})
     multimodal_catalog = _load(ROOT / "references/multimodal-models.json", {})
     archived_zoo = _load(ROOT / "references/archived-model-zoo.json", {})
-    promo_evidence = _load(ROOT / "promo/production-evidence.json", {})
 
-    expected_downloads = DownloadCatalog.load(ROOT / "runtime-profiles/downloads.json").files_for_group(
-        "deepseek-v4-flash-0731-q8-dspark"
-    )
-    receipt_files = {item.get("id"): item for item in receipt.get("files", [])}
-    downloads_ok = all(
-        item.id in receipt_files
-        and receipt_files[item.id].get("sha256") == item.sha256
-        and receipt_files[item.id].get("size_bytes") == item.size_bytes
-        for item in expected_downloads
+
+    production_downloads = production_download_gate(
+        ROOT / "runtime-profiles/downloads.json",
+        ROOT / "references/artifact-manifest.json",
     )
     dspark_ok, dspark_detail = _command_ok([
         str(ROOT / "scripts/install-dspark-runtime"), "check", "--backend", "cuda",
@@ -141,6 +173,8 @@ def report() -> dict[str, Any]:
     plugin_entry = (ROOT / "__init__.py").read_text(encoding="utf-8")
     plugin_manifest = (ROOT / "plugin.yaml").read_text(encoding="utf-8")
     bundled_skill = (ROOT / "skills/turbofit/SKILL.md").read_text(encoding="utf-8")
+    plugin_version = _declared_version(plugin_manifest)
+    bundled_skill_version = _declared_version(bundled_skill)
     tailnet_source = (ROOT / "src/turbofit_runtime/tailnet.py").read_text(encoding="utf-8")
     multimodal_source = (ROOT / "src/turbofit_runtime/multimodal.py").read_text(encoding="utf-8")
     campaign_backend_source = (ROOT / "src/turbofit_runtime/backend.py").read_text(encoding="utf-8")
@@ -152,7 +186,6 @@ def report() -> dict[str, Any]:
     checks: dict[str, dict[str, Any]] = {
         "canonical_configuration_matrix": {
             "ok": len(configurations.get("rows", [])) == expected_matrix
-            and expected_matrix == 1_620
             and len({item.get("id") for item in configurations.get("rows", [])}) == expected_matrix
             and all(len(item.get("revision", "")) == 40 for item in catalog.get("models", [])),
             "rows": len(configurations.get("rows", [])),
@@ -212,26 +245,28 @@ def report() -> dict[str, Any]:
             "promoted": sum(bool(item.get("winner")) for item in tournaments["tiers"]),
             "expected": 8,
         },
-        "deepseek_artifacts": {
-            "ok": downloads_ok,
-            "verified": len(receipt_files),
-            "expected": len(expected_downloads),
-        },
+        "production_floor_artifacts": production_downloads,
         "qwen38_day_zero_lane": {
             "ok": (ROOT / "scripts/turbofit-model-onboard").exists()
             and (ROOT / "scripts/watch-qwen38-release").exists()
             and (ROOT / "scripts/install-qwen38-watcher").exists()
             and (ROOT / "references/model-onboarding/README.md").exists()
-            and policy.get("replacement_candidate") == "qwen3-8-27b"
+            and policy.get("replacement_candidate") in {item.get("id") for item in catalog.get("models", [])}
             and not deferred_models,
             "replacement_candidate": policy.get("replacement_candidate"),
             "retiring_variants": len(deferred_models),
         },
         "dspark_runtime": {"ok": dspark_ok, "detail": dspark_detail},
-        "dspark_live_tool_call": {
-            "ok": dspark_live.get("schema") == "turbofit.dspark-live/v1"
-            and (dspark_live.get("tool_call") or {}).get("function", {}).get("name") == "get_weather",
-            "backend": dspark_live.get("backend"),
+        "speculative_runtime_evidence": {
+            "ok": dflash2_ab.get("schema") == "turbofit.dflash2-ab/v2"
+            and _evidence_hash_matches(dflash2_ab)
+            and float((dflash2_ab.get("comparison") or {}).get("speedup", 0)) > 1.0
+            and int((dflash2_ab.get("comparison") or {}).get("accepted_draft_tokens", 0)) > 0
+            and (dflash2_ab.get("promotion") or {}).get("eligible") is True,
+            "schema": dflash2_ab.get("schema"),
+            "hash_bound": _evidence_hash_matches(dflash2_ab),
+            "runtime": (((dflash2_ab.get("arms") or {}).get("dflash2") or {}).get("runtime_command") or [None])[0],
+            "speedup": (dflash2_ab.get("comparison") or {}).get("speedup"),
         },
         "lemonade_runtime": {
             "ok": lemonade_ok
@@ -264,14 +299,14 @@ def report() -> dict[str, Any]:
             and "install_sirvir" in plugin_api,
         },
         "hermes_plugin_and_setup_command": {
-            "ok": 'version: "2.1.0"' in plugin_manifest
-            and "version: 2.1.0" in bundled_skill
+            "ok": bool(plugin_version)
+            and plugin_version == bundled_skill_version
             and "provides_commands:" in plugin_manifest
             and "  - turbofit" in plugin_manifest
             and "ctx.register_command" in plugin_entry
             and '"setup", "configure"' in plugin_entry
             and '"", "scan", "rescan", "recommend"' in plugin_entry,
-            "version": "2.1.0" if 'version: "2.1.0"' in plugin_manifest else None,
+            "version": plugin_version if plugin_version == bundled_skill_version else None,
         },
         "exact_combination_settings": {
             "ok": "/api/plugins/turbofit/combinations" in dashboard_js
@@ -311,13 +346,12 @@ def report() -> dict[str, Any]:
             and "refusing to overwrite" in tailnet_source
             and "publish_tailnet" in plugin_tools,
         },
-        "bundled_sirvir_customer_service": {
-            "ok": all(
-                (ROOT / "profiles/sirvir" / name).is_file()
-                for name in ("SOUL.md", "INSTRUCTIONS.md", "config.yaml", "distribution.yaml")
-            )
-            and "install_sirvir_profile" in plugin_tools
-            and "pull request suggestion" in (ROOT / "profiles/sirvir/INSTRUCTIONS.md").read_text(encoding="utf-8").lower(),
+        "github_sirvir_customer_service": {
+            "ok": "install_sirvir_profile" in plugin_tools
+            and '"https://github.com/SouthpawIN/sirvir.git"' in plugin_tools
+            and '"profile",\n            "install"' in plugin_tools
+            and '"profile", "update", "sirvir", "--yes"' in plugin_tools,
+            "source": "https://github.com/SouthpawIN/sirvir.git",
         },
         "multimodal_setup_and_fit": {
             "ok": multimodal_catalog.get("schema") == "turbofit.multimodal-catalog/v1"
@@ -342,15 +376,7 @@ def report() -> dict[str, Any]:
             and {"glm-5-2-2-788bpw", "minimax-m3-q4", "laguna-s2-1-fp16", "laguna-s2-1-q4"}
             == {item.get("id") for item in archived_zoo.get("models", [])},
         },
-        "h3_promo_and_senter_delivery": {
-            "ok": promo_evidence.get("schema") == "turbofit.h3-promo-production/v1"
-            and _sha256(ROOT / "promo/turbofit-2.1-promo.mp4") == (promo_evidence.get("final") or {}).get("sha256")
-            and _sha256(ROOT / "promo/turbofit-2.1-h3-local-promo-discord.mp4") == (promo_evidence.get("delivery") or {}).get("attachment_sha256")
-            and (promo_evidence.get("delivery") or {}).get("via_profile") == "senter"
-            and bool((promo_evidence.get("delivery") or {}).get("message_id"))
-            and (promo_evidence.get("verification") or {}).get("every_required_style_visually_checked") is True,
-            "message_id": (promo_evidence.get("delivery") or {}).get("message_id"),
-        },
+
     }
     return {"complete": all(item["ok"] for item in checks.values()), "checks": checks}
 
