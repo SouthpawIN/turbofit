@@ -104,6 +104,12 @@ def register(ctx) -> None:
         args_hint="[scan|status|tiers|update|shift up|shift down|shift <model>|serve|setup]",
     )
     ctx.register_skill("turbofit", Path(__file__).parent / "SKILL.md")
+    try:
+        from .plugin_tools import activate_slash_commands
+
+        activate_slash_commands()
+    except Exception:
+        pass
 
 
 __all__ = ["register"]

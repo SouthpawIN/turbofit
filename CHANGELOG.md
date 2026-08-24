@@ -4,6 +4,7 @@
 
 ### Setup / troubleshooting
 
+- `/turbofit` now enables itself in every Hermes profile home (including Sirvir). Desktop was reporting `not a quick/plugin/bundle/skill command: turbofit` because standalone plugins are opt-in and profile sessions do not see `~/.hermes/plugins`.
 - `/turbofit update` pulls the plugin and Sirvir onto the current device and refreshes the Desktop surface.
 - `/turbofit shift up|down|<model>|intelligence|balanced|speed` walks the same measured ladder the healer uses.
 - `/turbofit serve` publishes `:8091` on Tailscale Serve so other tailnet devices can use the same local model server. Funnel is never used.

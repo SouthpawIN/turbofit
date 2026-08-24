@@ -7,7 +7,10 @@ import subprocess
 from pathlib import Path
 from typing import Any, Mapping
 
-import plugin_tools
+try:
+    from . import plugin_tools
+except ImportError:  # pytest and scripts import this as a top-level module
+    import plugin_tools
 
 TURBOFIT_GIT = "https://github.com/SouthpawIN/turbofit.git"
 PREFERENCE_ALIASES = {
@@ -49,6 +52,7 @@ def update_products(*, hermes_home: Path | None = None) -> dict[str, Any]:
     desktop = plugin_tools.install_desktop_plugin(hermes_home=hermes_home)
     sirvir = plugin_tools.install_sirvir_profile(hermes_home=hermes_home)
     models = plugin_tools.ensure_recommended_models()
+    slash = plugin_tools.activate_slash_commands(hermes_home=hermes_home)
     return {
         "ok": True,
         "updated": True,
@@ -59,6 +63,7 @@ def update_products(*, hermes_home: Path | None = None) -> dict[str, Any]:
         "desktop": desktop,
         "sirvir": sirvir,
         "models": models,
+        "slash_commands": slash,
         "message": (
             "Turbofit plugin, Desktop surface, and Sirvir updated. "
             "Reload Desktop plugins and open Turbofit. Start a new session for provider changes."

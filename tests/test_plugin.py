@@ -523,6 +523,28 @@ def test_plugin_registers_status_configure_and_slash_command() -> None:
     assert ctx.skills == [("turbofit", ROOT / "SKILL.md")]
 
 
+def test_slash_commands_are_enabled_in_sirvir_and_default_homes(tmp_path: Path) -> None:
+    import plugin_tools
+    import yaml
+
+    default = tmp_path / ".hermes"
+    sirvir = default / "profiles" / "sirvir"
+    (default / "plugins" / "turbofit").mkdir(parents=True)
+    sirvir.mkdir(parents=True)
+    (sirvir / "config.yaml").write_text("model:\n  provider: custom:turbofit\n", encoding="utf-8")
+    (default / "plugins" / "turbofit" / "plugin.yaml").write_text("name: turbofit\n", encoding="utf-8")
+
+    result = plugin_tools.activate_slash_commands(hermes_home=sirvir, plugin_root=default / "plugins" / "turbofit")
+
+    default_config = yaml.safe_load((default / "config.yaml").read_text(encoding="utf-8"))
+    sirvir_config = yaml.safe_load((sirvir / "config.yaml").read_text(encoding="utf-8"))
+    assert "turbofit" in default_config["plugins"]["enabled"]
+    assert "turbofit" in sirvir_config["plugins"]["enabled"]
+    assert (sirvir / "plugins" / "turbofit" / "plugin.yaml").is_file()
+    assert (sirvir / "skills" / "turbofit" / "SKILL.md").is_file()
+    assert result["homes"] >= 2
+
+
 def test_combination_snapshot_requests_portable_fit_lanes(monkeypatch) -> None:
     import plugin_tools
     monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})

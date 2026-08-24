@@ -57,6 +57,8 @@ hermes plugins install --enable https://github.com/SouthpawIN/Turbofit.git
 
 **Sirvir handles install and setup.** That is its job. After the plugin is present, start Sirvir and ask it to install Turbofit, download recommended models, and verify a real local completion. A bootstrap fallback exists only so Sirvir can talk while `:8091` is coming up.
 
+`/turbofit` is a **plugin** command. Hermes Desktop profile sessions (including Sirvir) only load plugins from that profile's `plugins/` and `plugins.enabled`. Install still writes the default `~/.hermes` home, so a Sirvir-only Desktop session used to report `not a quick/plugin/bundle/skill command: turbofit`. Setup and update now copy/link the plugin into every Hermes profile and add `turbofit` to each `plugins.enabled`. Restart Desktop or start a new session after install/update.
+
 ```text
 /turbofit status
 /turbofit setup
