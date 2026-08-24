@@ -49,6 +49,7 @@ def test_readme_separates_hermes_gateway_from_turbofit_8091() -> None:
     assert "docs/windows-native-install.md" in readme
     assert "## Tailscale" in readme
     assert "/turbofit serve" in readme
+    assert "/turbofit smoke" in readme
     assert "Funnel is never used" in readme or "never uses Funnel" in readme
     assert "never from Sirvir" not in skill
     assert "Sirvir handles install" in readme or "Sirvir handles install and setup" in readme

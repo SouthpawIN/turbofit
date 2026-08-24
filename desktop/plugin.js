@@ -105,6 +105,7 @@ function TurbofitPage() {
   const [providerHttpsPort, setProviderHttpsPort] = useState('9443')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
+  const [smoke, setSmoke] = useState(null)
 
   const refresh = useCallback(async () => {
     setBusy(true)
@@ -244,6 +245,24 @@ function TurbofitPage() {
     }
   }
 
+  async function runSmoke() {
+    setBusy(true)
+    setMessage('Running local-runtime-smoke-v1 against 127.0.0.1:8091…')
+    setSmoke(null)
+    try {
+      const result = await api.rest('/smoke', {
+        method: 'POST',
+        body: { timeout_seconds: 300 },
+      })
+      setSmoke(result)
+      setMessage(result.message || (result.ok ? 'Local smoke passed. Nothing was promoted.' : 'Local smoke failed. Nothing was promoted.'))
+    } catch (error) {
+      setMessage(String(error && error.message || error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const choices = ((recommendations && recommendations.recommendations) || {})[preference] || []
   const compatibleLanes = (recommendations && recommendations.compatible_lanes) || []
   const hardware = (recommendations && recommendations.hardware) || {}
@@ -277,6 +296,7 @@ function TurbofitPage() {
           jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: () => runShift(preference), children: `Shift ${preference}` }),
           jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runUpdate, children: 'Update Turbofit + Sirvir' }),
           jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runServe, children: 'Serve on Tailscale' }),
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runSmoke, children: 'Smoke local runtime' }),
         ],
       }),
       jsxs('div', {
@@ -531,6 +551,13 @@ function TurbofitPage() {
             jsx('div', { style: { color: 'var(--ui-text-quaternary)' }, children: item.fit_reason }),
           ],
         })),
+      ] }) : null,
+      smoke ? jsxs('section', { className: 'flex flex-col gap-2', children: [
+        jsx('h2', { className: 'font-semibold', children: 'Local smoke results' }),
+        jsx('p', { style: { color: 'var(--ui-text-tertiary)' }, children: 'Health check of the currently serving loopback gateway. This is not a promotion benchmark and does not rank models.' }),
+        jsx('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '8px' }, children: `${smoke.status || 'unknown'} · suite ${smoke.suite || 'local-runtime-smoke-v1'}` }),
+        smoke.evidence_path ? jsx('div', { style: { color: 'var(--ui-text-quaternary)' }, children: smoke.evidence_path }) : null,
+        (smoke.resource_warnings || []).length ? jsx('div', { style: { color: 'var(--ui-text-tertiary)' }, children: `Warnings: ${(smoke.resource_warnings || []).join(', ')}` }) : null,
       ] }) : null,
       jsx('div', {
         style: { color: 'var(--ui-text-quaternary)' },

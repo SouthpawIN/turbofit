@@ -75,6 +75,7 @@ hermes plugins install --enable https://github.com/SouthpawIN/Turbofit.git
 /turbofit shift intelligence
 /turbofit serve           # publish :8091 on your tailnet
 /turbofit serve status
+/turbofit smoke           # loopback health of the current local runtime; not a promotion bench
 ```
 
 ```bash

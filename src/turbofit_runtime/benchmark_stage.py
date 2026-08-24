@@ -158,6 +158,7 @@ def run_benchmark(
     process_id: int | None = None, timeout_seconds: float = 900.0,
     artifact_sha256: str | None = None,
     request_options: Mapping[str, Any] | None = None,
+    require_gpu_samples: bool = True,
 ) -> dict[str, Any]:
     cases: list[dict[str, Any]] = []
     all_samples: list[ResourceSample] = []
@@ -196,8 +197,12 @@ def run_benchmark(
     request_failures = [case["id"] for case in cases if case["error"] is not None]
     validator_failures = [case["id"] for case in cases if case["passed"] is False]
     resource_failures = []
+    resource_warnings = []
     if not summary["peak_gpu_memory_used_mib"]:
-        resource_failures.append("gpu-memory-sampling-unavailable")
+        if require_gpu_samples:
+            resource_failures.append("gpu-memory-sampling-unavailable")
+        else:
+            resource_warnings.append("gpu-memory-sampling-unavailable")
     evidence: dict[str, Any] = {
         "schema": EVIDENCE_SCHEMA,
         "recorded_at": datetime.now(timezone.utc).isoformat(),
@@ -213,6 +218,7 @@ def run_benchmark(
         "request_failures": request_failures,
         "validator_failures": validator_failures,
         "resource_failures": resource_failures,
+        "resource_warnings": resource_warnings,
         "summary": summary,
         "cases": cases,
         "resource_samples": [sample.__dict__ for sample in compacted_samples],

@@ -310,7 +310,7 @@ def probe_hardware(
             devices = parse_rocm_smi_json(runner(list(ROCM_INVENTORY_QUERY)))
         except (FileNotFoundError, OSError, ValueError, subprocess.SubprocessError):
             devices = ()
-    if not devices and normalized_os == "windows":
+    if not devices and normalized_os in {"windows", "linux"}:
         try:
             devices = parse_vulkaninfo_text(runner(list(VULKAN_INVENTORY_QUERY)))
         except (FileNotFoundError, OSError, ValueError, subprocess.SubprocessError):
@@ -341,6 +341,13 @@ def probe_hardware(
     )
 
 
+def _command_timeout(command: list[str]) -> int:
+    name = Path(command[0]).name.lower() if command else ""
+    if name in {"vulkaninfo", "vulkaninfo.exe"}:
+        return 30
+    return 5
+
+
 def _run_command(
     command: list[str],
     *,
@@ -348,8 +355,9 @@ def _run_command(
     compatibility_library_dir: Callable[[], str | None] | None = None,
 ) -> str:
     run = check_output or subprocess.check_output
+    timeout = _command_timeout(command)
     try:
-        return run(command, text=True, timeout=5, stderr=subprocess.PIPE)
+        return run(command, text=True, timeout=timeout, stderr=subprocess.PIPE)
     except subprocess.CalledProcessError:
         if not command or Path(command[0]).name != "nvidia-smi":
             raise
@@ -365,7 +373,7 @@ def _run_command(
         return run(
             command,
             text=True,
-            timeout=5,
+            timeout=timeout,
             stderr=subprocess.PIPE,
             env=env,
         )
