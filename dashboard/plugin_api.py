@@ -24,7 +24,7 @@ from plugin_tools import (  # noqa: E402
     recommendation_snapshot,
     status_snapshot,
 )
-from product_ops import serve_status, serve_tailnet, shift_configuration, update_products  # noqa: E402
+from product_ops import serve_status, serve_tailnet, shift_configuration, smoke_local_runtime, update_products  # noqa: E402
 
 
 router = APIRouter()
@@ -308,6 +308,18 @@ async def post_update() -> dict[str, Any]:
         return await asyncio.to_thread(update_products)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/smoke")
+async def post_smoke(body: dict[str, Any] | None = None) -> dict[str, Any]:
+    payload = body or {}
+    timeout_seconds = payload.get("timeout_seconds", 300.0)
+    try:
+        return await asyncio.to_thread(smoke_local_runtime, timeout_seconds=timeout_seconds)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception:
+        raise HTTPException(status_code=503, detail="local smoke failed; inspect Turbofit logs") from None
 
 
 @router.post("/shift")

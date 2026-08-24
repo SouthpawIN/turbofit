@@ -147,6 +147,10 @@ def test_slash_update_and_shift_are_wired(monkeypatch) -> None:
     assert json.loads(plugin._slash_turbofit("shift bonsai"))["profile"] == "bonsai"
     monkeypatch.setattr(plugin, "serve_tailnet", lambda: {"ok": True, "served": True, "provider_base_url": "https://host.ts.net:9443/v1"})
     assert json.loads(plugin._slash_turbofit("serve"))["served"] is True
+    monkeypatch.setattr(plugin, "smoke_local_runtime", lambda: {"ok": True, "promoted": False, "suite": "local-runtime-smoke-v1"})
+    smoke = json.loads(plugin._slash_turbofit("smoke"))
+    assert smoke["promoted"] is False
+    assert smoke["suite"] == "local-runtime-smoke-v1"
 
 
 def test_serve_tailnet_publishes_provider_url(monkeypatch) -> None:
