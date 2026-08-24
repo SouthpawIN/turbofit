@@ -21,6 +21,7 @@ distribution_owned:
   - schemas.py
   - plugin_tools.py
   - product_ops.py
+  - after-install.md
   - dashboard/
   - desktop/
   - SKILL.md

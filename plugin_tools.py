@@ -119,18 +119,116 @@ def install_desktop_plugin(*, hermes_home: Path | None = None) -> dict[str, Any]
     updated = target.exists()
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, target)
+    activation = activate_slash_commands(hermes_home=root)
     return {
         "installed": True,
         "updated": updated,
         "plugin": "turbofit",
         "path": str(target),
+        "slash_commands": activation,
     }
+
+
+def _default_hermes_home(hermes_home: Path) -> Path:
+    if hermes_home.parent.name == "profiles":
+        return hermes_home.parent.parent
+    return hermes_home
+
+
+def hermes_homes(hermes_home: Path | None = None) -> list[Path]:
+    """Return the default Hermes home plus every named profile home."""
+    current = Path(hermes_home or os.getenv("HERMES_HOME") or Path.home() / ".hermes")
+    default = _default_hermes_home(current)
+    homes = [default]
+    profiles = default / "profiles"
+    if profiles.is_dir():
+        homes.extend(sorted(path for path in profiles.iterdir() if path.is_dir()))
+    if current not in homes:
+        homes.append(current)
+    return homes
+
+
+def _enable_plugin(config_path: Path) -> bool:
+    try:
+        payload = yaml.safe_load(config_path.read_text(encoding="utf-8")) if config_path.is_file() else {}
+    except (OSError, ValueError):
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+    plugins = payload.get("plugins")
+    if not isinstance(plugins, dict):
+        plugins = {}
+        payload["plugins"] = plugins
+    enabled = plugins.get("enabled")
+    if not isinstance(enabled, list):
+        enabled = []
+        plugins["enabled"] = enabled
+    names = {str(item).strip().lower() for item in enabled}
+    if "turbofit" in names or "user/turbofit" in names:
+        return False
+    enabled.append("turbofit")
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    return True
+
+
+def _publish_path(source: Path, destination: Path) -> str:
+    if destination.exists() or destination.is_symlink():
+        return "exists"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        destination.symlink_to(source, target_is_directory=source.is_dir())
+        return "symlink"
+    except OSError:
+        pass
+    if os.name == "nt":
+        result = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(destination), str(source)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0:
+            return "junction"
+    if source.is_dir():
+        shutil.copytree(source, destination)
+    else:
+        shutil.copy2(source, destination)
+    return "copy"
+
+
+def activate_slash_commands(
+    *,
+    hermes_home: Path | None = None,
+    plugin_root: Path | None = None,
+) -> dict[str, Any]:
+    """Enable /turbofit in every Hermes home, including Sirvir.
+
+    Desktop profile sessions only scan that profile's plugins/ and
+    plugins.enabled. Installing into ~/.hermes alone leaves /turbofit
+    unknown in Sirvir with 'not a quick/plugin/bundle/skill command'.
+    """
+    source = Path(plugin_root or PLUGIN_ROOT).resolve()
+    skill = PLUGIN_ROOT / "skills" / "turbofit"
+    homes = hermes_homes(hermes_home)
+    published = []
+    for home in homes:
+        plugin_dest = home / "plugins" / "turbofit"
+        skill_dest = home / "skills" / "turbofit"
+        published.append({
+            "home": str(home),
+            "enabled": _enable_plugin(home / "config.yaml"),
+            "plugin": _publish_path(source, plugin_dest) if plugin_dest.resolve() != source else "self",
+            "skill": _publish_path(skill, skill_dest) if skill.is_dir() else "missing-skill",
+        })
+    return {"ok": True, "homes": len(homes), "published": published}
 
 
 def launch_setup_screen() -> dict[str, Any]:
     """Refresh the Hermes Desktop Turbofit page. Dashboard is deprecated."""
     desktop = install_desktop_plugin()
     models = ensure_recommended_models()
+    slash = activate_slash_commands()
     return {
         "launched": True,
         "surface": "desktop",
@@ -138,6 +236,7 @@ def launch_setup_screen() -> dict[str, Any]:
         "page": "Turbofit",
         "desktop": desktop,
         "models": models,
+        "slash_commands": slash,
         "message": "Recommended models are downloading or verified. Open Hermes Desktop → Turbofit, or ask Sirvir to finish setup.",
     }
 
