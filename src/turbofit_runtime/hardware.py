@@ -27,6 +27,7 @@ ROCM_INVENTORY_QUERY = [
     "--showbus",
     "--json",
 ]
+VULKAN_INVENTORY_QUERY = ["vulkaninfo"]
 
 
 @dataclass(frozen=True)
@@ -242,6 +243,51 @@ def parse_rocm_smi_json(raw: str) -> tuple[AcceleratorDevice, ...]:
     return tuple(sorted(devices, key=lambda item: (item.bus_id or "", item.index)))
 
 
+def parse_vulkaninfo_text(raw: str) -> tuple[AcceleratorDevice, ...]:
+    """Extract stable Vulkan device identity and dedicated heap capacity."""
+    blocks = re.finditer(
+        r"^GPU(?P<index>\d+):\s*$\n(?P<body>.*?)(?=^GPU\d+:\s*$|\Z)",
+        raw,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    devices: list[AcceleratorDevice] = []
+    vendor_names = {"0x1002": "amd", "0x10de": "nvidia", "0x8086": "intel"}
+    for block in blocks:
+        body = block.group("body")
+        name_match = re.search(r"^\s*deviceName\s*=\s*(.+)$", body, re.MULTILINE)
+        uuid_match = re.search(r"^\s*deviceUUID\s*=\s*(\S+)$", body, re.MULTILINE)
+        vendor_match = re.search(r"^\s*vendorID\s*=\s*(0x[0-9a-fA-F]+)$", body, re.MULTILINE)
+        heaps_match = re.search(r"^\s*memoryHeaps:.*?\n(?P<heaps>.*?)(?=^\s*memoryTypes:)", body, re.MULTILINE | re.DOTALL)
+        if not (name_match and uuid_match and vendor_match and heaps_match):
+            continue
+        device_local_bytes = 0
+        for heap in re.finditer(
+            r"^\s*memoryHeaps\[\d+\]:\s*$\n(?P<body>.*?)(?=^\s*memoryHeaps\[\d+\]:|\Z)",
+            heaps_match.group("heaps"),
+            re.MULTILINE | re.DOTALL,
+        ):
+            heap_body = heap.group("body")
+            size_match = re.search(r"^\s*size\s*=\s*(\d+)", heap_body, re.MULTILINE)
+            if size_match and "MEMORY_HEAP_DEVICE_LOCAL_BIT" in heap_body:
+                device_local_bytes += int(size_match.group(1))
+        if device_local_bytes <= 0:
+            continue
+        vendor_id = vendor_match.group(1).lower()
+        devices.append(AcceleratorDevice(
+            index=int(block.group("index")),
+            uuid=uuid_match.group(1),
+            name=name_match.group(1).strip(),
+            vendor=vendor_names.get(vendor_id, "vulkan"),
+            backend="vulkan",
+            memory_total_mb=device_local_bytes // (1024 * 1024),
+            compute_capability=None,
+            bus_id=None,
+        ))
+    if not devices:
+        raise ValueError("no Vulkan devices with dedicated memory heaps")
+    return tuple(sorted(devices, key=lambda item: item.index))
+
+
 def probe_hardware(
     *,
     command_runner: Callable[[list[str]], str] | None = None,
@@ -262,6 +308,11 @@ def probe_hardware(
     if not devices and normalized_os == "linux":
         try:
             devices = parse_rocm_smi_json(runner(list(ROCM_INVENTORY_QUERY)))
+        except (FileNotFoundError, OSError, ValueError, subprocess.SubprocessError):
+            devices = ()
+    if not devices and normalized_os == "windows":
+        try:
+            devices = parse_vulkaninfo_text(runner(list(VULKAN_INVENTORY_QUERY)))
         except (FileNotFoundError, OSError, ValueError, subprocess.SubprocessError):
             devices = ()
     if not devices and normalized_os == "darwin" and normalized_architecture in {"arm64", "aarch64"}:

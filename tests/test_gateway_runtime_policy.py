@@ -26,6 +26,33 @@ def test_gateway_and_controller_share_the_same_default_route_state() -> None:
     assert GATEWAY.RUNTIME_STATE.endswith("/.local/state/turbofit/runtime-state.json")
 
 
+def test_gateway_reads_utf8_bom_runtime_state(tmp_path, monkeypatch) -> None:
+    state = tmp_path / "runtime-state.json"
+    state.write_bytes(
+        b"\xef\xbb\xbf"
+        + json.dumps(
+            {
+                "active": "bom-profile",
+                "routes": {
+                    "main": {
+                        "kind": "local",
+                        "alias": "main",
+                        "port": 8080,
+                        "context_length": 131072,
+                    },
+                    "aux": {"kind": "shared-main", "context_length": 131072},
+                },
+            }
+        ).encode()
+    )
+    monkeypatch.setattr(GATEWAY, "RUNTIME_STATE", str(state))
+    monkeypatch.setattr(GATEWAY, "backend_state", lambda *_args, **_kwargs: "ready")
+
+    assert GATEWAY.active_profile() == "bom-profile"
+    assert GATEWAY.active_context_length() == 131072
+    assert GATEWAY.runtime_override("main")["alias"] == "main"
+
+
 def test_nous_api_auth_uses_hermes_refresh_aware_runtime_credentials(monkeypatch) -> None:
     package = types.ModuleType("hermes_cli")
     package.__path__ = []

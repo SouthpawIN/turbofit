@@ -187,7 +187,7 @@ def active_context_length(default=65536):
     """
     stored = []
     try:
-        with open(RUNTIME_STATE) as f:
+        with open(RUNTIME_STATE, encoding="utf-8-sig") as f:
             state = json.load(f)
         routes = state.get("routes") or {}
         for role in ("main", "aux"):
@@ -239,7 +239,7 @@ def parse_provider_model(model):
 
 def active_profile():
     try:
-        with open(RUNTIME_STATE) as f:
+        with open(RUNTIME_STATE, encoding="utf-8-sig") as f:
             return (json.load(f).get("active") or "").strip() or None
     except Exception:
         return None
@@ -368,7 +368,7 @@ def runtime_override(role):
     without mutating the global catalog between swaps.
     """
     try:
-        with open(RUNTIME_STATE) as f:
+        with open(RUNTIME_STATE, encoding="utf-8-sig") as f:
             state = json.load(f)
     except Exception:
         return None
