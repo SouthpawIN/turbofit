@@ -18,7 +18,13 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from turbofit_runtime.recommend import priority_key  # noqa: E402
-from turbofit_runtime.allowed_lineup import is_allowed_aux, is_allowed_main, is_banned  # noqa: E402
+from turbofit_runtime.allowed_lineup import (  # noqa: E402
+    is_allowed_aux,
+    is_allowed_main,
+    is_banned,
+    main_matches_recommendable,
+    recommendable_mains_for_hardware,
+)
 from turbofit_runtime.hardware import HardwareFingerprint, probe_hardware  # noqa: E402
 from turbofit_runtime.catalog_campaign import build_configuration_index  # noqa: E402
 from turbofit_runtime.executor import capture_physical_hardware, production_recipe_sha256  # noqa: E402
@@ -358,6 +364,7 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
         require_live_fingerprint=not portable_fit,
     )
     hardware = probe_hardware()
+    recommendable = recommendable_mains_for_hardware(hardware)
     physical_budgets, shared_memory = hardware_memory_budgets(hardware)
     live_nvidia = nvidia_memory() if args.live and "cuda" in hardware.backends else {}
     available_budgets = {
@@ -374,6 +381,8 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
         if is_banned(main) or is_banned(aux):
             continue
         if main and not is_allowed_main(main):
+            continue
+        if main and not main_matches_recommendable(main, recommendable):
             continue
         if aux and aux != "auto" and not is_allowed_aux(aux):
             continue
