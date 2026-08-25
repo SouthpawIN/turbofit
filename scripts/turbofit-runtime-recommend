@@ -10,7 +10,7 @@ import subprocess
 import sys
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -22,9 +22,10 @@ from turbofit_runtime.allowed_lineup import (  # noqa: E402
     is_allowed_aux,
     is_allowed_main,
     is_banned,
+    load_measured_speeds,
     main_matches_recommendable,
     recommendable_mains_for_hardware,
-    speed_family_rank,
+    speed_rank_value,
 )
 from turbofit_runtime.hardware import HardwareFingerprint, probe_hardware  # noqa: E402
 from turbofit_runtime.catalog_campaign import build_configuration_index  # noqa: E402
@@ -337,9 +338,17 @@ class Recommendation:
     intelligence_evidence: str | None = None
 
 
-def recommendation_sort_key(item: Recommendation, preference: str) -> tuple[Any, ...]:
+def recommendation_sort_key(item: Recommendation, preference: str, measured_speeds: Mapping[str, Mapping[str, float]] | None = None) -> tuple[Any, ...]:
     if preference == "speed":
-        return (item.fit, speed_family_rank(item.main), item.min_tps, item.context, item.score)
+        # Evidence-first: measured decode TPS outranks the alias family prior,
+        # so a dense 27B that benchmarks faster than an MoE wins the fast lane.
+        return (
+            item.fit,
+            speed_rank_value(item.main, measured_speeds),
+            item.min_tps,
+            item.context,
+            item.score,
+        )
     if preference == "intelligence":
         return (
             item.fit,
@@ -365,6 +374,7 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
         require_live_fingerprint=not portable_fit,
     )
     hardware = probe_hardware()
+    measured_speeds = load_measured_speeds(getattr(args, "speed_rankings", None))
     recommendable = recommendable_mains_for_hardware(hardware)
     physical_budgets, shared_memory = hardware_memory_budgets(hardware)
     live_nvidia = nvidia_memory() if args.live and "cuda" in hardware.backends else {}
@@ -383,7 +393,11 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
             continue
         if main and not is_allowed_main(main):
             continue
-        if main and not main_matches_recommendable(main, recommendable):
+        # The recommendable-hardware gate protects primary recommendations
+        # (never host-spill a dense 27B). Portable-fit lanes are the labeled
+        # exception: benchmark-required safety candidates ordered by smallest
+        # measured residency, so they bypass the primary-lane filter.
+        if main and not portable_fit and not main_matches_recommendable(main, recommendable):
             continue
         if aux and aux != "auto" and not is_allowed_aux(aux):
             continue
@@ -460,7 +474,7 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
     ranked.sort(key=lambda item: item.profile)
     return sorted(
         ranked,
-        key=lambda item: recommendation_sort_key(item, args.prefer),
+        key=lambda item: recommendation_sort_key(item, args.prefer, measured_speeds),
         reverse=True,
     )
 
@@ -482,6 +496,12 @@ def main() -> int:
     parser.add_argument("--live", action="store_true", help="fit against current free VRAM instead of clear-card total")
     parser.add_argument("--fit-only", action="store_true")
     parser.add_argument("--prefer", choices=("intelligence", "balanced", "speed", "context"), default="balanced")
+    parser.add_argument(
+        "--speed-rankings",
+        type=Path,
+        default=None,
+        help="measured alias TPS evidence (default: references/speed-rankings.json when present)",
+    )
     parser.add_argument("--safety-floor-mb", type=int, default=SAFETY_FLOOR_MB)
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--limit", type=int, default=20)

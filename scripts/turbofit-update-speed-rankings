@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""Refresh references/speed-rankings.json from physically validated evidence.
+
+Sources, in authority order:
+1. references/hardware-tier-report.json — tiers with a measured winner carry
+   the winner's measured_tps (physically demonstrated on that exact topology).
+2. Nothing else. Unmeasured aliases are intentionally absent: recommenders
+   fall back to documented family priors for them, never to stale numbers.
+
+Idempotent and deterministic: same evidence files produce identical output.
+"""
+from __future__ import annotations
+
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT = ROOT / "references/speed-rankings.json"
+SCHEMA = "turbofit.speed-rankings/v1"
+
+
+def main() -> int:
+    records: dict[str, dict[str, object]] = {}
+    report_path = ROOT / "references/hardware-tier-report.json"
+    try:
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        report = {}
+
+    def walk(node: object, tier_id: object = None, topology: object = None) -> None:
+        if isinstance(node, dict):
+            if "measured_winner" not in node and node.get("id") is not None:
+                tier_id = node.get("id")
+            if node.get("topology") is not None:
+                topology = node.get("topology")
+            winner = node.get("measured_winner")
+            if isinstance(winner, dict) and isinstance(winner.get("main"), dict):
+                alias = str(winner["main"].get("id") or "")
+                tps = winner.get("measured_tps")
+                if (
+                    alias
+                    and not isinstance(tps, bool)
+                    and isinstance(tps, (int, float))
+                    and tps > 0
+                    and alias not in records  # first tier wins; tiers are ordered small → large
+                ):
+                    records[alias] = {
+                        "alias": alias,
+                        "tps": round(float(tps), 2),
+                        "context": winner.get("context"),
+                        "evidence": True,
+                        "source_evidence_sha256": ((winner.get("fit") or {}).get("evidence")),
+                        "hardware_topology": topology,
+                        "source": f"hardware-tier-report/{tier_id}/recommendations.measured_winner",
+                    }
+            for value in node.values():
+                walk(value, tier_id, topology)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value, tier_id, topology)
+
+    walk(report)
+
+    payload = {
+        "schema": SCHEMA,
+        "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "policy": (
+            "Speed preference ranks by measured decode TPS when present; family "
+            "priors apply only to aliases without measurements. Regenerate with "
+            "scripts/turbofit-update-speed-rankings."
+        ),
+        "records": sorted(records.values(), key=lambda item: str(item["alias"])),
+    }
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    temporary = OUTPUT.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(payload, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+    temporary.replace(OUTPUT)
+    print(json.dumps({"updated": OUTPUT.name, "aliases": len(records)}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -98,6 +98,57 @@ class CampaignBackend:
             time.sleep(0.5)
         raise RuntimeError(f"port {port} did not become reusable within {timeout_s:.0f}s")
 
+    # Campaign measurement ports are reserved exclusively for campaign model
+    # processes. A previous attempt that died without running its finally block
+    # (cron SIGKILL, power loss, teardown crash) leaves an orphaned llama-server
+    # bound to one of these ports, and every later stage would then fail with
+    # "port did not become reusable" forever. Reap them by ownership evidence:
+    # the command must be a Turbofit-managed runtime binary pinned to a campaign
+    # port. Production models live on different ports and never match.
+    CAMPAIGN_PORTS = frozenset({11605, 11610})
+
+    def _reap_stale_campaign_processes(self) -> list[int]:
+        reaped: list[int] = []
+        for proc_dir in Path("/proc").iterdir():
+            if not proc_dir.name.isdigit():
+                continue
+            try:
+                cmdline = (proc_dir / "cmdline").read_bytes().split(b"\0")
+                parts = [part.decode(errors="replace") for part in cmdline if part]
+            except OSError:
+                continue
+            if len(parts) < 2 or "llama-server" not in Path(parts[0]).name:
+                continue
+            executable = parts[0]
+            if ".local/share/turbofit/runtimes" not in executable:
+                continue
+            ports = {
+                parts[index + 1]
+                for index, token in enumerate(parts[:-1])
+                if token == "--port" and parts[index + 1].isdigit()
+            }
+            if not ports or not ports <= {str(port) for port in self.CAMPAIGN_PORTS}:
+                continue
+            pid = int(proc_dir.name)
+            try:
+                os.killpg(pid, signal.SIGTERM)
+            except ProcessLookupError:
+                continue
+            deadline = time.monotonic() + 30
+            while time.monotonic() < deadline:
+                try:
+                    os.kill(pid, 0)
+                except ProcessLookupError:
+                    break
+                time.sleep(0.25)
+            else:
+                try:
+                    os.killpg(pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            reaped.append(pid)
+        return reaped
+
 
     def _start_monitor(self) -> None:
         if self._monitor_thread and self._monitor_thread.is_alive():
@@ -228,6 +279,9 @@ class CampaignBackend:
     def start(self, component: ResolvedComponent) -> dict[str, Any]:
         self._suspend_production()
         try:
+            reaped = self._reap_stale_campaign_processes()
+            if reaped:
+                print(json.dumps({"campaign_reaped_stale_pids": reaped}), flush=True)
             self._wait_port_reusable(component.port)
             self._start_monitor()
             self.result_dir.mkdir(parents=True, exist_ok=True)

@@ -14,8 +14,11 @@ candidate only: custom SGLang kernels, no llama.cpp recipe, no TurboFit TPS.
 """
 from __future__ import annotations
 
+import json
+import math
 import re
-from typing import Iterable
+from pathlib import Path
+from typing import Iterable, Mapping
 
 ALLOWED_MAIN = (
     "maple-preview-tq2",
@@ -121,6 +124,14 @@ def speed_main_for_vram_gb(vram_gb: float) -> str:
 
 
 def speed_family_rank(alias: str) -> int:
+    """Fallback speed prior used only when no measured TPS evidence exists.
+
+    Ordering follows measured Turbofit decode throughput: Ornith 35A3B MoE
+    variants and their MTP builds out-decode dense Qwen 3.8 27B on the same
+    hardware; Maple (A1B) is fastest per byte but ranks below Ornith MTP
+    builds. When `references/speed-rankings.json` carries a measured TPS for
+    the alias, that number wins over this table — benchmarks, not names.
+    """
     token = normalize(alias)
     if "oq8e" in token:
         return 50
@@ -133,6 +144,56 @@ def speed_family_rank(alias: str) -> int:
     if "unleashed" in token or token.startswith("qwen3-8-27b"):
         return 5
     return 10
+
+
+SPEED_RANKINGS_PATH = Path(__file__).resolve().parents[2] / "references" / "speed-rankings.json"
+
+
+def load_measured_speeds(
+    path: str | Path | None = None,
+) -> dict[str, dict[str, float]]:
+    """Load alias → {tps, evidence} from the measured speed-ranking file.
+
+    Returns {} when the file is absent or malformed; callers must treat an
+    empty mapping as "no evidence" and fall back to family priors.
+    """
+    target = Path(path) if path is not None else SPEED_RANKINGS_PATH
+    try:
+        payload = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    records = payload.get("records") if isinstance(payload, Mapping) else None
+    if not isinstance(records, list):
+        return {}
+    speeds: dict[str, dict[str, float]] = {}
+    for record in records:
+        if not isinstance(record, Mapping):
+            continue
+        alias = record.get("alias")
+        tps = record.get("tps")
+        if not isinstance(alias, str) or not alias or isinstance(tps, bool) or not isinstance(tps, (int, float)):
+            continue
+        if record.get("evidence") is not True:
+            continue  # unmeasured rows must never masquerade as evidence
+        if not math.isfinite(float(tps)) or tps <= 0:
+            continue
+        speeds[normalize(alias)] = {"tps": float(tps)}
+    return speeds
+
+
+def speed_rank_value(alias: str, measured: Mapping[str, Mapping[str, float]] | None = None) -> tuple[int, float]:
+    """Sort value for a descending sort: faster candidates get LARGER keys.
+
+    Returns (measured_flag, value): measured TPS beats any prior outright
+    (benchmarks outrank heuristics in BOTH directions); within each group,
+    bigger value = faster.
+    """
+    token = normalize(alias)
+    if measured and token in measured:
+        entry = measured[token]
+        return (1, round(entry["tps"], 1))
+    return (0, float(speed_family_rank(alias)))
+
 
 
 def shared_main_for_total_memory_gb(total_memory_gb: float) -> str:

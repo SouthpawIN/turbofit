@@ -87,6 +87,52 @@ class CampaignRunner:
         self.clear_ceilings_mb = clear_ceilings_mb or {0: 1024, 1: 1024}
         self.deferred_row_ids = deferred_row_ids or frozenset()
 
+    def _tune_backoff(self, state: dict) -> dict:
+        """Self-tuning retry pressure (GitRadar threshold pattern).
+
+        Looks at the most recent terminal outcomes across all rows: when
+        failures dominate recent attempts (>= 60% over the last 10), the
+        backoff ladder stretches so nightly runs stop burning attempts on a
+        broken environment; when successes dominate (< 20% failure), any
+        stretch decays 25% back toward 1.0. The decision and its inputs are
+        persisted under ``state["self_tuning"]`` for inspection.
+        """
+        rows = state.get("rows", {})
+        outcomes: list[str] = []
+        for record in sorted(
+            rows.values(),
+            key=lambda item: str(item.get("updated_at") or ""),
+            reverse=True,
+        ):
+            status = record.get("status")
+            if status in {"success", "failed"}:
+                outcomes.append("success" if status == "success" else "failed")
+            if len(outcomes) >= 10:
+                break
+        window = outcomes[:10]
+        tuning = state.setdefault("self_tuning", {
+            "schema": "turbofit.campaign-self-tuning/v1",
+            "failure_rate": 0.0,
+            "backoff_scale": 1.0,
+            "history": [],
+        })
+        if not window:
+            return tuning
+        failure_rate = window.count("failed") / len(window)
+        scale = float(tuning.get("backoff_scale") or 1.0)
+        previous_rate = float(tuning.get("failure_rate") or 0.0)
+        if failure_rate >= 0.6:
+            scale = min(8.0, scale * 2.0)
+        elif failure_rate < 0.2 and scale > 1.0:
+            scale = max(1.0, scale * 0.75)
+        tuning.update({
+            "failure_rate": round(failure_rate, 3),
+            "backoff_scale": round(scale, 3),
+            "window": len(window),
+            "previous_failure_rate": round(previous_rate, 3),
+        })
+        return tuning
+
     def _load_state(self) -> dict:
         try:
             state = json.loads(self.state_path.read_text())
@@ -183,9 +229,14 @@ class CampaignRunner:
             "recipe_sha256": recipe_sha256,
         }
         if status == "failed":
-            delay_seconds = 0 if attempts == 0 else min(
+            tuning = self._tune_backoff(state)
+            base_delay = 0 if attempts == 0 else min(
                 21_600, 30 * (2 ** min(attempts - 1, 10))
             )
+            # Self-tuning (GitRadar pattern): sustained failure-heavy stretches
+            # stretch the retry ladder instead of burning nightly attempts;
+            # healthy stretches decay the stretch factor back toward 1.
+            delay_seconds = int(base_delay * tuning["backoff_scale"])
             state["rows"][row.id].update({
                 "failure_class": "retryable-runtime",
                 "next_retry_at": (

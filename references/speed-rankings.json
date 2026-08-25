@@ -1,0 +1,23 @@
+{
+  "schema": "turbofit.speed-rankings/v1",
+  "updated_at": "2026-08-25T21:55:24+00:00",
+  "policy": "Speed preference ranks by measured decode TPS when present; family priors apply only to aliases without measurements. Regenerate with scripts/turbofit-update-speed-rankings.",
+  "records": [
+    {
+      "alias": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+      "tps": 39.39,
+      "context": 262144,
+      "evidence": true,
+      "source_evidence_sha256": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+      "hardware_topology": {
+        "class_vram_gb": 48,
+        "min_devices": 2,
+        "total_vram_gb": 48,
+        "per_device_min_gb": 24,
+        "accelerator": "llama.cpp-local",
+        "topology": "2x24"
+      },
+      "source": "hardware-tier-report/hardware-48gb/recommendations.measured_winner"
+    }
+  ]
+}
