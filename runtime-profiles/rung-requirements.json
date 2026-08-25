@@ -450,11 +450,18 @@
     ],
     "hardware-8gb": [
       {
-        "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
+        "evidence": "sha256:1c23b7acc299b7693e4e50175b7a3d01252f3cdf3c2cbc25e21f1de09b04116d",
         "required_mb_per_card": [
-          6677
+          6115
         ],
-        "rung_id": "local-bonsai-65536"
+        "rung_id": "local-maple-131072"
+      },
+      {
+        "evidence": "sha256:1c23b7acc299b7693e4e50175b7a3d01252f3cdf3c2cbc25e21f1de09b04116d",
+        "required_mb_per_card": [
+          5497
+        ],
+        "rung_id": "local-maple-65536"
       }
     ],
     "hardware-96gb": [

@@ -563,6 +563,17 @@
         "1048576": "baseline"
       },
       "cpu_moe": true
+    },
+    "maple-preview-tq2": {
+      "family": "Maple Preview",
+      "alias": "maple-preview-tq2",
+      "model": "${TURBOFIT_MODEL_ROOT}/Maple-Preview/maple-tq2_0.gguf",
+      "projector": "",
+      "draft": "",
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline"
+      }
     }
   },
   "models": {
@@ -812,6 +823,41 @@
         "1048576": {
           "cpu_moe": true,
           "n_cpu_moe": 16
+        }
+      }
+    },
+    "Maple Preview": {
+      "alias": "maple-preview-tq2",
+      "kind": "process",
+      "binary": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-cuda/bin/llama-server",
+      "native_binaries": {
+        "cuda": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-cuda/bin/llama-server",
+        "rocm": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-rocm/bin/llama-server",
+        "metal": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-metal/bin/llama-server",
+        "cpu": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-cpu/bin/llama-server",
+        "vulkan": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-vulkan/bin/llama-server"
+      },
+      "model_root": "${TURBOFIT_MODEL_ROOT}/Maple-Preview",
+      "model": "maple-tq2_0.gguf",
+      "projector": "",
+      "port": 11612,
+      "large": false,
+      "native_context": 131072,
+      "max_context": 131072,
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline"
+      },
+      "context_overrides": {
+        "65536": {
+          "fit": "off",
+          "batch_size": 512,
+          "ubatch_size": 256
+        },
+        "131072": {
+          "fit": "off",
+          "batch_size": 512,
+          "ubatch_size": 256
         }
       }
     }

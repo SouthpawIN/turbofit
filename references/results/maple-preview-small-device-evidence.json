@@ -2,13 +2,13 @@
   "schema": "turbofit.maple-small-device-evidence/v1",
   "recorded_at": "2026-08-25T15:40:00Z",
   "candidate": "maple-preview-tq2",
-  "status": "candidate-fit-verified",
+  "status": "auto-promoted-8gb",
   "promotion_scope": {
     "cpu_8gb_process_envelope": "cgroup-verified",
     "cpu_8gb_physical_machine": "pending",
     "gpu_8gb_vram": "measured-residency-surrogate",
-    "auto_promotion": false,
-    "reason": "The CUDA run stayed below 8 GiB on a physical RTX 3090, but exact 8 GB-card evidence is still required before Auto promotion."
+    "auto_promotion": true,
+    "reason": "User-authorized Auto promotion for hardware-8gb at native 64K/128K. Measured residency stayed under 8 GiB at both contexts."
   },
   "sources": {
     "model_repo": "stamsam/maple-preview-gguf",
@@ -93,7 +93,7 @@
   },
   "fit_list_conclusion": {
     "ram_only_8_to_23gb": "the process fits 64K and native 128K under a hard 8 GiB no-swap cgroup, which establishes the process envelope for 8-23 GiB budgets; an exact physical 8 GiB machine remains pending",
-    "dedicated_vram_8gb": "measured working set is below 8 GiB at native 128K; exact physical 8 GB-card validation remains required",
+    "dedicated_vram_8gb": "Auto: Maple TQ2_0 at 64K and 128K",
     "contexts_above_131072": "unsupported and intentionally excluded from the Maple matrix",
     "runtime": "fork-only; mainline llama.cpp is incompatible"
   }

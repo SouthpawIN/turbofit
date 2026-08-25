@@ -101,13 +101,36 @@ def _backend_status() -> dict[str, Any]:
             "compatibility": asdict(compatibility),
             "auto_promote": False,
         }
+    engines = []
+    try:
+        from dataclasses import asdict as _asdict
+        from turbofit_runtime.engine_check import detect_driver_major, detect_wsl, probe_engines
+        from turbofit_runtime.hardware import probe_hardware as _probe
+
+        live = _probe()
+        engines = [
+            {
+                "engine_id": item.engine_id,
+                "display_name": item.display_name,
+                "compatible": item.compatible,
+                "installed": item.installed,
+                "running": item.running,
+                "eligible": item.eligible,
+                "reason": item.reason,
+                "support_mode": item.support_mode,
+            }
+            for item in probe_engines(live, driver_major=detect_driver_major(), is_wsl=detect_wsl())
+        ]
+    except Exception as exc:
+        engines = [{"error": type(exc).__name__}]
     return {
         "hardware": hardware,
         "hardware_error": hardware_error,
         "local_backend": local_backend,
         "lemonade": lemonade,
         "freetoken": freetoken,
-        "supported": ["cuda", "rocm", "metal", "cpu", "lemonade", "freetoken-candidate"],
+        "engines": engines,
+        "supported": ["cuda", "rocm", "metal", "cpu", "lemonade", "freetoken-candidate", "llama.cpp", "mlx", "sglang", "vllm", "turbohaul-manager"],
     }
 
 
@@ -328,6 +351,24 @@ async def post_smoke(body: dict[str, Any] | None = None) -> dict[str, Any]:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception:
         raise HTTPException(status_code=503, detail="local smoke failed; inspect Turbofit logs") from None
+
+
+@router.get("/audition")
+async def get_audition(main: str = "maple-preview-tq2", aux: str = "auto", context: int = 65536) -> dict[str, Any]:
+    try:
+        from turbofit_runtime.engine_check import audition_pair, detect_driver_major, detect_wsl
+        from turbofit_runtime.hardware import probe_hardware
+
+        rows = await asyncio.to_thread(
+            audition_pair,
+            probe_hardware(),
+            main_alias=main,
+            aux_alias=aux,
+            context=context,
+        )
+        return {"ok": True, "main": main, "aux": aux, "context": context, "engines": rows, "driver_major": detect_driver_major(), "wsl": detect_wsl()}
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
 @router.get("/local-models")

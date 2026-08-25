@@ -370,6 +370,9 @@ def test_desktop_plugin_source_has_status_recommendation_and_fallback_controls()
     assert "Delete old model" in text
     assert "Keep both" in text
     assert "api.rest('/retire-model'" in text
+    assert "Audition engines" in text
+    assert "api.rest(`/audition?" in text
+    assert "Engine audition" in text
 
 
 def test_apply_configuration_can_install_bundled_sirvir(monkeypatch) -> None:

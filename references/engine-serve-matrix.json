@@ -1,0 +1,93 @@
+{
+  "schema": "turbofit.engine-serve-matrix/v1",
+  "researched_at": "2026-08-25",
+  "preference_order": [
+    "turbohaul-manager",
+    "llama.cpp",
+    "mlx",
+    "sglang",
+    "vllm",
+    "freetoken"
+  ],
+  "engines": {
+    "llama.cpp": {
+      "serves": "GGUF via llama-server OpenAI /v1",
+      "os": ["linux", "windows", "darwin"],
+      "backends": ["cuda", "rocm", "metal", "vulkan", "cpu"],
+      "maple_gguf": "stamsam/llama.cpp prism fork only; mainline cannot load maple or TQ2_0 type 35",
+      "qwen38_gguf": "pinned mainline llama.cpp",
+      "ornith_gguf": "pinned mainline llama.cpp with --cpu-moe"
+    },
+    "mlx": {
+      "serves": "MLX weights via mlx-lm or mlx-lm-deepgrove",
+      "os": ["darwin"],
+      "backends": ["metal"],
+      "maple_gguf": "incompatible; use deepgrove/maple-preview-2bit-mlx with mlx-lm-deepgrove --flash-head",
+      "qwen38_gguf": "incompatible; use OrcaRouter Uncensored MLX 4/6/8-bit",
+      "ornith_gguf": "incompatible"
+    },
+    "sglang": {
+      "serves": "HuggingFace / FP8 / some standard GGUF via sglang.launch_server",
+      "os": ["linux"],
+      "backends": ["cuda", "rocm"],
+      "windows": "WSL only",
+      "maple_gguf": "incompatible; maple arch is not in SGLang",
+      "qwen38_gguf": "prefer Qwen/Qwen3.8-27B HF; standard Qwen GGUF is optional and unproven here",
+      "ornith_gguf": "unproven"
+    },
+    "vllm": {
+      "serves": "HuggingFace / FP8 / NVFP4 via vllm serve",
+      "os": ["linux", "darwin"],
+      "backends": ["cuda", "rocm", "metal"],
+      "windows": "WSL only",
+      "maple_gguf": "incompatible; maple arch is not in vLLM",
+      "qwen38_gguf": "prefer Qwen/Qwen3.8-27B or NVFP4/FP8 recipes, not Unleashed GGUF",
+      "ornith_gguf": "unproven"
+    },
+    "freetoken": {
+      "serves": "HF safetensors or FTW MoE via ft on Linux x86_64 CUDA 13 / driver r580+",
+      "os": ["linux"],
+      "backends": ["cuda"],
+      "windows": "WSL only",
+      "maple_gguf": "incompatible; FreeToken does not load maple GGUF",
+      "qwen38_gguf": "incompatible as GGUF; only if a supported HF MoE recipe exists",
+      "ornith_gguf": "candidate only after an exact FreeToken recipe"
+    },
+    "turbohaul-manager": {
+      "serves": "OpenAI/Ollama-compatible manager over a llama.cpp backend",
+      "os": ["linux"],
+      "backends": ["cuda"],
+      "source": "https://github.com/MrTrenchTrucker/turbohaul-manager",
+      "ref": "v0.7.0",
+      "revision": "905b4506883313b17e1d4e0480a8e6ca6c63399b",
+      "maple_gguf": "only if the managed llama.cpp binary is the Maple fork",
+      "qwen38_gguf": "preferred manager over pinned mainline llama.cpp",
+      "ornith_gguf": "preferred manager over pinned mainline llama.cpp"
+    }
+  },
+  "pairs": {
+    "maple-preview-tq2": {
+      "artifact": "GGUF TQ2_0",
+      "eligible_engines": ["llama.cpp", "turbohaul-manager"],
+      "apple_alternate": "mlx",
+      "ineligible_engines": ["sglang", "vllm", "freetoken"]
+    },
+    "qwen3-8-27b-unleashed-ud-iq3-xxs": {
+      "artifact": "GGUF",
+      "eligible_engines": ["turbohaul-manager", "llama.cpp"],
+      "apple_alternate": "mlx",
+      "hf_engines": ["vllm", "sglang"]
+    },
+    "qwen3-8-27b-unleashed-ud-q3-k-xl": {
+      "artifact": "GGUF",
+      "eligible_engines": ["turbohaul-manager", "llama.cpp"],
+      "apple_alternate": "mlx",
+      "hf_engines": ["vllm", "sglang"]
+    },
+    "ornith-1-5-35a3b": {
+      "artifact": "GGUF MoE",
+      "eligible_engines": ["turbohaul-manager", "llama.cpp"],
+      "ineligible_engines": ["mlx"]
+    }
+  }
+}

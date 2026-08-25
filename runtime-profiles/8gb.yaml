@@ -1,6 +1,6 @@
 schema: turbofit.runtime/v1
 id: hardware-8gb
-revision: 3
+revision: 4
 hardware:
   class_vram_gb: 8
   min_devices: 1
@@ -22,8 +22,13 @@ roles:
   auxiliary: active:aux
   fallback: active:main
 rungs:
-- id: local-bonsai-65536
+- id: local-maple-131072
+  context: 131072
+  aux_mode: shared-main
+  evidence: sha256:1c23b7acc299b7693e4e50175b7a3d01252f3cdf3c2cbc25e21f1de09b04116d
+  main_manifest: sha256:09d219202562dbd17722dc8e3273527a021182ab7f892c2a06aac459a8f3a090
+- id: local-maple-65536
   context: 65536
   aux_mode: shared-main
-  evidence: sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591
-  main_manifest: sha256:da9ed9fb1b17f6423f759a783a150051b51d5555c7dea09f87c6effb3dac35a2
+  evidence: sha256:1c23b7acc299b7693e4e50175b7a3d01252f3cdf3c2cbc25e21f1de09b04116d
+  main_manifest: sha256:09d219202562dbd17722dc8e3273527a021182ab7f892c2a06aac459a8f3a090
