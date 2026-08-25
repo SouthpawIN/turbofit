@@ -60,6 +60,42 @@ Auxiliary is **Ornith 1.5 35A3B**, optional **Carwin Nano**, or **auto**. Pressu
 
 ![Turbofit 2.4 auto-fit model ladder from Maple through Unleashed and Nous keyless free](assets/turbofit-2.3-model-ladder.png)
 
+### Inference engines
+
+Check **auditions** the selected main/aux pair on every engine below. Compatible ≠ installed ≠ running ≠ eligible.
+
+| Engine | What it serves | Maple TQ2_0 | Qwen 3.8 | Where |
+|---|---|---|---|---|
+| **Turbohaul Manager** | OpenAI/Ollama manager over llama.cpp | only if it drives the Maple fork | preferred GGUF manager | Linux NVIDIA |
+| **llama.cpp** | GGUF `llama-server` `/v1` | Maple fork only (`stamsam/llama.cpp` prism) | pinned mainline | Linux, Windows, macOS · CUDA/ROCm/Metal/Vulkan/CPU |
+| **MLX** | MLX weights | `deepgrove/maple-preview-2bit-mlx` via mlx-lm-deepgrove | OrcaRouter Uncensored 4/6/8-bit · never 2-bit | Apple Silicon |
+| **SGLang** | HF / FP8 / some standard GGUF | no | official Qwen HF recipes | Linux / WSL |
+| **vLLM** | HF / FP8 / NVFP4 | no | official Qwen HF / NVFP4 recipes | Linux / WSL · vLLM-Metal on Apple |
+| **FreeToken** | HF/FTW MoE | no | only with a supported HF MoE recipe | Linux x86_64 · CUDA 13 · driver r580+ |
+| **Lemonade** | NPU | only with a validated NPU recipe | same | fail-closed otherwise |
+
+Serve matrix: [`references/engine-serve-matrix.json`](references/engine-serve-matrix.json). Desktop: **Audition engines**.
+
+### Still in the product
+
+These stay shipped. They are not deleted because Maple is Auto on 8 GB.
+
+| Surface | What |
+|---|---|
+| **Catalog** | Qwen 3.8 Q4/Q8/BF16 ± MTP, DFlash2 candidate, Bonsai Q1/1-bit/ternary, Ornith, Carwin Nano, Unleashed, Maple |
+| **Contexts** | 64K · 128K · 262K · 1M YaRN where the model is native or proven |
+| **Adaptive runtime** | pressure contracts experts → context → aux auto → smaller model → keyless Nous free; healing walks back up |
+| **Stable routes** | `auto` · `active:main` · `active:aux` |
+| **Desktop** | shift, update, Tailscale serve, smoke, audition, Keep/Archive/Delete old weights |
+| **Slash** | `/turbofit` scan, status, setup, update, shift, serve, smoke, intelligence, balanced, speed |
+| **Sirvir** | GitHub-current support; reciprocal install |
+| **Multimodal** | MiniMax H3 video (local INT8 offload proven), Music 3, Parakeet STT, Soprano TTS, ACE-Step candidates |
+| **Campaigns** | physical catalog + intelligence; List stays blank until exact-tier evidence |
+
+![Turbofit 2.4 Unleashed + Qwen 3.8 27B lineup](assets/turbofit-2.3-unleashed-lineup.png)
+
+![Turbofit multimodal: MiniMax Music 3, Parakeet, Soprano, MiniMax H3](assets/turbofit-2.3-multimodal.png)
+
 ## What it does
 
 - One stable provider: `custom:turbofit` / `auto`. Routes `active:main` and `active:aux` stay put while the backing process heals or contracts.
@@ -218,6 +254,7 @@ Hermes Desktop **Turbofit** is the setup surface: hardware, score bars, shift, u
 |---|---|
 | Evidence-only winners | [`docs/turbofit-list.md`](docs/turbofit-list.md) |
 | Check vs List | [`docs/turbofit-check.md`](docs/turbofit-check.md) |
+| Engine serve matrix | [`references/engine-serve-matrix.json`](references/engine-serve-matrix.json) |
 | Model matrix, Unleashed, Maple, Bonsai | [`docs/model-matrix.md`](docs/model-matrix.md) |
 | Maple small-device validation | [`docs/maple-small-device-validation.md`](docs/maple-small-device-validation.md) |
 | Physical + intelligence campaigns | [`docs/campaigns.md`](docs/campaigns.md) |
