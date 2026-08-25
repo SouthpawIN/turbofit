@@ -121,10 +121,42 @@ def test_update_products_updates_plugin_desktop_and_sirvir(monkeypatch, tmp_path
 def test_recommended_families_follow_auto_memory_bands() -> None:
     import plugin_tools
 
-    assert plugin_tools.recommended_artifact_families(8 * 1024) == ["bonsai-27b", "ornith-1-5-35a3b"]
+    assert plugin_tools.recommended_artifact_families(8 * 1024) == ["maple-preview-tq2", "ornith-1-5-35a3b"]
     assert plugin_tools.recommended_artifact_families(16 * 1024)[0] == "qwen3-8-27b-unleashed-ud-iq3-xxs"
     assert plugin_tools.recommended_artifact_families(24 * 1024)[0] == "qwen3-8-27b-unleashed-ud-q3-k-xl"
     assert plugin_tools.recommended_artifact_families(96 * 1024)[0] == "qwen3-8-27b-bf16"
+
+
+def test_retire_archives_old_family_and_refuses_recommended(tmp_path, monkeypatch) -> None:
+    import json
+    import product_ops
+
+    monkeypatch.setenv("TURBOFIT_MODEL_ROOT", str(tmp_path))
+    old = tmp_path / "Bonsai-27B" / "old.gguf"
+    old.parent.mkdir(parents=True)
+    old.write_bytes(b"old-weights")
+    monkeypatch.setattr(product_ops, "_artifact_rows", lambda: [
+        {"destination": "Bonsai-27B/old.gguf", "families": ["bonsai-27b"]},
+        {"destination": "Maple-Preview/maple-tq2_0.gguf", "families": ["maple-preview-tq2"]},
+    ])
+    monkeypatch.setattr(product_ops.plugin_tools, "recommended_artifact_families", lambda usable_memory_mb=None: ["maple-preview-tq2", "ornith-1-5-35a3b"])
+
+    offer = product_ops.local_model_replacement()
+    assert offer["offer"] is True
+    assert offer["from_family"] == "bonsai-27b"
+    assert offer["to_family"] == "maple-preview-tq2"
+
+    archived = product_ops.retire_local_model("bonsai-27b", "archive")
+    assert archived["retired"] is True
+    assert not old.exists()
+    assert (Path.home() / ".local/share/turbofit/archive/bonsai-27b/old.gguf").is_file() or archived["archived"]
+
+    try:
+        product_ops.retire_local_model("maple-preview-tq2", "delete")
+        raise AssertionError("should refuse recommended")
+    except ValueError as exc:
+        assert "recommended" in str(exc)
+
 
 
 def test_slash_update_and_shift_are_wired(monkeypatch) -> None:

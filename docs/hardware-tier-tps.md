@@ -21,7 +21,7 @@ Updated: `2026-08-22T21:22:27.728816+00:00`
 | 300 GB | Qwen 3.8 27B BF16 @ 1M | — | — | — | — |
 | aux | Carwin Nano `--cpu-moe` | 19.29 | 25.44 | 24.59 | 11.62 |
 
-8 GB without 32 GB RAM: Bonsai (dense) or Ornith 1.5 with `--cpu-moe` + mmap. Never a 9B.
+The 2.4 Fit List candidate for 8 GB is Maple Preview TQ2_0. The Bonsai row above is historical 2x24 serving evidence, not smaller-card proof and not Auto promotion. Ornith remains the 8 GB alternative when host RAM can hold offloaded experts. Never a 9B.
 
 Raw: [`references/results/hardware-tier-tps-contexts-2x24.json`](../references/results/hardware-tier-tps-contexts-2x24.json)
 

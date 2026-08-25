@@ -1,9 +1,10 @@
 # Turbofit
 
-## 2.3 new models
+## 2.4 new models
 
 | New model | Variants or role | State |
 |---|---|---|
+| **Maple Preview 20B-A1B** | TQ2_0 8 GB main candidate | CPU 8 GiB envelope verified; exact 8 GB GPU pending |
 | **Qwen 3.8 27B Unleashed** | UD-IQ3_XXS, UD-Q3_K_XL | Active catalog candidates |
 | **Ornith 1.5 35A3B** | Q4_K_M MoE auxiliary | Active auxiliary candidate |
 | **Carwin Nano** | Optional MoE auxiliary | Optional auxiliary candidate |

@@ -106,22 +106,25 @@ function TurbofitPage() {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [smoke, setSmoke] = useState(null)
+  const [replacement, setReplacement] = useState(null)
 
   const refresh = useCallback(async () => {
     setBusy(true)
     setMessage('')
     try {
-      const [nextStatus, nextCombinations, nextRecommendations, nextMultimodal] = await Promise.all([
+      const [nextStatus, nextCombinations, nextRecommendations, nextMultimodal, nextReplacement] = await Promise.all([
         api.rest('/status'),
         api.rest('/combinations'),
         api.rest(`/recommendations?preference=${encodeURIComponent(preference)}`),
         api.rest('/multimodal'),
+        api.rest('/local-models').catch(() => ({ offer: false })),
       ])
       setStatus(nextStatus)
       const exact = (nextCombinations && nextCombinations.combinations) || []
       setCombinations(exact)
       setRecommendations(nextRecommendations)
       setMultimodal(nextMultimodal)
+      setReplacement(nextReplacement && nextReplacement.offer ? nextReplacement : null)
       const selectedModalities = { ...(nextMultimodal.selected || {}) }
       ;['image', 'video', 'music', 'tts', 'stt'].forEach((modality) => {
         if (!selectedModalities[modality]) {
@@ -217,6 +220,24 @@ function TurbofitPage() {
     }
   }
 
+  async function runRetire(action) {
+    if (!replacement) return
+    setBusy(true)
+    setMessage('')
+    try {
+      const result = await api.rest('/retire-model', {
+        method: 'POST',
+        body: { family: replacement.from_family, action },
+      })
+      setMessage(result.message || `${action} complete`)
+      await refresh()
+    } catch (error) {
+      setMessage(String(error && error.message || error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function runUpdate() {
     setBusy(true)
     setMessage('')
@@ -299,6 +320,30 @@ function TurbofitPage() {
           jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runSmoke, children: 'Smoke local runtime' }),
         ],
       }),
+      replacement ? jsxs('div', {
+        style: {
+          border: '2px solid #d9aa50',
+          background: 'rgba(217,170,80,0.12)',
+          borderRadius: '8px',
+          padding: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+        },
+        children: [
+          jsx('strong', { children: 'New model recommended' }),
+          jsx('span', { children: replacement.prompt || `Check recommends ${replacement.to_family} instead of ${replacement.from_family}.` }),
+          jsx('span', { style: { color: 'var(--ui-text-secondary)' }, children: 'Archive keeps the old weights off the live path. Delete frees the disk. Keep both leaves them installed.' }),
+          jsxs('div', {
+            className: 'flex flex-wrap gap-2',
+            children: [
+              jsx('button', { type: 'button', disabled: busy, style: { ...buttonStyle, borderColor: '#d9aa50' }, onClick: () => setReplacement(null), children: 'Keep both' }),
+              jsx('button', { type: 'button', disabled: busy, style: { ...buttonStyle, borderColor: '#d9aa50' }, onClick: () => runRetire('archive'), children: 'Archive old model' }),
+              jsx('button', { type: 'button', disabled: busy, style: { ...buttonStyle, borderColor: '#d9aa50', color: '#d9aa50' }, onClick: () => runRetire('delete'), children: 'Delete old model' }),
+            ],
+          }),
+        ],
+      }) : null,
       jsxs('div', {
         className: 'grid grid-cols-1 gap-3 md:grid-cols-2',
         children: [

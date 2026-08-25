@@ -7,7 +7,7 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_VERSION = "2.3.0"
+RELEASE_VERSION = "2.4.0"
 
 
 def test_all_release_surfaces_use_release_version() -> None:
@@ -28,6 +28,7 @@ def test_all_release_surfaces_use_release_version() -> None:
 
 def test_release_readmes_show_every_new_2_2_model() -> None:
     required = {
+        "Maple Preview 20B-A1B",
         "Qwen 3.8 27B Unleashed",
         "Ornith 1.5 35A3B",
         "MiniMax Music 3",

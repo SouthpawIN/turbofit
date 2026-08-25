@@ -293,7 +293,7 @@ def recommended_artifact_families(usable_memory_mb: int | None = None) -> list[s
 
         usable_memory_mb = int(probe_hardware().total_usable_memory_mb)
     if usable_memory_mb < 16 * 1024:
-        main = "bonsai-27b"
+        main = "maple-preview-tq2"
     elif usable_memory_mb < 24 * 1024:
         main = "qwen3-8-27b-unleashed-ud-iq3-xxs"
     elif usable_memory_mb < 96 * 1024:

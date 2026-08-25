@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.4 — Maple small-device Fit List
+
+- Version surfaces are `2.4.0`.
+- Dedicated VRAM and integrated/RAM-only total memory are separate Fit List dimensions. 8 GB of VRAM is not 8 GB of RAM.
+- Dedicated 8 GB main candidate is Maple Preview 20B-A1B TQ2_0. Ornith remains the alternative when host RAM can hold offloaded experts. Bonsai stays in the catalog but is no longer the 8 GB default.
+- Shared total memory: Maple at 8–15 GB, Ornith 1.5 35A3B at 16–23 GB, Unleashed UD-Q3_K_XL at 24 GB+.
+- Maple is native 64K/128K only and needs the Maple llama.cpp fork. CPU 8 GiB/no-swap process envelope verified; CUDA ≤8 GiB residency measured on a 24 GB surrogate. Exact physical 8 GB GPU/RAM evidence still blocks Auto promotion.
+- README is the whole-product 2.4 surface: Check, List, Desktop, slash, Sirvir, Tailscale, engines, multimodal. Campaign depth stays in `docs/`.
+- Posters use the existing gold/mint starfield language.
+- Desktop shows a gold **New model recommended** card when Check suggests a replacement and the old weights are still installed: Keep both, Archive old model, or Delete old model.
+
 ## 2.3 — Unleashed / Ornith / Nous free fallback
 
 ### Setup / troubleshooting

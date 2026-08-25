@@ -4,7 +4,7 @@
 
 **One model provider. Every machine. The best local configuration the hardware can safely sustain.**
 
-Turbofit is a first-class [Hermes Agent](https://github.com/NousResearch/hermes-agent) provider and adaptive local-inference runtime. It inventories physical compute and memory, recommends an evidence-backed ladder, and exposes one OpenAI-compatible endpoint. The client-facing name stays `auto` while the backing model, context, and auxiliary mode change.
+Turbofit is a first-class [Hermes Agent](https://github.com/NousResearch/hermes-agent) provider and adaptive local-inference runtime. It inventories physical compute and **total usable memory**, recommends an evidence-backed ladder, launches a native backend, and exposes one OpenAI-compatible endpoint. The client-facing name stays `auto` while the backing model, context, and auxiliary mode change.
 
 ![Turbofit settings in Hermes Desktop, including fallback routing, multimodal model selection, and hardware-fit recommendations](assets/hermes-desktop-turbofit-settings.png)
 
@@ -13,32 +13,62 @@ provider: custom:turbofit
 model: auto
 ```
 
-**TurboFit Check** scans this machine and applies Auto or a selected compatible lane. The **[TurboFit List](docs/turbofit-list.md)** is the separate evidence-only winner table by hardware class.
+**TurboFit Check** scans this machine — dedicated VRAM, unified/integrated memory, or RAM-only — and applies Auto or a selected compatible lane. The **[TurboFit List](docs/turbofit-list.md)** is the separate evidence-only winner table by hardware class.
 
 > Catalog entries are **candidates** until the physical campaign passes. Compile, download, or estimated fit is not a winner.
 
-## 2.3 lineup
+## 2.4 lineup
+
+2.4 keeps the Unleashed / Ornith / Nous-free stack and splits the 8 GB problem into two topologies. **Dedicated VRAM is not the same as total RAM.**
 
 | Model | Entries | Role | Status |
 |---|---|---|---|
+| **Maple Preview 20B-A1B** | `TQ2_0` | Small-device MoE, ~1B active, native 128K | 8 GB Fit List candidate; CPU 8 GiB envelope verified; exact 8 GB GPU pending |
 | **Qwen 3.8 27B Unleashed** | `UD-IQ3_XXS`, `UD-Q3_K_XL` | Uncensored dense 27B, 262K, vision | Active catalog candidates |
-| **Ornith 1.5 35A3B** | `Q4_K_M` MoE | Default auxiliary | Active auxiliary candidate |
+| **Ornith 1.5 35A3B** | `Q4_K_M` MoE | Default auxiliary; 16 GB RAM-only main | Active auxiliary candidate |
 | **Qwen 3.8 27B** | `Q4_K_M`, `Q8_0`, `BF16` ± MTP | Native image/video | Active catalog candidates |
+| **Bonsai 27B** | Q1 / 1-bit | Still in the catalog; no longer the 8 GB Fit List default | Active catalog candidate |
 | **MiniMax Music 3** | `minimax-music3` | Full-song music | Pinned integration candidate |
 | **NVIDIA Parakeet TDT 0.6B v3** | `parakeet-tdt-0-6b-v3` | Local STT | Pinned integration candidate |
 | **Soprano TTS** | `soprano-tts` | Local TTS | Pinned integration candidate |
 
-| Usable memory | Main path |
+### Dedicated VRAM
+
+| Capacity | Main path |
 |---|---|
 | 96 GB+ | Qwen 3.8 27B 16-bit until Unleashed FP16 GGUF exists |
 | 24–95 GB | Unleashed UD-Q3_K_XL |
 | 16 GB | Unleashed UD-IQ3_XXS |
-| 8 GB | Bonsai 27B |
-| Below 8 GB dedicated | Bonsai 27B Q1 shared-main, portable-fit until benching that box |
+| 8 GB | Maple Preview TQ2_0; Ornith if host RAM can hold offloaded experts |
+| Below 8 GB dedicated | Portable-fit only until that box is benched. Never a 9B. |
 
-Auxiliary is **Ornith 1.5 35A3B**, optional **Carwin Nano**, or **auto**. Pressure steps: offload Ornith experts → lower context → aux auto → smaller Unleashed → Bonsai → keyless Nous free models. Optional FreeToken is a pinned NVIDIA MoE **candidate**, never Auto: [`docs/freetoken-runtime.md`](docs/freetoken-runtime.md).
+### Integrated / RAM-only total memory
 
-![Turbofit 2.3 auto-fit model ladder from Bonsai through Unleashed and Nous keyless free](assets/turbofit-2.3-model-ladder.png)
+| Capacity | Main path |
+|---|---|
+| 24 GB+ | Unleashed UD-Q3_K_XL |
+| 16–23 GB | Ornith 1.5 35A3B |
+| 8–15 GB | Maple Preview TQ2_0 |
+
+Apple Silicon stays on OrcaRouter Uncensored MLX 4/6/8-bit (never 2-bit). Sub-24 GB Macs stay on Ornith.
+
+Maple is restricted to native 64K/128K. It requires the Maple llama.cpp fork. The CPU process fitted a hard 8 GiB/no-swap cgroup; CUDA residency stayed under 8 GiB on a 24 GB RTX 3090 surrogate. Exact physical 8 GB GPU and 8 GB RAM machines still block Auto promotion.
+
+![Turbofit 2.4 Fit List: dedicated VRAM versus integrated and RAM-only memory](assets/turbofit-maple-fit-list.png)
+
+Auxiliary is **Ornith 1.5 35A3B**, optional **Carwin Nano**, or **auto**. Pressure steps: offload Ornith experts → lower context → aux auto → smaller Unleashed → Maple → keyless Nous free models. Optional FreeToken is a pinned NVIDIA MoE **candidate**, never Auto: [`docs/freetoken-runtime.md`](docs/freetoken-runtime.md).
+
+![Turbofit 2.4 auto-fit model ladder from Maple through Unleashed and Nous keyless free](assets/turbofit-2.3-model-ladder.png)
+
+## What it does
+
+- One stable provider: `custom:turbofit` / `auto`. Routes `active:main` and `active:aux` stay put while the backing process heals or contracts.
+- Inventories MLX, llama.cpp, SGLang, vLLM, FreeToken, and [Turbohaul Manager](https://github.com/MrTrenchTrucker/turbohaul-manager). Only a locally compatible, verified recipe is eligible.
+- Runs native llama.cpp on CUDA, ROCm, Metal, Vulkan, or CPU. Lemonade is used only for a validated NPU recipe.
+- Hermes Desktop is the setup surface. `/turbofit` is the slash surface. Both expose the same operational controls.
+- [Sirvir](https://github.com/SouthpawIN/sirvir) is GitHub-current support: install, Q&A, tested PRs. Sirvir installs Turbofit when it is missing.
+- Private Tailscale Serve publishes this machine’s `:8091` to the tailnet. Funnel is never used.
+- Image, video, music, STT, and TTS recommendations live on the same setup page.
 
 ## Install
 
@@ -71,7 +101,7 @@ hermes plugins install --enable https://github.com/SouthpawIN/Turbofit.git
 /turbofit update          # plugin + Desktop surface + Sirvir
 /turbofit shift up        # next smarter measured combo
 /turbofit shift down      # next lighter measured combo
-/turbofit shift bonsai    # recommended combo for that model
+/turbofit shift maple     # recommended combo for that model
 /turbofit shift intelligence
 /turbofit serve           # publish :8091 on your tailnet
 /turbofit serve status
@@ -176,11 +206,11 @@ smaller context / shared aux / smaller model
 keyless Nous free fallback
 ```
 
-Pressure drops fast; healing is slower and hysteretic. Transitions lock, fail closed, and roll back. `/turbofit shift` walks the same measured ladder manually. Hardware pools, backends, and offload: [`docs/runtime-backends.md`](docs/runtime-backends.md).
+Pressure drops fast; healing is slower and hysteretic. Transitions lock, fail closed, and roll back. `/turbofit shift` walks the same measured ladder manually. Hardware pools, backends, and offload: [`docs/runtime-backends.md`](docs/runtime-backends.md). Maple small-device evidence: [`docs/maple-small-device-validation.md`](docs/maple-small-device-validation.md).
 
 ## Desktop
 
-Hermes Desktop **Turbofit** is the setup surface: hardware, score bars, shift, update, Tailscale serve, fallbacks, runtimes, Sirvir, multimodal. Source: [`desktop/plugin.js`](desktop/plugin.js).
+Hermes Desktop **Turbofit** is the setup surface: hardware, score bars, shift, update, Tailscale serve, fallbacks, runtimes, Sirvir, multimodal. When Check recommends a new main model and the old weights are still on disk, the page shows a gold **New model recommended** card with **Keep both**, **Archive old model**, and **Delete old model**. Source: [`desktop/plugin.js`](desktop/plugin.js).
 
 ## More detail
 
@@ -188,7 +218,8 @@ Hermes Desktop **Turbofit** is the setup surface: hardware, score bars, shift, u
 |---|---|
 | Evidence-only winners | [`docs/turbofit-list.md`](docs/turbofit-list.md) |
 | Check vs List | [`docs/turbofit-check.md`](docs/turbofit-check.md) |
-| Model matrix, Unleashed, DFlash2, Bonsai | [`docs/model-matrix.md`](docs/model-matrix.md) |
+| Model matrix, Unleashed, Maple, Bonsai | [`docs/model-matrix.md`](docs/model-matrix.md) |
+| Maple small-device validation | [`docs/maple-small-device-validation.md`](docs/maple-small-device-validation.md) |
 | Physical + intelligence campaigns | [`docs/campaigns.md`](docs/campaigns.md) |
 | Multimodal pins | [`docs/multimodal.md`](docs/multimodal.md) |
 | Live 2x24 TPS | [`docs/hardware-tier-tps.md`](docs/hardware-tier-tps.md) |

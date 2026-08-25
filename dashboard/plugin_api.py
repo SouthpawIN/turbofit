@@ -24,7 +24,15 @@ from plugin_tools import (  # noqa: E402
     recommendation_snapshot,
     status_snapshot,
 )
-from product_ops import serve_status, serve_tailnet, shift_configuration, smoke_local_runtime, update_products  # noqa: E402
+from product_ops import (  # noqa: E402
+    local_model_replacement,
+    retire_local_model,
+    serve_status,
+    serve_tailnet,
+    shift_configuration,
+    smoke_local_runtime,
+    update_products,
+)
 
 
 router = APIRouter()
@@ -320,6 +328,29 @@ async def post_smoke(body: dict[str, Any] | None = None) -> dict[str, Any]:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception:
         raise HTTPException(status_code=503, detail="local smoke failed; inspect Turbofit logs") from None
+
+
+@router.get("/local-models")
+async def get_local_models() -> dict[str, Any]:
+    try:
+        return await asyncio.to_thread(local_model_replacement)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.post("/retire-model")
+async def post_retire_model(body: dict[str, Any] | None = None) -> dict[str, Any]:
+    payload = body or {}
+    family = payload.get("family") or ""
+    action = payload.get("action") or ""
+    if not isinstance(family, str) or not isinstance(action, str):
+        raise HTTPException(status_code=422, detail="family and action must be strings")
+    try:
+        return await asyncio.to_thread(retire_local_model, family, action)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/shift")

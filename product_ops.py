@@ -242,3 +242,120 @@ def smoke_local_runtime(*, timeout_seconds: float = 300.0) -> dict[str, Any]:
     from smoke_ops import smoke_local_runtime as run_smoke
 
     return run_smoke(timeout_seconds=timeout_seconds)
+
+
+def _artifact_rows() -> list[dict[str, Any]]:
+    import json
+
+    payload = json.loads((Path(__file__).resolve().parent / "references/artifact-manifest.json").read_text())
+    return [dict(item) for item in payload.get("artifacts") or [] if isinstance(item, Mapping)]
+
+
+def _family_files(family: str) -> list[dict[str, Any]]:
+    from importlib.machinery import SourceFileLoader
+    import importlib.util
+
+    script = Path(__file__).resolve().parent / "scripts" / "download-artifacts"
+    loader = SourceFileLoader("turbofit_download_artifacts", str(script))
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    root = module.model_root()
+    found: list[dict[str, Any]] = []
+    for item in _artifact_rows():
+        families = [str(value) for value in item.get("families") or []]
+        if family not in families:
+            continue
+        destination = module.safe_destination(root, str(item["destination"]))
+        present = destination.is_file()
+        found.append(
+            {
+                "family": family,
+                "destination": str(item["destination"]),
+                "path": str(destination),
+                "present": present,
+                "size_bytes": destination.stat().st_size if present else 0,
+            }
+        )
+    return found
+
+
+def local_model_replacement() -> dict[str, Any]:
+    """Offer archive/delete when Check recommends a different installed main."""
+    families = plugin_tools.recommended_artifact_families()
+    recommended = families[0] if families else ""
+    installed: list[str] = []
+    seen: set[str] = set()
+    for item in _artifact_rows():
+        for family in item.get("families") or []:
+            name = str(family)
+            if name in seen:
+                continue
+            seen.add(name)
+            if any(row["present"] for row in _family_files(name)):
+                installed.append(name)
+    outgoing = [name for name in installed if name != recommended]
+    current = outgoing[0] if outgoing else ""
+    present = _family_files(current) if current else []
+    present = [row for row in present if row["present"]]
+    offer = bool(recommended and current and present)
+    return {
+        "ok": True,
+        "recommended_main": recommended,
+        "current_main": current,
+        "offer": offer and bool(present),
+        "from_family": current if offer else "",
+        "to_family": recommended if offer else "",
+        "title": "New model recommended",
+        "prompt": (
+            f"Check now recommends {recommended} instead of {current}. "
+            "Archive or delete the old weights to free disk, or keep both."
+            if offer
+            else ""
+        ),
+        "files": present,
+        "bytes": sum(int(row["size_bytes"]) for row in present),
+    }
+
+
+def retire_local_model(family: str, action: str) -> dict[str, Any]:
+    """Archive or delete an installed model family that is no longer the recommendation."""
+    if action not in {"archive", "delete"}:
+        raise ValueError("action must be archive or delete")
+    token = str(family or "").strip()
+    if not token:
+        raise ValueError("family is required")
+    replacement = local_model_replacement()
+    if token == replacement.get("recommended_main"):
+        raise ValueError("refusing to retire the currently recommended model")
+    rows = [row for row in _family_files(token) if row["present"]]
+    if not rows:
+        raise ValueError(f"no installed files for {token}")
+    archive_root = Path.home() / ".local/share/turbofit/archive" / token
+    moved: list[str] = []
+    deleted: list[str] = []
+    for row in rows:
+        source = Path(row["path"])
+        if action == "delete":
+            source.unlink()
+            deleted.append(str(source))
+            continue
+        archive_root.mkdir(parents=True, exist_ok=True)
+        target = archive_root / source.name
+        if target.exists():
+            target.unlink()
+        shutil.move(str(source), str(target))
+        moved.append(str(target))
+    return {
+        "ok": True,
+        "retired": True,
+        "action": action,
+        "family": token,
+        "archived": moved,
+        "deleted": deleted,
+        "message": (
+            f"Archived {token} under {archive_root}."
+            if action == "archive"
+            else f"Deleted {len(deleted)} file(s) for {token}."
+        ),
+    }
