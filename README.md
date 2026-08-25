@@ -37,8 +37,8 @@ model: auto
 | Capacity | Main path |
 |---|---|
 | 96 GB+ | Qwen 3.8 27B 16-bit until Unleashed FP16 GGUF exists |
-| 24–95 GB | Unleashed UD-Q3_K_XL |
-| 16 GB | Unleashed UD-IQ3_XXS |
+| 24–95 GB | Unleashed UD-Q3_K_XL + DFlash2 |
+| 16 GB | Unleashed UD-IQ3_XXS + DFlash2 |
 | 8 GB | Maple Preview TQ2_0; Ornith if host RAM can hold offloaded experts |
 | Below 8 GB dedicated | Portable-fit only until that box is benched. Never a 9B. |
 
@@ -55,6 +55,8 @@ Apple Silicon stays on OrcaRouter Uncensored MLX 4/6/8-bit (never 2-bit). Sub-24
 Maple is restricted to native 64K/128K. It requires the Maple llama.cpp fork. Auto on `hardware-8gb` now starts at Maple 128K and contracts to Maple 64K.
 
 ![Turbofit 2.4 Fit List: dedicated VRAM versus integrated and RAM-only memory](assets/turbofit-maple-fit-list.png)
+
+![Turbofit 2.4 speculative decode: DFlash2 on Qwen 27B, MTP on Ornith](assets/turbofit-2.4-spec-decode.png)
 
 Auxiliary is **Ornith 1.5 35A3B**, optional **Carwin Nano**, or **auto**. Pressure steps: offload Ornith experts → lower context → aux auto → smaller Unleashed → Maple → keyless Nous free models. Optional FreeToken is a pinned NVIDIA MoE **candidate**, never Auto: [`docs/freetoken-runtime.md`](docs/freetoken-runtime.md).
 

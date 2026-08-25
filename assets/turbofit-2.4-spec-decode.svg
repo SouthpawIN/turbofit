@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <pattern id="grid" width="38" height="38" patternUnits="userSpaceOnUse"><path d="M38 0H0V38" fill="none" stroke="#00d6a3" stroke-width=".6" opacity=".08"/></pattern>
+    <pattern id="dots" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#d9aa50" opacity=".28"/></pattern>
+    <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1600" height="900" fill="#070908"/>
+  <rect width="1600" height="900" fill="url(#grid)"/>
+  <circle cx="180" cy="120" r="2" fill="#d9aa50" opacity=".8"/>
+  <circle cx="420" cy="80" r="1" fill="#00d6a3" opacity=".6"/>
+  <circle cx="980" cy="140" r="2" fill="#d9aa50" opacity=".7"/>
+  <circle cx="1320" cy="90" r="1" fill="#00d6a3" opacity=".5"/>
+  <circle cx="1480" cy="240" r="2" fill="#d9aa50" opacity=".6"/>
+  <circle cx="220" cy="780" r="2" fill="#00d6a3" opacity=".45"/>
+  <circle cx="760" cy="40" r="1" fill="#d9aa50" opacity=".8"/>
+  <circle cx="1100" cy="820" r="2" fill="#d9aa50" opacity=".5"/>
+  <g fill="none" stroke="#d9aa50" stroke-width="2" opacity=".9">
+    <path d="M28 78V28H78 M1522 28h50v50 M28 822v50h50 M1572 822v50h-50"/>
+  </g>
+  <path d="M70 90H360" stroke="#00d6a3" stroke-width="2"/>
+  <path d="M1240 90h290" stroke="#00d6a3" stroke-width="2"/>
+  <text x="72" y="76" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="22" font-weight="700">TURBOFIT 2.4  //  SPEC DECODE</text>
+  <text x="72" y="168" fill="#d9aa50" font-family="DejaVu Serif,serif" font-size="56" font-weight="700">DRAFT.</text>
+  <text x="72" y="236" fill="#d9aa50" font-family="DejaVu Serif,serif" font-size="56" font-weight="700">VERIFY.</text>
+  <text x="72" y="304" fill="#d9aa50" font-family="DejaVu Serif,serif" font-size="56" font-weight="700">ACCEPT.</text>
+  <text x="76" y="354" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="20" font-weight="700">DFLASH2 ON QWEN 27B   ·   MTP ON ORNITH</text>
+  <text x="76" y="388" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="16" font-weight="700">SPEED PICKS THE SPEC PATH. INTELLIGENCE STILL PICKS UNLEASHED.</text>
+
+  <rect x="70" y="420" width="720" height="390" fill="#070908" opacity=".72" stroke="#d9aa50"/>
+  <text x="96" y="462" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="20" font-weight="700">SPEC ON THE FIT LIST</text>
+
+  <rect x="96" y="486" width="668" height="70" fill="#070908" opacity=".82" stroke="#d9aa50"/>
+  <rect x="96" y="486" width="18" height="70" fill="url(#dots)"/>
+  <text x="132" y="516" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="20" font-weight="700">8 GB</text>
+  <text x="132" y="542" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700">MAPLE TQ2_0  ·  64K / 128K  ·  NATIVE FORK</text>
+
+  <rect x="96" y="568" width="668" height="70" fill="#070908" opacity=".82" stroke="#d9aa50"/>
+  <rect x="96" y="568" width="18" height="70" fill="url(#dots)"/>
+  <text x="132" y="598" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="20" font-weight="700">16–24 GB</text>
+  <text x="132" y="624" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700">UNLEASHED + DFLASH2  ·  SPEED = ORNITH MTP</text>
+
+  <rect x="96" y="650" width="668" height="70" fill="#070908" opacity=".82" stroke="#d9aa50"/>
+  <rect x="96" y="650" width="18" height="70" fill="url(#dots)"/>
+  <text x="132" y="680" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="20" font-weight="700">40 GB+</text>
+  <text x="132" y="706" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700">UNLEASHED DFLASH2 + ORNITH oQ4e / oQ8e MTP AUX</text>
+
+  <rect x="96" y="732" width="668" height="54" fill="#070908" opacity=".82" stroke="#00d6a3"/>
+  <text x="132" y="766" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="16" font-weight="700">NEVER HOST-SPILL A DENSE 27B ON 8 GB</text>
+
+  <rect x="830" y="420" width="700" height="390" fill="#070908" opacity=".72" stroke="#00d6a3"/>
+  <text x="856" y="462" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="20" font-weight="700">HOW IT DECODES</text>
+  <text x="856" y="516" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="18" font-weight="700">DFLASH2</text>
+  <text x="856" y="544" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">Qwen 3.8 27B + Unleashed · n_max 7</text>
+  <text x="856" y="568" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">Pinned z-lab llama.cpp fork</text>
+  <text x="856" y="616" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="18" font-weight="700">MTP</text>
+  <text x="856" y="644" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">Ornith oQ4e / oQ8e · Qwen MTP drafts</text>
+  <text x="856" y="668" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">draft-mtp on the serving binary</text>
+  <text x="856" y="716" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="18" font-weight="700">AUTO HEALS</text>
+  <text x="856" y="744" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">context → model → Nous keyless free</text>
+  <text x="856" y="768" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">stable routes: auto / active:main / aux</text>
+</svg>

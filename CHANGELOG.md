@@ -14,6 +14,7 @@
 - Check now auditions llama.cpp, MLX, SGLang, vLLM, FreeToken, and Turbohaul Manager against the selected model pair. Maple GGUF is fork-only; vLLM/SGLang stay HF/FP8/NVFP4.
 - Compatible lanes are Fit List mains only. 8 GB VRAM + any host RAM is Maple or Ornith. Host-spill of a dense 27B is not a recommendation.
 - Default aux is Ornith oQ4e MTP at 40 GB+ total VRAM and oQ8e MTP at 64 GB+. Speed preference ranks Ornith over dense Qwen 27B. Unleashed stays the intelligence pick on 16/24 GB.
+- Unleashed Qwen 27B now serves with DFlash2 (`n_max=7`) on the pinned z-lab fork. Ornith oQ is MTP. Spec decode is the default where a draft exists.
 - Desktop opens with speed/VRAM/RAM graphs, the live scale-down/up ladder, subscriptions, and Nous keyless free models instead of fallback JSON.
 
 ## 2.3 — Unleashed / Ornith / Nous free fallback

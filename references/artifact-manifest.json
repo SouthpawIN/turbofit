@@ -256,7 +256,9 @@
     {
       "destination": "Qwen3.8-27B/Qwen3.8-27B-DFlash2-Q4_K_M.gguf",
       "families": [
-        "qwen3-8-27b-q4-dflash2"
+        "qwen3-8-27b-q4-dflash2",
+        "qwen3-8-27b-unleashed-ud-iq3-xxs",
+        "qwen3-8-27b-unleashed-ud-q3-k-xl"
       ],
       "repo_id": "incoai/Qwen3.8-27B-DFlash2-GGUF",
       "revision": "6cb5872e2cee6b4e780a8414922350be8e42d65c",

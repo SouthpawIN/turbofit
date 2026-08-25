@@ -527,27 +527,33 @@
     "qwen3-8-27b-unleashed-ud-iq3-xxs": {
       "family": "Qwen 3.8 27B Unleashed",
       "alias": "qwen3-8-27b-unleashed-ud-iq3-xxs",
+      "binary": "~/.local/share/turbofit/runtimes/dflash2-llama.cpp-1deefcca395743049c3820ab8f9b15043f3e9446/build-cuda/bin/llama-server",
       "model": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf",
       "projector": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B-Unleashed/mmproj-Unleashed-f16.gguf",
-      "draft": "",
+      "draft": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B/Qwen3.8-27B-DFlash2-Q4_K_M.gguf",
+      "dflash_target_family": "Qwen 3.8 27B Unleashed",
+      "draft_n_max": 7,
       "methods": {
-        "65536": "baseline",
-        "131072": "baseline",
-        "262144": "baseline",
-        "1048576": "baseline"
+        "65536": "dflash2",
+        "131072": "dflash2",
+        "262144": "dflash2",
+        "1048576": "dflash2"
       }
     },
     "qwen3-8-27b-unleashed-ud-q3-k-xl": {
       "family": "Qwen 3.8 27B Unleashed",
       "alias": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+      "binary": "~/.local/share/turbofit/runtimes/dflash2-llama.cpp-1deefcca395743049c3820ab8f9b15043f3e9446/build-cuda/bin/llama-server",
       "model": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
       "projector": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B-Unleashed/mmproj-Unleashed-f16.gguf",
-      "draft": "",
+      "draft": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-27B/Qwen3.8-27B-DFlash2-Q4_K_M.gguf",
+      "dflash_target_family": "Qwen 3.8 27B Unleashed",
+      "draft_n_max": 7,
       "methods": {
-        "65536": "baseline",
-        "131072": "baseline",
-        "262144": "baseline",
-        "1048576": "baseline"
+        "65536": "dflash2",
+        "131072": "dflash2",
+        "262144": "dflash2",
+        "1048576": "dflash2"
       }
     },
     "ornith-1-5-35a3b": {
