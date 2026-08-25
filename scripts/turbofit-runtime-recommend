@@ -24,6 +24,7 @@ from turbofit_runtime.allowed_lineup import (  # noqa: E402
     is_banned,
     main_matches_recommendable,
     recommendable_mains_for_hardware,
+    speed_family_rank,
 )
 from turbofit_runtime.hardware import HardwareFingerprint, probe_hardware  # noqa: E402
 from turbofit_runtime.catalog_campaign import build_configuration_index  # noqa: E402
@@ -338,7 +339,7 @@ class Recommendation:
 
 def recommendation_sort_key(item: Recommendation, preference: str) -> tuple[Any, ...]:
     if preference == "speed":
-        return (item.fit, item.min_tps, item.quality_points, item.context, item.score)
+        return (item.fit, speed_family_rank(item.main), item.min_tps, item.context, item.score)
     if preference == "intelligence":
         return (
             item.fit,

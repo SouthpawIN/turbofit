@@ -348,6 +348,11 @@ def test_desktop_plugin_source_has_status_recommendation_and_fallback_controls()
     assert "Context length" in text
     assert "api.rest(`/recommendations?" in text
     assert "fallback_chain" in text
+    assert "Nous keyless free" in text
+    assert "Your subscriptions" in text
+    assert "Auto scale down / up" in text
+    assert "Speed" in text
+    assert "Ordered provider/model JSON" not in text
     assert "publish_tailnet" in text
     assert "install_sirvir" in text
     assert "install_native" in text
