@@ -16,6 +16,10 @@ WORKING_CONTEXT = 262_144
 MAX_CONTEXT = 1_048_576
 INTERACTIVE_TPS = 30.0
 FAST_TPS = 50.0
+# Windows Vulkan drivers can report a dedicated 8 GiB device as 8,176 MiB
+# (16 MiB below the binary tier). Keep the physical tier boundary strict
+# apart from that documented reporting delta.
+DEDICATED_VRAM_REPORTING_TOLERANCE_MB = 16
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _TOPOLOGY_PART_RE = re.compile(r"^(\d+)x(\d+)(?:gb)?$", re.IGNORECASE)
 
@@ -149,6 +153,8 @@ def hardware_satisfies(
     if hardware.total_usable_memory_mb < _gb_to_mb(constraint.total_vram_gb):
         return False
     minimum_mb = _gb_to_mb(constraint.per_device_min_gb)
+    if not shared_local:
+        minimum_mb = max(0, minimum_mb - DEDICATED_VRAM_REPORTING_TOLERANCE_MB)
     capable_devices = (
         constraint.min_devices if shared_local and hardware.total_usable_memory_mb >= minimum_mb
         else sum(device.memory_total_mb >= minimum_mb for device in devices)
