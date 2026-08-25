@@ -1,6 +1,6 @@
 # Maple Preview small-device validation
 
-Status: **Fit List candidate; not Auto-promoted on the 8 GB dedicated-GPU tier**
+Status: **Auto on `hardware-8gb` at native 64K and 128K**
 
 ## Pinned inputs
 

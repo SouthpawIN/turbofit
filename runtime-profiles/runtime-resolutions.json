@@ -211,12 +211,21 @@
       }
     },
     "hardware-8gb": {
-      "local-bonsai-65536": {
+      "local-maple-131072": {
         "main": {
-          "expected_vram_mb": 6677,
-          "family": "bonsai-27b",
+          "expected_vram_mb": 6115,
+          "family": "maple-preview-tq2",
           "gpu": "0",
-          "model_tag": "bonsai-27b-1bit-64k-main",
+          "model_tag": "maple-preview-tq2-128k-main",
+          "port": 8092
+        }
+      },
+      "local-maple-65536": {
+        "main": {
+          "expected_vram_mb": 5497,
+          "family": "maple-preview-tq2",
+          "gpu": "0",
+          "model_tag": "maple-preview-tq2-64k-main",
           "port": 8092
         }
       }

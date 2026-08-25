@@ -49,6 +49,13 @@
         "multimodal": false,
         "model_format": "hf-safetensors-or-ftw"
       }
+    },
+    {
+      "id": "maple-llama.cpp",
+      "repository": "https://github.com/stamsam/llama.cpp.git",
+      "revision": "9ee03eec62d088a117ab916bbe489e7a3872a21f",
+      "purpose": "Maple architecture and TQ2_0 GPU kernels",
+      "cuda_binary": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-cuda/bin/llama-server"
     }
   ]
 }

@@ -11,7 +11,7 @@ tags: [hermes-agent, llama-cpp, llm, accelerator, cpu, adaptive-runtime, turbofi
 
 ## 2.4 model authority
 
-Fit List keeps dedicated VRAM separate from integrated/RAM-only total memory. Dedicated: Maple Preview TQ2_0 at 8GB, Qwen 3.8 27B Unleashed UD-IQ3_XXS at 16GB, UD-Q3_K_XL at 24–95GB, and Qwen 3.8 27B 16-bit at 96GB+ until an Unleashed FP16 GGUF is published. Shared total memory: Maple at 8–15GB, Ornith 1.5 35A3B at 16–23GB, and Unleashed UD-Q3_K_XL at 24GB+. An 8GB GPU may also use Ornith when host RAM can hold offloaded experts. Maple remains candidate-only on the GPU band until exact physical 8GB-card evidence passes. Auxiliary is Ornith, optional Carwin Nano, or auto.
+Fit List keeps dedicated VRAM separate from integrated/RAM-only total memory. Dedicated: Maple Preview TQ2_0 at 8GB, Qwen 3.8 27B Unleashed UD-IQ3_XXS at 16GB, UD-Q3_K_XL at 24–95GB, and Qwen 3.8 27B 16-bit at 96GB+ until an Unleashed FP16 GGUF is published. Shared total memory: Maple at 8–15GB, Ornith 1.5 35A3B at 16–23GB, and Unleashed UD-Q3_K_XL at 24GB+. An 8GB GPU may also use Ornith when host RAM can hold offloaded experts. Maple remains Auto on dedicated 8GB at native 64K/128K. Auxiliary is Ornith, optional Carwin Nano, or auto.
 
 ## Use when
 

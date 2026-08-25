@@ -164,6 +164,8 @@ def test_dedicated_8gb_tier_allows_only_the_windows_vulkan_reporting_delta() -> 
 
     assert hardware_satisfies(windows_vulkan, profile.hardware)
     assert not hardware_satisfies(undersized, profile.hardware)
+    assert [rung.id for rung in profile.rungs] == ["local-maple-131072", "local-maple-65536"]
+    assert [rung.context for rung in profile.rungs] == [131072, 65536]
 
 
 def test_large_shared_memory_pools_are_not_rejected_by_discrete_card_topology() -> None:

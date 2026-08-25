@@ -23,7 +23,7 @@ model: auto
 
 | Model | Entries | Role | Status |
 |---|---|---|---|
-| **Maple Preview 20B-A1B** | `TQ2_0` | Small-device MoE, ~1B active, native 128K | 8 GB Fit List candidate; CPU 8 GiB envelope verified; exact 8 GB GPU pending |
+| **Maple Preview 20B-A1B** | `TQ2_0` | Small-device MoE, ~1B active, native 128K | **Auto on 8 GB at 64K and 128K** |
 | **Qwen 3.8 27B Unleashed** | `UD-IQ3_XXS`, `UD-Q3_K_XL` | Uncensored dense 27B, 262K, vision | Active catalog candidates |
 | **Ornith 1.5 35A3B** | `Q4_K_M` MoE | Default auxiliary; 16 GB RAM-only main | Active auxiliary candidate |
 | **Qwen 3.8 27B** | `Q4_K_M`, `Q8_0`, `BF16` ± MTP | Native image/video | Active catalog candidates |
@@ -52,7 +52,7 @@ model: auto
 
 Apple Silicon stays on OrcaRouter Uncensored MLX 4/6/8-bit (never 2-bit). Sub-24 GB Macs stay on Ornith.
 
-Maple is restricted to native 64K/128K. It requires the Maple llama.cpp fork. The CPU process fitted a hard 8 GiB/no-swap cgroup; CUDA residency stayed under 8 GiB on a 24 GB RTX 3090 surrogate. Exact physical 8 GB GPU and 8 GB RAM machines still block Auto promotion.
+Maple is restricted to native 64K/128K. It requires the Maple llama.cpp fork. Auto on `hardware-8gb` now starts at Maple 128K and contracts to Maple 64K.
 
 ![Turbofit 2.4 Fit List: dedicated VRAM versus integrated and RAM-only memory](assets/turbofit-maple-fit-list.png)
 
@@ -63,7 +63,7 @@ Auxiliary is **Ornith 1.5 35A3B**, optional **Carwin Nano**, or **auto**. Pressu
 ## What it does
 
 - One stable provider: `custom:turbofit` / `auto`. Routes `active:main` and `active:aux` stay put while the backing process heals or contracts.
-- Inventories MLX, llama.cpp, SGLang, vLLM, FreeToken, and [Turbohaul Manager](https://github.com/MrTrenchTrucker/turbohaul-manager). Only a locally compatible, verified recipe is eligible.
+- Inventories MLX, llama.cpp, SGLang, vLLM, FreeToken, and [Turbohaul Manager](https://github.com/MrTrenchTrucker/turbohaul-manager). **Audition engines** ranks those engines for the selected main/aux pair using the researched serve matrix. Maple GGUF is the Maple llama.cpp fork (or TurboHaul managing that fork). vLLM/SGLang take Qwen HF/FP8/NVFP4, not Maple TQ2_0. Apple Maple uses `deepgrove/maple-preview-2bit-mlx`.
 - Runs native llama.cpp on CUDA, ROCm, Metal, Vulkan, or CPU. Lemonade is used only for a validated NPU recipe.
 - Hermes Desktop is the setup surface. `/turbofit` is the slash surface. Both expose the same operational controls.
 - [Sirvir](https://github.com/SouthpawIN/sirvir) is GitHub-current support: install, Q&A, tested PRs. Sirvir installs Turbofit when it is missing.

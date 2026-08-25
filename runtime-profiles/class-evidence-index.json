@@ -68,5 +68,12 @@
     ],
     "source": "runtime-profiles/class-status/ee78b9da9b3a984c62232ec08a928cd294948f4471e665be9a04d3a1e17e685f.json",
     "status": "unproven-local"
+  },
+  "sha256:1c23b7acc299b7693e4e50175b7a3d01252f3cdf3c2cbc25e21f1de09b04116d": {
+    "profiles": [
+      "hardware-8gb"
+    ],
+    "source": "references/results/maple-preview-small-device-evidence.json",
+    "status": "auto-promoted"
   }
 }

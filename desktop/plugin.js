@@ -107,6 +107,7 @@ function TurbofitPage() {
   const [message, setMessage] = useState('')
   const [smoke, setSmoke] = useState(null)
   const [replacement, setReplacement] = useState(null)
+  const [audition, setAudition] = useState(null)
 
   const refresh = useCallback(async () => {
     setBusy(true)
@@ -220,6 +221,21 @@ function TurbofitPage() {
     }
   }
 
+  async function runAudition() {
+    setBusy(true)
+    setMessage('')
+    try {
+      const pair = mainModel || 'maple-preview-tq2'
+      const result = await api.rest(`/audition?main=${encodeURIComponent(pair)}&aux=${encodeURIComponent(auxModel || 'auto')}&context=${encodeURIComponent(context || '65536')}`)
+      setAudition(result)
+      setMessage(`Auditioned ${pair} across ${((result && result.engines) || []).length} engines.`)
+    } catch (error) {
+      setMessage(String(error && error.message || error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function runRetire(action) {
     if (!replacement) return
     setBusy(true)
@@ -318,6 +334,7 @@ function TurbofitPage() {
           jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runUpdate, children: 'Update Turbofit + Sirvir' }),
           jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runServe, children: 'Serve on Tailscale' }),
           jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runSmoke, children: 'Smoke local runtime' }),
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runAudition, children: 'Audition engines' }),
         ],
       }),
       replacement ? jsxs('div', {
@@ -603,6 +620,18 @@ function TurbofitPage() {
         jsx('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '8px' }, children: `${smoke.status || 'unknown'} · suite ${smoke.suite || 'local-runtime-smoke-v1'}` }),
         smoke.evidence_path ? jsx('div', { style: { color: 'var(--ui-text-quaternary)' }, children: smoke.evidence_path }) : null,
         (smoke.resource_warnings || []).length ? jsx('div', { style: { color: 'var(--ui-text-tertiary)' }, children: `Warnings: ${(smoke.resource_warnings || []).join(', ')}` }) : null,
+      ] }) : null,
+      audition ? jsxs('section', { className: 'flex flex-col gap-2', children: [
+        jsx('h2', { className: 'font-semibold', children: 'Engine audition' }),
+        jsx('p', { style: { color: 'var(--ui-text-tertiary)' }, children: `Pair ${audition.main} / ${audition.aux} @ ${audition.context}. Maple GGUF is fork llama.cpp or TurboHaul-on-that-fork. vLLM/SGLang need HF weights, not Maple TQ2_0.` }),
+        ...((audition.engines || []).map((item) => jsxs('div', {
+          key: item.engine_id,
+          style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' },
+          children: [
+            jsx('div', { className: 'font-medium', children: `${item.display_name} · ${item.audition}` }),
+            jsx('div', { style: { color: 'var(--ui-text-tertiary)' }, children: item.serve_note || item.reason }),
+          ],
+        }))),
       ] }) : null,
       jsx('div', {
         style: { color: 'var(--ui-text-quaternary)' },

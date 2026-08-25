@@ -10,7 +10,7 @@ The evidence-only winners at each physical hardware level. A level remains blank
 
 The system scan-to-configuration process. It scans the user's hardware, compares it with exact-tier winners and portable-fit candidates, then recommends and configures Hermes-Agent main and auxiliary models for that device.
 
-Low-VRAM dedicated Auto is **Bonsai 27B** or **Ornith 1.5 35A3B** (`--cpu-moe` + mmap). Apple Silicon uses **OrcaRouter Qwen3.8-27B-Uncensored MLX** (4/6/8-bit, never 2-bit). Integrated / unified (non-Apple) uses **Ornith 1.5**.
+Low-VRAM dedicated Auto is **Maple Preview TQ2_0** at 64K/128K. Ornith 1.5 remains the host-RAM-dependent alternative. Apple Silicon uses **OrcaRouter Qwen3.8-27B-Uncensored MLX** (4/6/8-bit, never 2-bit) or official Maple MLX on `mlx-lm-deepgrove`. Integrated / unified (non-Apple) uses Maple at 8–15 GB and Ornith at 16–23 GB.
 
 Must account for:
 
@@ -34,9 +34,21 @@ Models are ranked from real scores, not guesses:
 
 Those scores are posted to the TurboFit GitHub. A user's local TurboFit can follow that live ladder.
 
-## Backend
+## Engine audition
 
-TurboHaul Manager is the preferred backend. Other inference engines are fallbacks only when they are measurably better for that machine.
+Check inventories and auditions these engines against the selected model pair:
+
+| Engine | Maple TQ2_0 GGUF | Qwen 3.8 GGUF / HF | Notes |
+|---|---|---|---|
+| llama.cpp | Maple fork only | mainline | Cross-platform |
+| Turbohaul Manager | only if it manages the Maple fork | preferred manager | Linux NVIDIA |
+| MLX | `deepgrove/maple-preview-2bit-mlx` | OrcaRouter Uncensored 4/6/8-bit | Apple Silicon |
+| SGLang | no | HF / FP8 recipes | Linux/WSL |
+| vLLM | no | HF / FP8 / NVFP4 | Linux/WSL or vLLM-Metal |
+| FreeToken | no | HF MoE recipes only | Linux x86_64 CUDA 13 / r580+ |
+
+Canonical matrix: [`references/engine-serve-matrix.json`](../references/engine-serve-matrix.json). Desktop: **Audition engines**.
+
 
 ## Live fallback chain
 
