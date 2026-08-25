@@ -906,7 +906,7 @@ def recommendation_snapshot(
         "preferences": list(preferences),
         "recommendations": recommendations,
         "compatible_lanes": compatible_lanes,
-        "compatible_lane_policy": "physical-fit candidate; on-box benchmark required before Auto promotion",
+        "compatible_lane_policy": "only Fit List mains for this topology; dense 27B is not offered on 8 GB VRAM",
         "errors": errors,
     }
 

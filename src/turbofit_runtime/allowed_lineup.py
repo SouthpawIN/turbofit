@@ -124,6 +124,34 @@ def low_vram_moe_main() -> str:
     return "ornith-1-5-35a3b"
 
 
+def recommendable_mains_for_hardware(hardware: object) -> frozenset[str]:
+    """Mains Check may offer. Host-spill of a dense 27B is not a recommendation."""
+    vram_gb = float(getattr(hardware, "total_vram_mb", 0) or 0) / 1024
+    host_ram_gb = float(getattr(hardware, "system_ram_mb", 0) or 0) / 1024
+    pool = str(getattr(hardware, "memory_pool_kind", "dedicated") or "dedicated")
+    devices = getattr(hardware, "devices", ()) or ()
+    backend = devices[0].backend if devices else "cpu"
+    vendor = devices[0].vendor if devices else ""
+    if pool == "cpu":
+        pool = "unified"
+        vram_gb = 0
+    return frozenset(
+        normalize(str(item["alias"]))
+        for item in check_local_options(
+            vram_gb=vram_gb,
+            host_ram_gb=host_ram_gb,
+            memory_pool=pool,
+            backend=backend,
+            vendor=vendor,
+        )
+    )
+
+
+def main_matches_recommendable(alias: str, allowed: Iterable[str]) -> bool:
+    token = normalize(alias)
+    return any(token == item or token.startswith(f"{item}-") for item in allowed)
+
+
 def check_local_options(
     *,
     vram_gb: float,

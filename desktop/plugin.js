@@ -599,10 +599,10 @@ function TurbofitPage() {
         }),
       ] }),
       compatibleLanes.length ? jsxs('section', { className: 'flex flex-col gap-2', children: [
-        jsx('h2', { className: 'font-semibold', children: 'Compatible local lanes — benchmark required' }),
+        jsx('h2', { className: 'font-semibold', children: 'Compatible local lanes — same Fit List only' }),
         jsx('div', {
           style: { color: 'var(--ui-text-tertiary)' },
-          children: 'These lanes fit the physical memory envelope, including safe host spill. Their source-machine speed is not claimed for this box; select one manually to validate it here.',
+          children: 'Only Maple or Ornith on 8 GB VRAM. A dense 27B that spills into RAM is not a lane — it will crawl.',
         }),
         ...compatibleLanes.map((item) => jsxs('div', {
           key: item.profile,

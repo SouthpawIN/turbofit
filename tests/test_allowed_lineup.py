@@ -76,3 +76,26 @@ def test_filter_drops_nine_b() -> None:
         ["maple-preview-tq2", "ornith-9b", "qwen3-8-27b-unleashed-ud-q3-k-xl"],
         role="main",
     ) == ["maple-preview-tq2", "qwen3-8-27b-unleashed-ud-q3-k-xl"]
+
+
+def test_eight_gb_vram_thirty_two_gb_ram_is_maple_or_ornith_not_dense_27b() -> None:
+    from turbofit_runtime.allowed_lineup import (
+        main_matches_recommendable,
+        recommendable_mains_for_hardware,
+    )
+    from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
+
+    hardware = HardwareFingerprint(
+        "linux",
+        "x86_64",
+        32 * 1024,
+        devices=(
+            AcceleratorDevice(0, "gpu-0", "8gb", "nvidia", "cuda", 8 * 1024, "8.6", None),
+        ),
+    )
+    allowed = recommendable_mains_for_hardware(hardware)
+    assert allowed == frozenset({"maple-preview-tq2", "ornith-1-5-35a3b"})
+    assert main_matches_recommendable("maple-preview-tq2-128k-main", allowed)
+    assert main_matches_recommendable("ornith-1-5-35a3b", allowed)
+    assert not main_matches_recommendable("qwen3-8-27b-unleashed-ud-q3-k-xl", allowed)
+    assert not main_matches_recommendable("qwen3-8-27b-q4-k-m", allowed)
