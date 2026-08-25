@@ -832,6 +832,34 @@
       ],
       "revision": "fbbaed45c2f0e200276ffa51701a24d45dc7f57e",
       "upstream_source": "https://huggingface.co/ornith-ai/Ornith-1.5-35B-A3B"
+    },
+    {
+      "id": "ornith-1-5-oq4e-mtp",
+      "name": "Ornith 1.5 35B-A3B oQ4e MTP",
+      "family": "Ornith 1.5 35A3B",
+      "source": "https://huggingface.co/dotyerts/Ornith-1.5-35B-A3B-oQ4e-mtp",
+      "artifact": "Ornith-1.5-35B-A3B-oQ4e-mtp",
+      "quantization": "oQ4e-MTP",
+      "vision": true,
+      "moe": true,
+      "runtime_features": ["mtp", "mlx"],
+      "roles": ["aux", "main"],
+      "revision": "74d4e12c62e9bcd7b69cb290dee4eed76222e308",
+      "upstream_source": "https://huggingface.co/ornith-ai/Ornith-1.5-35B-A3B"
+    },
+    {
+      "id": "ornith-1-5-oq8e-mtp",
+      "name": "Ornith 1.5 35B-A3B oQ8e MTP",
+      "family": "Ornith 1.5 35A3B",
+      "source": "https://huggingface.co/dotyerts/Ornith-1.5-35B-A3B-oQ8e-mtp",
+      "artifact": "Ornith-1.5-35B-A3B-oQ8e-mtp",
+      "quantization": "oQ8e-MTP",
+      "vision": true,
+      "moe": true,
+      "runtime_features": ["mtp", "mlx"],
+      "roles": ["aux", "main"],
+      "revision": "867508b47eb34dc273f98c3dabad0012373b2b90",
+      "upstream_source": "https://huggingface.co/ornith-ai/Ornith-1.5-35B-A3B"
     }
   ]
 }

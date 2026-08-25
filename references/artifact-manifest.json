@@ -460,6 +460,24 @@
       "size_bytes": 21713462848
     },
     {
+      "destination": "Ornith-1.5-35B-A3B-oQ4e-mtp",
+      "families": ["ornith-1-5-oq4e-mtp"],
+      "repo_id": "dotyerts/Ornith-1.5-35B-A3B-oQ4e-mtp",
+      "revision": "74d4e12c62e9bcd7b69cb290dee4eed76222e308",
+      "path": ".",
+      "sha256": "snapshot:74d4e12c62e9bcd7b69cb290dee4eed76222e308",
+      "size_bytes": 21626133561
+    },
+    {
+      "destination": "Ornith-1.5-35B-A3B-oQ8e-mtp",
+      "families": ["ornith-1-5-oq8e-mtp"],
+      "repo_id": "dotyerts/Ornith-1.5-35B-A3B-oQ8e-mtp",
+      "revision": "867508b47eb34dc273f98c3dabad0012373b2b90",
+      "path": ".",
+      "sha256": "snapshot:867508b47eb34dc273f98c3dabad0012373b2b90",
+      "size_bytes": 38617271546
+    },
+    {
       "destination": "Ornith-1.5-35B-A3B/mmproj-Ornith-1.5-35B-BF16.gguf",
       "families": [
         "ornith-1-5-35a3b"

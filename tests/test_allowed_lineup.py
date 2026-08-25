@@ -33,13 +33,26 @@ def test_eight_gb_without_32gb_ram_still_offers_ornith_from_disk() -> None:
 def test_eight_gb_aux_does_not_stack_two_models() -> None:
     assert local_aux_for_host(vram_gb=8, host_ram_gb=16) == "auto"
     assert is_allowed_aux("auto:bonsai-27b")
-    assert local_aux_for_host(vram_gb=24, host_ram_gb=16) == "ornith-1-5-35a3b"
+    assert local_aux_for_host(vram_gb=24, host_ram_gb=16) == "auto"
+    assert local_aux_for_host(vram_gb=48, host_ram_gb=64) == "ornith-1-5-oq4e-mtp"
+    assert local_aux_for_host(vram_gb=64, host_ram_gb=64) == "ornith-1-5-oq8e-mtp"
 
 
 def test_unleashed_bands() -> None:
     assert local_main_for_vram_gb(16) == "qwen3-8-27b-unleashed-ud-iq3-xxs"
     assert local_main_for_vram_gb(24) == "qwen3-8-27b-unleashed-ud-q3-k-xl"
     assert local_main_for_vram_gb(96) == "qwen3-8-27b-bf16"
+    from turbofit_runtime.allowed_lineup import speed_family_rank, speed_main_for_vram_gb
+
+    assert speed_main_for_vram_gb(8) == "maple-preview-tq2"
+    assert speed_main_for_vram_gb(16) == "ornith-1-5-35a3b"
+    assert speed_main_for_vram_gb(24) == "ornith-1-5-oq4e-mtp"
+    assert speed_main_for_vram_gb(48) == "ornith-1-5-oq8e-mtp"
+    assert speed_family_rank("ornith-1-5-oq4e-mtp") > speed_family_rank("qwen3-8-27b-unleashed-ud-q3-k-xl")
+    options = check_local_options(vram_gb=24, host_ram_gb=64)
+    aliases = [item["alias"] for item in options if item["role"] == "main"]
+    assert "qwen3-8-27b-unleashed-ud-q3-k-xl" in aliases
+    assert "ornith-1-5-oq4e-mtp" in aliases
 
 
 def test_shared_total_memory_is_not_treated_as_vram() -> None:

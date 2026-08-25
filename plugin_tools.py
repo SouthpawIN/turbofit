@@ -36,6 +36,27 @@ DEFAULT_BASE_URL = "http://127.0.0.1:8091/v1"
 # - The other four are live Portal freeRecommendedModels as of 2026-08-22
 #   that Hermes also documents as the free Portal tail (stepfun + hy3 +
 #   both Laguna :free slugs). No Hermes-branded models. No NVIDIA NIM.
+NOUS_FREE_LABELS = {
+    "stealth/ox-alpha": "Ox Alpha",
+    "stepfun/step-3.7-flash:free": "Step 3.7 Flash",
+    "tencent/hy3:free": "Tencent HY3",
+    "poolside/laguna-s-2.1:free": "Laguna S 2.1",
+    "poolside/laguna-xs-2.1:free": "Laguna XS 2.1",
+}
+SUBSCRIPTION_LABELS = {
+    "nous": "Nous (subscription)",
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "openrouter": "OpenRouter",
+    "xai": "xAI",
+    "groq": "Groq",
+    "google": "Google",
+    "gemini": "Gemini",
+    "mistral": "Mistral",
+    "deepseek": "DeepSeek",
+    "together": "Together",
+    "fireworks": "Fireworks",
+}
 NOUS_FREE_FALLBACK_CHAIN = [
     {"provider": "nous", "model": "stealth/ox-alpha"},
     {"provider": "nous", "model": "stepfun/step-3.7-flash:free"},
@@ -619,6 +640,96 @@ def gateway_health(base_url: str = DEFAULT_BASE_URL, timeout: float = 1.5) -> di
         return {"reachable": False, "endpoint": endpoint, "error": str(exc)}
 
 
+def _live_usage() -> dict[str, Any]:
+    gpus: list[dict[str, Any]] = []
+    try:
+        from turbofit_runtime.gpu import probe_gpus
+
+        gpus = [sample.to_dict() for sample in probe_gpus()]
+    except Exception:
+        pass
+    host: dict[str, Any] = {}
+    try:
+        from turbofit_runtime.hardware import probe_hardware
+
+        hardware = probe_hardware()
+        host = {
+            "system_ram_mb": hardware.system_ram_mb,
+            "host_usable_memory_mb": hardware.host_usable_memory_mb,
+            "total_vram_mb": hardware.total_vram_mb,
+            "topology_key": hardware.topology_key,
+        }
+    except Exception:
+        pass
+    runtime = _load_json(RUNTIME_STATE_PATH) or {}
+    tps = None
+    for key in ("main_tps", "tps", "predicted_per_second"):
+        value = runtime.get(key)
+        if isinstance(value, (int, float)) and value > 0:
+            tps = float(value)
+            break
+    return {"gpus": gpus, "host": host, "tps": tps, "runtime_keys": sorted(runtime)}
+
+
+def _provider_catalog(config: Mapping[str, Any]) -> dict[str, Any]:
+    named = config.get("providers") if isinstance(config.get("providers"), Mapping) else {}
+    subscriptions = []
+    for name, spec in named.items():
+        token = str(name).strip()
+        if not token or token.lower() == "turbofit":
+            continue
+        body = spec if isinstance(spec, Mapping) else {}
+        configured = any(body.get(key) for key in ("api_key", "api", "base_url", "oauth"))
+        subscriptions.append({
+            "id": token,
+            "label": SUBSCRIPTION_LABELS.get(token.lower(), token.replace("_", " ").title()),
+            "kind": "nous-subscription" if token.lower() == "nous" else "subscription",
+            "configured": bool(configured),
+        })
+    nous_free = [
+        {
+            "provider": "nous",
+            "model": item["model"],
+            "label": NOUS_FREE_LABELS.get(item["model"], item["model"]),
+            "kind": "nous-free",
+        }
+        for item in NOUS_FREE_FALLBACK_CHAIN
+    ]
+    return {"subscriptions": subscriptions, "nous_free": nous_free}
+
+
+def _local_scale_ladder(selection: Mapping[str, Any] | None) -> list[dict[str, Any]]:
+    requested = ""
+    if isinstance(selection, Mapping):
+        requested = str(selection.get("profile") or selection.get("requested") or "")
+    stem = requested.replace("hardware-", "") if requested.startswith("hardware-") else "8gb"
+    path = PLUGIN_ROOT / "runtime-profiles" / f"{stem}.yaml"
+    steps: list[dict[str, Any]] = []
+    if path.is_file():
+        try:
+            payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            for rung in payload.get("rungs") or []:
+                if not isinstance(rung, Mapping):
+                    continue
+                ident = str(rung.get("id") or "")
+                steps.append({
+                    "id": ident,
+                    "label": ident.replace("local-", "").replace("-", " "),
+                    "context": rung.get("context"),
+                    "aux_mode": rung.get("aux_mode"),
+                    "kind": "local",
+                })
+        except Exception:
+            pass
+    if not steps:
+        steps = [
+            {"id": "local-maple-131072", "label": "maple 131072", "context": 131072, "aux_mode": "shared-main", "kind": "local"},
+            {"id": "local-maple-65536", "label": "maple 65536", "context": 65536, "aux_mode": "shared-main", "kind": "local"},
+        ]
+    steps.append({"id": "nous-free", "label": "Nous keyless free", "context": None, "aux_mode": "api", "kind": "api"})
+    return steps
+
+
 def status_snapshot(config: Mapping[str, Any], *, probe: bool = True) -> dict[str, Any]:
     primary, fallback, endpoint = _provider_flags(config)
     selection = _load_json(SELECTION_PATH)
@@ -651,6 +762,9 @@ def status_snapshot(config: Mapping[str, Any], *, probe: bool = True) -> dict[st
         "gateway": gateway_health(endpoint) if probe else {"reachable": None, "endpoint": endpoint},
         "tailnet": tailnet_status(),
         "platform": {"os": os.name, "sys_platform": sys.platform},
+        "usage": _live_usage() if probe else {"gpus": [], "host": {}, "tps": None},
+        "catalog": _provider_catalog(config),
+        "scale_ladder": _local_scale_ladder(selection),
     }
 
 

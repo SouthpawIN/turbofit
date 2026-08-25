@@ -564,6 +564,34 @@
       },
       "cpu_moe": true
     },
+    "ornith-1-5-oq4e-mtp": {
+      "family": "Ornith 1.5 35A3B",
+      "alias": "ornith-1-5-oq4e-mtp",
+      "engine": "mlx",
+      "model": "${TURBOFIT_MODEL_ROOT}/Ornith-1.5-35B-A3B-oQ4e-mtp",
+      "projector": "",
+      "draft": "",
+      "methods": {
+        "65536": "mtp",
+        "131072": "mtp",
+        "262144": "mtp",
+        "1048576": "mtp"
+      }
+    },
+    "ornith-1-5-oq8e-mtp": {
+      "family": "Ornith 1.5 35A3B",
+      "alias": "ornith-1-5-oq8e-mtp",
+      "engine": "mlx",
+      "model": "${TURBOFIT_MODEL_ROOT}/Ornith-1.5-35B-A3B-oQ8e-mtp",
+      "projector": "",
+      "draft": "",
+      "methods": {
+        "65536": "mtp",
+        "131072": "mtp",
+        "262144": "mtp",
+        "1048576": "mtp"
+      }
+    },
     "maple-preview-tq2": {
       "family": "Maple Preview",
       "alias": "maple-preview-tq2",

@@ -23,6 +23,8 @@ ALLOWED_MAIN = (
     "bonsai-27b-q1",
     "bonsai-27b-1bit",
     "ornith-1-5-35a3b",
+    "ornith-1-5-oq4e-mtp",
+    "ornith-1-5-oq8e-mtp",
     "qwen3-8-27b-unleashed-ud-iq3-xxs",
     "qwen3-8-27b-unleashed-ud-q3-k-xl",
     "qwen3-8-27b-unleashed",
@@ -35,6 +37,8 @@ ALLOWED_MAIN = (
 
 ALLOWED_AUX = (
     "ornith-1-5-35a3b",
+    "ornith-1-5-oq4e-mtp",
+    "ornith-1-5-oq8e-mtp",
     "carwin-nano",
     "carwin-moe-nano",
     "auto",
@@ -105,6 +109,32 @@ def local_main_for_vram_gb(vram_gb: float) -> str:
     return "qwen3-8-27b-bf16"
 
 
+def speed_main_for_vram_gb(vram_gb: float) -> str:
+    """Faster MoE over dense 27B when the user picks speed."""
+    if vram_gb < 16:
+        return "maple-preview-tq2"
+    if vram_gb < 24:
+        return "ornith-1-5-35a3b"
+    if vram_gb < 48:
+        return "ornith-1-5-oq4e-mtp"
+    return "ornith-1-5-oq8e-mtp"
+
+
+def speed_family_rank(alias: str) -> int:
+    token = normalize(alias)
+    if "oq8e" in token:
+        return 50
+    if "oq4e" in token:
+        return 45
+    if token.startswith("ornith"):
+        return 40
+    if token.startswith("maple"):
+        return 30
+    if "unleashed" in token or token.startswith("qwen3-8-27b"):
+        return 5
+    return 10
+
+
 def shared_main_for_total_memory_gb(total_memory_gb: float) -> str:
     """Select by the one shared pool; never interpret it as dedicated VRAM."""
     if total_memory_gb < 16:
@@ -115,9 +145,17 @@ def shared_main_for_total_memory_gb(total_memory_gb: float) -> str:
 
 
 def local_aux_for_host(*, vram_gb: float, host_ram_gb: float) -> str:
-    if vram_gb < 16:
-        return "auto"
-    return "ornith-1-5-35a3b"
+    """Default aux is MTP Ornith when the box can hold it next to main.
+
+    oQ4e is 21.6 GB. oQ8e is 38.6 GB. A single 8/16/24 GB card cannot stack
+    either next to Unleashed, so those stay `auto`. Dual-24 / 40 GB+ gets oQ4e.
+    64 GB+ gets oQ8e. GGUF Ornith remains in the catalog, not the default.
+    """
+    if vram_gb >= 64:
+        return "ornith-1-5-oq8e-mtp"
+    if vram_gb >= 40:
+        return "ornith-1-5-oq4e-mtp"
+    return "auto"
 
 
 def low_vram_moe_main() -> str:
@@ -222,12 +260,17 @@ def check_local_options(
         {
             "role": "main",
             "alias": local_main_for_vram_gb(vram_gb),
-            "why": "Unleashed / Qwen band for this VRAM.",
+            "why": "Intelligence / balanced: Unleashed / Qwen band for this VRAM.",
+        },
+        {
+            "role": "main",
+            "alias": speed_main_for_vram_gb(vram_gb),
+            "why": "Speed: Ornith MoE / MTP instead of dense 27B.",
         },
         {
             "role": "aux",
-            "alias": "ornith-1-5-35a3b",
-            "why": "35A3B aux with CPU/disk expert stream.",
+            "alias": local_aux_for_host(vram_gb=vram_gb, host_ram_gb=host_ram_gb),
+            "why": "Default aux is MTP Ornith when total VRAM can hold it next to main.",
             "residency": residency,
         },
     ]

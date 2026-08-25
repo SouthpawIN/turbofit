@@ -29,6 +29,27 @@ const buttonStyle = {
 }
 
 
+function Spark({ values }) {
+  const nums = (values || []).map((value) => Number(value) || 0)
+  if (nums.length < 2) return jsx('div', { style: { height: '36px' } })
+  const max = Math.max(...nums, 1)
+  const points = nums.map((value, index) => {
+    const x = (index / (nums.length - 1)) * 120
+    const y = 32 - (value / max) * 28
+    return `${x},${y}`
+  }).join(' ')
+  return jsx('svg', {
+    viewBox: '0 0 120 36',
+    style: { width: '100%', height: '36px' },
+    children: jsx('polyline', {
+      fill: 'none',
+      stroke: 'var(--ui-accent)',
+      strokeWidth: '2',
+      points,
+    }),
+  })
+}
+
 function ScoreBar({ label, value, max = 100 }) {
   const numeric = Number(value) || 0
   const ceiling = Number(max) || 100
@@ -93,7 +114,8 @@ function TurbofitPage() {
   const [primary, setPrimary] = useState(false)
   const [fallback, setFallback] = useState(false)
   const [baseUrl, setBaseUrl] = useState('http://127.0.0.1:8091/v1')
-  const [fallbackChain, setFallbackChain] = useState('[]')
+  const [fallbackChain, setFallbackChain] = useState([])
+  const [usageHistory, setUsageHistory] = useState([])
   const [publishTailnet, setPublishTailnet] = useState(false)
   const [installSirvir, setInstallSirvir] = useState(false)
   const [installNative, setInstallNative] = useState(false)
@@ -139,7 +161,14 @@ function TurbofitPage() {
       setPrimary(Boolean(provider.primary))
       setFallback(Boolean(provider.fallback))
       setBaseUrl(provider.base_url || 'http://127.0.0.1:8091/v1')
-      setFallbackChain(JSON.stringify(provider.fallback_chain || [], null, 2))
+      setFallbackChain(Array.isArray(provider.fallback_chain) ? provider.fallback_chain : [])
+      const usage = nextStatus && nextStatus.usage
+      if (usage) {
+        setUsageHistory((prev) => [...prev, {
+          tps: Number(usage.tps) || 0,
+          vram: ((usage.gpus || []).reduce((sum, gpu) => sum + (Number(gpu.used_mb) || 0), 0)),
+        }].slice(-24))
+      }
       const requested = (nextStatus && nextStatus.selection && nextStatus.selection.requested) || 'auto'
 
       const exactId = requested.startsWith('manual-') ? requested.slice(7) : requested
@@ -171,8 +200,7 @@ function TurbofitPage() {
     setBusy(true)
     setMessage('')
     try {
-      const chain = fallbackChain.trim() ? JSON.parse(fallbackChain) : []
-      if (!Array.isArray(chain)) throw new Error('Fallback chain must be a JSON array.')
+      const chain = Array.isArray(fallbackChain) ? fallbackChain : []
       const chosen = combinations.find((item) =>
         item.main === mainModel && item.aux === auxModel && String(item.context) === String(context)
       )
@@ -320,6 +348,45 @@ function TurbofitPage() {
           style: { color: 'var(--ui-text-tertiary)' },
           children: `Hardware: ${hardware.topology_key || 'scanning'} · usable memory ${hardware.total_usable_memory_mb || '—'} MiB`,
         }),
+      ] }),
+      jsxs('section', {
+        className: 'grid grid-cols-1 gap-3 md:grid-cols-3',
+        children: [
+          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' }, children: [
+            jsx('div', { className: 'font-medium', children: 'Speed' }),
+            jsx(ScoreBar, { label: 'tok/s', value: (status && status.usage && status.usage.tps) || 0, max: 80 }),
+            jsx(Spark, { values: usageHistory.map((item) => item.tps) }),
+          ] }),
+          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' }, children: [
+            jsx('div', { className: 'font-medium', children: 'VRAM' }),
+            jsx(ScoreBar, {
+              label: 'used MiB',
+              value: ((status && status.usage && status.usage.gpus) || []).reduce((sum, gpu) => sum + (Number(gpu.used_mb) || 0), 0),
+              max: Math.max(1, ((status && status.usage && status.usage.gpus) || []).reduce((sum, gpu) => sum + (Number(gpu.total_mb) || 0), 0)),
+            }),
+            jsx(Spark, { values: usageHistory.map((item) => item.vram) }),
+          ] }),
+          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' }, children: [
+            jsx('div', { className: 'font-medium', children: 'Host RAM' }),
+            jsx(ScoreBar, {
+              label: 'usable MiB',
+              value: (status && status.usage && status.usage.host && status.usage.host.host_usable_memory_mb) || 0,
+              max: Math.max(1, (status && status.usage && status.usage.host && status.usage.host.system_ram_mb) || 1),
+            }),
+          ] }),
+        ],
+      }),
+      jsxs('section', { className: 'flex flex-col gap-2', children: [
+        jsx('h2', { className: 'font-semibold', children: 'Auto scale down / up' }),
+        jsx('p', { style: { color: 'var(--ui-text-tertiary)' }, children: 'Pressure drops context, then model, then Nous keyless. Healing walks back up.' }),
+        jsx('div', { className: 'flex flex-wrap gap-2', children: ((status && status.scale_ladder) || []).map((step, index) => jsxs('div', {
+          key: step.id,
+          style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '8px' },
+          children: [
+            jsx('div', { className: 'font-medium', children: `${index + 1}. ${step.label}` }),
+            jsx('div', { style: { color: 'var(--ui-text-tertiary)' }, children: `${step.aux_mode || ''} ${step.context ? `· ${step.context}` : ''}` }),
+          ],
+        })) }),
       ] }),
       message ? jsx('div', {
         style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '8px' },
@@ -477,17 +544,41 @@ function TurbofitPage() {
           ] }),
         ],
       }),
-      jsx(Field, {
-        label: 'Fallback chain',
-        help: 'Ordered provider/model JSON. Keep credentials in Hermes provider configuration.',
-        children: jsx('textarea', {
-          value: fallbackChain,
-          onChange: (event) => setFallbackChain(event.target.value),
-          rows: 7,
-          spellCheck: false,
-          style: { ...fieldStyle, fontFamily: 'var(--ui-font-mono)', resize: 'vertical' },
-        }),
-      }),
+      jsxs('section', { className: 'flex flex-col gap-3', children: [
+        jsx('h2', { className: 'font-semibold', children: 'Subscriptions and keyless fallbacks' }),
+        jsx('p', { style: { color: 'var(--ui-text-tertiary)' }, children: 'Your configured providers first. Nous keyless free models last. Not a JSON dump.' }),
+        jsx('div', { className: 'font-medium', children: 'Your subscriptions' }),
+        ...(((status && status.catalog && status.catalog.subscriptions) || []).length
+          ? (status.catalog.subscriptions.map((item) => jsxs('label', {
+            key: item.id,
+            className: 'flex items-center gap-2',
+            children: [
+              jsx('span', { children: item.label }),
+              jsx('span', { style: { color: 'var(--ui-text-tertiary)' }, children: item.configured ? 'configured' : 'not configured' }),
+            ],
+          })))
+          : [jsx('div', { key: 'no-subs', style: { color: 'var(--ui-text-tertiary)' }, children: 'No paid or OAuth providers in this Hermes config yet.' })]),
+        jsx('div', { className: 'font-medium', children: 'Nous keyless free' }),
+        ...(((status && status.catalog && status.catalog.nous_free) || []).map((item) => {
+          const enabled = fallbackChain.some((row) => row.provider === 'nous' && row.model === item.model)
+          return jsxs('label', {
+            key: item.model,
+            className: 'flex items-center gap-2',
+            children: [
+              jsx('input', {
+                type: 'checkbox',
+                checked: enabled,
+                onChange: (event) => {
+                  if (event.target.checked) setFallbackChain([...fallbackChain, { provider: 'nous', model: item.model }])
+                  else setFallbackChain(fallbackChain.filter((row) => !(row.provider === 'nous' && row.model === item.model)))
+                },
+              }),
+              jsx('span', { children: item.label }),
+              jsx('span', { style: { color: 'var(--ui-text-tertiary)' }, children: item.model }),
+            ],
+          })
+        })),
+      ] }),
       jsxs('section', { className: 'flex flex-col gap-2', children: [
         jsx('h2', { className: 'font-semibold', children: 'Runtime and remote access' }),
         jsx('p', {
