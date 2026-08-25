@@ -125,6 +125,47 @@ def test_hardware_envelopes_match_their_canonical_topologies() -> None:
         assert hardware_satisfies(fingerprint(tuple(sizes)), profile.hardware)
 
 
+def test_dedicated_8gb_tier_allows_only_the_windows_vulkan_reporting_delta() -> None:
+    profile = load_yaml_profile(ROOT / "runtime-profiles" / "8gb.yaml")
+    windows_vulkan = HardwareFingerprint(
+        os="windows",
+        architecture="amd64",
+        system_ram_mb=65_455,
+        devices=(
+            AcceleratorDevice(
+                index=0,
+                uuid="00000000-0900-0000-0000-000000000000",
+                name="AMD Radeon RX 6600",
+                vendor="amd",
+                backend="vulkan",
+                memory_total_mb=8_176,
+                compute_capability=None,
+                bus_id=None,
+            ),
+        ),
+    )
+    undersized = HardwareFingerprint(
+        os="windows",
+        architecture="amd64",
+        system_ram_mb=65_455,
+        devices=(
+            AcceleratorDevice(
+                index=0,
+                uuid="00000000-0900-0000-0000-000000000001",
+                name="AMD Radeon RX 6600",
+                vendor="amd",
+                backend="vulkan",
+                memory_total_mb=8_175,
+                compute_capability=None,
+                bus_id=None,
+            ),
+        ),
+    )
+
+    assert hardware_satisfies(windows_vulkan, profile.hardware)
+    assert not hardware_satisfies(undersized, profile.hardware)
+
+
 def test_large_shared_memory_pools_are_not_rejected_by_discrete_card_topology() -> None:
     profile = load_yaml_profile(ROOT / "runtime-profiles" / "96gb.yaml")
     cpu = HardwareFingerprint("linux", "x86_64", 131_072)
