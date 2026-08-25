@@ -16,10 +16,14 @@ Current generated scope:
 - **43 main configurations**
 - **3 auxiliary choices** (`ornith-1-5-35a3b`, `carwin-nano`, `auto`)
 - **4 exact context tiers**
-- **516 benchmark rows**
+- Maple Preview TQ2_0 is the 8 GB Fit List candidate and is native 64K/128K only
 - DeepSeek V4 Flash 0731 is **not** in the active catalog
 
 ### Main configurations
+
+#### Maple Preview 20B-A1B
+
+`stamsam/maple-preview-gguf` `maple-tq2_0.gguf` is the dedicated 8 GB and RAM-only 8–15 GB Fit List candidate. It is a 20B-A1B ternary MoE with native 131,072 context and requires the Maple llama.cpp fork. It is not Auto-promoted until exact physical 8 GB-device evidence exists. Details: [`maple-small-device-validation.md`](maple-small-device-validation.md).
 
 #### Qwen 3.8 27B Unleashed
 

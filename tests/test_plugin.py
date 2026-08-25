@@ -364,6 +364,12 @@ def test_desktop_plugin_source_has_status_recommendation_and_fallback_controls()
     assert "api.rest('/smoke'" in text
     assert "Smoke local runtime" in text
     assert "This is not a promotion benchmark" in text
+    assert "api.rest('/local-models'" in text
+    assert "New model recommended" in text
+    assert "Archive old model" in text
+    assert "Delete old model" in text
+    assert "Keep both" in text
+    assert "api.rest('/retire-model'" in text
 
 
 def test_apply_configuration_can_install_bundled_sirvir(monkeypatch) -> None:

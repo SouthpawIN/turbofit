@@ -469,6 +469,17 @@
       "path": "mmproj-Ornith-1.5-35B-BF16.gguf",
       "sha256": "d9ce31026d1cb1f3f8d5152e2e2a014d9d2b302b6c93a7dc07bb0a0487f52837",
       "size_bytes": 902822016
+    },
+    {
+      "destination": "Maple-Preview/maple-tq2_0.gguf",
+      "families": [
+        "maple-preview-tq2"
+      ],
+      "repo_id": "stamsam/maple-preview-gguf",
+      "revision": "0afcb98771d39ab4de25252ee006ea9f9eab1920",
+      "path": "maple-tq2_0.gguf",
+      "sha256": "09d219202562dbd17722dc8e3273527a021182ab7f892c2a06aac459a8f3a090",
+      "size_bytes": 5454482432
     }
   ]
 }

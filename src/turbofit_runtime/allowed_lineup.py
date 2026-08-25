@@ -4,8 +4,9 @@ A 9B must never be recommended. Routing:
 
 - Apple / Metal: OrcaRouter Qwen3.8-27B-Uncensored MLX (4/6/8-bit). Never the
   MLX 2-bit build (uploader: archival, quality collapse).
-- Integrated / unified (non-Apple): Ornith 1.5 35A3B with --cpu-moe + mmap.
-- Low-memory dedicated: Bonsai 27B Q1 with safe host spill and/or Ornith 1.5 streamed from disk.
+- Integrated / RAM-only (non-Apple): Maple at 8 GB total, Ornith at 16 GB,
+  and Qwen 3.8 27B Unleashed at 24 GB+.
+- Dedicated 8 GB: Maple, plus Ornith when host RAM can hold offloaded experts.
 - Dedicated 16 GB+: Unleashed GGUF + Ornith aux.
 
 The Asha/Escha mixed 2-bit (EschaLabs/Qwen3.8-27B-Escha-W2) is a research
@@ -17,6 +18,7 @@ import re
 from typing import Iterable
 
 ALLOWED_MAIN = (
+    "maple-preview-tq2",
     "bonsai-27b",
     "bonsai-27b-q1",
     "bonsai-27b-1bit",
@@ -95,12 +97,21 @@ def apple_mlx_main(*, unified_ram_gb: float) -> str:
 
 def local_main_for_vram_gb(vram_gb: float) -> str:
     if vram_gb < 16:
-        return "bonsai-27b"
+        return "maple-preview-tq2"
     if vram_gb < 24:
         return "qwen3-8-27b-unleashed-ud-iq3-xxs"
     if vram_gb < 96:
         return "qwen3-8-27b-unleashed-ud-q3-k-xl"
     return "qwen3-8-27b-bf16"
+
+
+def shared_main_for_total_memory_gb(total_memory_gb: float) -> str:
+    """Select by the one shared pool; never interpret it as dedicated VRAM."""
+    if total_memory_gb < 16:
+        return "maple-preview-tq2"
+    if total_memory_gb < 24:
+        return "ornith-1-5-35a3b"
+    return "qwen3-8-27b-unleashed-ud-q3-k-xl"
 
 
 def local_aux_for_host(*, vram_gb: float, host_ram_gb: float) -> str:
@@ -145,35 +156,40 @@ def check_local_options(
         ]
 
     if unified:
+        main = shared_main_for_total_memory_gb(host_ram_gb)
         return [
             {
                 "role": "main",
-                "alias": "ornith-1-5-35a3b",
+                "alias": main,
                 "why": (
-                    "Integrated/unified memory: Ornith 1.5 35A3B with --cpu-moe "
-                    f"and mmap from {residency['mode']}."
+                    "Integrated/unified memory uses total-memory bands: "
+                    "Maple at 8 GB, Ornith at 16 GB, Unleashed at 24 GB+."
                 ),
-                "residency": residency,
+                "residency": residency if main == "ornith-1-5-35a3b" else None,
             }
         ]
 
     if vram_gb < 16:
-        return [
+        options: list[dict[str, object]] = [
             {
                 "role": "main",
-                "alias": "bonsai-27b",
-                "why": "Bonsai 27B Q1 shared-main lane with safe host spill when full GPU residency is unavailable.",
-            },
-            {
-                "role": "main",
-                "alias": "ornith-1-5-35a3b",
-                "why": (
-                    "35A3B MoE. Experts stay off GPU (--cpu-moe) and mmap "
-                    f"from {residency['mode']} so constrained VRAM and host RAM remain a testable lane."
-                ),
-                "residency": residency,
+                "alias": "maple-preview-tq2",
+                "why": "20B-A1B Maple TQ2_0 fits within the dedicated 8 GB VRAM band.",
             },
         ]
+        if host_ram_gb >= 16:
+            options.append(
+                {
+                    "role": "main",
+                    "alias": "ornith-1-5-35a3b",
+                    "why": (
+                        "35A3B MoE alternative when host RAM can hold offloaded "
+                        f"experts via {residency['mode']}-backed mmap."
+                    ),
+                    "residency": residency,
+                }
+            )
+        return options
     return [
         {
             "role": "main",

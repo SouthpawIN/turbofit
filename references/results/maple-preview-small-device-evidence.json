@@ -1,0 +1,100 @@
+{
+  "schema": "turbofit.maple-small-device-evidence/v1",
+  "recorded_at": "2026-08-25T15:40:00Z",
+  "candidate": "maple-preview-tq2",
+  "status": "candidate-fit-verified",
+  "promotion_scope": {
+    "cpu_8gb_process_envelope": "cgroup-verified",
+    "cpu_8gb_physical_machine": "pending",
+    "gpu_8gb_vram": "measured-residency-surrogate",
+    "auto_promotion": false,
+    "reason": "The CUDA run stayed below 8 GiB on a physical RTX 3090, but exact 8 GB-card evidence is still required before Auto promotion."
+  },
+  "sources": {
+    "model_repo": "stamsam/maple-preview-gguf",
+    "model_revision": "0afcb98771d39ab4de25252ee006ea9f9eab1920",
+    "artifact": "maple-tq2_0.gguf",
+    "artifact_size_bytes": 5454482432,
+    "artifact_sha256": "09d219202562dbd17722dc8e3273527a021182ab7f892c2a06aac459a8f3a090",
+    "upstream_repo": "deepgrove/maple-preview",
+    "upstream_revision": "ac1ddd79d2b5cb4406f5d2bebdf95406ce505a07",
+    "runtime_repo": "stamsam/llama.cpp",
+    "runtime_revision": "9ee03eec62d088a117ab916bbe489e7a3872a21f"
+  },
+  "host": {
+    "cpu": "Intel Xeon E5-2620 v4",
+    "system_ram_gib": 377,
+    "gpus": [
+      "NVIDIA GeForce RTX 3090 24 GiB",
+      "NVIDIA GeForce RTX 3090 24 GiB"
+    ],
+    "cuda_test_device": 1,
+    "cuda_compute_capability": "8.6"
+  },
+  "cpu_only": {
+    "constraints": {
+      "memory_max_gib": 8,
+      "swap_max_gib": 0,
+      "cuda_visible_devices": "",
+      "gpu_layers": 0,
+      "mmap": false,
+      "kv_cache": "q4_0/q4_0"
+    },
+    "contexts": {
+      "65536": {
+        "startup": "pass",
+        "generation": "pass",
+        "peak_bytes": 5763842048,
+        "peak_gib": 5.368,
+        "decode_tokens_per_second": 8.165
+      },
+      "131072": {
+        "startup": "pass",
+        "generation": "pass",
+        "peak_bytes": 5992275968,
+        "peak_gib": 5.581,
+        "decode_tokens_per_second": 11.918
+      }
+    },
+    "quality_peak_bytes": 6037815296,
+    "quality_peak_gib": 5.623,
+    "tool_calls": {
+      "passed": 3,
+      "attempted": 3,
+      "cases": [
+        "get_weather(city=Boston)",
+        "calculator(expression=(17*23)+5)",
+        "read_file(path=/tmp/maple-proof.txt)"
+      ]
+    },
+    "coherence": {
+      "prompt": "7 rows of 9 items minus 5",
+      "expected": "58",
+      "actual": "58",
+      "passed": true
+    },
+    "prompt_cache_observed": {
+      "cached_tokens": 255,
+      "passed": true
+    }
+  },
+  "cuda": {
+    "context": 131072,
+    "all_layers_offloaded": true,
+    "kv_cache": "q4_0/q4_0",
+    "baseline_device_memory_mib": 76,
+    "peak_device_memory_mib": 6191,
+    "model_delta_peak_mib": 6115,
+    "model_delta_peak_gib": 5.972,
+    "prefill_tokens_per_second": 256.06,
+    "decode_tokens_per_second": 82.988,
+    "tool_call": "get_weather(city=Boston)",
+    "tool_call_passed": true
+  },
+  "fit_list_conclusion": {
+    "ram_only_8_to_23gb": "the process fits 64K and native 128K under a hard 8 GiB no-swap cgroup, which establishes the process envelope for 8-23 GiB budgets; an exact physical 8 GiB machine remains pending",
+    "dedicated_vram_8gb": "measured working set is below 8 GiB at native 128K; exact physical 8 GB-card validation remains required",
+    "contexts_above_131072": "unsupported and intentionally excluded from the Maple matrix",
+    "runtime": "fork-only; mainline llama.cpp is incompatible"
+  }
+}

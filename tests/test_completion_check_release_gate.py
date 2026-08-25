@@ -73,7 +73,7 @@ def test_release_gate_derives_current_matrix_candidate_and_version() -> None:
     assert checks["qwen38_day_zero_lane"]["ok"] is True
     assert checks["qwen38_day_zero_lane"]["replacement_candidate"] == "qwen3-8-27b-unleashed-ud-q3-k-xl"
     assert checks["hermes_plugin_and_setup_command"]["ok"] is True
-    assert checks["hermes_plugin_and_setup_command"]["version"] == "2.3.0"
+    assert checks["hermes_plugin_and_setup_command"]["version"] == "2.4.0"
     assert "deepseek_artifacts" not in checks
     assert checks["production_floor_artifacts"]["ok"] is True
     assert "bundled_sirvir_customer_service" not in checks
