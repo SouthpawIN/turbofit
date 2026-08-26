@@ -840,7 +840,8 @@ def combination_snapshot() -> dict[str, Any]:
         rows = json.loads(result.stdout)
     except ValueError as exc:
         raise RuntimeError((result.stderr or "failed to enumerate exact combinations").strip()) from exc
-    if result.returncode or not isinstance(rows, list):
+    no_match = result.returncode == 1 and rows == []
+    if (result.returncode and not no_match) or not isinstance(rows, list):
         raise RuntimeError((result.stderr or "failed to enumerate exact combinations").strip())
     from turbofit_runtime.catalog_campaign import build_configuration_index
     from turbofit_runtime.model_catalog import ModelCatalog

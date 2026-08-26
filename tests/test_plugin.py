@@ -586,6 +586,24 @@ def test_combination_snapshot_requests_portable_fit_lanes(monkeypatch) -> None:
     assert calls[0][calls[0].index("--evidence-scope") + 1] == "portable-fit"
 
 
+def test_combination_snapshot_accepts_empty_json_from_no_match_exit(monkeypatch) -> None:
+    import plugin_tools
+
+    class Result:
+        stdout = "[]"
+        stderr = ""
+        returncode = 1
+
+    monkeypatch.setattr(plugin_tools.subprocess, "run", lambda *args, **kwargs: Result())
+
+    payload = plugin_tools.combination_snapshot()
+
+    assert payload["ok"] is True
+    assert payload["combinations"] == []
+    assert payload["compatible"] == 0
+    assert payload["total"] == 0
+
+
 def test_recommendation_snapshot_exposes_unmeasured_compatible_lanes(monkeypatch) -> None:
     import plugin_tools
     monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
