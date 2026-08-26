@@ -68,6 +68,26 @@ def test_nous_api_auth_uses_hermes_refresh_aware_runtime_credentials(monkeypatch
     assert GATEWAY._get_api_key("nous") == "fresh-invoke-jwt"
 
 
+def test_nous_api_auth_adds_hermes_source_for_standalone_systemd_service(
+    tmp_path, monkeypatch
+) -> None:
+    source = tmp_path / "hermes-agent"
+    package = source / "hermes_cli"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text("")
+    (package / "auth.py").write_text(
+        "def resolve_nous_runtime_credentials(**kwargs):\n"
+        "    return {'api_key': 'systemd-runtime-key'}\n"
+    )
+    monkeypatch.setattr(GATEWAY, "HERMES_SOURCE", str(source))
+    monkeypatch.delitem(sys.modules, "hermes_cli", raising=False)
+    monkeypatch.delitem(sys.modules, "hermes_cli.auth", raising=False)
+    monkeypatch.setattr(sys, "path", [p for p in sys.path if p != str(source)])
+
+    assert GATEWAY._get_api_key("nous") == "systemd-runtime-key"
+    assert sys.path[0] == str(source)
+
+
 def test_health_probe_accepts_native_runtime_health(monkeypatch) -> None:
     reply = SimpleNamespace(returncode=0, stdout='{"status":"ok"}')
     monkeypatch.setattr(GATEWAY.subprocess, "run", lambda *args, **kwargs: reply)
@@ -91,6 +111,33 @@ def test_explicit_api_fallback_precedes_interactive_profile_provider(tmp_path, m
     assert fallback["provider"] == "nous"
     assert fallback["model_id"] == "z-ai/glm-5.2"
     assert fallback["base_url"] == "https://inference-api.nousresearch.com"
+
+
+def test_api_fallback_accepts_ordered_model_chain(tmp_path, monkeypatch) -> None:
+    preferences = tmp_path / "preferences.yaml"
+    preferences.write_text(
+        "api_fallback:\n"
+        "  main:\n"
+        "    - qwen/qwen3.5-flash-02-23\n"
+        "    - z-ai/glm-5.2\n"
+        "    - minimax/minimax-m3\n"
+        "  base_url: https://inference-api.nousresearch.com/v1\n"
+        "  provider: nous\n"
+    )
+    monkeypatch.setattr(GATEWAY, "PREFS", str(preferences))
+    monkeypatch.setattr(GATEWAY, "HERMES_HOME", str(tmp_path / "hermes"))
+
+    candidates = GATEWAY._api_fallback_candidates()
+
+    assert [candidate["model_id"] for candidate in candidates] == [
+        "qwen/qwen3.5-flash-02-23",
+        "z-ai/glm-5.2",
+        "minimax/minimax-m3",
+    ]
+    assert all(
+        candidate["base_url"] == "https://inference-api.nousresearch.com"
+        for candidate in candidates
+    )
 
 
 def test_campaign_lease_forces_api_fallback_without_touching_campaign_models(tmp_path, monkeypatch) -> None:

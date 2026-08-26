@@ -38,6 +38,10 @@ HOME = os.path.expanduser("~")
 CATALOG = os.environ.get("TURBOFIT_CATALOG", f"{HOME}/.config/turbofit/models.yaml")
 PREFS = os.environ.get("TURBOFIT_PREFS", f"{HOME}/.config/turbofit/preferences.yaml")
 HERMES_HOME = os.environ.get("HERMES_HOME", f"{HOME}/.hermes")
+HERMES_SOURCE = os.environ.get(
+    "HERMES_AGENT_SOURCE",
+    str(Path(HERMES_HOME) / "hermes-agent"),
+)
 STATE_HOME = os.environ.get("XDG_STATE_HOME", f"{HOME}/.local/state")
 RUNTIME_STATE = os.environ.get(
     "TURBOFIT_RUNTIME_STATE",
@@ -521,6 +525,12 @@ def _get_api_key(provider):
     prov_key = provider.replace("custom:", "") if provider.startswith("custom:") else provider
     if prov_key == "nous":
         try:
+            # The gateway runs as a standalone systemd service, not through the
+            # Hermes CLI entrypoint. Make the canonical source checkout
+            # importable so refresh-aware Nous credentials work without a
+            # service-specific PYTHONPATH override.
+            if HERMES_SOURCE and HERMES_SOURCE not in sys.path:
+                sys.path.insert(0, HERMES_SOURCE)
             from hermes_cli.auth import resolve_nous_runtime_credentials
 
             credentials = resolve_nous_runtime_credentials(timeout_seconds=15)
@@ -548,7 +558,11 @@ def _find_api_fallback_in_profiles():
     prefs = load_yaml(PREFS)
     configured = prefs.get("api_fallback", {}) or {}
     url = str(configured.get("base_url") or "").strip()
-    default = str(configured.get("main") or "").strip()
+    configured_main = configured.get("main")
+    if isinstance(configured_main, list):
+        default = str(configured_main[0] if configured_main else "").strip()
+    else:
+        default = str(configured_main or "").strip()
     provider = str(configured.get("provider") or "").strip()
     if url and default and "127.0.0.1" not in url and "localhost" not in url:
         return {
@@ -599,6 +613,33 @@ def _find_api_fallback_in_profiles():
         except Exception:
             continue
     return None
+
+
+def _api_fallback_candidates():
+    """Return the ordered API safety-net models configured for this host.
+
+    ``api_fallback.main`` accepts either the legacy scalar or an ordered list.
+    A retired/overloaded API model must not collapse Turbofit's whole fallback
+    chain; callers try each candidate until one succeeds.
+    """
+    primary = _find_api_fallback_in_profiles()
+    if not primary:
+        return []
+    configured = (load_yaml(PREFS).get("api_fallback", {}) or {}).get("main")
+    models = configured if isinstance(configured, list) else [configured]
+    ordered = []
+    seen = set()
+    for model in models:
+        model_id = str(model or "").strip()
+        if not model_id or model_id in seen:
+            continue
+        seen.add(model_id)
+        ordered.append({
+            **primary,
+            "alias": f"api-fallback:{model_id}",
+            "model_id": model_id,
+        })
+    return ordered or [primary]
 
 
 def _local_ladder():
@@ -935,12 +976,22 @@ class GatewayHandler(BaseHTTPRequestHandler):
             return
 
         # API fallback is disabled by default; explicit opt-in preserves legacy behavior.
-        if status >= 400 and not backend.get("is_api") and ALLOW_API:
-            api = _find_api_fallback_in_profiles()
-            if api and api.get("source") not in tried:
-                tried.append(api.get("source"))
-                log.warning(f"Local {backend.get('alias')} returned {status} — falling back to API ({api.get('source')})")
-                result = self._proxy_to({**api, "state": "ready"}, upstream_path, body=body, role="main")
+        # Once enabled, walk the complete ordered API chain. A single retired or
+        # overloaded API model must not surface a 503 while another safety-net
+        # model is healthy.
+        if status >= 400 and ALLOW_API:
+            current_model = backend.get("model_id") if backend.get("is_api") else None
+            for api in _api_fallback_candidates():
+                if api.get("model_id") == current_model:
+                    continue
+                tried.append(api.get("model_id") or api.get("source") or "api-fallback")
+                log.warning(
+                    "%s returned %s — falling back to API model %s",
+                    backend.get("alias"), status, api.get("model_id"),
+                )
+                result = self._proxy_to(
+                    {**api, "state": "ready"}, upstream_path, body=body, role="main"
+                )
                 status = result["status"]
                 if result.get("response_sent"):
                     return
@@ -962,10 +1013,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
         result = self._proxy_to(backend, upstream_path, body=body, role="aux")
         if result.get("response_sent"):
             return
-        if result["status"] >= 400 and not backend.get("is_api") and ALLOW_API:
-            api = _find_api_fallback_in_profiles()
-            if api:
-                result = self._proxy_to({**api, "state": "ready"}, upstream_path, body=body, role="aux")
+        if result["status"] >= 400 and ALLOW_API:
+            current_model = backend.get("model_id") if backend.get("is_api") else None
+            for api in _api_fallback_candidates():
+                if api.get("model_id") == current_model:
+                    continue
+                result = self._proxy_to(
+                    {**api, "state": "ready"}, upstream_path, body=body, role="aux"
+                )
                 if result.get("response_sent"):
                     return
         # If even the aux fallback failed, optional internal auxiliary work may
