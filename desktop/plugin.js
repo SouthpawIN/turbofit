@@ -50,18 +50,26 @@ function Spark({ values }) {
   })
 }
 
-function Dial({ label, value, max = 100, unit = '', digits = 0 }) {
+function Dial({ label, value, max = 100, unit = '', digits = 0, size = 140 }) {
   const numeric = Number(value)
   const ceiling = Number(max) || 100
   const ok = Number.isFinite(numeric) && numeric > 0
   const pct = ok ? Math.max(0.02, Math.min(1, numeric / ceiling)) : 0
-  const size = 74
-  const r = 30
+  const r = size * 0.38
   const cx = size / 2
-  const cy = size / 2
-  // 270° sweep gauge: starts at 135° (lower-left), ends at 405° (lower-right)
-  const start = Math.PI * 0.75
-  const end = start + pct * Math.PI * 1.5
+  const cy = size * 0.56
+  const strokeWidth = size * 0.07
+  const tickR = size * 0.40
+  const startAngle = Math.PI * 0.75
+  const endAngle = startAngle + Math.PI * 1.5
+  const needleAngle = startAngle + pct * Math.PI * 1.5
+  const tickArc = (angle) => {
+    const x1 = cx + (tickR - 4) * Math.cos(angle)
+    const y1 = cy + (tickR - 4) * Math.sin(angle)
+    const x2 = cx + tickR * Math.cos(angle)
+    const y2 = cy + tickR * Math.sin(angle)
+    return `M ${x1} ${y1} L ${x2} ${y2}`
+  }
   const arc = (from, to) => {
     const x1 = cx + r * Math.cos(from)
     const y1 = cy + r * Math.sin(from)
@@ -70,38 +78,64 @@ function Dial({ label, value, max = 100, unit = '', digits = 0 }) {
     const large = to - from > Math.PI ? 1 : 0
     return `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`
   }
+  const ticks = []
+  for (let i = 0; i <= 10; i++) {
+    const angle = startAngle + (i / 10) * Math.PI * 1.5
+    ticks.push({ d: tickArc(angle), key: i })
+  }
+  const needleX = cx + (r - 10) * Math.cos(needleAngle)
+  const needleY = cy + (r - 10) * Math.sin(needleAngle)
   return jsxs('div', {
     className: 'flex flex-col items-center gap-1',
+    style: { minWidth: size * 0.95 },
     children: [
+      jsx('div', {
+        className: 'text-xs font-semibold uppercase tracking-wide',
+        style: { color: 'var(--ui-text-secondary)', minHeight: '14px' },
+        children: label,
+      }),
       jsx('svg', {
         viewBox: `0 0 ${size} ${size}`,
         style: { width: `${size}px`, height: `${size}px` },
         children: [
+          ticks.map(tick => jsx('line', {
+            key: tick.key,
+            x1: tick.d.split(' ')[1], y1: tick.d.split(' ')[2],
+            x2: tick.d.split(' ')[4], y2: tick.d.split(' ')[5],
+            stroke: 'var(--ui-stroke-secondary)',
+            strokeWidth: '1.2',
+          })),
           jsx('path', {
-            d: arc(start, start + Math.PI * 1.5),
+            d: arc(startAngle, endAngle),
             fill: 'none',
             stroke: 'var(--ui-stroke-secondary)',
-            strokeWidth: '7',
+            strokeWidth,
             strokeLinecap: 'round',
           }),
           ok ? jsx('path', {
-            d: arc(start, end),
+            d: arc(startAngle, needleAngle),
             fill: 'none',
             stroke: 'var(--ui-accent)',
-            strokeWidth: '7',
+            strokeWidth,
             strokeLinecap: 'round',
           }) : null,
-          jsx('text', {
-            x: cx, y: cy + 4, textAnchor: 'middle',
-            style: { fontSize: '15px', fontWeight: 600, fill: 'var(--ui-text-primary)' },
-            children: ok ? numeric.toFixed(digits) : '—',
-          }),
+          ok ? jsxs('g', {
+            children: [
+              jsx('circle', { cx, cy, r: 3.5, fill: 'var(--ui-text-primary)' }),
+              jsx('line', {
+                x1: cx, y1: cy, x2: needleX, y2: needleY,
+                stroke: 'var(--ui-accent)',
+                strokeWidth: size * 0.045,
+                strokeLinecap: 'round',
+              }),
+            ]
+          }) : null,
         ].filter(Boolean),
       }),
       jsx('div', {
-        className: 'text-xs text-center',
-        style: { color: 'var(--ui-text-secondary)' },
-        children: unit ? `${label} (${unit})` : label,
+        className: 'text-xs font-medium text-center',
+        style: { color: 'var(--ui-text-primary)', minHeight: '16px' },
+        children: ok ? `${numeric.toFixed(digits)} / ${ceiling.toFixed(digits)} ${unit}` : `— / ${ceiling.toFixed(digits)} ${unit}`,
       }),
     ],
   })
@@ -374,28 +408,30 @@ function TurbofitPage() {
         }),
       ] }),
       jsxs('section', {
-        className: 'grid grid-cols-1 gap-3 md:grid-cols-3',
+        className: 'flex flex-row justify-between gap-3',
         children: [
-          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' }, children: [
+          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px', flex: '1 1 0' }, children: [
             jsx('div', { className: 'font-medium', children: 'Speed' }),
             jsx(ScoreBar, { label: 'tok/s', value: (status && status.usage && status.usage.tps) || 0, max: 80 }),
-            jsx(Spark, { values: usageHistory.map((item) => item.tps) }),
           ] }),
-          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' }, children: [
+          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px', flex: '1 1 0' }, children: [
             jsx('div', { className: 'font-medium', children: 'VRAM' }),
             jsx(ScoreBar, {
-              label: 'used', unit: 'MiB',
+              label: 'used',
               value: ((status && status.usage && status.usage.gpus) || []).reduce((sum, gpu) => sum + (Number(gpu.used_mb) || 0), 0),
               max: Math.max(1, ((status && status.usage && status.usage.gpus) || []).reduce((sum, gpu) => sum + (Number(gpu.total_mb) || 0), 0)),
+              unit: 'MiB',
+              digits: 0,
             }),
-            jsx(Spark, { values: usageHistory.map((item) => item.vram) }),
           ] }),
-          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' }, children: [
+          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px', flex: '1 1 0' }, children: [
             jsx('div', { className: 'font-medium', children: 'Host RAM' }),
             jsx(ScoreBar, {
-              label: 'usable MiB',
-              value: (status && status.usage && status.usage.host && status.usage.host.host_usable_memory_mb) || 0,
+              label: 'used',
+              value: (status && status.usage && status.usage.host && status.usage.host.host_used_memory_mb) || 0,
               max: Math.max(1, (status && status.usage && status.usage.host && status.usage.host.system_ram_mb) || 1),
+              unit: 'MiB',
+              digits: 0,
             }),
           ] }),
         ],
@@ -463,7 +499,6 @@ function TurbofitPage() {
               style: fieldStyle,
               children: [
                 jsx('option', { value: 'intelligence', children: 'Intelligence' }),
-                jsx('option', { value: 'balanced', children: 'Balanced' }),
                 jsx('option', { value: 'speed', children: 'Tokens per second' }),
               ],
             }),
@@ -693,7 +728,7 @@ function TurbofitPage() {
               children: `${item.context} ctx · ${item.min_tps} tok/s · ${item.aux_mode} · ${item.confidence}`,
             }),
             jsxs('div', {
-              className: 'grid grid-cols-1 gap-2 md:grid-cols-3',
+              className: 'flex flex-row flex-wrap gap-2',
               children: [
                 jsx(ScoreBar, { label: 'Context', value: item.context, max: 1048576 }),
                 jsx(ScoreBar, { label: 'tok/s', value: item.min_tps, max: 80, digits: 1 }),
