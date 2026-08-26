@@ -203,9 +203,11 @@ providers:
 
 fallback_providers:
   - provider: nous
-    model: stealth/ox-alpha
+    model: meituan/longcat-2.0:free
   - provider: nous
     model: stepfun/step-3.7-flash:free
+  - provider: nous
+    model: upstage/solar-pro4:free
   - provider: nous
     model: tencent/hy3:free
   - provider: nous

@@ -47,7 +47,7 @@
 - Removed DeepSeek V4 Flash 0731 from the active catalog, recipes, downloads, and hardware-tier candidates.
 - Main Auto chain is now Bonsai 27B at 8GB, Qwen 3.8 27B Unleashed UD-IQ3_XXS at 16GB, UD-Q3_K_XL at 24–95GB, and the existing Qwen 3.8 27B 16-bit recipe at 96GB+ until an Unleashed FP16 GGUF is published.
 - Auxiliary authority is Ornith 1.5 35A3B, optional Carwin Nano, or auto. Ornith is MoE: scale-down offloads experts, then lowers context, then switches aux to auto, then a listed Unleashed quant, then Bonsai.
-- Replaced the API fallback chain with the five looked-up Nous free/keyless models from the current Hermes-Agent catalog: `stealth/ox-alpha` (Ox Alpha, $0/$0 curated), `stepfun/step-3.7-flash:free`, `tencent/hy3:free`, `poolside/laguna-s-2.1:free`, `poolside/laguna-xs-2.1:free`. No Hermes-branded models. No NVIDIA NIM.
+- Replaced the API fallback chain with the six live zero-price models from the Nous `/v1/models` catalog: `meituan/longcat-2.0:free`, `stepfun/step-3.7-flash:free`, `upstage/solar-pro4:free`, `tencent/hy3:free`, `poolside/laguna-s-2.1:free`, and `poolside/laguna-xs-2.1:free`. Every row was completion-probed; retired models were removed.
 
 ### Hermes plugin install
 

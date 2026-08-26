@@ -247,8 +247,9 @@ def test_apply_configuration_can_publish_tailnet_and_use_remote_provider_url(mon
     assert saved[0]["providers"]["turbofit"]["api"] == "https://host.example.ts.net:9443/v1"
     chain = saved[0]["fallback_providers"]
     assert {"provider": "custom:turbofit", "model": "auto"} in chain
-    assert {"provider": "nous", "model": "stealth/ox-alpha"} in chain
+    assert {"provider": "nous", "model": "meituan/longcat-2.0:free"} in chain
     assert {"provider": "nous", "model": "stepfun/step-3.7-flash:free"} in chain
+    assert {"provider": "nous", "model": "upstage/solar-pro4:free"} in chain
     assert {"provider": "nous", "model": "tencent/hy3:free"} in chain
     assert {"provider": "nous", "model": "poolside/laguna-s-2.1:free"} in chain
     assert {"provider": "nous", "model": "poolside/laguna-xs-2.1:free"} in chain

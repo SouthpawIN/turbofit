@@ -30,15 +30,12 @@ from turbofit_runtime.tailnet import publish_tailnet, tailnet_status
 
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8091/v1"
-# Looked up from Hermes-Agent, not guessed:
-# - stealth/ox-alpha is the official Nous curated "Ox Alpha" model
-#   ($0/$0 on the Portal; same weights as OpenCode Zen x-preview-f-free).
-# - The other four are live Portal freeRecommendedModels as of 2026-08-22
-#   that Hermes also documents as the free Portal tail (stepfun + hy3 +
-#   both Laguna :free slugs). No Hermes-branded models. No NVIDIA NIM.
+# Live zero-price Nous catalog, verified via /v1/models and completion probes.
+# Retired rows are removed rather than preserved as historical fallbacks.
 NOUS_FREE_LABELS = {
-    "stealth/ox-alpha": "Ox Alpha",
+    "meituan/longcat-2.0:free": "LongCat 2.0",
     "stepfun/step-3.7-flash:free": "Step 3.7 Flash",
+    "upstage/solar-pro4:free": "Solar Pro 4",
     "tencent/hy3:free": "Tencent HY3",
     "poolside/laguna-s-2.1:free": "Laguna S 2.1",
     "poolside/laguna-xs-2.1:free": "Laguna XS 2.1",
@@ -58,8 +55,9 @@ SUBSCRIPTION_LABELS = {
     "fireworks": "Fireworks",
 }
 NOUS_FREE_FALLBACK_CHAIN = [
-    {"provider": "nous", "model": "stealth/ox-alpha"},
+    {"provider": "nous", "model": "meituan/longcat-2.0:free"},
     {"provider": "nous", "model": "stepfun/step-3.7-flash:free"},
+    {"provider": "nous", "model": "upstage/solar-pro4:free"},
     {"provider": "nous", "model": "tencent/hy3:free"},
     {"provider": "nous", "model": "poolside/laguna-s-2.1:free"},
     {"provider": "nous", "model": "poolside/laguna-xs-2.1:free"},
