@@ -598,6 +598,72 @@
         "1048576": "mtp"
       }
     },
+    "qwen3-8-flash-next-ud-iq1_s": {
+      "family": "Qwen 3.8 Flash Next",
+      "alias": "qwen3-8-flash-next",
+      "binary": "~/projects/llama.cpp-latest/build-cuda/bin/llama-server",
+      "model": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-Flash-Next/UD-IQ1_S/Qwen3.8-Flash-Next-UD-IQ1_S-00001-of-00003.gguf",
+      "projector": "",
+      "draft": "",
+      "native_context": 262144,
+      "large": true,
+      "moe_offload": {
+        "total_layers": 48,
+        "expert_bytes_per_layer": 1387573118,
+        "dense_bytes": 6442450944,
+        "compute_reserve_mb": 2048
+      },
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
+      }
+    },
+    "qwen3-8-flash-next-ud-q3_k_xl": {
+      "family": "Qwen 3.8 Flash Next",
+      "alias": "qwen3-8-flash-next-q3-k-xl",
+      "binary": "~/projects/llama.cpp-latest/build-cuda/bin/llama-server",
+      "model": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-Flash-Next/UD-Q3_K_XL/Qwen3.8-Flash-Next-UD-Q3_K_XL-00001-of-00003.gguf",
+      "projector": "",
+      "draft": "",
+      "native_context": 262144,
+      "large": true,
+      "moe_offload": {
+        "total_layers": 48,
+        "expert_bytes_per_layer": 1745879040,
+        "dense_bytes": 6442450944,
+        "compute_reserve_mb": 2048
+      },
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
+      }
+    },
+    "qwen3-8-flash-next-ud-q4_k_xl": {
+      "family": "Qwen 3.8 Flash Next",
+      "alias": "qwen3-8-flash-next-q4-k-xl",
+      "binary": "~/projects/llama.cpp-latest/build-cuda/bin/llama-server",
+      "model": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-Flash-Next/UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf",
+      "projector": "",
+      "draft": "",
+      "native_context": 262144,
+      "large": true,
+      "moe_offload": {
+        "total_layers": 48,
+        "expert_bytes_per_layer": 2190433321,
+        "dense_bytes": 6442450944,
+        "compute_reserve_mb": 2048
+      },
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
+      }
+    },
     "maple-preview-tq2": {
       "family": "Maple Preview",
       "alias": "maple-preview-tq2",
@@ -860,8 +926,54 @@
         }
       }
     },
-    "Maple Preview": {
-      "alias": "maple-preview-tq2",
+    "Qwen 3.8 Flash Next": {
+        "alias": "qwen3-8-flash-next",
+        "kind": "process",
+        "model": "${TURBOFIT_MODEL_ROOT}/Qwen3.8-Flash-Next/UD-IQ1_S/Qwen3.8-Flash-Next-UD-IQ1_S-00001-of-00003.gguf",
+        "projector": "",
+        "port": 11610,
+        "large": false,
+        "gpu_layers": 99,
+        "fit": "off",
+        "batch_size": 2048,
+        "ubatch_size": 512,
+        "native_context": 262144,
+        "max_context": 1048576,
+        "context_scaling": {
+          "method": "yarn",
+          "scale": 4,
+          "original_context": 262144
+        },
+        "context_overrides": {
+          "65536": {
+            "gpu_layers": 99,
+            "fit": "off"
+          },
+          "131072": {
+            "gpu_layers": 99,
+            "fit": "off"
+          },
+          "262144": {
+            "gpu_layers": 99,
+            "fit": "off"
+          },
+          "1048576": {
+            "gpu": "0,1",
+            "split_mode": "layer",
+            "tensor_split": "1,1",
+            "gpu_layers": 99,
+            "fit": "off"
+          }
+        },
+        "methods": {
+          "65536": "baseline",
+          "131072": "baseline",
+          "262144": "baseline",
+          "1048576": "baseline"
+        }
+      },
+      "Maple Preview": {
+        "alias": "maple-preview-tq2",
       "kind": "process",
       "binary": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-cuda/bin/llama-server",
       "native_binaries": {

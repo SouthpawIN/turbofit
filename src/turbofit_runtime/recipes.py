@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .hardware import HardwareFingerprint
+from .offload import moe_expert_offload_layers
 from .schema import MatrixRow
 
 
@@ -235,6 +236,30 @@ class RecipeBook:
         if context_override.get("main_gpu") is not None and self.backend_name in {"cuda", "rocm", "vulkan"}:
             command.extend(["--main-gpu", str(context_override["main_gpu"])])
         n_cpu_moe = context_override.get("n_cpu_moe", spec.get("n_cpu_moe"))
+        moe_shape = spec.get("moe_offload")
+        if n_cpu_moe is None and moe_shape and self.hardware is not None:
+            # Hardware-derived expert offload: the recipe declares the model's
+            # shape (portable), this machine decides the split. Never bake a
+            # single host's n_cpu_moe into the shared recipe.
+            try:
+                n_cpu_moe = moe_expert_offload_layers(
+                    total_layers=int(moe_shape["total_layers"]),
+                    expert_bytes_per_layer=int(moe_shape["expert_bytes_per_layer"]),
+                    dense_bytes=int(moe_shape["dense_bytes"]),
+                    usable_vram_mb=(
+                        self.hardware.total_usable_memory_mb
+                        if self.hardware.memory_pool_kind == "unified"
+                        else self.hardware.total_vram_mb
+                    ),
+                    usable_host_mb=self.hardware.host_usable_memory_mb,
+                    compute_reserve_mb=int(
+                        moe_shape.get("compute_reserve_mb", 2048)
+                    ),
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"cannot size MoE expert offload for {family}: {exc}"
+                ) from exc
         if n_cpu_moe is not None:
             command.extend(["--n-cpu-moe", str(n_cpu_moe)])
         if context_override.get("cpu_moe", spec.get("cpu_moe")) is True:
