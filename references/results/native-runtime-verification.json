@@ -1,0 +1,26 @@
+{
+  "schema": "turbofit.native-runtime-verification/v1",
+  "runtimes": [
+    {
+      "id": "mainline-llama.cpp",
+      "revision": "1c3c9674de4d455f1e571bed808252af54932767",
+      "binary": "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+      "binary_sha256": "7587bb75ed582418127fd8a2ff03a9d31ef4505cc8532236615aea86ff1867f6",
+      "status": "verified"
+    },
+    {
+      "id": "prism-llama.cpp",
+      "revision": "9ca265a57f85f2117942490f421f64a226dd9847",
+      "binary": "/home/sovthpaw/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server",
+      "binary_sha256": "6b9fece6eefc3544965381fdeaf05a557e62dc2152091544dca7099212fddea5",
+      "status": "verified"
+    },
+    {
+      "id": "ik-llama.cpp",
+      "revision": "f2328aa0c19954d0ab31a3de60fbf50e47c2429f",
+      "binary": "/home/sovthpaw/.local/share/turbofit/runtimes/ik-llama.cpp-f2328aa0c19954d0ab31a3de60fbf50e47c2429f/build-cuda/bin/llama-server",
+      "binary_sha256": "8ab7d2cfeab59f113f6611742554ff956cfe0f75a9182fda83a1d037be558ea4",
+      "status": "verified"
+    }
+  ]
+}

@@ -25,10 +25,6 @@ rungs:
 - id: local-maple-131072
   context: 131072
   aux_mode: shared-main
-  evidence: sha256:1c23b7acc299b7693e4e50175b7a3d01252f3cdf3c2cbc25e21f1de09b04116d
-  main_manifest: sha256:09d219202562dbd17722dc8e3273527a021182ab7f892c2a06aac459a8f3a090
 - id: local-maple-65536
   context: 65536
   aux_mode: shared-main
-  evidence: sha256:1c23b7acc299b7693e4e50175b7a3d01252f3cdf3c2cbc25e21f1de09b04116d
-  main_manifest: sha256:09d219202562dbd17722dc8e3273527a021182ab7f892c2a06aac459a8f3a090

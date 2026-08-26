@@ -427,11 +427,10 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
         expected = profile.get("expected") or {}
         aux_mode = str(expected.get("aux_mode", "dedicated"))
         stored_tps = [float(stored_metrics.get(key) or 0.0) for key in ("main_tps", "aux_tps")]
-        if all(value > 0 for value in stored_tps):
-            source_min_tps = min(stored_tps)
-        else:
-            tps_values = metrics.get("throughput") or []
-            source_min_tps = min(tps_values[:2]) if len(tps_values) >= 2 else (tps_values[0] if tps_values else 0.0)
+        positive_tps = [value for value in stored_tps if value > 0]
+        source_min_tps = min(positive_tps) if positive_tps else (
+            min(tps_values[:2]) if len(tps_values) >= 2 else (tps_values[0] if tps_values else 0.0)
+        )
         min_tps = 0.0 if portable_fit else source_min_tps
         if portable_fit:
             confidence = "portable-fit; benchmark-required"

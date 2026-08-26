@@ -1,0 +1,139 @@
+{
+  "schema": "turbofit.lemonade-live/v1",
+  "verified_at": "2026-08-04T23:53:43.631983+00:00",
+  "runtime": {
+    "distribution": "native-embeddable",
+    "version": "11.5.1",
+    "binary": "/home/sovthpaw/.local/share/turbofit/runtimes/lemonade-11.5.1/lemond",
+    "service": "systemd-user:turbofit-lemonade.service"
+  },
+  "health": {
+    "all_models_loaded": [
+      {
+        "backend_alive": true,
+        "backend_health": "ready",
+        "backend_url": "http://127.0.0.1:8002/v1",
+        "checkpoint": "unsloth/Qwen3-0.6B-GGUF:Q4_0",
+        "device": "cpu",
+        "is_busy": false,
+        "is_streaming": false,
+        "last_use": 318926117,
+        "loaded": true,
+        "max_context_window": 40960,
+        "model_name": "turbofit-smoke",
+        "pid": 4069992,
+        "pinned": false,
+        "recipe": "llamacpp",
+        "recipe_options": {
+          "ctx_size": 4096,
+          "llamacpp_backend": "cpu"
+        },
+        "residency_class": "standard",
+        "slot_pool": "standard/llm",
+        "status": "ready",
+        "type": "llm",
+        "watchdog_reset": false
+      }
+    ],
+    "max_models": {
+      "classification": 1,
+      "embedding": 1,
+      "image": 1,
+      "llm": 1,
+      "reranking": 1,
+      "transcription": 1,
+      "tts": 1
+    },
+    "model_loaded": "turbofit-smoke",
+    "pinned_helper_models": {
+      "classification": 0,
+      "embedding": 0,
+      "image": 0,
+      "llm": 0,
+      "reranking": 0,
+      "transcription": 0,
+      "tts": 0
+    },
+    "pinned_models": {
+      "classification": 0,
+      "embedding": 0,
+      "image": 0,
+      "llm": 0,
+      "reranking": 0,
+      "transcription": 0,
+      "tts": 0
+    },
+    "status": "ok",
+    "telemetry": {
+      "enabled": false
+    },
+    "update_check_done": true,
+    "version": "11.5.1",
+    "websocket_port": 9000
+  },
+  "models": {
+    "object": "list",
+    "data": [
+      {
+        "checkpoint": "unsloth/Qwen3-0.6B-GGUF:Q4_0",
+        "checkpoints": {
+          "main": "unsloth/Qwen3-0.6B-GGUF:Q4_0"
+        },
+        "components": [],
+        "created": 1234567890,
+        "downloaded": true,
+        "id": "turbofit-smoke",
+        "labels": [
+          "custom",
+          "tool-calling"
+        ],
+        "max_context_window": 40960,
+        "object": "model",
+        "owned_by": "lemonade",
+        "recipe": "llamacpp",
+        "recipe_options": {},
+        "registry_source": "huggingface",
+        "size": 0.356,
+        "source": "huggingface",
+        "suggested": true,
+        "update_available": false
+      }
+    ]
+  },
+  "chat": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "content": "OK",
+          "role": "assistant"
+        }
+      }
+    ],
+    "created": 1785887623,
+    "id": "chatcmpl-i2eJ3iF8Z56tptfJE810RnsdlMUdCjah",
+    "model": "turbofit-smoke",
+    "object": "chat.completion",
+    "system_fingerprint": "b9747-d6d899580",
+    "timings": {
+      "cache_n": 0,
+      "predicted_ms": 164.644,
+      "predicted_n": 6,
+      "predicted_per_second": 36.442263307499815,
+      "predicted_per_token_ms": 27.44066666666667,
+      "prompt_ms": 255.174,
+      "prompt_n": 31,
+      "prompt_per_second": 121.4857313049135,
+      "prompt_per_token_ms": 8.23141935483871
+    },
+    "usage": {
+      "completion_tokens": 6,
+      "prompt_tokens": 31,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "total_tokens": 37
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "backend": "cuda",
+  "command": [
+    "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+    "-m",
+    "/home/sovthpaw/Models/storage/gguf/DeepSeek-V4-Flash-0731/UD-Q4_K_XL/DeepSeek-V4-Flash-0731-UD-Q4_K_XL-00001-of-00005.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "11731",
+    "--alias",
+    "deepseek-v4-flash-0731-q4-dspark",
+    "-c",
+    "1048576",
+    "-ngl",
+    "99",
+    "--fit",
+    "off",
+    "-fa",
+    "on",
+    "--jinja",
+    "-b",
+    "512",
+    "-ub",
+    "64",
+    "--cache-type-k",
+    "q4_0",
+    "--cache-type-v",
+    "q4_0",
+    "--parallel",
+    "1",
+    "--split-mode",
+    "layer",
+    "--tensor-split",
+    "1,1",
+    "--no-kv-offload",
+    "--cpu-moe",
+    "--model-draft",
+    "/home/sovthpaw/Models/storage/gguf/DeepSeek-V4-Flash-0731/dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
+    "--spec-type",
+    "draft-dspark",
+    "--spec-draft-n-max",
+    "3",
+    "-ngld",
+    "0"
+  ],
+  "finish_reason": "tool_calls",
+  "health": {
+    "status": "ok"
+  },
+  "log": "references/results/deepseek-v4-flash-0731-dspark-1m-live.log",
+  "normal": {
+    "message": {
+      "content": "OK",
+      "reasoning_content": "We need to respond with exactly \"OK\". The instruction says \"Reply with exactly OK.\" So output should be \"OK\".",
+      "role": "assistant"
+    },
+    "timings": {
+      "cache_n": 0,
+      "draft_n": 27,
+      "draft_n_accepted": 19,
+      "predicted_ms": 8109.77,
+      "predicted_n": 28,
+      "predicted_per_second": 3.452625660160522,
+      "predicted_per_token_ms": 289.63464285714286,
+      "prompt_ms": 3450.711,
+      "prompt_n": 13,
+      "prompt_per_second": 3.76733954248849,
+      "prompt_per_token_ms": 265.4393076923077
+    }
+  },
+  "row": {
+    "auxiliary": "auto",
+    "context": 1048576,
+    "id": "deepseek-v4-flash-0731-q4-dspark--auto--1m",
+    "main": "deepseek-v4-flash-0731-q4-dspark",
+    "status": "candidate"
+  },
+  "schema": "turbofit.dspark-live/v1",
+  "startup_seconds": 89.601,
+  "tool_call": {
+    "function": {
+      "arguments": "{\"city\":\"Paris\"}",
+      "name": "get_weather"
+    },
+    "id": "nvl7oeDOvISRJjqJXwB5LOvIdxNQ0Upn",
+    "type": "function"
+  },
+  "verified_at": "2026-08-08T21:03:10.554362+00:00"
+}

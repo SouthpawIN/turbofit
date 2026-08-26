@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "rows": [
+    {
+      "id": "qwen-3-8-27b-unleashed-ud-q3-k-xl-auto-262k",
+      "main": "Qwen 3.8 27B Unleashed UD-Q3_K_XL",
+      "aux": "auto",
+      "context": 262144,
+      "status": "pending",
+      "method_priority": [
+        "vision-projector",
+        "dflash2"
+      ]
+    }
+  ]
+}

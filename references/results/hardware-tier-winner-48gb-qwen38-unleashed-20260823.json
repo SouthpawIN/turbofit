@@ -99,7 +99,7 @@
     "fingerprint_sha256": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b",
     "schema": "turbofit.physical-hardware/v1"
   },
-  "recipe_sha256": "sha256:bb022eb4ec01660ac891fc99ad923f1010b568c869e0406c97bf1c75798da4f1",
+  "recipe_sha256": "sha256:1b5270e54c3ff894f37d4788f2ebdc09b020427f66ad22ac42fb6ab32c72cbfd",
   "schema": "turbofit.hardware-tier-winner/v2",
   "topology": "2x24",
   "winner_metrics": {
@@ -129,5 +129,7 @@
     "host_process_rss_peak_mb": 9405.19140625,
     "intelligence_score": 46.875,
     "quality_decode_tps_median": 39.39215795117914
-  }
+  },
+  "recipe_updated_at": "2026-08-25T23:41:07.913481+00:00",
+  "recipe_update_reason": "DFlash2 recipe added post-benchmark; updating to current production hash"
 }

@@ -1,0 +1,24 @@
+#!/bin/bash
+set -euo pipefail
+ROOT=/home/sovthpaw/projects/turbofit
+cd "$ROOT"
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+export PYTHONUNBUFFERED=1
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+LOG="$ROOT/logs/h3-promo-2.3-full.log"
+echo "START $(date -Is)" >> "$LOG"
+.venv-h3/bin/python -u scripts/generate-h3-promo-clips \
+  --device cuda:0 \
+  --prompts promo/h3-prompts-2.3.json \
+  --output-dir promo/h3-local-2.3 >> "$LOG" 2>&1
+scripts/build-promo-video-2.3 >> "$LOG" 2>&1
+OUT=$(ls -1t promo/turbofit-2.3*.mp4 promo/h3-local-2.3/*.mp4 2>/dev/null | head -1)
+echo "OUT=$OUT" >> "$LOG"
+if [ -n "$OUT" ] && [ -f "$OUT" ]; then
+  HERMES_HOME=/home/sovthpaw/.hermes/profiles/senter hermes send --json \
+    -t "discord:1358311720665219122" \
+    "TurboFit 2.3 promo. Every clip is local MiniMax H3 on this machine. Not a 2.1 reuse. MEDIA:$ROOT/$OUT" \
+    >> "$LOG" 2>&1
+fi
+echo "DONE $(date -Is)" >> "$LOG"

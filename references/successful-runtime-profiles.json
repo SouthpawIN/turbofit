@@ -21641,78 +21641,36 @@
     },
     "qwen-3-8-27b-unleashed-ud-q3-k-xl-auto-262k": {
       "evidence_schema": "turbofit.catalog-physical/v4",
-      "description": "Qwen 3.8 27B Unleashed UD-Q3_K_XL main with auto auxiliary at 262144",
+      "description": "Qwen 3.8 27B Unleashed UD-Q3_K_XL + DFlash2 main with auto auxiliary at 262144",
       "context": 262144,
-      "evidence": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/qwen-3-8-27b-unleashed-ud-q3-k-xl-auto-262k.md",
-      "raw_result": "/tmp/turbofit_benchmark_repair/references/results/catalog-campaign/attempts/qwen-3-8-27b-unleashed-ud-q3-k-xl-auto-262k/20260823T023610.276876Z/result.json",
-      "raw_result_sha256": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+      "evidence": "references/results/hardware-tier-winner-48gb-qwen38-unleashed-20260825.json",
+      "raw_result": "/home/sovthpaw/projects/turbofit/references/results/catalog-campaign/attempts/qwen-3-8-27b-unleashed-ud-q3-k-xl-auto-262k/20260826T001603.263021Z/result.json",
+      "raw_result_sha256": "sha256:77df9883d9d2765dce7e3953c6a56c3591dd7926d0106d15a94ce09b5cddaaa0",
       "physical_fingerprint": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b",
       "backend": "native-process",
-      "runtime_string": "turbofit-runtime use qwen-3-8-27b-unleashed-ud-q3-k-xl-auto-262k",
+      "runtime_string": "turbofit-runtime us",
       "expected": {
         "main_alias": "qwen3-8-27b-unleashed-ud-q3-k-xl",
         "aux_alias": "auto:qwen3-8-27b-unleashed-ud-q3-k-xl",
         "aux_mode": "shared-main"
       },
       "metrics": {
-        "main_tps": 37.99259025763131,
-        "aux_tps": 36.356117257567185,
+        "main_tps": 59.80199418460922,
+        "aux_tps": 0.0,
         "gpu_peak_mb": {
-          "0": 563,
-          "1": 19391
+          "0": 459,
+          "1": 22239
         },
-        "method": "baseline"
-      },
-      "components": [
-        {
-          "role": "main",
-          "kind": "process",
-          "name": "turbofit-runtime-main",
-          "gpu": "1",
-          "port": 11605,
-          "method": "baseline",
-          "command": [
-            "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
-            "-m",
-            "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
-            "--host",
-            "127.0.0.1",
-            "--port",
-            "11605",
-            "--alias",
-            "qwen3-8-27b-unleashed-ud-q3-k-xl",
-            "-c",
-            "262144",
-            "-ngl",
-            "99",
-            "--fit",
-            "off",
-            "-fa",
-            "on",
-            "--jinja",
-            "-b",
-            "2048",
-            "-ub",
-            "512",
-            "--cache-type-k",
-            "q4_0",
-            "--cache-type-v",
-            "q4_0",
-            "--parallel",
-            "1",
-            "--mmproj",
-            "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B-Unleashed/mmproj-Unleashed-f16.gguf"
-          ]
-        }
-      ]
+        "method": "dflash2"
+      }
     },
     "qwen-3-8-27b-q4-k-m-dflash2-auto-64k": {
       "evidence_schema": "turbofit.catalog-physical/v4",
       "description": "Qwen 3.8 27B Q4_K_M + DFlash2 main with auto auxiliary at 65536",
       "context": 65536,
       "evidence": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/qwen-3-8-27b-q4-k-m-dflash2-auto-64k.md",
-      "raw_result": "/tmp/turbofit_benchmark_repair/references/results/catalog-campaign/attempts/qwen-3-8-27b-q4-k-m-dflash2-auto-64k/20260823T054025.204410Z/result.json",
-      "raw_result_sha256": "sha256:c921be2eb83c4f4a58cbd3bea3f67fb5f1e19d62e08e7555084ff356f1ab4598",
+      "raw_result": "/home/sovthpaw/projects/turbofit/references/results/catalog-campaign/attempts/qwen-3-8-27b-q4-k-m-dflash2-auto-64k/20260825T235627.362861Z/result.json",
+      "raw_result_sha256": "sha256:8d86d6ce600a42b0cd73b5594f2d42224cc9305f9c048a4bd6d8b069aa4547fc",
       "physical_fingerprint": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b",
       "backend": "native-process",
       "runtime_string": "turbofit-runtime use qwen-3-8-27b-q4-k-m-dflash2-auto-64k",
@@ -21722,11 +21680,11 @@
         "aux_mode": "shared-main"
       },
       "metrics": {
-        "main_tps": 52.64076326619771,
-        "aux_tps": 57.399417689687006,
+        "main_tps": 54.10192717880602,
+        "aux_tps": 65.911709448729,
         "gpu_peak_mb": {
-          "0": 440,
-          "1": 23181
+          "0": 444,
+          "1": 23189
         },
         "method": "dflash2"
       },

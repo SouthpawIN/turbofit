@@ -50,40 +50,64 @@ function Spark({ values }) {
   })
 }
 
-function ScoreBar({ label, value, max = 100 }) {
-  const numeric = Number(value) || 0
+function Dial({ label, value, max = 100, unit = '', digits = 0 }) {
+  const numeric = Number(value)
   const ceiling = Number(max) || 100
-  const pct = Math.max(0, Math.min(100, (numeric / ceiling) * 100))
+  const ok = Number.isFinite(numeric) && numeric > 0
+  const pct = ok ? Math.max(0.02, Math.min(1, numeric / ceiling)) : 0
+  const size = 74
+  const r = 30
+  const cx = size / 2
+  const cy = size / 2
+  // 270° sweep gauge: starts at 135° (lower-left), ends at 405° (lower-right)
+  const start = Math.PI * 0.75
+  const end = start + pct * Math.PI * 1.5
+  const arc = (from, to) => {
+    const x1 = cx + r * Math.cos(from)
+    const y1 = cy + r * Math.sin(from)
+    const x2 = cx + r * Math.cos(to)
+    const y2 = cy + r * Math.sin(to)
+    const large = to - from > Math.PI ? 1 : 0
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`
+  }
   return jsxs('div', {
-    className: 'flex flex-col gap-1',
+    className: 'flex flex-col items-center gap-1',
     children: [
-      jsxs('div', {
-        className: 'flex justify-between text-xs',
-        style: { color: 'var(--ui-text-secondary)' },
+      jsx('svg', {
+        viewBox: `0 0 ${size} ${size}`,
+        style: { width: `${size}px`, height: `${size}px` },
         children: [
-          jsx('span', { children: label }),
-          jsx('span', { children: Number.isFinite(numeric) ? String(value) : '—' }),
-        ],
+          jsx('path', {
+            d: arc(start, start + Math.PI * 1.5),
+            fill: 'none',
+            stroke: 'var(--ui-stroke-secondary)',
+            strokeWidth: '7',
+            strokeLinecap: 'round',
+          }),
+          ok ? jsx('path', {
+            d: arc(start, end),
+            fill: 'none',
+            stroke: 'var(--ui-accent)',
+            strokeWidth: '7',
+            strokeLinecap: 'round',
+          }) : null,
+          jsx('text', {
+            x: cx, y: cy + 4, textAnchor: 'middle',
+            style: { fontSize: '15px', fontWeight: 600, fill: 'var(--ui-text-primary)' },
+            children: ok ? numeric.toFixed(digits) : '—',
+          }),
+        ].filter(Boolean),
       }),
       jsx('div', {
-        style: {
-          height: '7px',
-          borderRadius: '99px',
-          background: 'var(--ui-stroke-secondary)',
-          overflow: 'hidden',
-        },
-        children: jsx('div', {
-          style: {
-            width: `${pct}%`,
-            height: '100%',
-            borderRadius: '99px',
-            background: 'var(--ui-accent)',
-          },
-        }),
+        className: 'text-xs text-center',
+        style: { color: 'var(--ui-text-secondary)' },
+        children: unit ? `${label} (${unit})` : label,
       }),
     ],
   })
 }
+
+const ScoreBar = Dial
 
 function Field({ label, children, help }) {
   return jsxs('label', {
@@ -360,7 +384,7 @@ function TurbofitPage() {
           jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' }, children: [
             jsx('div', { className: 'font-medium', children: 'VRAM' }),
             jsx(ScoreBar, {
-              label: 'used MiB',
+              label: 'used', unit: 'MiB',
               value: ((status && status.usage && status.usage.gpus) || []).reduce((sum, gpu) => sum + (Number(gpu.used_mb) || 0), 0),
               max: Math.max(1, ((status && status.usage && status.usage.gpus) || []).reduce((sum, gpu) => sum + (Number(gpu.total_mb) || 0), 0)),
             }),
@@ -672,8 +696,8 @@ function TurbofitPage() {
               className: 'grid grid-cols-1 gap-2 md:grid-cols-3',
               children: [
                 jsx(ScoreBar, { label: 'Context', value: item.context, max: 1048576 }),
-                jsx(ScoreBar, { label: 'tok/s', value: item.min_tps, max: 80 }),
-                jsx(ScoreBar, { label: 'Confidence', value: item.confidence === 'measured' ? 100 : item.confidence === 'portable-fit' ? 55 : 25, max: 100 }),
+                jsx(ScoreBar, { label: 'tok/s', value: item.min_tps, max: 80, digits: 1 }),
+                jsx(ScoreBar, { label: 'Confidence', value: item.confidence === 'measured' ? 100 : item.confidence === 'portable-fit' ? 55 : 25, max: 100, unit: '%' }),
               ],
             }),
             jsx('button', {

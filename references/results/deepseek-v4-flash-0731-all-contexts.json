@@ -1,0 +1,71 @@
+{
+  "schema": "turbofit.deepseek-v4-flash-0731-context-suite/v1",
+  "verified_at": "2026-08-08T21:03:50.129175+00:00",
+  "official_upstream": "deepseek-ai/DeepSeek-V4-Flash-0731",
+  "runtime_revision": "1c3c9674de4d455f1e571bed808252af54932767",
+  "required_contexts": [
+    65536,
+    131072,
+    262144,
+    1048576
+  ],
+  "all_contexts_verified": true,
+  "runs": [
+    {
+      "context": 65536,
+      "main": "deepseek-v4-flash-0731-q8-dspark",
+      "evidence": "references/results/deepseek-v4-flash-0731-dspark-b10269-live.json",
+      "sha256": "68464bfb3fedc6ac5e852fa970916dafd6a1e7e67de287178ed420783d66d92a",
+      "startup_seconds": 78.359,
+      "predicted_tokens_per_second": 2.9855528070167496,
+      "draft_tokens": 39,
+      "draft_tokens_accepted": 16,
+      "tool_call": {
+        "arguments": "{\"city\":\"Paris\"}",
+        "name": "get_weather"
+      }
+    },
+    {
+      "context": 131072,
+      "main": "deepseek-v4-flash-0731-q4-dspark",
+      "evidence": "references/results/deepseek-v4-flash-0731-dspark-128k-live.json",
+      "sha256": "bffc1aed4c5d9b468c5b303bc1a769627fc83ecfd605ede31ac9329e39783e9e",
+      "startup_seconds": 996.048,
+      "predicted_tokens_per_second": 2.6211900183960735,
+      "draft_tokens": 27,
+      "draft_tokens_accepted": 19,
+      "tool_call": {
+        "arguments": "{\"city\":\"Paris\"}",
+        "name": "get_weather"
+      }
+    },
+    {
+      "context": 262144,
+      "main": "deepseek-v4-flash-0731-q4-dspark",
+      "evidence": "references/results/deepseek-v4-flash-0731-dspark-262k-live.json",
+      "sha256": "51f713dfc163bfd764d759fab8558b3623744a3a641712923dc3eaa11c828b86",
+      "startup_seconds": 84.476,
+      "predicted_tokens_per_second": 3.801791947478787,
+      "draft_tokens": 27,
+      "draft_tokens_accepted": 19,
+      "tool_call": {
+        "arguments": "{\"city\":\"Paris\"}",
+        "name": "get_weather"
+      }
+    },
+    {
+      "context": 1048576,
+      "main": "deepseek-v4-flash-0731-q4-dspark",
+      "evidence": "references/results/deepseek-v4-flash-0731-dspark-1m-live.json",
+      "sha256": "b06364dc712697f46161f1bbb9026f696c2bc426c8a312c0bde46adef856b2af",
+      "startup_seconds": 89.601,
+      "predicted_tokens_per_second": 3.452625660160522,
+      "draft_tokens": 27,
+      "draft_tokens_accepted": 19,
+      "tool_call": {
+        "arguments": "{\"city\":\"Paris\"}",
+        "name": "get_weather"
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "schema": "turbofit.h3-live/v1",
+  "generated_at": "2026-08-25T19:54:23.211097+00:00",
+  "source": "https://huggingface.co/MiniMaxAI/MiniMax-H3",
+  "revision": "bfc8ed0353f5a9733be73e6b2c98ec0948195b86",
+  "recipe": {
+    "schema": "turbofit.h3-launch/v1",
+    "source": "https://huggingface.co/MiniMaxAI/MiniMax-H3",
+    "revision": "bfc8ed0353f5a9733be73e6b2c98ec0948195b86",
+    "workflow": "t2va",
+    "device": "cuda:0",
+    "quantization": "torchao-int8-weight-only-v2",
+    "transformer_offload": "block_level",
+    "text_encoder_offload": "leaf_level",
+    "vae_dtype": "float32",
+    "vae_device": "cuda:0",
+    "verify": [
+      "scripts/verify-h3-live",
+      "--smoke",
+      "--device",
+      "cuda:0"
+    ],
+    "launch": [
+      "systemd-run",
+      "--user",
+      "--unit=turbofit-h3-verify",
+      "--property=WorkingDirectory=%h/projects/turbofit",
+      "scripts/verify-h3-live",
+      "--smoke",
+      "--device",
+      "cuda:0"
+    ],
+    "minimum_accelerator_memory_mb": 24576,
+    "minimum_memory_mb": 98304
+  },
+  "command": [
+    "/home/sovthpaw/projects/turbofit/.venv-h3/bin/python",
+    "/home/sovthpaw/projects/turbofit/scripts/generate-h3-promo-clips",
+    "--device",
+    "cuda:0",
+    "--model-root",
+    "/home/sovthpaw/Models/storage/hf/MiniMax-H3",
+    "--prompts",
+    "/home/sovthpaw/projects/turbofit/promo/h3-prompts-2.3.json",
+    "--output-dir",
+    "/home/sovthpaw/projects/turbofit/promo/h3-verify",
+    "--smoke",
+    "--clip",
+    "bonsai-8gb"
+  ],
+  "exit_code": 0,
+  "clip": "/home/sovthpaw/projects/turbofit/promo/h3-verify/bonsai-8gb-smoke.mp4",
+  "ok": true
+}

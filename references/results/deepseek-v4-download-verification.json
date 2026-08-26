@@ -1,0 +1,42 @@
+{
+  "files": [
+    {
+      "id": "deepseek-v4-q8-shard-1",
+      "path": "/home/sovthpaw/Models/storage/gguf/DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
+      "sha256": "d13ce8f90855547bdaebe7312f531a1f2c4f822178d3103951f27fe884395cfa",
+      "size_bytes": 5257408
+    },
+    {
+      "id": "deepseek-v4-q8-shard-2",
+      "path": "/home/sovthpaw/Models/storage/gguf/DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00002-of-00005.gguf",
+      "sha256": "3da2f2443063f83635986f9b67fa7e8e3d03c53b81a9a08d2007936612423610",
+      "size_bytes": 49215492960
+    },
+    {
+      "id": "deepseek-v4-q8-shard-3",
+      "path": "/home/sovthpaw/Models/storage/gguf/DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00003-of-00005.gguf",
+      "sha256": "7d622a7760d359ec9257b3493ad531e3bf0bfbe6f6533267e16e6dde8153ddce",
+      "size_bytes": 49700372160
+    },
+    {
+      "id": "deepseek-v4-q8-shard-4",
+      "path": "/home/sovthpaw/Models/storage/gguf/DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00004-of-00005.gguf",
+      "sha256": "6ed2bce452214f156b85e7c5f7d4fc242a3052f409d1b90a61422f60669c2de3",
+      "size_bytes": 49466495968
+    },
+    {
+      "id": "deepseek-v4-q8-shard-5",
+      "path": "/home/sovthpaw/Models/storage/gguf/DeepSeek-V4-Flash-0731/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00005-of-00005.gguf",
+      "sha256": "ea4727af4888fdca0fff796ec81ac2f3ebb43c310b2feb4798f41d82744b42ea",
+      "size_bytes": 13481997024
+    },
+    {
+      "id": "deepseek-v4-dspark-q8",
+      "path": "/home/sovthpaw/Models/storage/gguf/DeepSeek-V4-Flash-0731/dspark/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf",
+      "sha256": "2c7ac54b0b64a99df1f139a9f1371a00198265e1d6a614b77597d20a655a4249",
+      "size_bytes": 10896057440
+    }
+  ],
+  "schema": "turbofit.download-verification/v1",
+  "verified_at": "2026-08-04T22:16:27.662969+00:00"
+}

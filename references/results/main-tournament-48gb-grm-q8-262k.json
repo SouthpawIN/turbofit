@@ -1,0 +1,231 @@
+{
+  "schema": "turbofit.auxiliary-tournament/v1",
+  "timestamp": "2026-08-05T13:53:06.252311+00:00",
+  "physical_tier": "hardware-48gb",
+  "candidates": [
+    {
+      "family": "grm-2-6-27b-q8",
+      "context": 262144,
+      "gpu": "0,1",
+      "method": "mtp",
+      "model_path": "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/Q8/OrionLLM_GRM-2.6-Plus-0628-Q8_0.gguf",
+      "model_sha256": "21ed959ac44f3960a562b4058601cf582d3497f98ba598bfeaa34545194b790e",
+      "command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-6ea215d171fd31df943bf1ac8227129f2b963160/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/Q8/OrionLLM_GRM-2.6-Plus-0628-Q8_0.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11700",
+        "--alias",
+        "aux-bench-grm-2-6-27b-q8",
+        "-c",
+        "262144",
+        "-ngl",
+        "auto",
+        "--fit",
+        "on",
+        "-fa",
+        "on",
+        "--jinja",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--parallel",
+        "1",
+        "--split-mode",
+        "layer",
+        "--tensor-split",
+        "1,1",
+        "--spec-type",
+        "draft-mtp",
+        "--mmproj",
+        "/home/sovthpaw/Models/storage/gguf/GRM-2.6-Plus-0628/mmproj-OrionLLM_GRM-2.6-Plus-0628-bf16.gguf"
+      ],
+      "health": {
+        "context": 262144,
+        "model": "aux-bench-grm-2-6-27b-q8",
+        "health": {
+          "status": "ok"
+        }
+      },
+      "status": "completed",
+      "quality": [
+        {
+          "name": "capital",
+          "pass": true,
+          "content": "Paris.",
+          "wall_seconds": 3.4201279259868897,
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 20,
+            "prompt_ms": 510.934,
+            "prompt_per_token_ms": 25.5467,
+            "prompt_per_second": 39.14399902922882,
+            "predicted_n": 133,
+            "predicted_ms": 2903.999,
+            "predicted_per_token_ms": 21.83457894736842,
+            "predicted_per_second": 45.79891384260119,
+            "draft_n": 120,
+            "draft_n_accepted": 94
+          }
+        },
+        {
+          "name": "science",
+          "pass": true,
+          "content": "Au",
+          "wall_seconds": 3.0727647059829906,
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 24,
+            "prompt_ms": 325.224,
+            "prompt_per_token_ms": 13.551,
+            "prompt_per_second": 73.79529186037931,
+            "predicted_n": 140,
+            "predicted_ms": 2444.885,
+            "predicted_per_token_ms": 17.463464285714288,
+            "predicted_per_second": 57.2624070252793,
+            "draft_n": 120,
+            "draft_n_accepted": 102
+          }
+        },
+        {
+          "name": "arithmetic",
+          "pass": false,
+          "content": "",
+          "wall_seconds": 8.576810690981802,
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 28,
+            "prompt_ms": 298.965,
+            "prompt_per_token_ms": 10.677321428571428,
+            "prompt_per_second": 93.6564480792066,
+            "predicted_n": 512,
+            "predicted_ms": 7951.273,
+            "predicted_per_token_ms": 15.529830078125,
+            "predicted_per_second": 64.39220487084269,
+            "draft_n": 432,
+            "draft_n_accepted": 366
+          }
+        },
+        {
+          "name": "reasoning",
+          "pass": true,
+          "content": "9",
+          "wall_seconds": 3.6129348810063675,
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 38,
+            "prompt_ms": 282.642,
+            "prompt_per_token_ms": 7.437947368421052,
+            "prompt_per_second": 134.44569455353417,
+            "predicted_n": 198,
+            "predicted_ms": 3027.894,
+            "predicted_per_token_ms": 15.292393939393937,
+            "predicted_per_second": 65.3919853204901,
+            "draft_n": 159,
+            "draft_n_accepted": 146
+          }
+        },
+        {
+          "name": "instruction",
+          "pass": true,
+          "content": "4",
+          "wall_seconds": 9.037988062016666,
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 24,
+            "prompt_ms": 280.491,
+            "prompt_per_token_ms": 11.687125,
+            "prompt_per_second": 85.56424270297444,
+            "predicted_n": 482,
+            "predicted_ms": 8462.883,
+            "predicted_per_token_ms": 17.557848547717843,
+            "predicted_per_second": 56.95458627987649,
+            "draft_n": 447,
+            "draft_n_accepted": 334
+          }
+        }
+      ],
+      "quality_passes": 4,
+      "quality_total": 5,
+      "tools": [
+        {
+          "name": "weather",
+          "pass": true,
+          "expected": "get_weather",
+          "arguments": {
+            "location": "Tokyo"
+          },
+          "message": {
+            "role": "assistant",
+            "content": "",
+            "reasoning_content": "Thinking Process:\n1.  Identify the user's intent: The user wants to know the weather in Tokyo.\n2.  Identify the available tool: `get_weather` function.\n3.  Check required parameters for `get_weather`: `location` (string).\n4.  Extract the location from the prompt: \"Tokyo\".\n5.  Call the `get_weather` function with `location: \"Tokyo\"`.\n6.  Return the result to the user. (I will simulate the tool call and then provide the response based on the tool's output, but since I'm generating the response directly, I'll just make the tool call). Wait, I need to output the tool call first.\nLet's construct the tool call.\n`get_weather(location=\"Tokyo\")`\nProceed. \nNote: I will just output the tool call as requested by the system prompt format. I don't need to simulate the response, the system will handle it. I'll just generate the tool call.\u2705\nWait, the prompt says \"If you choose to call a function ONLY reply in the following format...\". I will do exactly that.\nParameters: location: \"Tokyo\"\nFunction: get_weather\nDone. \nOutput matches format.\u2705\nProceed. \n(Self-Correction/Verification during thought)\nCheck function definition: `get_weather` takes `location` (string). Required: `[\"location\"]`.\nPrompt: \"What is the weather in Tokyo?\"\nMatches perfectly.\nOutput generation. \n`\n",
+            "tool_calls": [
+              {
+                "type": "function",
+                "function": {
+                  "name": "get_weather",
+                  "arguments": "{\"location\":\"Tokyo\"}"
+                },
+                "id": "EksoLrAqOknm88gmbgCkZzqBMYdNI9gB"
+              }
+            ]
+          },
+          "wall_seconds": 7.022565703024156
+        },
+        {
+          "name": "calendar",
+          "pass": true,
+          "expected": "create_calendar_event",
+          "arguments": {
+            "title": "Review",
+            "datetime": "tomorrow at 3pm"
+          },
+          "message": {
+            "role": "assistant",
+            "content": "",
+            "reasoning_content": "The user wants to schedule a meeting.\nI need to use the `create_calendar_event` function.\nThe title is \"Review\".\nThe datetime is \"tomorrow at 3pm\".\nI will call the function with these parameters.\nNo need to resolve \"tomorrow\" to a specific date unless the function requires it, but usually passing the string as is or a standard format is fine. I'll pass \"tomorrow at 3pm\" or a formatted version if needed, but the prompt says \"tomorrow at 3pm\", so I'll use that.\nWait, let's check the function definition: `datetime` is a string. I'll pass \"tomorrow at 3pm\".\nActually, it's safer to just pass exactly what the user said or a standard format. I'll use \"tomorrow at 3pm\".\nLet's call the function.\n",
+            "tool_calls": [
+              {
+                "type": "function",
+                "function": {
+                  "name": "create_calendar_event",
+                  "arguments": "{\"title\":\"Review\",\"datetime\":\"tomorrow at 3pm\"}"
+                },
+                "id": "fOoOYJI4ohVwCqgzY2qkS9K7Uwois7pt"
+              }
+            ]
+          },
+          "wall_seconds": 4.459611021971796
+        },
+        {
+          "name": "multiply",
+          "pass": false,
+          "expected": "multiply",
+          "arguments": {},
+          "message": {
+            "role": "assistant",
+            "content": "",
+            "reasoning_content": "Thinking Process:\n1.  **Identify User Request**: The user wants to calculate 15 * 23.\n2.  **Identify Available Tools**: I have `get_weather`, `create_calendar_event`, and `multiply`.\n3.  **Select Tool**: `multiply` is the correct tool for this task.\n4.  **Check Parameters**: `multiply` requires `a` (number) and `b` (number).\n5.  **Map Values**: `a` = 15, `b` = 23.\n6.  **Construct Tool Call**: `multiply(a=15, b=23)`.\n7.  **Execute Tool Call**: (Simulated) 15 * 23 = 345.\n8.  **Formulate Response**: State the result clearly. Provide the tool call. Ensure format matches requirements. All steps are straightforward. No extra fluff. Proceed. \n   Tool call: `multiply(a=15, b=23)` -> returns 345.\n   Response: \"The result of 15 * 23 is 345.\" (or similar)\n   Check constraints: none specific. Just use the tool.\n   Ready. \n   Output matches tool call format.\u2705\n   Proceed. \n   [Self-Correction/Verification during thought]\n   - Tool name: `multiply`\n   - Parameters: `a`: 15, `b`: 23\n   - Correct.\n   - I will generate the tool call now. \n   - After tool call, I will answer based on the result. (Since I'm simulating the tool call in this step, I'll just output the tool call first as per standard protocol, but the prompt says \"Calculate... using the available tool.\" I will call it.)\n   - Actually, I am the model, I will output the tool call. The system will execute it. I'll just write the tool call.\n   - Wait, the prompt says \"Calculate 15 * 23 using the available tool.\" I will call `multiply`.\n   - Done. \n   - Output generation. \n   - `multiply(a=15, b=23)` -> 345.\n   - I'll produce the tool call.\u2705\n   - Note: I should just output the tool call. The system"
+          },
+          "wall_seconds": 8.955713255971204
+        }
+      ],
+      "tool_passes": 2,
+      "tool_total": 3,
+      "decode_tps_samples": [
+        53.46165243702645,
+        52.90224615497796,
+        51.05270274204864
+      ],
+      "decode_tps_median": 52.90224615497796,
+      "gpu_peak_mb": {
+        "0": 19298,
+        "1": 21144
+      }
+    }
+  ]
+}

@@ -22,9 +22,6 @@ from typing import Iterable, Mapping
 
 ALLOWED_MAIN = (
     "maple-preview-tq2",
-    "bonsai-27b",
-    "bonsai-27b-q1",
-    "bonsai-27b-1bit",
     "ornith-1-5-35a3b",
     "ornith-1-5-oq4e-mtp",
     "ornith-1-5-oq8e-mtp",
@@ -51,7 +48,8 @@ MLX_REPO = "orcarouter/Qwen3.8-27B-Uncensored-MLX"
 MLX_REVISION = "b4603df5fd2a51e7fed2560ee7090caa4e13e4b7"
 
 _BANNED = re.compile(
-    r"(?:^|[-_])9b(?:$|[-_])|ornith-9|qwen3\.5-9b|qwen3\.8-9b|mlx-2bit|uncensored-mlx-2",
+    r"(?:^|[-_])9b(?:$|[-_])|ornith-9|qwen3\.5-9b|qwen3\.8-9b|mlx-2bit|uncensored-mlx-2"
+    r"|bonsai",
     re.IGNORECASE,
 )
 
