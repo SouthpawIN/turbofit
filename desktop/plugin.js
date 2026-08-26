@@ -717,7 +717,7 @@ function TurbofitPage() {
         jsx('h2', { className: 'font-semibold', children: 'Compatible local lanes — same Fit List only' }),
         jsx('div', {
           style: { color: 'var(--ui-text-tertiary)' },
-          children: 'Only Maple or Ornith on 8 GB VRAM. A dense 27B that spills into RAM is not a lane — it will crawl.',
+          children: 'Compatible lanes are low-VRAM local models that share the host as auxiliary. Dense 27B+ that spills into host RAM is not a lane — it will crawl.',
         }),
         ...compatibleLanes.map((item) => jsxs('div', {
           key: item.profile,
