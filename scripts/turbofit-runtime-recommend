@@ -384,7 +384,7 @@ def rank_profiles(args: argparse.Namespace) -> list[Recommendation]:
     }
     ranked = []
     for name, profile in payload.get("profiles", {}).items():
-        if current_profiles is not None and name not in current_profiles:
+        if current_profiles and name not in current_profiles:
             continue
         expected = profile.get("expected") or {}
         main = str(expected.get("main_alias", ""))
