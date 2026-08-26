@@ -50,16 +50,16 @@ function Spark({ values }) {
   })
 }
 
-function Dial({ label, value, max = 100, unit = '', digits = 0, size = 140 }) {
+function Dial({ label, value, max = 100, unit = '', digits = 0, size = 160 }) {
   const numeric = Number(value)
   const ceiling = Number(max) || 100
   const ok = Number.isFinite(numeric) && numeric > 0
   const pct = ok ? Math.max(0.02, Math.min(1, numeric / ceiling)) : 0
-  const r = size * 0.38
+  const r = size * 0.36
   const cx = size / 2
-  const cy = size * 0.56
+  const cy = size * 0.54
   const strokeWidth = size * 0.07
-  const tickR = size * 0.40
+  const tickR = size * 0.38
   const startAngle = Math.PI * 0.75
   const endAngle = startAngle + Math.PI * 1.5
   const needleAngle = startAngle + pct * Math.PI * 1.5
@@ -91,7 +91,7 @@ function Dial({ label, value, max = 100, unit = '', digits = 0, size = 140 }) {
     children: [
       jsx('div', {
         className: 'text-xs font-semibold uppercase tracking-wide',
-        style: { color: 'var(--ui-text-secondary)', minHeight: '14px' },
+        style: { color: 'var(--ui-text-secondary)', minHeight: '16px' },
         children: label,
       }),
       jsx('svg', {
@@ -134,7 +134,7 @@ function Dial({ label, value, max = 100, unit = '', digits = 0, size = 140 }) {
       }),
       jsx('div', {
         className: 'text-xs font-medium text-center',
-        style: { color: 'var(--ui-text-primary)', minHeight: '16px' },
+        style: { color: 'var(--ui-text-primary)', minHeight: '18px' },
         children: ok ? `${numeric.toFixed(digits)} / ${ceiling.toFixed(digits)} ${unit}` : `— / ${ceiling.toFixed(digits)} ${unit}`,
       }),
     ],
@@ -408,13 +408,14 @@ function TurbofitPage() {
         }),
       ] }),
       jsxs('section', {
-        className: 'flex flex-row justify-between gap-3',
+        className: 'flex flex-row justify-between gap-4',
+        style: { width: '100%' },
         children: [
-          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px', flex: '1 1 0' }, children: [
+          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '8px', padding: '12px', flex: '1 1 0', maxWidth: '360px' }, children: [
             jsx('div', { className: 'font-medium', children: 'Speed' }),
             jsx(ScoreBar, { label: 'tok/s', value: (status && status.usage && status.usage.tps) || 0, max: 80 }),
           ] }),
-          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px', flex: '1 1 0' }, children: [
+          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '8px', padding: '12px', flex: '1 1 0', maxWidth: '360px' }, children: [
             jsx('div', { className: 'font-medium', children: 'VRAM' }),
             jsx(ScoreBar, {
               label: 'used',
@@ -424,7 +425,7 @@ function TurbofitPage() {
               digits: 0,
             }),
           ] }),
-          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px', flex: '1 1 0' }, children: [
+          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '8px', padding: '12px', flex: '1 1 0', maxWidth: '360px' }, children: [
             jsx('div', { className: 'font-medium', children: 'Host RAM' }),
             jsx(ScoreBar, {
               label: 'used',
