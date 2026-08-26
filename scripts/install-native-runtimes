@@ -40,6 +40,13 @@ def cmake_configuration(backend: str) -> tuple[str, str]:
         raise ValueError(f"unsupported native backend: {backend}") from exc
 
 
+def native_server_binary(source: Path, build_dir: str) -> Path:
+    root = source / build_dir / "bin"
+    if os.name == "nt":
+        return root / "Release" / "llama-server.exe"
+    return root / "llama-server"
+
+
 def detect_backend() -> str:
     explicit = os.getenv("TURBOFIT_ACCELERATOR_BACKEND", "").lower()
     if explicit:
@@ -60,7 +67,7 @@ def install(runtime: dict, *, backend: str, check_only: bool) -> dict:
     cuda_binary = Path(os.path.expanduser(runtime["cuda_binary"])).resolve()
     source = Path(os.path.expanduser(runtime.get("source", str(cuda_binary.parents[2])))).resolve()
     build_dir, accelerator_flag = cmake_configuration(backend)
-    binary = source / build_dir / "bin/llama-server"
+    binary = native_server_binary(source, build_dir)
     revision = runtime["revision"]
     if not source.exists():
         if check_only:
