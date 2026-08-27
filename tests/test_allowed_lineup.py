@@ -61,16 +61,17 @@ def test_shared_total_memory_is_not_treated_as_vram() -> None:
     assert shared_main_for_total_memory_gb(24) == "qwen3-8-27b-unleashed-ud-q3-k-xl"
 
 
-def test_apple_uses_orcarouter_mlx_not_two_bit() -> None:
+def test_apple_uses_unleashed_fit_list_not_orcarouter_mlx() -> None:
     assert apple_mlx_main(unified_ram_gb=16) == "ornith-1-5-35a3b"
-    assert apple_mlx_main(unified_ram_gb=24) == "qwen3-8-27b-uncensored-mlx-4bit"
-    assert apple_mlx_main(unified_ram_gb=32) == "qwen3-8-27b-uncensored-mlx-6bit"
-    assert apple_mlx_main(unified_ram_gb=64) == "qwen3-8-27b-uncensored-mlx-8bit"
+    assert apple_mlx_main(unified_ram_gb=24) == "qwen3-8-27b-unleashed-ud-q3-k-xl"
+    assert apple_mlx_main(unified_ram_gb=32) == "qwen3-8-27b-unleashed-ud-q3-k-xl"
+    assert apple_mlx_main(unified_ram_gb=64) == "qwen3-8-27b-unleashed-ud-q3-k-xl"
     apple = check_local_options(
         vram_gb=0, host_ram_gb=32, memory_pool="unified", backend="metal", vendor="apple"
     )
-    assert apple[0]["alias"] == "qwen3-8-27b-uncensored-mlx-6bit"
-    assert apple[0]["repo"] == "orcarouter/Qwen3.8-27B-Uncensored-MLX"
+    assert apple[0]["alias"] == "qwen3-8-27b-unleashed-ud-q3-k-xl"
+    assert apple[0]["engine"] == "llama.cpp"
+    assert apple[0]["repo"] is None
 
 
 def test_integrated_unified_uses_total_memory_bands() -> None:

@@ -69,9 +69,9 @@ def test_fresh_auto_selection_acquires_and_verifies_local_floor_before_publicati
 
     floor = len(choice.profile.rungs) - 1
     assert controller.state.adaptive.current_index == floor
-    assert backends[0].events[0] == ("local", "local-bonsai-65536")
+    assert backends[0].events[0] == ("local", "local-unleashed-q3kxl-65536")
     route = json.loads((tmp_path / "routes.json").read_text())
-    assert route["rung_id"] == "local-bonsai-65536"
+    assert route["rung_id"] == "local-unleashed-q3kxl-65536"
     assert route["routes"]["main"]["kind"] == "local"
     assert route["routes"]["aux"]["kind"] == "shared-main"
 
@@ -95,12 +95,10 @@ def test_service_persists_healing_and_contraction_state(tmp_path: Path) -> None:
 
     runtime.tick(pressure(7000), now=now)
     contracted = runtime.tick(pressure(7000), now=now + 5)
-    # Live-refit ban list: every local rung in hardware-24gb is a retired
-    # Bonsai rung, so contraction refuses every rung instead of re-selecting
-    # Bonsai. Swapping the stale profile rungs is tracked separately
-    # (upstream fix 1); the policy contract here is "never pick a banned rung".
+    # With the fixed profile (Unleashed rungs) AND live-refit, contraction at
+    # low pressure re-fits via the fit function; the stale-Bonsai refusal path
+    # no longer exists. Current rung holds until re-fit selects the tier.
     assert contracted.state.adaptive.current_index == 0
-    assert contracted.reason == "no contraction rung fits"
     assert ("publish", 0) in backends[-1].events
 
     restarted, _ = service(tmp_path)
@@ -127,5 +125,5 @@ def test_legacy_state_resets_managed_models_before_bootstrapping_new_revision(
     controller = restarted.synchronize(selection_path, hardware(24576))
 
     assert backends[0].events == ["reset"]
-    assert backends[1].events[0] == ("local", "local-bonsai-65536")
+    assert backends[1].events[0] == ("local", "local-unleashed-q3kxl-65536")
     assert controller.state.profile_revision == choice.profile.revision

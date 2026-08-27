@@ -289,32 +289,25 @@
     ],
     "hardware-24gb": [
       {
-        "evidence": "sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba",
+        "rung_id": "local-unleashed-q3kxl-262144",
+        "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
         "required_mb_per_card": [
-          21554
-        ],
-        "rung_id": "local-grm-131072"
+          19391
+        ]
       },
       {
-        "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
+        "rung_id": "local-unleashed-q3kxl-131072",
+        "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
         "required_mb_per_card": [
-          11093
-        ],
-        "rung_id": "local-bonsai-262144"
+          19391
+        ]
       },
       {
-        "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
+        "rung_id": "local-unleashed-q3kxl-65536",
+        "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
         "required_mb_per_card": [
-          8149
-        ],
-        "rung_id": "local-bonsai-131072"
-      },
-      {
-        "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
-        "required_mb_per_card": [
-          6677
-        ],
-        "rung_id": "local-bonsai-65536"
+          19391
+        ]
       }
     ],
     "hardware-300gb": [
