@@ -111,6 +111,8 @@ class GPUClearGate:
         self,
         *,
         ceilings_mb: Mapping[int, int],
+        baseline_mb: Mapping[int, int] | None = None,
+        baseline_margin_mb: int = 256,
         settle_samples: int = 3,
         timeout_s: float = 180,
         poll_s: float = 1,
@@ -118,6 +120,17 @@ class GPUClearGate:
     ) -> GPUClearEvent:
         if settle_samples < 1:
             raise ValueError("settle_samples must be >= 1")
+        if baseline_margin_mb < 0:
+            raise ValueError("baseline_margin_mb must be >= 0")
+        effective_ceilings = {
+            gpu: max(
+                int(ceiling),
+                int(baseline_mb[gpu]) + baseline_margin_mb,
+            )
+            if baseline_mb is not None and gpu in baseline_mb
+            else int(ceiling)
+            for gpu, ceiling in ceilings_mb.items()
+        }
         started = self._monotonic()
         observed = 0
         consecutive = 0
@@ -126,7 +139,7 @@ class GPUClearGate:
             snapshot = tuple(self._sample())
             observed += 1
             clear = bool(snapshot) and all(
-                sample.used_mb <= ceilings_mb.get(sample.gpu, 1024)
+                sample.used_mb <= effective_ceilings.get(sample.gpu, 1024)
                 for sample in snapshot
             )
             consecutive = consecutive + 1 if clear else 0
@@ -135,7 +148,7 @@ class GPUClearGate:
                     timestamp=datetime.now(timezone.utc).isoformat(),
                     label=label,
                     passed=True,
-                    ceilings_mb=dict(ceilings_mb),
+                    ceilings_mb=effective_ceilings,
                     snapshot=snapshot,
                     samples_observed=observed,
                 )
@@ -144,7 +157,7 @@ class GPUClearGate:
             timestamp=datetime.now(timezone.utc).isoformat(),
             label=label,
             passed=False,
-            ceilings_mb=dict(ceilings_mb),
+            ceilings_mb=effective_ceilings,
             snapshot=snapshot,
             samples_observed=observed,
         )

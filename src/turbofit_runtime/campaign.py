@@ -317,6 +317,10 @@ class CampaignRunner:
             try:
                 after = self.clear_gate.wait(
                     ceilings_mb=self.clear_ceilings_mb,
+                    baseline_mb=(
+                        {sample.gpu: sample.used_mb for sample in before.snapshot}
+                        if before is not None else None
+                    ),
                     settle_samples=3,
                     timeout_s=180,
                     label=f"after-{row.id}",
