@@ -63,6 +63,20 @@ def detect_backend() -> str:
     return "cpu"
 
 
+def require_cmake() -> None:
+    """Fail fast with an actionable hint when the build toolchain is missing."""
+    if shutil.which("cmake") is None:
+        raise SystemExit(
+            "error: cmake is required to build the native llama.cpp runtimes "
+            "but was not found on PATH.\n"
+            "Install it first, e.g.:\n"
+            "  macOS (Homebrew):  brew install cmake\n"
+            "  Debian/Ubuntu:     sudo apt-get install cmake\n"
+            "  Windows:           winget install Kitware.CMake\n"
+            "Then re-run scripts/install-native-runtimes."
+        )
+
+
 def install(runtime: dict, *, backend: str, check_only: bool) -> dict:
     cuda_binary = Path(os.path.expanduser(runtime["cuda_binary"])).resolve()
     source = Path(os.path.expanduser(runtime.get("source", str(cuda_binary.parents[2])))).resolve()
@@ -120,6 +134,7 @@ def main() -> int:
     selected = set(args.runtime or [])
     runtimes = select_native_runtimes(manifest["runtimes"], selected)
     backend = args.backend or detect_backend()
+    require_cmake()
     records = [install(item, backend=backend, check_only=args.check_only) for item in runtimes]
     print(json.dumps({"schema": "turbofit.native-runtime-verification/v1", "runtimes": records}, indent=2))
     return 0

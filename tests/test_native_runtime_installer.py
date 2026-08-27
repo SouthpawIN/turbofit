@@ -28,6 +28,19 @@ def test_native_installer_generates_backend_specific_cmake_configuration() -> No
     assert module.cmake_configuration("cpu") == ("build-cpu", "-DGGML_NATIVE=ON")
 
 
+def test_native_installer_fails_fast_with_install_hint_when_cmake_missing(monkeypatch) -> None:
+    module = _module()
+    monkeypatch.setattr(module.shutil, "which", lambda name: None)
+
+    try:
+        module.require_cmake()
+    except SystemExit as exc:
+        assert "brew install cmake" in str(exc)
+        assert "apt-get install cmake" in str(exc)
+    else:
+        raise AssertionError("require_cmake should exit when cmake is missing")
+
+
 def test_native_installer_resolves_visual_studio_release_executable(monkeypatch) -> None:
     module = _module()
     monkeypatch.setattr(module.os, "name", "nt")
