@@ -83,6 +83,22 @@ def test_configure_hermes_registers_named_provider_and_primary_model() -> None:
     assert original["custom_providers"][-1]["name"] == "other"
 
 
+def test_remote_private_and_tailnet_provider_endpoints_are_normalized() -> None:
+    from plugin_tools import _validated_base_url
+
+    assert _validated_base_url("http://192.168.1.50:8091") == "http://192.168.1.50:8091/v1"
+    assert _validated_base_url("http://mac-name.example-tailnet.ts.net:8091/v1") == "http://mac-name.example-tailnet.ts.net:8091/v1"
+    assert _validated_base_url("https://mac-name.example.com:9443") == "https://mac-name.example.com:9443/v1"
+
+
+def test_public_plain_http_provider_endpoint_is_rejected() -> None:
+    import pytest
+    from plugin_tools import _validated_base_url
+
+    with pytest.raises(ValueError, match="loopback or a Tailscale address"):
+        _validated_base_url("http://model.example.com:8091")
+
+
 def test_configure_hermes_writes_matching_main_aux_context() -> None:
     from plugin_tools import configure_hermes
 
