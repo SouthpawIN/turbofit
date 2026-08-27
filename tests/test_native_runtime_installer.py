@@ -28,6 +28,15 @@ def test_native_installer_generates_backend_specific_cmake_configuration() -> No
     assert module.cmake_configuration("cpu") == ("build-cpu", "-DGGML_NATIVE=ON")
 
 
+def test_native_installer_resolves_visual_studio_release_executable(monkeypatch) -> None:
+    module = _module()
+    monkeypatch.setattr(module.os, "name", "nt")
+
+    assert module.native_server_binary(Path("runtime"), "build-vulkan") == Path(
+        "runtime/build-vulkan/bin/Release/llama-server.exe"
+    )
+
+
 def test_native_installer_excludes_separate_freetoken_candidate() -> None:
     module = _module()
     manifest = __import__("json").loads((ROOT / "references/native-runtimes.json").read_text())
