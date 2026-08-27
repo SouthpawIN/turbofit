@@ -5,6 +5,7 @@ import math
 from dataclasses import dataclass, replace
 from enum import Enum
 
+from .fit_check import TierProfile, fit_tier, rung_is_banned, rung_tokens
 from .runtime_profile import Turbofile
 
 
@@ -128,9 +129,7 @@ def reconcile(
         elapsed = now - contracted_state.deficit_since
         if elapsed < profile.policy.contraction_dwell_s:
             return _none(contracted_state, "deficit dwell active")
-        target = _first_fitting_contraction(
-            state.current_index, snapshot.required_mb_by_rung, snapshot.available_mb_per_card
-        )
+        target = _contraction_target(state.current_index, snapshot, profile)
         if target is None:
             return _none(contracted_state, "no contraction rung fits")
         planned = replace(
@@ -147,8 +146,13 @@ def reconcile(
     if now < state.quarantine_until:
         return _none(replace(stable_state, surplus_since=None), "expansion quarantine active")
 
-    target = state.current_index - 1
     margin_mb = round(profile.policy.expansion_margin_gb_per_card * 1024)
+    if profile.policy.expansion_mode == "direct":
+        target = _expansion_fit_target(state.current_index, snapshot, profile, margin_mb)
+    else:
+        target = state.current_index - 1
+    if target is None or target >= state.current_index:
+        return _none(replace(stable_state, surplus_since=None), "no expansion target fits")
     requirement = snapshot.required_mb_by_rung[target]
     if not _fits(requirement, snapshot.available_mb_per_card, margin_mb=margin_mb):
         return _none(replace(stable_state, surplus_since=None), "expansion margin unavailable")
@@ -211,12 +215,96 @@ def _resolve_pending(
     return _none(state, "activation pending")
 
 
+def _contraction_target(
+    current_index: int,
+    snapshot: CapacitySnapshot,
+    profile: Turbofile,
+) -> int | None:
+    """Live re-fit: select the rung for the tier that fits current usable memory.
+
+    Usable memory comes from the pressure probe (CapacitySnapshot's
+    available_mb_per_card). The fit check maps it to a Fit List tier band;
+    the deepest-fitting rung carrying that tier's model identity is the
+    target. Banned models (Bonsai, 9B) are never selected. Falls back to
+    the pre-baked rung ladder only for profiles without tier-identified
+    rungs.
+    """
+    usable_gb = sum(snapshot.available_mb_per_card) / 1024
+    tier = fit_tier(usable_gb)
+    if tier is not None:
+        matching = _rung_indices_for_tier(profile, tier)
+        for index in sorted(matching, reverse=True):
+            if index == current_index:
+                continue
+            if _fits(
+                snapshot.required_mb_by_rung[index],
+                snapshot.available_mb_per_card,
+                margin_mb=0,
+            ):
+                return index
+    return _first_unbanned_fitting_contraction(
+        current_index,
+        snapshot.required_mb_by_rung,
+        snapshot.available_mb_per_card,
+        tuple(rung.id for rung in profile.rungs),
+    )
+
+
+def _expansion_fit_target(
+    current_index: int,
+    snapshot: CapacitySnapshot,
+    profile: Turbofile,
+    margin_mb: int,
+) -> int | None:
+    """Direct expansion: re-fit straight to the best tier that fits, with margin."""
+    usable_gb = (sum(snapshot.available_mb_per_card) - margin_mb) / 1024
+    tier = fit_tier(usable_gb)
+    if tier is None:
+        return current_index - 1
+    best: int | None = None
+    for index in sorted(_rung_indices_for_tier(profile, tier)):
+        if index >= current_index:
+            break
+        if _fits(
+            snapshot.required_mb_by_rung[index],
+            snapshot.available_mb_per_card,
+            margin_mb=margin_mb,
+        ):
+            best = index
+    return best
+
+
+def _rung_indices_for_tier(profile: Turbofile, tier: TierProfile) -> tuple[int, ...]:
+    rung_ids = tuple(rung.id for rung in profile.rungs)
+    indices: list[int] = []
+    for index, rung_id in enumerate(rung_ids):
+        if rung_is_banned(rung_id):
+            continue
+        if set(tier.model_tokens) & rung_tokens(rung_id):
+            indices.append(index)
+    return tuple(indices)
+
+
 def _first_fitting_contraction(
     current_index: int,
     requirements: tuple[tuple[int, ...], ...],
     available: tuple[int, ...],
 ) -> int | None:
     for index in range(current_index + 1, len(requirements)):
+        if _fits(requirements[index], available, margin_mb=0):
+            return index
+    return None
+
+
+def _first_unbanned_fitting_contraction(
+    current_index: int,
+    requirements: tuple[tuple[int, ...], ...],
+    available: tuple[int, ...],
+    rung_ids: tuple[str, ...],
+) -> int | None:
+    for index in range(current_index + 1, len(requirements)):
+        if rung_is_banned(rung_ids[index]):
+            continue
         if _fits(requirements[index], available, margin_mb=0):
             return index
     return None
