@@ -39,6 +39,9 @@ class FakeClearGate:
         self.labels: list[str] = []
         self.baselines: list[dict[int, int] | None] = []
 
+    def sample_now(self) -> tuple[GPUSample, ...]:
+        return (GPUSample(gpu=0, total_mb=24576, used_mb=500, free_mb=24076, utilization_pct=0),)
+
     def wait(self, **kwargs) -> GPUClearEvent:
         self.labels.append(kwargs["label"])
         self.baselines.append(kwargs.get("baseline_mb"))
