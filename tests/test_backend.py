@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import subprocess
 from types import SimpleNamespace
 
@@ -92,6 +93,10 @@ def test_campaign_lease_stops_and_restores_only_previously_active_services(
     backend.release_campaign_lease()
     assert not (tmp_path / "campaign-lease.json").exists()
 
+    if os.name == "nt":
+        assert calls == []
+        return
+
     assert ["systemctl", "--user", "stop", "turbofit-controller.service"] in calls
     assert ["systemctl", "--user", "start", "turbofit-controller.service"] in calls
     assert not any(
@@ -102,6 +107,9 @@ def test_campaign_lease_stops_and_restores_only_previously_active_services(
 
 
 def test_failed_controller_suspend_removes_campaign_marker(tmp_path: Path, monkeypatch) -> None:
+    if os.name == "nt":
+        pytest.skip("systemctl lease behavior is Linux-only")
+
     def fake_run(command, **kwargs):
         if command[:4] == ["systemctl", "--user", "is-active", "--quiet"]:
             return SimpleNamespace(returncode=0)
@@ -133,3 +141,32 @@ def test_wait_port_reusable_requires_three_clear_samples(tmp_path: Path, monkeyp
     monkeypatch.setattr("turbofit_runtime.backend.time.sleep", lambda seconds: None)
 
     backend._wait_port_reusable(11605, timeout_s=1)
+
+
+def test_windows_stop_kills_owned_process_tree(tmp_path: Path, monkeypatch) -> None:
+    calls = []
+
+    class FakeProcess:
+        pid = 4242
+
+        def poll(self):
+            return None
+
+        def wait(self, timeout=None):
+            return 0
+
+    monkeypatch.setattr("turbofit_runtime.backend.platform.system", lambda: "Windows")
+    monkeypatch.setattr(
+        "turbofit_runtime.backend.subprocess.run",
+        lambda command, **kwargs: calls.append(command) or SimpleNamespace(returncode=0),
+    )
+    backend = CampaignBackend(
+        gateway_script=tmp_path / "gateway.py", result_dir=tmp_path,
+        runtime_state=tmp_path / "runtime.json",
+    )
+    handle = {"process": FakeProcess()}
+    backend._handles.append(handle)
+
+    backend.stop(SimpleNamespace(role="main"), handle)
+
+    assert ["taskkill.exe", "/PID", "4242", "/T", "/F"] in calls

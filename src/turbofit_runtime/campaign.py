@@ -304,8 +304,10 @@ class CampaignRunner:
             if prepare is not None:
                 prepare(row)
                 prepared = True
+            baseline = self.clear_gate.sample_now()
             before = self.clear_gate.wait(
                 ceilings_mb=self.clear_ceilings_mb,
+                baseline_mb={sample.gpu: sample.used_mb for sample in baseline},
                 settle_samples=3,
                 timeout_s=180,
                 label=f"before-{row.id}",

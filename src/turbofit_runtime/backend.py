@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import platform
 import signal
 import socket
 import subprocess
@@ -15,6 +16,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .hardware import _nvidia_compatibility_library_dir
+from .gpu import probe_gpus
 from .recipes import ResolvedComponent, ResolvedRecipe, resolve_native_backend
 from .runtime_backends import llama_environment
 
@@ -102,27 +104,17 @@ class CampaignBackend:
     def _start_monitor(self) -> None:
         if self._monitor_thread and self._monitor_thread.is_alive():
             return
-        if self.accelerator_backend != "cuda":
+        if self.accelerator_backend == "cpu":
             return
         self._samples = []
         self._monitor_stop.clear()
 
         def monitor() -> None:
             while not self._monitor_stop.is_set():
-                result = subprocess.run([
-                    "nvidia-smi",
-                    "--query-gpu=index,memory.used,memory.free,utilization.gpu,power.draw,fan.speed",
-                    "--format=csv,noheader,nounits",
-                ], capture_output=True, text=True)
-                snapshot = []
-                for line in result.stdout.strip().splitlines():
-                    values = [item.strip() for item in line.split(",")]
-                    if len(values) == 6:
-                        snapshot.append({
-                            "gpu": int(values[0]), "used_mb": int(values[1]),
-                            "free_mb": int(values[2]), "util_pct": int(values[3]),
-                            "power_w": float(values[4]), "fan_pct": int(values[5]),
-                        })
+                try:
+                    snapshot = [sample.to_dict() for sample in probe_gpus()]
+                except (OSError, RuntimeError, ValueError, subprocess.SubprocessError):
+                    snapshot = []
                 if snapshot:
                     self._samples.append(snapshot)
                 time.sleep(0.15)
@@ -146,6 +138,9 @@ class CampaignBackend:
         # suspended by the campaign lease.
         services = (self.production_controller_service,)
         self._production_services_to_restore = []
+        if sys.platform == "win32":
+            self._production_suspended = True
+            return
         try:
             for service in services:
                 active = subprocess.run(
@@ -322,9 +317,11 @@ class CampaignBackend:
         payload = {
             "model": "auto",
             "messages": [{"role": "user", "content": "Implement merge sort in Python with type hints and explain six design choices."}],
-            "max_tokens": 128,
+            "max_tokens": 512,
             "temperature": 0,
             "chat_template_kwargs": {"enable_thinking": False},
+            "reasoning_format": "none",
+            "reasoning": False,
         }
         code, body, headers = self._request_json(
             f"http://127.0.0.1:{self.gateway_port}/{role}/v1/chat/completions",
@@ -351,12 +348,25 @@ class CampaignBackend:
         try:
             process: subprocess.Popen[str] = handle["process"]
             if process.poll() is None:
-                try: os.killpg(process.pid, signal.SIGTERM)
-                except ProcessLookupError: pass
+                try:
+                    if platform.system() == "Windows":
+                        subprocess.run(
+                            ["taskkill.exe", "/PID", str(process.pid), "/T", "/F"],
+                            check=False, capture_output=True, text=True,
+                        )
+                    else:
+                        os.killpg(process.pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
                 try: process.wait(timeout=30)
                 except subprocess.TimeoutExpired:
-                    try: os.killpg(process.pid, signal.SIGKILL)
-                    except ProcessLookupError: pass
+                    try:
+                        if platform.system() == "Windows":
+                            process.kill()
+                        else:
+                            os.killpg(process.pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
                     process.wait()
         finally:
             if handle in self._handles:
@@ -366,12 +376,25 @@ class CampaignBackend:
                 if self._monitor_thread:
                     self._monitor_thread.join(timeout=5)
                 if self._gateway and self._gateway.poll() is None:
-                    try: os.killpg(self._gateway.pid, signal.SIGTERM)
-                    except ProcessLookupError: pass
+                    try:
+                        if platform.system() == "Windows":
+                            subprocess.run(
+                                ["taskkill.exe", "/PID", str(self._gateway.pid), "/T", "/F"],
+                                check=False, capture_output=True, text=True,
+                            )
+                        else:
+                            os.killpg(self._gateway.pid, signal.SIGTERM)
+                    except ProcessLookupError:
+                        pass
                     try: self._gateway.wait(timeout=10)
                     except subprocess.TimeoutExpired:
-                        try: os.killpg(self._gateway.pid, signal.SIGKILL)
-                        except ProcessLookupError: pass
+                        try:
+                            if platform.system() == "Windows":
+                                self._gateway.kill()
+                            else:
+                                os.killpg(self._gateway.pid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
                 self.runtime_state.write_text(json.dumps({"active": None, "components": []}, indent=2) + "\n")
                 if self._campaign_lease_depth == 0:
                     self._resume_production()

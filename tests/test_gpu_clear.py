@@ -8,6 +8,7 @@ from turbofit_runtime.gpu import (
     GPUSample,
     fit_per_card,
     parse_nvidia_memory_csv,
+    parse_windows_gpu_memory,
 )
 
 
@@ -23,6 +24,17 @@ def test_parse_nvidia_memory_csv() -> None:
     assert parsed == (
         GPUSample(gpu=0, total_mb=24576, used_mb=530, free_mb=24046, utilization_pct=0),
         GPUSample(gpu=1, total_mb=24576, used_mb=57, free_mb=24519, utilization_pct=2),
+    )
+
+
+def test_parse_windows_gpu_memory() -> None:
+    parsed = parse_windows_gpu_memory(
+        '{"adapters":[{"Name":"AMD Radeon RX 6600","AdapterRAM":4293918720}],'
+        '"usage":[{"InstanceName":"luid_0_phys_0","CookedValue":1610051584}]}'
+    )
+
+    assert parsed == (
+        GPUSample(gpu=0, total_mb=4095, used_mb=1535, free_mb=2559, utilization_pct=0),
     )
 
 
