@@ -185,6 +185,8 @@ Desktop: **Serve on Tailscale**. Same as `/turbofit serve`. Check with `/turbofi
 
 Public binds stay rejected. Loopback and verified tailnet addresses are the only plain-HTTP exceptions.
 
+For the split topology where Turbofit runs on a Mac and Hermes runs in a Proxmox LXC, see [`docs/remote-hermes-model-server.md`](docs/remote-hermes-model-server.md). It covers private Tailscale/LAN publication, connectivity checks from the LXC, named provider configuration, and selecting the remote provider from Hermes Desktop.
+
 ## Hermes configuration
 
 ```yaml
