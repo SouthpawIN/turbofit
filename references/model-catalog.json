@@ -856,6 +856,24 @@
       "upstream_source": "https://huggingface.co/ornith-ai/Ornith-1.5-35B-A3B"
     },
     {
+      "id": "maple-preview-tq2",
+      "name": "Maple Preview 20B-A1B TQ2_0",
+      "family": "Maple Preview 20B-A1B",
+      "source": "https://huggingface.co/stamsam/maple-preview-gguf",
+      "artifact": "maple-tq2_0.gguf",
+      "quantization": "TQ2_0",
+      "vision": false,
+      "moe": true,
+      "runtime_features": [
+        "maple"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "0afcb98771d39ab4de25252ee006ea9f9eab1920",
+      "upstream_source": "https://huggingface.co/deepgrove/maple-preview"
+    },
+    {
       "id": "ornith-1-5-oq8e-mtp",
       "name": "Ornith 1.5 35B-A3B oQ8e MTP",
       "family": "Ornith 1.5 35A3B",

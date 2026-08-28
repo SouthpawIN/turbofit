@@ -40,6 +40,26 @@ def resolve_native_backend(
     return "cpu"
 
 
+def resolve_native_binary(binary: str | Path, *, platform_name: str | None = None) -> str:
+    """Resolve a manifest binary to the layout produced by the native builder."""
+    path = Path(str(binary)).expanduser()
+    host = str(platform_name or sys.platform).lower()
+    if not host.startswith("win"):
+        return str(path)
+    if path.suffix.lower() == ".exe":
+        return str(path)
+    candidates = (
+        path,
+        path.parent / "Release" / f"{path.name}.exe",
+        path.with_suffix(".exe"),
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
+    # Visual Studio's default multi-config generator places the executable here.
+    return str(candidates[1])
+
+
 @dataclass(frozen=True)
 class ResolvedComponent:
     role: str
@@ -162,7 +182,7 @@ class RecipeBook:
                 )
         if binary_value is None:
             binary_value = self.atomic_binary
-        binary = str(Path(str(binary_value)).expanduser())
+        binary = resolve_native_binary(binary_value, platform_name=self.platform_name)
         if kind != "process":
             raise ValueError(f"unsupported recipe kind: {kind}")
         root_value = str(spec.get("model_root", "")).replace(

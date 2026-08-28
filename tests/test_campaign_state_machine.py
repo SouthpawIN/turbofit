@@ -37,9 +37,14 @@ def clear_event(label: str) -> GPUClearEvent:
 class FakeClearGate:
     def __init__(self) -> None:
         self.labels: list[str] = []
+        self.baselines: list[dict[int, int] | None] = []
+
+    def sample_now(self) -> tuple[GPUSample, ...]:
+        return (GPUSample(gpu=0, total_mb=24576, used_mb=500, free_mb=24076, utilization_pct=0),)
 
     def wait(self, **kwargs) -> GPUClearEvent:
         self.labels.append(kwargs["label"])
+        self.baselines.append(kwargs.get("baseline_mb"))
         return clear_event(kwargs["label"])
 
 
@@ -131,6 +136,7 @@ def test_success_clears_before_and_after_publishes_and_registers(tmp_path: Path)
 
     assert outcome.status == "success"
     assert clear.labels == [f"before-{item.id}", f"after-{item.id}"]
+    assert clear.baselines == [None, {0: 500}]
     assert executor.rows == [item.id]
     assert publisher.results[0].gpu_clear_after.label == f"after-{item.id}"
     assert registry.rows == [item.id]

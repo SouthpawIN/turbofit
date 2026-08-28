@@ -21847,6 +21847,70 @@
           ]
         }
       ]
+    },
+    "maple-preview-20b-a1b-tq2-0-auto-64k": {
+      "evidence_schema": "turbofit.catalog-physical/v4",
+      "description": "Maple Preview 20B-A1B TQ2_0 main with auto auxiliary at 65536",
+      "context": 65536,
+      "evidence": "C:\\Users\\kuipo\\.hermes\\wiki\\topics\\turbofit\\evidence\\maple-preview-20b-a1b-tq2-0-auto-64k.md",
+      "raw_result": "C:\\Users\\kuipo\\turbofit-maple-test\\references\\results\\catalog-campaign\\attempts\\maple-preview-20b-a1b-tq2-0-auto-64k\\20260828T024502.462506Z\\result.json",
+      "raw_result_sha256": "sha256:79316e574acb80192d139f538d7bbc25d78adc47232ca39a3c97f4862dbd3aff",
+      "physical_fingerprint": "sha256:c2b70edcf9877c776efbc69333dee52b2558b4115252f93652720eace4a84675",
+      "backend": "native-process",
+      "runtime_string": "turbofit-runtime use maple-preview-20b-a1b-tq2-0-auto-64k",
+      "expected": {
+        "main_alias": "maple-preview-tq2",
+        "aux_alias": "auto:maple-preview-tq2",
+        "aux_mode": "shared-main"
+      },
+      "metrics": {
+        "main_tps": 15.743981217430408,
+        "aux_tps": 15.781688937855963,
+        "gpu_peak_mb": {
+          "0": 1824
+        },
+        "method": "baseline"
+      },
+      "components": [
+        {
+          "role": "main",
+          "kind": "process",
+          "name": "turbofit-runtime-main",
+          "gpu": "0",
+          "port": 11605,
+          "method": "baseline",
+          "command": [
+            "C:\\Users\\kuipo\\.local\\share\\turbofit\\runtimes\\maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f\\build-vulkan\\bin\\Release\\llama-server.exe",
+            "-m",
+            "C:\\Users\\kuipo\\Models\\storage\\gguf\\Maple-Preview\\maple-tq2_0.gguf",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "11605",
+            "--alias",
+            "maple-preview-tq2",
+            "-c",
+            "65536",
+            "-ngl",
+            "auto",
+            "--fit",
+            "off",
+            "-fa",
+            "on",
+            "--jinja",
+            "-b",
+            "512",
+            "-ub",
+            "256",
+            "--cache-type-k",
+            "q4_0",
+            "--cache-type-v",
+            "q4_0",
+            "--parallel",
+            "1"
+          ]
+        }
+      ]
     }
   }
 }

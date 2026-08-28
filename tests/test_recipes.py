@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from turbofit_runtime.recipes import RecipeBook, resolve_native_backend
+from turbofit_runtime.recipes import RecipeBook, resolve_native_backend, resolve_native_binary
 from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
 from turbofit_runtime.schema import MatrixRow
 
@@ -41,6 +41,21 @@ def test_backend_detection_uses_vulkan_before_cpu_when_no_vendor_cli_exists() ->
     assert resolve_native_backend(
         platform_name="linux", which=lambda command: command if command in available else None,
     ) == "vulkan"
+
+
+def test_windows_native_binary_resolves_visual_studio_release_layout(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "build-vulkan" / "bin" / "llama-server"
+    release_path = manifest_path.parent / "Release" / "llama-server.exe"
+    release_path.parent.mkdir(parents=True)
+    release_path.write_bytes(b"stub")
+
+    assert resolve_native_binary(manifest_path, platform_name="win32") == str(release_path)
+
+
+def test_windows_native_binary_defaults_to_visual_studio_release_layout() -> None:
+    assert Path(resolve_native_binary(
+        "runtime/build-vulkan/bin/llama-server", platform_name="win32"
+    )) == Path("runtime/build-vulkan/bin/Release/llama-server.exe")
 
 
 def test_small_dedicated_pair_pins_aux_gpu0_and_main_gpu1() -> None:

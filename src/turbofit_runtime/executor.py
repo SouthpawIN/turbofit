@@ -79,13 +79,27 @@ def capture_physical_hardware() -> dict:
         if set(drivers) != expected:
             raise RuntimeError("NVIDIA driver inventory does not match physical accelerator inventory")
     if any(device.vendor == "amd" for device in hardware.devices):
-        completed = subprocess.run(
-            ["rocm-smi", "--showdriverversion", "--json"],
-            text=True, capture_output=True, check=True, timeout=30,
-        )
-        if not completed.stdout.strip():
-            raise RuntimeError("empty ROCm driver inventory")
-        drivers["rocm-smi"] = completed.stdout.strip()
+        if platform.system() == "Windows":
+            completed = subprocess.run(
+                [
+                    "powershell.exe", "-NoProfile", "-NonInteractive", "-Command",
+                    "Get-CimInstance Win32_VideoController | "
+                    "Where-Object { $_.AdapterRAM -gt 0 } | "
+                    "Select-Object Name,DriverVersion | ConvertTo-Json -Compress",
+                ],
+                text=True, capture_output=True, check=True, timeout=30,
+            )
+            if not completed.stdout.strip():
+                raise RuntimeError("empty Windows video-driver inventory")
+            drivers["windows-video-controller"] = completed.stdout.strip()
+        else:
+            completed = subprocess.run(
+                ["rocm-smi", "--showdriverversion", "--json"],
+                text=True, capture_output=True, check=True, timeout=30,
+            )
+            if not completed.stdout.strip():
+                raise RuntimeError("empty ROCm driver inventory")
+            drivers["rocm-smi"] = completed.stdout.strip()
     if any(device.vendor == "apple" for device in hardware.devices):
         completed = subprocess.run(
             ["sw_vers", "-productVersion"],

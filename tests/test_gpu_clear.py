@@ -8,6 +8,7 @@ from turbofit_runtime.gpu import (
     GPUSample,
     fit_per_card,
     parse_nvidia_memory_csv,
+    parse_windows_gpu_memory,
 )
 
 
@@ -23,6 +24,17 @@ def test_parse_nvidia_memory_csv() -> None:
     assert parsed == (
         GPUSample(gpu=0, total_mb=24576, used_mb=530, free_mb=24046, utilization_pct=0),
         GPUSample(gpu=1, total_mb=24576, used_mb=57, free_mb=24519, utilization_pct=2),
+    )
+
+
+def test_parse_windows_gpu_memory() -> None:
+    parsed = parse_windows_gpu_memory(
+        '{"adapters":[{"Name":"AMD Radeon RX 6600","AdapterRAM":4293918720}],'
+        '"usage":[{"InstanceName":"luid_0_phys_0","CookedValue":1610051584}]}'
+    )
+
+    assert parsed == (
+        GPUSample(gpu=0, total_mb=4095, used_mb=1535, free_mb=2559, utilization_pct=0),
     )
 
 
@@ -95,3 +107,33 @@ def test_clear_card_fit_uses_total_minus_safety_floor() -> None:
     assert result.cards[0].fits is True
     assert result.cards[0].budget_mb == 23552
     assert result.cards[1].fits is False
+
+
+def test_clear_gate_can_use_a_pre_run_baseline_for_desktop_residency() -> None:
+    samples = iter([
+        (sample(0, 1566),),
+        (sample(0, 1700),),
+        (sample(0, 1700),),
+        (sample(0, 1700),),
+    ])
+    gate = GPUClearGate(sample_fn=lambda: next(samples), sleep_fn=lambda _: None)
+
+    event = gate.wait(
+        ceilings_mb={0: 1024},
+        baseline_mb={0: 1566},
+        baseline_margin_mb=256,
+        settle_samples=3,
+        timeout_s=10,
+        label="baseline-relative",
+    )
+
+    assert event.passed is True
+    assert event.ceilings_mb == {0: 1822}
+    assert event.snapshot[0].used_mb == 1700
+
+
+def test_clear_gate_rejects_negative_baseline_margin() -> None:
+    gate = GPUClearGate(sample_fn=lambda: (sample(0, 0),))
+
+    with pytest.raises(ValueError, match="baseline_margin_mb"):
+        gate.wait(ceilings_mb={0: 1024}, baseline_margin_mb=-1, label="invalid")

@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import subprocess
+import json
+import platform
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -87,12 +89,57 @@ def parse_nvidia_memory_csv(raw: str) -> tuple[GPUSample, ...]:
 
 
 def probe_gpus() -> tuple[GPUSample, ...]:
+    if platform.system() == "Windows":
+        return probe_windows_gpus()
     raw = subprocess.check_output([
         "nvidia-smi",
         "--query-gpu=index,memory.total,memory.used,memory.free,utilization.gpu",
         "--format=csv,noheader,nounits",
     ], text=True)
     return parse_nvidia_memory_csv(raw)
+
+
+def parse_windows_gpu_memory(raw: str) -> tuple[GPUSample, ...]:
+    """Parse PowerShell's adapter inventory plus dedicated usage counters."""
+    payload = json.loads(raw)
+    adapters = payload.get("adapters") or []
+    usage = payload.get("usage") or []
+    if not isinstance(adapters, list) or not isinstance(usage, list) or not adapters:
+        raise ValueError("Windows GPU probe returned no adapters")
+    if len(usage) < len(adapters):
+        raise ValueError("Windows GPU probe returned incomplete usage counters")
+    samples = []
+    for index, adapter in enumerate(adapters):
+        total_bytes = int(adapter.get("AdapterRAM") or 0)
+        used_bytes = int(usage[index].get("CookedValue") or 0)
+        if total_bytes <= 0:
+            raise ValueError("Windows GPU adapter has no usable memory size")
+        samples.append(GPUSample(
+            gpu=index,
+            total_mb=total_bytes // (1024 * 1024),
+            used_mb=used_bytes // (1024 * 1024),
+            free_mb=max(0, total_bytes - used_bytes) // (1024 * 1024),
+            utilization_pct=0,
+        ))
+    return tuple(samples)
+
+
+def probe_windows_gpus() -> tuple[GPUSample, ...]:
+    command = (
+        "$adapters = @(Get-CimInstance Win32_VideoController | "
+        "Where-Object { $_.AdapterRAM -gt 0 } | "
+        "Select-Object Name,AdapterRAM); "
+        "$usage = @(Get-Counter '\\GPU Adapter Memory(*)\\Dedicated Usage' "
+        "-ErrorAction Stop | Select-Object -ExpandProperty CounterSamples | "
+        "Select-Object InstanceName,CookedValue); "
+        "[PSCustomObject]@{adapters=$adapters;usage=$usage} | "
+        "ConvertTo-Json -Compress"
+    )
+    raw = subprocess.check_output(
+        ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", command],
+        text=True,
+    )
+    return parse_windows_gpu_memory(raw)
 
 
 class GPUClearGate:
@@ -107,10 +154,16 @@ class GPUClearGate:
         self._sleep = sleep_fn
         self._monotonic = monotonic_fn
 
+    def sample_now(self) -> tuple[GPUSample, ...]:
+        """Read one instantaneous sample for baseline-relative campaigns."""
+        return tuple(self._sample())
+
     def wait(
         self,
         *,
         ceilings_mb: Mapping[int, int],
+        baseline_mb: Mapping[int, int] | None = None,
+        baseline_margin_mb: int = 256,
         settle_samples: int = 3,
         timeout_s: float = 180,
         poll_s: float = 1,
@@ -118,6 +171,17 @@ class GPUClearGate:
     ) -> GPUClearEvent:
         if settle_samples < 1:
             raise ValueError("settle_samples must be >= 1")
+        if baseline_margin_mb < 0:
+            raise ValueError("baseline_margin_mb must be >= 0")
+        effective_ceilings = {
+            gpu: max(
+                int(ceiling),
+                int(baseline_mb[gpu]) + baseline_margin_mb,
+            )
+            if baseline_mb is not None and gpu in baseline_mb
+            else int(ceiling)
+            for gpu, ceiling in ceilings_mb.items()
+        }
         started = self._monotonic()
         observed = 0
         consecutive = 0
@@ -126,7 +190,7 @@ class GPUClearGate:
             snapshot = tuple(self._sample())
             observed += 1
             clear = bool(snapshot) and all(
-                sample.used_mb <= ceilings_mb.get(sample.gpu, 1024)
+                sample.used_mb <= effective_ceilings.get(sample.gpu, 1024)
                 for sample in snapshot
             )
             consecutive = consecutive + 1 if clear else 0
@@ -135,7 +199,7 @@ class GPUClearGate:
                     timestamp=datetime.now(timezone.utc).isoformat(),
                     label=label,
                     passed=True,
-                    ceilings_mb=dict(ceilings_mb),
+                    ceilings_mb=effective_ceilings,
                     snapshot=snapshot,
                     samples_observed=observed,
                 )
@@ -144,7 +208,7 @@ class GPUClearGate:
             timestamp=datetime.now(timezone.utc).isoformat(),
             label=label,
             passed=False,
-            ceilings_mb=dict(ceilings_mb),
+            ceilings_mb=effective_ceilings,
             snapshot=snapshot,
             samples_observed=observed,
         )

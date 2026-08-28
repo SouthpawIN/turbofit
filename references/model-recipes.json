@@ -606,7 +606,9 @@
       "draft": "",
       "methods": {
         "65536": "baseline",
-        "131072": "baseline"
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
       }
     }
   },
@@ -880,7 +882,9 @@
       "max_context": 131072,
       "methods": {
         "65536": "baseline",
-        "131072": "baseline"
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
       },
       "context_overrides": {
         "65536": {
@@ -889,6 +893,16 @@
           "ubatch_size": 256
         },
         "131072": {
+          "fit": "off",
+          "batch_size": 512,
+          "ubatch_size": 256
+        },
+        "262144": {
+          "fit": "off",
+          "batch_size": 512,
+          "ubatch_size": 256
+        },
+        "1048576": {
           "fit": "off",
           "batch_size": 512,
           "ubatch_size": 256
