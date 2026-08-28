@@ -33,6 +33,10 @@ ALLOWED_MAIN = (
     "qwen3-8-27b-uncensored-mlx-4bit",
     "qwen3-8-27b-uncensored-mlx-6bit",
     "qwen3-8-27b-uncensored-mlx-8bit",
+    "qwen3-8-flash-next",
+    "qwen3-8-flash-next-ud-iq1_s",
+    "qwen3-8-flash-next-ud-q3_k_xl",
+    "qwen3-8-flash-next-ud-q4_k_xl",
 )
 
 ALLOWED_AUX = (
@@ -315,6 +319,42 @@ def check_local_options(
                 }
             )
         return options
+    flash_next = None
+    if vram_gb >= 48 and host_ram_gb >= 144:
+        flash_next = "qwen3-8-flash-next-ud-q4_k_xl"
+    elif vram_gb >= 24 and host_ram_gb >= 96:
+        flash_next = "qwen3-8-flash-next-ud-q3_k_xl"
+    elif vram_gb >= 16 and host_ram_gb >= 64:
+        flash_next = "qwen3-8-flash-next-ud-iq1_s"
+    if flash_next:
+        return [
+            {
+                "role": "main",
+                "alias": flash_next,
+                "why": (
+                    "Qwen 3.8 Flash Next (176.9B stored / 6B active). The full quantized "
+                    f"checkpoint fits in {host_ram_gb:.0f} GB host RAM; routed experts use a "
+                    "measured per-context CPU/GPU placement policy."
+                ),
+                "residency": residency,
+            },
+            {
+                "role": "main",
+                "alias": local_main_for_vram_gb(vram_gb),
+                "why": "Intelligence / balanced: Unleashed / Qwen band for this VRAM.",
+            },
+            {
+                "role": "main",
+                "alias": speed_main_for_vram_gb(vram_gb),
+                "why": "Speed: Ornith MoE / MTP instead of dense 27B.",
+            },
+            {
+                "role": "aux",
+                "alias": local_aux_for_host(vram_gb=vram_gb, host_ram_gb=host_ram_gb),
+                "why": "Default aux is MTP Ornith when total VRAM can hold it next to main.",
+                "residency": residency,
+            },
+        ]
     return [
         {
             "role": "main",

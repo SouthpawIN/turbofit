@@ -25,20 +25,23 @@ box. Recipes declare the model's **shape** only:
 `host_usable_memory_mb`. An explicit `n_cpu_moe` still wins, and a machine that
 cannot hold the model raises rather than silently thrashing.
 
-Sizing across tiers for the three Qwen3.8-Flash-Next quants:
+Preflight sizing estimates across tiers for the three Qwen3.8-Flash-Next quants.
+These reject impossible hosts and seed a physical search; they are not promoted
+launch values until the exact quant and context pass on-box allocation tests:
 
 | Tier | IQ1_S (68 GB) | Q3_K_XL (84 GB) | Q4_K_XL (104 GB) |
 |---|---|---|---|
 | 8 GB / 32 GB RAM | rejected | rejected | rejected |
 | 16 GB / 64 GB RAM | `-ncmoe 42` | rejected | rejected |
 | 24 GB / 128 GB RAM | `-ncmoe 36` | `-ncmoe 39` | `-ncmoe 41` |
-| 48 GB / 377 GB RAM | `-ncmoe 18` | `-ncmoe 24` | `-ncmoe 29` |
+| 48 GB / 377 GB RAM | `-ncmoe 18` | `-ncmoe 24` | estimate `29`; measured Q4 ladder `36/37/39/38` |
 | 96 GB / 377 GB RAM | `-ncmoe 0` | `-ncmoe 0` | `-ncmoe 5` |
 | 192 GB unified | `-ncmoe 0` | `-ncmoe 0` | `-ncmoe 0` |
 
 ## Qwen3.8-Flash-Next — VERIFIED WORKING
 
-- **Arch**: `qwen4exp`, 125B total / 6B active, 512 experts (10 routed + 1 shared),
+- **Arch**: `qwen4exp`, 125B main model plus 51B PLE table (176.94B stored) / 6B active,
+  512 experts (10 routed + 1 shared),
   48 layers, 262K native context, PLE n-gram table (`per_layer_token_embd`,
   160 × 320M rows), hyper-connections.
 - **Runtime**: llama.cpp **PR #27742** (`model: add Qwen3.8-Flash-Next (qwen4exp)`).
@@ -55,12 +58,27 @@ Sizing across tiers for the three Qwen3.8-Flash-Next quants:
 |---|---|---|---|---|
 | UD-IQ1_S | 68 GB | 7 s | 16.07 tok/s | 8.26 tok/s |
 | UD-Q3_K_XL | 84 GB | 3 m 36 s | — | — |
-| UD-Q4_K_XL | 104 GB | ~7 min | 10.75 tok/s | 8.68 tok/s |
+| UD-Q4_K_XL | 103.69 GiB | 9–10 s warm-cache load | 47.26 tok/s bench median | 8.82 tok/s bench median |
 
-Launch (Q4_K_XL, this box):
+Measured Q4_K_XL context ladder:
+
+| Context | CPU expert layers | KV placement | Server decode | Minimum free VRAM |
+|---|---:|---|---:|---:|
+| 64K | 36 | GPU F16 | 8.02 tok/s | 1.63 GiB |
+| 128K | 37 | GPU F16 | placement validated | 2.01 GiB |
+| 262K native | 39 | GPU F16 | 8.02 tok/s | 2.76 GiB |
+| 1M YaRN | 38 | host F16 | 4.50 tok/s short request | 2.79 GiB |
+
+The 1M rung has a real 1,048,576-token slot and short-generation smoke test,
+but not a full 1M-token fill/retrieval acceptance run. It requires the private
+server patch that skips the training-context slot cap when explicit RoPE scaling
+is active.
+
+Launch (Q4_K_XL 64K, this machine class):
 ```
 llama-server -m <shard-00001-of-00004>.gguf --jinja \
-  -ngl 99 -ncmoe 36 -c 8192 -fa on --parallel 1
+  -ngl 99 -ncmoe 36 -c 65536 -fa on --parallel 1 \
+  --numa distribute -t 10 --load-mode mmap
 ```
 
 ### Pitfalls (all hit and confirmed)
@@ -77,8 +95,12 @@ llama-server -m <shard-00001-of-00004>.gguf --jinja \
 - **Free the GPUs first.** A leftover Turbofit backend holding 22 GB caused the
   compute-buffer OOM that looked like a weights problem
   (`systemctl --user stop turbofit-controller`).
+- **Quantized KV currently crashes Qwen4Exp.** `q8_0` hits the assertion at
+  `qwen4exp.cpp:544`; use GPU F16 KV through 262K and host F16 KV for 1M.
+- **Automatic split beats explicit 1:1** on this dual-socket/no-NVLink machine:
+  8.82 vs 8.37 tok/s decode median.
 
-## GLM-5.3-Flash — runtime ready, awaiting weights
+## GLM-5.3-Flash — runtime and source ready, conversion pending
 
 - **Arch**: `glm5_next` / `Glm5NextForConditionalGeneration`, 321.3B hybrid
   linear/sparse MoE. 45-layer trunk + MTP block at index 45, 288 routed experts
@@ -89,8 +111,9 @@ llama-server -m <shard-00001-of-00004>.gguf --jinja \
   PR #27752 is a competing text-only draft.
 - **Local build**: `~/projects/llama.cpp-glm5/build-cuda/bin/llama-server` (BUILT,
   `LLM_ARCH_GLM5NEXT` present).
-- **No public GGUF exists yet.** Every candidate repo
+- **No public GGUF existed at the time of the scan.** Every candidate repo
   (`unsloth/`, `AtomicChat/`, `aj9o9/`, `vcruz305/`, `MaliAir/`,
   `DevQuasar/zai-org.GLM-5.3-Flash-GGUF`) contains only READMEs/images; the sole
-  real artifact is a 1.1 GB `mmproj` in the DevQuasar repo. Converting locally
-  from `zai-org/GLM-5.3-Flash` (328 GB FP8) instead.
+  real artifact was a 1.1 GB `mmproj` in the DevQuasar repo. The complete
+  `zai-org/GLM-5.3-Flash` FP8 source (62/62 shards, 328,326,771,576 indexed
+  bytes) is now local; conversion is pending a tokenizer-class fix in PR #27754.

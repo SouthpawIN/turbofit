@@ -559,6 +559,156 @@
           }
         }
       ]
+    },
+    {
+      "id": "qwen3-8-flash-next-ud-q4-k-xl",
+      "name": "Qwen 3.8 Flash Next UD-Q4_K_XL",
+      "architecture": "qwen4exp",
+      "runtime_requirement": "llama.cpp PR #27742 with Qwen4Exp graph-size fix; 1M also requires the private YaRN slot-cap fix",
+      "parameter_count_b": 176.94389952,
+      "native_context": 262144,
+      "context_scaling": {
+        "method": "yarn",
+        "scale": 4,
+        "original_context": 262144,
+        "max_context": 1048576
+      },
+      "source": {
+        "repo_id": "unsloth/Qwen3.8-Flash-Next-GGUF",
+        "revision": "be60321be4a38386344b529db0153382a2d31a5b",
+        "files": [
+          {
+            "filename": "UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf",
+            "expected_sha256": "sha256:4448186216b3af4cc558bbce2c3213f01608f8f8b2e5267a9767971dd3ec8082",
+            "size_bytes": 10946624
+          },
+          {
+            "filename": "UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00002-of-00004.gguf",
+            "expected_sha256": "sha256:3f342f1c1580473f1ee94ddd5b28206e8c07a70fa1a366f59d1d6c922919a6c9",
+            "size_bytes": 49859583136
+          },
+          {
+            "filename": "UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00003-of-00004.gguf",
+            "expected_sha256": "sha256:56758f40269cad5cd9b0d3d6fbae0f40f6d5be6de49e4ab392dbe83157d9cbd3",
+            "size_bytes": 49376141504
+          },
+          {
+            "filename": "UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00004-of-00004.gguf",
+            "expected_sha256": "sha256:753bda48b98ba4f1636134a90a967de1b2d3908a236c026e464777342e53510a",
+            "size_bytes": 12087983520
+          }
+        ]
+      },
+      "configurations": [
+        {
+          "id": "dual-24gb-64k",
+          "status": "validated",
+          "evidence": "sha256:58563a2f5905e61ceed4c2bbe640a1d9cea670aee76bb973be93708717d71d83",
+          "context": 65536,
+          "min_system_ram_mib": 147456,
+          "required_available_ram_mib": 122880,
+          "min_vram_mb_per_card": [8192, 23552],
+          "engine": "llama.cpp",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [],
+            "threads": 10,
+            "threads_batch": 10,
+            "batch_size": 2048,
+            "ubatch_size": 512,
+            "cache_type_k": "f16",
+            "cache_type_v": "f16",
+            "mlock": false,
+            "gpu_layers": 99,
+            "cpu_moe_layers": 36,
+            "mmap": true,
+            "extra_args": ["--jinja", "--numa", "distribute", "--load-mode", "mmap"]
+          }
+        },
+        {
+          "id": "dual-24gb-128k",
+          "status": "configured-unmeasured",
+          "evidence": "sha256:58563a2f5905e61ceed4c2bbe640a1d9cea670aee76bb973be93708717d71d83",
+          "context": 131072,
+          "min_system_ram_mib": 147456,
+          "required_available_ram_mib": 122880,
+          "min_vram_mb_per_card": [8192, 23552],
+          "engine": "llama.cpp",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [],
+            "threads": 10,
+            "threads_batch": 10,
+            "batch_size": 2048,
+            "ubatch_size": 512,
+            "cache_type_k": "f16",
+            "cache_type_v": "f16",
+            "mlock": false,
+            "gpu_layers": 99,
+            "cpu_moe_layers": 37,
+            "mmap": true,
+            "extra_args": ["--jinja", "--numa", "distribute", "--load-mode", "mmap"]
+          }
+        },
+        {
+          "id": "dual-24gb-262k",
+          "status": "validated",
+          "evidence": "sha256:58563a2f5905e61ceed4c2bbe640a1d9cea670aee76bb973be93708717d71d83",
+          "context": 262144,
+          "min_system_ram_mib": 147456,
+          "required_available_ram_mib": 122880,
+          "min_vram_mb_per_card": [10240, 23552],
+          "engine": "llama.cpp",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [],
+            "threads": 10,
+            "threads_batch": 10,
+            "batch_size": 2048,
+            "ubatch_size": 512,
+            "cache_type_k": "f16",
+            "cache_type_v": "f16",
+            "mlock": false,
+            "gpu_layers": 99,
+            "cpu_moe_layers": 39,
+            "mmap": true,
+            "extra_args": ["--jinja", "--numa", "distribute", "--load-mode", "mmap"]
+          }
+        },
+        {
+          "id": "dual-24gb-1m",
+          "status": "configured-unmeasured",
+          "evidence": "sha256:58563a2f5905e61ceed4c2bbe640a1d9cea670aee76bb973be93708717d71d83",
+          "context": 1048576,
+          "min_system_ram_mib": 196608,
+          "required_available_ram_mib": 163840,
+          "min_vram_mb_per_card": [8192, 23552],
+          "engine": "llama.cpp",
+          "launch": {
+            "split_mode": "layer",
+            "tensor_split": [],
+            "threads": 10,
+            "threads_batch": 10,
+            "batch_size": 2048,
+            "ubatch_size": 512,
+            "cache_type_k": "f16",
+            "cache_type_v": "f16",
+            "mlock": false,
+            "gpu_layers": 99,
+            "cpu_moe_layers": 38,
+            "mmap": true,
+            "extra_args": [
+              "--jinja",
+              "--numa", "distribute",
+              "--load-mode", "mmap",
+              "--no-kv-offload",
+              "--rope-scaling", "yarn",
+              "--rope-scale", "4",
+              "--yarn-orig-ctx", "262144"
+            ]
+          }
+        }
+      ]
     }
   ]
 }

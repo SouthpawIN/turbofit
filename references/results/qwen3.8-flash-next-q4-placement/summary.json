@@ -1,0 +1,152 @@
+{
+  "schema": "turbofit.qwen4exp-placement-evidence/v1",
+  "model": {
+    "id": "qwen3-8-flash-next-ud-q4-k-xl",
+    "architecture": "qwen4exp",
+    "parameters": 176943899520,
+    "active_parameters": 6000000000,
+    "expert_count": 512,
+    "experts_selected_per_token": 10,
+    "layers": 48,
+    "native_context": 262144,
+    "quant": "UD-Q4_K_XL",
+    "size_bytes": 111334654784,
+    "repo": "unsloth/Qwen3.8-Flash-Next-GGUF",
+    "revision": "be60321be4a38386344b529db0153382a2d31a5b",
+    "shards": [
+      {"file": "Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf", "size": 10946624, "sha256": "4448186216b3af4cc558bbce2c3213f01608f8f8b2e5267a9767971dd3ec8082"},
+      {"file": "Qwen3.8-Flash-Next-UD-Q4_K_XL-00002-of-00004.gguf", "size": 49859583136, "sha256": "3f342f1c1580473f1ee94ddd5b28206e8c07a70fa1a366f59d1d6c922919a6c9"},
+      {"file": "Qwen3.8-Flash-Next-UD-Q4_K_XL-00003-of-00004.gguf", "size": 49376141504, "sha256": "56758f40269cad5cd9b0d3d6fbae0f40f6d5be6de49e4ab392dbe83157d9cbd3"},
+      {"file": "Qwen3.8-Flash-Next-UD-Q4_K_XL-00004-of-00004.gguf", "size": 12087983520, "sha256": "753bda48b98ba4f1636134a90a967de1b2d3908a236c026e464777342e53510a"}
+    ]
+  },
+  "hardware": {
+    "class": "dual-24gb-discrete-384gb-numa",
+    "gpus": [
+      {"name": "NVIDIA GeForce RTX 3090", "vram_mib": 24576, "numa_node": 0},
+      {"name": "NVIDIA GeForce RTX 3090", "vram_mib": 24576, "numa_node": 1}
+    ],
+    "system_ram_mib": 386861,
+    "cpu": "2x Intel Xeon E5-2620 v4, 16 physical cores / 32 threads",
+    "numa_nodes": 2,
+    "gpu_interconnect": "SYS (PCIe plus socket interconnect; no NVLink)",
+    "driver": "580.159.03",
+    "cuda_toolkit": "12.0"
+  },
+  "runtime": {
+    "engine": "llama.cpp",
+    "branch": "PR #27742 qwen4exp",
+    "server_build": 10656,
+    "server_commit": "035e22731 + private YaRN slot-cap fix",
+    "bench_build": 10591,
+    "bench_commit": "dfa0c0fee",
+    "load_mode": "mmap",
+    "split_mode": "layer",
+    "numa": "distribute",
+    "threads": 10,
+    "flash_attention": true
+  },
+  "placement_screen": [
+    {"n_cpu_moe": 36, "result": "pass", "prefill_tps": 44.35945, "decode_tps": 9.630989, "repetitions": 1},
+    {"n_cpu_moe": 35, "result": "pass", "prefill_tps": 37.407714, "decode_tps": 7.675206, "repetitions": 1},
+    {"n_cpu_moe": 35, "tensor_split": "1/1", "result": "pass", "prefill_tps": 37.057544, "decode_tps": 7.641587, "repetitions": 1},
+    {"n_cpu_moe": 34, "result": "load-failed"},
+    {"n_cpu_moe": 32, "result": "load-failed"},
+    {"n_cpu_moe": 29, "result": "load-failed"}
+  ],
+  "validated_short_context_medians": {
+    "n_cpu_moe_36_numa_distribute_threads_10": {
+      "prefill_tps_samples": [40.953, 48.518, 47.258],
+      "prefill_tps_median": 47.258,
+      "decode_tps_samples": [8.816, 8.818, 8.875],
+      "decode_tps_median": 8.818
+    },
+    "n_cpu_moe_37_numa_distribute_threads_10": {
+      "prefill_tps_samples": [36.660, 43.545, 41.839],
+      "prefill_tps_median": 41.839,
+      "decode_tps_samples": [8.026, 8.359, 8.272],
+      "decode_tps_median": 8.272
+    }
+  },
+  "context_ladder": [
+    {
+      "context": 65536,
+      "n_cpu_moe": 36,
+      "kv": "gpu-f16",
+      "status": "validated-startup-and-generation",
+      "gpu_used_mib": [5772, 22749],
+      "gpu_min_free_mib": 1625,
+      "server_prompt_tps": 8.69,
+      "server_decode_tps": 8.02
+    },
+    {
+      "context": 131072,
+      "n_cpu_moe": 37,
+      "kv": "gpu-f16",
+      "status": "validated-startup",
+      "gpu_used_mib": [6891, 22369],
+      "gpu_min_free_mib": 2005,
+      "short_context_prefill_tps_median": 41.839,
+      "short_context_decode_tps_median": 8.272
+    },
+    {
+      "context": 262144,
+      "n_cpu_moe": 39,
+      "kv": "gpu-f16",
+      "status": "validated-startup-and-generation",
+      "gpu_used_mib": [9131, 21611],
+      "gpu_min_free_mib": 2763,
+      "server_prompt_tps": 10.64,
+      "server_decode_tps": 8.02
+    },
+    {
+      "context": 1048576,
+      "n_cpu_moe": 38,
+      "kv": "host-f16",
+      "rope": "yarn factor 4, original context 262144",
+      "status": "validated-1m-slot-allocation-and-short-generation-full-context-fill-not-tested",
+      "gpu_used_mib": [5974, 21587],
+      "gpu_min_free_mib": 2787,
+      "host_available_gib": 331,
+      "server_prompt_tps": 4.91,
+      "server_decode_tps": 4.50
+    }
+  ],
+  "speculative_decoding": {
+    "dflash2_status": "no compatible Qwen3.8-Flash-Next/Qwen4Exp DFlash2 checkpoint found",
+    "incompatible_dense_drafts": [
+      "incoai/Qwen3.8-27B-DFlash2",
+      "z-lab/Qwen3.8-27B-DFlash2",
+      "z-lab/Qwen3.8-27B-DFlash2-GGUF"
+    ],
+    "mtp_candidates": [
+      {
+        "repo": "jlkivey/Qwen3.8-Flash-Next-MTP-PR27836-GGUF",
+        "file": "mtp-Qwen3.8-Flash-Next-Q8_0.gguf",
+        "size_bytes": 4135893152,
+        "sha256": "ee87df0ecae89d759758667e9a1012d09299806f7805efc266eb5fe84773d4c9",
+        "runtime": "llama.cpp PR #27836 only; draft/unstable; tested on Metal"
+      },
+      {
+        "repo": "quimmedes/Qwen3.8-Flash-Next-MTP-GGUF",
+        "file": "mtp-Qwen3.8-Flash-Next-Q4_K_M.gguf",
+        "size_bytes": 2786245792,
+        "sha256": "4563303ab6e7d40f409750fd48af76bf33dd76b0773951cbf484109107de8140",
+        "runtime": "cafe-llama.cpp only; incompatible with PR #27836 layout"
+      },
+      {
+        "repo": "ashbash/Qwen3.8-Flash-Next-MTP-Drafter-GGUF",
+        "file": "Qwen3.8-Flash-Next-mtp-drafter-Q4_K_L.gguf",
+        "size_bytes": 1935468832,
+        "sha256": "ff01c08469659df9bdc6c5dc45901cd52bb5c1216048b813f668e9369fa266fb",
+        "runtime": "gmlx on Apple Silicon; explicitly unsupported by llama.cpp"
+      }
+    ]
+  },
+  "rejected_paths": [
+    {"runtime": "FreeToken 0.1.2", "reason": "Qwen3.8-Flash-Next/Qwen4Exp unsupported; upstream feature request #214; host CUDA toolkit 12.0 below pinned requirement 13+"},
+    {"runtime": "vLLM day-zero image", "reason": "validated NVFP4 checkpoint is 130 GB and requires datacenter-class aggregate VRAM; PLE offload is supported but selected-expert cache is not"},
+    {"runtime": "llama.cpp quantized KV", "reason": "Qwen4Exp branch asserts at qwen4exp.cpp:544 with q8_0 KV"},
+    {"runtime": "llama.cpp load-mode none", "reason": "previous server measurement collapsed to 0.36 tok/s; mmap is required"}
+  ]
+}

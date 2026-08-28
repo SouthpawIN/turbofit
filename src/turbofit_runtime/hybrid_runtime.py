@@ -87,8 +87,8 @@ class LaunchPolicy:
         if set(value) not in {frozenset(fields), frozenset(fields | {"environment"})}:
             raise ValueError("launch policy fields do not match schema")
         raw_split = value["tensor_split"]
-        if not isinstance(raw_split, list) or not raw_split:
-            raise ValueError("tensor_split must be a non-empty list")
+        if not isinstance(raw_split, list):
+            raise ValueError("tensor_split must be a list")
         raw_extra = value["extra_args"]
         if not isinstance(raw_extra, list):
             raise ValueError("extra_args must be a list")
@@ -115,7 +115,7 @@ class LaunchPolicy:
                 _positive_int(policy.cpu_moe_layers, "cpu_moe_layers")
         if policy.split_mode not in {"layer", "row", "graph"}:
             raise ValueError("split_mode must be layer, row, or graph")
-        if not policy.tensor_split or any(isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0 for value in policy.tensor_split):
+        if any(isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0 for value in policy.tensor_split):
             raise ValueError("tensor_split values must be positive")
         forbidden = ("-m", "--model", "--port", "--host", "--api-key", "--token", "--password")
         for argument in policy.extra_args:
@@ -212,7 +212,6 @@ class HybridConfiguration:
             binary, "-m", model_path, "--port", str(port), "--host", "127.0.0.1",
             "-c", str(self.context), "-ngl", str(self.launch.gpu_layers),
             "--split-mode", self.launch.split_mode,
-            "--tensor-split", ",".join(_number(value) for value in self.launch.tensor_split),
             "--threads", str(self.launch.threads),
             "--threads-batch", str(self.launch.threads_batch),
             "-b", str(self.launch.batch_size), "-ub", str(self.launch.ubatch_size),
@@ -221,6 +220,8 @@ class HybridConfiguration:
             "--cache-type-v", self.launch.cache_type_v,
             "--parallel", "1",
         ]
+        if self.launch.tensor_split:
+            command.extend(["--tensor-split", ",".join(_number(value) for value in self.launch.tensor_split)])
         if self.engine != "ik_llama.cpp":
             command.extend(["--fit", "off"])
         if self.launch.cpu_moe_layers == "all":
