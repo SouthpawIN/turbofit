@@ -110,9 +110,16 @@ def register(ctx) -> None:
     )
     ctx.register_skill("turbofit", Path(__file__).parent / "SKILL.md")
     try:
-        from .plugin_tools import activate_slash_commands
+        from .plugin_tools import activate_slash_commands, ensure_provider_registered
 
         activate_slash_commands()
+        # Fresh-profile heal — ensures every home (including newly created
+        # ones like turbosovth/sirvir) has providers.turbofit so
+        # custom:turbofit never fails with Unknown provider on first use.
+        try:
+            ensure_provider_registered()
+        except Exception:
+            pass
     except Exception:
         pass
 
