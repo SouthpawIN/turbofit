@@ -32,7 +32,7 @@ def test_eight_gb_without_32gb_ram_still_offers_ornith_from_disk() -> None:
 
 def test_eight_gb_aux_does_not_stack_two_models() -> None:
     assert local_aux_for_host(vram_gb=8, host_ram_gb=16) == "auto"
-    assert is_allowed_aux("auto:bonsai-27b")
+    assert not is_allowed_aux("auto:bonsai-27b")
     assert local_aux_for_host(vram_gb=24, host_ram_gb=16) == "auto"
     assert local_aux_for_host(vram_gb=48, host_ram_gb=64) == "ornith-1-5-oq4e-mtp"
     assert local_aux_for_host(vram_gb=64, host_ram_gb=64) == "ornith-1-5-oq8e-mtp"
@@ -53,6 +53,21 @@ def test_unleashed_bands() -> None:
     aliases = [item["alias"] for item in options if item["role"] == "main"]
     assert "qwen3-8-27b-unleashed-ud-q3-k-xl" in aliases
     assert "ornith-1-5-oq4e-mtp" in aliases
+
+
+def test_flash_next_quant_tracks_combined_ram_and_vram_capacity() -> None:
+    assert "qwen3-8-flash-next-ud-iq1_s" not in {
+        item["alias"] for item in check_local_options(vram_gb=16, host_ram_gb=32)
+    }
+    assert "qwen3-8-flash-next-ud-iq1_s" in {
+        item["alias"] for item in check_local_options(vram_gb=16, host_ram_gb=64)
+    }
+    assert "qwen3-8-flash-next-ud-q3_k_xl" in {
+        item["alias"] for item in check_local_options(vram_gb=24, host_ram_gb=96)
+    }
+    assert "qwen3-8-flash-next-ud-q4_k_xl" in {
+        item["alias"] for item in check_local_options(vram_gb=48, host_ram_gb=377)
+    }
 
 
 def test_shared_total_memory_is_not_treated_as_vram() -> None:

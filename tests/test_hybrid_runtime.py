@@ -20,6 +20,7 @@ def test_catalog_defines_large_local_models_without_host_paths() -> None:
         "laguna-s2-1-q4-k-m",
         "minimax-m3-q4-k-m",
         "glm-5-2-2-788bpw",
+        "qwen3-8-flash-next-ud-q4-k-xl",
     }
     minimax = catalog.models["minimax-m3-q4-k-m"]
     assert minimax.name == "MiniMax M3 UD-Q4_K_M"
@@ -47,13 +48,20 @@ def test_dual_24gb_configuration_uses_system_ram_and_both_gpus() -> None:
         assert config.context == 65_536
         assert config.min_system_ram_mib > sum(config.min_vram_mb_per_card)
         assert config.launch.split_mode in {"layer", "graph"}
-        assert config.launch.tensor_split == (1.0, 1.0)
+        if model.id == "qwen3-8-flash-next-ud-q4-k-xl":
+            assert config.launch.tensor_split == ()
+        else:
+            assert config.launch.tensor_split == (1.0, 1.0)
 
 
 def test_each_system_ram_model_has_64k_128k_262k_and_1m_configurations() -> None:
     catalog = HybridCatalog.load(CATALOG)
 
-    for model in catalog.models.values():
+    for model in (
+        catalog.models["laguna-s2-1-q4-k-m"],
+        catalog.models["minimax-m3-q4-k-m"],
+        catalog.models["glm-5-2-2-788bpw"],
+    ):
         assert {config.context for config in model.configurations} == {
             65_536, 131_072, 262_144, 1_048_576,
         }
@@ -68,6 +76,24 @@ def test_each_system_ram_model_has_64k_128k_262k_and_1m_configurations() -> None
     laguna_command = laguna_1m.command(binary="/opt/llama-server", model_path="/models/model.gguf", port=8080)
     assert laguna_command[laguna_command.index("--rope-scaling") + 1] == "yarn"
     assert laguna_command[laguna_command.index("--rope-scale") + 1] == "4"
+
+
+def test_qwen_flash_next_uses_measured_context_dependent_expert_placement() -> None:
+    model = HybridCatalog.load(CATALOG).models["qwen3-8-flash-next-ud-q4-k-xl"]
+
+    assert [config.launch.cpu_moe_layers for config in model.configurations] == [36, 37, 39, 38]
+    assert [config.status for config in model.configurations] == [
+        "validated", "configured-unmeasured", "validated", "configured-unmeasured",
+    ]
+    for config in model.configurations:
+        command = config.command(binary="/opt/llama-server", model_path="/models/qwen.gguf", port=8080)
+        assert "--tensor-split" not in command
+        assert command[command.index("--numa") + 1] == "distribute"
+    one_million = model.configuration("dual-24gb-1m").command(
+        binary="/opt/llama-server", model_path="/models/qwen.gguf", port=8080
+    )
+    assert "--no-kv-offload" in one_million
+    assert one_million[one_million.index("--rope-scaling") + 1] == "yarn"
 
 
 def test_laguna_host_kv_profiles_use_measured_maximal_gpu_offload() -> None:
