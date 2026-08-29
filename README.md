@@ -27,7 +27,7 @@ model: auto
 | **Qwen 3.8 27B Unleashed** | `UD-IQ3_XXS`, `UD-Q3_K_XL` | Uncensored dense 27B, 262K, vision | Active catalog candidates |
 | **Ornith 1.5 35A3B** | `Q4_K_M` MoE | Default auxiliary; 16 GB RAM-only main | Active auxiliary candidate |
 | **Qwen 3.8 27B** | `Q4_K_M`, `Q8_0`, `BF16` ± MTP | Native image/video | Active catalog candidates |
-| **Qwen Next Flash** | `Q2/Q4` | | Top catalog candidate |
+| **Qwen 3.8 Next Flash** | `Q2/Q4` | | Top catalog candidate |
 | **MiniMax Music 3** | `minimax-music3` | Full-song music | Pinned integration candidate |
 | **NVIDIA Parakeet TDT 0.6B v3** | `parakeet-tdt-0-6b-v3` | Local STT | Pinned integration candidate |
 | **Soprano TTS** | `soprano-tts` | Local TTS | Pinned integration candidate |
