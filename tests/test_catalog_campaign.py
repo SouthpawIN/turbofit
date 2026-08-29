@@ -23,8 +23,8 @@ def test_catalog_campaign_materializes_all_canonical_configurations(tmp_path: Pa
     build_campaign_matrix(configurations, catalog, output)
     matrix = load_matrix(output)
 
-    assert len(matrix.rows) == 552
-    assert len({row.id for row in matrix.rows}) == 552
+    assert len(matrix.rows) == 546
+    assert len({row.id for row in matrix.rows}) == 546
     assert {row.context for row in matrix.rows} == set(catalog.contexts)
     assert any("Unleashed" in row.main for row in matrix.rows)
     assert any("Qwen 3.8 27B" in row.main for row in matrix.rows)

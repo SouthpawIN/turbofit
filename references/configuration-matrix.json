@@ -3712,20 +3712,6 @@
       "status": "candidate"
     },
     {
-      "id": "maple-preview-tq2--ornith-1-5-35a3b--262k",
-      "main": "maple-preview-tq2",
-      "auxiliary": "ornith-1-5-35a3b",
-      "context": 262144,
-      "status": "candidate"
-    },
-    {
-      "id": "maple-preview-tq2--ornith-1-5-35a3b--1m",
-      "main": "maple-preview-tq2",
-      "auxiliary": "ornith-1-5-35a3b",
-      "context": 1048576,
-      "status": "candidate"
-    },
-    {
       "id": "maple-preview-tq2--carwin-nano--64k",
       "main": "maple-preview-tq2",
       "auxiliary": "carwin-nano",
@@ -3740,20 +3726,6 @@
       "status": "candidate"
     },
     {
-      "id": "maple-preview-tq2--carwin-nano--262k",
-      "main": "maple-preview-tq2",
-      "auxiliary": "carwin-nano",
-      "context": 262144,
-      "status": "candidate"
-    },
-    {
-      "id": "maple-preview-tq2--carwin-nano--1m",
-      "main": "maple-preview-tq2",
-      "auxiliary": "carwin-nano",
-      "context": 1048576,
-      "status": "candidate"
-    },
-    {
       "id": "maple-preview-tq2--auto--64k",
       "main": "maple-preview-tq2",
       "auxiliary": "auto",
@@ -3765,20 +3737,6 @@
       "main": "maple-preview-tq2",
       "auxiliary": "auto",
       "context": 131072,
-      "status": "candidate"
-    },
-    {
-      "id": "maple-preview-tq2--auto--262k",
-      "main": "maple-preview-tq2",
-      "auxiliary": "auto",
-      "context": 262144,
-      "status": "candidate"
-    },
-    {
-      "id": "maple-preview-tq2--auto--1m",
-      "main": "maple-preview-tq2",
-      "auxiliary": "auto",
-      "context": 1048576,
       "status": "candidate"
     },
     {
