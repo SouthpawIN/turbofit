@@ -26,6 +26,7 @@ def test_catalog_has_every_requested_main_and_auxiliary_variant() -> None:
     assert maple.artifact == "maple-tq2_0.gguf"
     assert maple.quantization == "TQ2_0"
     assert maple.runtime_features == ("maple",)
+    assert maple.supported_contexts == (65536, 131072)
     unleashed = next(item for item in catalog.main_models if item.id == "qwen3-8-27b-unleashed-ud-q3-k-xl")
     assert unleashed.source == "https://huggingface.co/outsourc-e/Qwen3.8-27B-Unleashed-GGUF"
     assert unleashed.upstream_source == "https://huggingface.co/JonathanColetti/Qwen3.8-27B-Uncensored"
@@ -43,8 +44,7 @@ def test_complete_matrix_is_generated_not_hand_maintained() -> None:
     catalog = ModelCatalog.load(CATALOG_PATH)
     matrix = json.loads(MATRIX_PATH.read_text())
     validate_configuration_matrix(matrix, catalog)
-    expected = len(catalog.main_models) * len(catalog.auxiliary_options) * len(CONTEXTS)
-    assert expected == 552
+    expected = 546
     assert len(matrix["rows"]) == expected
     assert len({item["id"] for item in matrix["rows"]}) == expected
     assert {item["context"] for item in matrix["rows"]} == set(CONTEXTS)

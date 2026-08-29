@@ -870,6 +870,10 @@
       "roles": [
         "main"
       ],
+      "supported_contexts": [
+        65536,
+        131072
+      ],
       "revision": "0afcb98771d39ab4de25252ee006ea9f9eab1920",
       "upstream_source": "https://huggingface.co/deepgrove/maple-preview"
     },
