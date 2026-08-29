@@ -17,9 +17,9 @@ model: auto
 
 > Catalog entries are **candidates** until the physical campaign passes. Compile, download, or estimated fit is not a winner.
 
-## 2.4 lineup
+## 2.3 lineup
 
-2.4 keeps the Unleashed / Ornith / Nous-free stack and splits the 8 GB problem into two topologies. **Dedicated VRAM is not the same as total RAM.**
+2.3 keeps the Unleashed / Ornith / Nous-free stack and splits the 8 GB problem into two topologies. **Dedicated VRAM is not the same as total RAM.**
 
 | Model | Entries | Role | Status |
 |---|---|---|---|

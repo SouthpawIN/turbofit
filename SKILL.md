@@ -1,7 +1,7 @@
 ---
 name: turbofit
 description: "Operate the Turbofit adaptive local inference plugin."
-version: 2.4.0
+version: 2.3.1
 author: SouthpawIN + Nous Girl
 license: MIT
 tags: [hermes-agent, plugin, llama-cpp, adaptive-runtime]
@@ -9,7 +9,7 @@ tags: [hermes-agent, plugin, llama-cpp, adaptive-runtime]
 
 # Turbofit
 
-## 2.4 model authority
+## 2.3 model authority
 
 Fit List keeps dedicated VRAM separate from integrated/RAM-only total memory. Dedicated: Maple Preview TQ2_0 at 8GB, Qwen 3.8 27B Unleashed UD-IQ3_XXS at 16GB, UD-Q3_K_XL at 24–95GB, and Qwen 3.8 27B 16-bit at 96GB+ until an Unleashed FP16 GGUF is published. Shared total memory: Maple at 8–15GB, Ornith 1.5 35A3B at 16–23GB, and Unleashed UD-Q3_K_XL at 24GB+. An 8GB GPU may also use Ornith when host RAM can hold offloaded experts. Maple remains Auto on dedicated 8GB at native 64K/128K. Auxiliary is Ornith, optional Carwin Nano, or auto.
 

@@ -1,7 +1,7 @@
 ---
 name: turbofit
 description: "Hardware-aware adaptive Hermes runtime using portable Turbofiles, total usable memory, owned native llama.cpp residency, stable auto/active:main/active:aux routes, and evidence-backed promotion. Use for recommending, activating, inspecting, testing, or troubleshooting Turbofit runtimes."
-version: 2.4.0
+version: 2.3.1
 author: SouthpawIN + Nous Girl
 license: MIT
 tags: [hermes-agent, llama-cpp, llm, accelerator, cpu, adaptive-runtime, turbofile]

@@ -7,7 +7,7 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_VERSION = "2.4.0"
+RELEASE_VERSION = "2.3.1"
 
 
 def test_all_release_surfaces_use_release_version() -> None:

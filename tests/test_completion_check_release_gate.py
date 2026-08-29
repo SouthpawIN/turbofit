@@ -33,9 +33,9 @@ def test_operator_docs_match_current_catalog_size_and_models() -> None:
     backend_docs = (ROOT / "docs/runtime-backends.md").read_text(encoding="utf-8")
     matrix = __import__("json").loads((ROOT / "references/configuration-matrix.json").read_text(encoding="utf-8"))
 
-    assert len(matrix["rows"]) == 516
-    assert "516 active rows" in campaign_docs
-    assert "currently 516 rows" in backend_docs
+    assert len(matrix["rows"]) == 552
+    assert "552 active rows" in campaign_docs
+    assert "currently 552 rows" in backend_docs
     assert "1,620" not in campaign_docs + backend_docs
     assert "--group deepseek-v4-flash-0731-q8-dspark" not in backend_docs
     assert "Qwen 3.8 Q4 plus DFlash2" in backend_docs
@@ -57,8 +57,8 @@ def test_release_gate_derives_current_matrix_candidate_and_version() -> None:
     loaded["_command_ok"] = lambda _command: (False, "not exercised in metadata test")
     loaded["_json_command"] = lambda command: (
         {
-            "matrix": {"total": 516},
-            "current_recipe": {"pending": 516},
+            "matrix": {"total": 552},
+            "current_recipe": {"pending": 552},
         }
         if "catalog-campaign" in command[0]
         else {"levels": {}}
@@ -69,11 +69,11 @@ def test_release_gate_derives_current_matrix_candidate_and_version() -> None:
     checks = loaded["report"]()["checks"]
 
     assert checks["canonical_configuration_matrix"]["ok"] is True
-    assert checks["canonical_configuration_matrix"]["expected"] == 516
+    assert checks["canonical_configuration_matrix"]["expected"] == 552
     assert checks["qwen38_day_zero_lane"]["ok"] is True
     assert checks["qwen38_day_zero_lane"]["replacement_candidate"] == "qwen3-8-27b-unleashed-ud-q3-k-xl"
     assert checks["hermes_plugin_and_setup_command"]["ok"] is True
-    assert checks["hermes_plugin_and_setup_command"]["version"] == "2.4.0"
+    assert checks["hermes_plugin_and_setup_command"]["version"] == "2.3.1"
     assert "deepseek_artifacts" not in checks
     assert checks["production_floor_artifacts"]["ok"] is True
     assert "bundled_sirvir_customer_service" not in checks

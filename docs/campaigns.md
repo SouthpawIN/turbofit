@@ -29,7 +29,7 @@ Inspect progress:
 PYTHONPATH=src:. scripts/turbofit-catalog-campaign status
 ```
 
-Status separates `current_recipe` coverage—whose `pending + resolved + deferred` always equals all 516 active rows—from `historical_attempts`, which may contain obsolete runtime failures or successes and is never release eligibility. Deferred rows remain explicit and are never counted as resolved.
+Status separates `current_recipe` coverage—whose `pending + resolved + deferred` always equals all 552 active rows—from `historical_attempts`, which may contain obsolete runtime failures or successes and is never release eligibility. Deferred rows remain explicit and are never counted as resolved.
 
 The campaign is resumable and records failed attempts rather than silently dropping them. Runtime failures preserve command lines, tracebacks, component/gateway logs, telemetry, and hashes in a unique immutable directory under `references/results/catalog-campaign/failures/<row>/<timestamp>/`. State records pin the canonical production-recipe and validation-protocol SHA-256; changing a runtime, artifact, offload policy, command, smoke-request length, or shared-route scheduling automatically requeues stale successes and resets the attempt budget. Each row acquires an exclusive production-service lease before the first GPU-clear gate: Turbofit's controller/gateway are paused, benchmark components run without a port/GPU race, post-run GPU clear is verified, and only services that were previously active are restored. Every successful row requires:
 
@@ -60,7 +60,7 @@ Raw evidence and resumable state live under [`references/results/catalog-campaig
 Runtime fit and decode speed do **not** imply intelligence. Turbofit therefore runs a second durable campaign against each exact production configuration after its native runtime row passes:
 
 ```bash
-# Initialize or inspect all 516 configurations × three benchmark levels
+# Initialize or inspect all 552 configurations × three benchmark levels
 PYTHONPATH=src:. scripts/turbofit-intelligence-campaign init
 PYTHONPATH=src:. scripts/turbofit-intelligence-campaign status
 

@@ -60,7 +60,7 @@ lemonade backends install vllm:rocm
 
 ## Benchmarking and evidence
 
-- `scripts/turbofit-catalog-campaign` runs the canonical generated main × auxiliary × context matrix (currently 516 rows), including all valid pinned Qwen 3.8, Ternary Bonsai, and Binary Bonsai add-on combinations.
+- `scripts/turbofit-catalog-campaign` runs the canonical generated main × auxiliary × context matrix (currently 552 rows), including all valid pinned Qwen 3.8, Ternary Bonsai, and Binary Bonsai add-on combinations.
 - `scripts/turbofit-deepswe` prepares a pinned DeepSWE/Pier checkout and runs selected finalists against an OpenAI-compatible endpoint.
 - `research/discover_external_benchmarks.py` binds imported DeepSWE evidence to the source artifact SHA-256. External evidence informs discovery but cannot promote a local runtime profile.
 - `scripts/turbofit-completion-check` reports every executable completion gate without converting a failed or missing live run into a success claim.

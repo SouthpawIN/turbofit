@@ -1,8 +1,16 @@
 # Changelog
 
-## 2.4 — Maple small-device Fit List
+## 2.3.1 — Windows campaign gate fixes + remote-Mac docs
 
-- Version surfaces are `2.4.0`.
+- Version surfaces are `2.3.1` (the Maple Fit List line stays 2.3; 2.4 is held).
+- Windows GPU clear gate is baseline-relative: pre-existing driver residency no longer reads as a leaked Turbofit allocation (absolute safety floor preserved).
+- Windows process-tree stop via `taskkill /T`, PowerShell GPU probing, AMD driver inventory via CIM.
+- Maple Preview TQ2_0 added to the catalog as the 8 GB Fit List candidate (native 64K/128K).
+- Documented the remote-Mac model-server topology (Turbofit on the Mac, Hermes in a Proxmox LXC).
+
+## 2.3 — Maple small-device Fit List
+
+- Version surfaces are `2.3.0`.
 - Dedicated VRAM and integrated/RAM-only total memory are separate Fit List dimensions. 8 GB of VRAM is not 8 GB of RAM.
 - Dedicated 8 GB main candidate is Maple Preview 20B-A1B TQ2_0. Ornith remains the alternative when host RAM can hold offloaded experts. Bonsai stays in the catalog but is no longer the 8 GB default.
 - Shared total memory: Maple at 8–15 GB, Ornith 1.5 35A3B at 16–23 GB, Unleashed UD-Q3_K_XL at 24 GB+.
