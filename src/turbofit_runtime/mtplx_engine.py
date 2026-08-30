@@ -12,6 +12,8 @@ from .managed_engine import EngineLaunch
 
 MTPLX_SPEED_MODEL = "Youssofal/Qwen3.8-27B-MTPLX-Optimized-Speed"
 MTPLX_QUALITY_MODEL = "Youssofal/Qwen3.8-27B-MTPLX-Optimized-Quality"
+MTPLX_FLASH_BARE_SPEED = "Youssofal/Qwen3.8-Flash-Next-MTPLX-Bare-Speed"
+MTPLX_FLASH_OPTIMIZED_SPEED = "Youssofal/Qwen3.8-Flash-Next-MTPLX-Optimized-Speed"
 MTPLX_MIN_VERSION = "2.10.1"
 DEFAULT_APP_SETTINGS = Path("~/Library/Application Support/MTPLX/settings.json")
 DEFAULT_PORTS = (18082, 8000, 18083, 18084, 18085)
@@ -23,6 +25,10 @@ def canonical_mtplx_alias(model_path: str | Path) -> str:
         return "qwen3-8-27b-mtplx-optimized-speed"
     if "qwen3.8-27b-mtplx-optimized-quality" in name:
         return "qwen3-8-27b-mtplx-optimized-quality"
+    if "qwen3.8-flash-next-mtplx-bare-speed" in name:
+        return "qwen3-8-flash-next-mtplx-bare-speed"
+    if "qwen3.8-flash-next-mtplx-optimized-speed" in name:
+        return "qwen3-8-flash-next-mtplx-optimized-speed"
     raise ValueError(f"unsupported MTPLX model path: {model_path}")
 
 
@@ -96,7 +102,12 @@ def build_mtplx_launch(
     model_id: str,
     port: int,
 ) -> EngineLaunch:
-    if model_repo not in {MTPLX_SPEED_MODEL, MTPLX_QUALITY_MODEL}:
+    if model_repo not in {
+        MTPLX_SPEED_MODEL,
+        MTPLX_QUALITY_MODEL,
+        MTPLX_FLASH_BARE_SPEED,
+        MTPLX_FLASH_OPTIMIZED_SPEED,
+    }:
         raise ValueError(f"unsupported MTPLX model: {model_repo}")
     path = Path(model_path).expanduser().resolve()
     command = (

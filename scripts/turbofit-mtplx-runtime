@@ -42,6 +42,8 @@ from turbofit_runtime.managed_engine import (  # noqa: E402
 from turbofit_runtime.mtplx_engine import (  # noqa: E402
     MTPLX_QUALITY_MODEL,
     MTPLX_SPEED_MODEL,
+    MTPLX_FLASH_BARE_SPEED,
+    MTPLX_FLASH_OPTIMIZED_SPEED,
     build_mtplx_launch,
     canonical_mtplx_alias,
     discover_mtplx,
@@ -165,7 +167,15 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=("adopt", "start", "status", "stop", "detach"))
     parser.add_argument("--model-path", type=Path)
-    parser.add_argument("--model-repo", choices=(MTPLX_SPEED_MODEL, MTPLX_QUALITY_MODEL))
+    parser.add_argument(
+        "--model-repo",
+        choices=(
+            MTPLX_SPEED_MODEL,
+            MTPLX_QUALITY_MODEL,
+            MTPLX_FLASH_BARE_SPEED,
+            MTPLX_FLASH_OPTIMIZED_SPEED,
+        ),
+    )
     parser.add_argument("--model-id")
     parser.add_argument("--port", type=int, default=18082)
     parser.add_argument("--timeout", type=float, default=1200.0)

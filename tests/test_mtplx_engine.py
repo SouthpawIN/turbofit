@@ -7,6 +7,8 @@ from turbofit_runtime.engine_check import engine_specs
 from turbofit_runtime.mtplx_engine import (
     MTPLX_QUALITY_MODEL,
     MTPLX_SPEED_MODEL,
+    MTPLX_FLASH_BARE_SPEED,
+    MTPLX_FLASH_OPTIMIZED_SPEED,
     build_mtplx_launch,
     canonical_mtplx_alias,
     discover_mtplx,
@@ -124,6 +126,35 @@ def test_cached_mtplx_paths_map_to_stable_turbofit_aliases() -> None:
     assert canonical_mtplx_alias(
         "/models/Youssofal--Qwen3.8-27B-MTPLX-Optimized-Quality"
     ) == "qwen3-8-27b-mtplx-optimized-quality"
+    assert canonical_mtplx_alias(
+        "/models/Youssofal--Qwen3.8-Flash-Next-MTPLX-Bare-Speed"
+    ) == "qwen3-8-flash-next-mtplx-bare-speed"
+    assert canonical_mtplx_alias(
+        "/models/Youssofal--Qwen3.8-Flash-Next-MTPLX-Optimized-Speed"
+    ) == "qwen3-8-flash-next-mtplx-optimized-speed"
+
+
+def test_flash_next_models_are_supported_engine_candidates(tmp_path: Path) -> None:
+    executable = tmp_path / "mtplx"
+    executable.write_text("mtplx")
+    executable.chmod(0o755)
+    model = tmp_path / "flash"
+    model.mkdir()
+    (model / "config.json").write_text("{}")
+
+    for repository, alias in (
+        (MTPLX_FLASH_BARE_SPEED, "qwen3-8-flash-next-mtplx-bare-speed"),
+        (MTPLX_FLASH_OPTIMIZED_SPEED, "qwen3-8-flash-next-mtplx-optimized-speed"),
+    ):
+        launch = build_mtplx_launch(
+            executable=executable,
+            model_path=model,
+            model_repo=repository,
+            model_id=alias,
+            port=18082,
+        )
+        assert launch.model_id == alias
+        assert launch.context_length == 262_144
 
 
 def test_telemetry_preserves_measured_fields_without_inventing_tps() -> None:

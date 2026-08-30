@@ -35,6 +35,8 @@ ALLOWED_MAIN = (
     "qwen3-8-27b-uncensored-mlx-8bit",
     "qwen3-8-27b-mtplx-optimized-speed",
     "qwen3-8-27b-mtplx-optimized-quality",
+    "qwen3-8-flash-next-mtplx-bare-speed",
+    "qwen3-8-flash-next-mtplx-optimized-speed",
 )
 
 ALLOWED_AUX = (

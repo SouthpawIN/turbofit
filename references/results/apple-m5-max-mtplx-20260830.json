@@ -88,11 +88,83 @@
         "quality_passed": true,
         "raw_result_sha256": "sha256:f08c2a6fd21f3f3c48b78e35a0772a22f7592ab517d2886d45240639789caa6c"
       }
+    },
+    "flash_next_bare_speed": {
+      "repository": "Youssofal/Qwen3.8-Flash-Next-MTPLX-Bare-Speed",
+      "upstream_revision_observed": "39c15cc6d45caeb4ea20e1e16e922c43fdb3e21f",
+      "local_source_manifest_sha256": "63bce5090d380de88b9fb37d05875cc2d53749d9af770856129854fc0df942e9",
+      "artifact_size_bytes": 106336816568,
+      "extended": {
+        "status": "pass",
+        "passkey_context_words": [8192, 32768, 65536],
+        "quality_pass_rate": 1.0,
+        "context_pass_rate": 1.0,
+        "effective_output_tokens_per_second": 85.343646,
+        "mean_ttft_ms": 21942.262,
+        "peak_unified_memory_used_mib": 105851,
+        "raw_evidence_sha256": "sha256:9e1d24a93f3f166d90a339a6d54c5d4bf963b5df68b355ef1a4244de0f2f6de4"
+      },
+      "depth_sweep": {
+        "prompt_id": "long_warm_code_continuation",
+        "completion_tokens_per_run": 512,
+        "ar_end_to_end_tokens_per_second": 44.963166,
+        "d1_end_to_end_tokens_per_second": 71.552248,
+        "d2_end_to_end_tokens_per_second": 95.251886,
+        "d3_end_to_end_tokens_per_second": 85.303066,
+        "d4_end_to_end_tokens_per_second": 86.392667,
+        "d5_end_to_end_tokens_per_second": 73.998435,
+        "winner": "D2",
+        "raw_evidence_sha256": {
+          "ar": "sha256:02d447543a59afd50442a211ec49c58937a9482fcdd2f9dc5fe0cef71f8f8375",
+          "d1": "sha256:c730741644f142b0cf63bff2d85cd0e8faab7000a71a7eac7ba4c5b9e88db9f7",
+          "d2": "sha256:7b7988e99a14f2a2d651a652b8259ab87695fafe6d0617f05e6d1e8e93bf6e2c",
+          "d3": "sha256:bf9d6231f47c452fba6e420419ce9fe487628cb4bb71f0ff61abadb66fbd89db",
+          "d4": "sha256:123e76c6f4173123ce0b0d0eb513871a18c22ba0f5cbf8d877d1e2394f8d3b61",
+          "d5": "sha256:d4c66f027785da01555c8fc34521c6c9aeff79deed63f764ff780595a95fcbdc"
+        }
+      }
+    },
+    "flash_next_optimized_speed": {
+      "repository": "Youssofal/Qwen3.8-Flash-Next-MTPLX-Optimized-Speed",
+      "upstream_revision_observed": "29ba90f82124961d0d902a9ea9bbb1034972af2f",
+      "local_source_manifest_sha256": "3157bb6ca92de5708c1510739f4afdd03d14cb06944e803033fcc4570734e04e",
+      "artifact_size_bytes": 115061257837,
+      "extended": {
+        "status": "pass",
+        "passkey_context_words": [8192, 32768, 65536],
+        "quality_pass_rate": 1.0,
+        "context_pass_rate": 1.0,
+        "effective_output_tokens_per_second": 85.580633,
+        "mean_ttft_ms": 22391.268,
+        "peak_unified_memory_used_mib": 113521,
+        "raw_evidence_sha256": "sha256:564779023377afd60028d0c5d5a3e33682a9392c99959365fca559e8f08a9f13"
+      },
+      "depth_sweep": {
+        "prompt_id": "long_warm_code_continuation",
+        "completion_tokens_per_run": 512,
+        "ar_end_to_end_tokens_per_second": 43.5019,
+        "d1_end_to_end_tokens_per_second": 63.454447,
+        "d2_end_to_end_tokens_per_second": 89.707503,
+        "d3_end_to_end_tokens_per_second": 90.963623,
+        "d4_end_to_end_tokens_per_second": 72.459613,
+        "d5_end_to_end_tokens_per_second": 84.138004,
+        "winner": "D3",
+        "raw_evidence_sha256": {
+          "ar": "sha256:b19d16bb4e75bfa3b6578da5bb4f545e5e6d7a76bece745c07817cfda181154c",
+          "d1": "sha256:922e77c4d64f6ee3e056356e4075c2637414f29d1b9bfc8640f38a7002db39cf",
+          "d2": "sha256:bdd374fea1d62114fff1f7827e0679900382f3f65a0f34e983564a43afb9a1e6",
+          "d3": "sha256:dfd9d31f393345c402251591d90d95191bd6ab16557d41b6c947965e976badd7",
+          "d4": "sha256:fc9502653235a64bffb0f81a80640b5cc857a3df1d065d872c0081e16ed657cb",
+          "d5": "sha256:6618a66a96f87ff7ff240d4da71f5c4b58d8356753a4ad63d7283ada01572c56"
+        }
+      }
     }
   },
   "limitations": [
-    "The observed upstream model revisions are the current repository heads at evidence-recording time; local tree hashes are the binding identities for the tested artifacts.",
+    "The observed upstream model revisions are repository heads at evidence-recording time; 27B local tree hashes and Flash Next local source-manifest hashes bind the tested artifacts.",
     "The extended mean TTFT includes 8K, 32K, and 64K prompt prefill and must not be read as short-prompt interactive TTFT.",
-    "Generic MLX and MTPLX use different model artifacts; cross-lane results compare complete configurations, not engine code in isolation."
+    "Generic MLX and MTPLX use different model artifacts; cross-lane results compare complete configurations, not engine code in isolation.",
+    "MTPLX bench tune does not support the qwen4_exp Flash Next family, so Flash Next AR/D1-D5 rows were measured through the same local OpenAI route and matched prompt instead of the tune command.",
+    "MTPLX bench run was blocked before model load by a missing packaged Phase 0H exactness script; that infrastructure failure is not scored as a model failure."
   ]
 }

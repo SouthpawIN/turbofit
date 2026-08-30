@@ -64,6 +64,8 @@ def test_shared_total_memory_is_not_treated_as_vram() -> None:
 def test_apple_uses_orcarouter_mlx_not_two_bit() -> None:
     assert is_allowed_main("qwen3-8-27b-mtplx-optimized-speed")
     assert is_allowed_main("qwen3-8-27b-mtplx-optimized-quality")
+    assert is_allowed_main("qwen3-8-flash-next-mtplx-bare-speed")
+    assert is_allowed_main("qwen3-8-flash-next-mtplx-optimized-speed")
     assert apple_mlx_main(unified_ram_gb=16) == "ornith-1-5-35a3b"
     assert apple_mlx_main(unified_ram_gb=24) == "qwen3-8-27b-uncensored-mlx-4bit"
     assert apple_mlx_main(unified_ram_gb=32) == "qwen3-8-27b-uncensored-mlx-6bit"
