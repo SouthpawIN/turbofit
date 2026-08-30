@@ -14,6 +14,12 @@ MTPLX_SPEED_MODEL = "Youssofal/Qwen3.8-27B-MTPLX-Optimized-Speed"
 MTPLX_QUALITY_MODEL = "Youssofal/Qwen3.8-27B-MTPLX-Optimized-Quality"
 MTPLX_FLASH_BARE_SPEED = "Youssofal/Qwen3.8-Flash-Next-MTPLX-Bare-Speed"
 MTPLX_FLASH_OPTIMIZED_SPEED = "Youssofal/Qwen3.8-Flash-Next-MTPLX-Optimized-Speed"
+MTPLX_MEASURED_DEPTHS = {
+    MTPLX_SPEED_MODEL: 3,
+    MTPLX_QUALITY_MODEL: 3,
+    MTPLX_FLASH_BARE_SPEED: 2,
+    MTPLX_FLASH_OPTIMIZED_SPEED: 3,
+}
 MTPLX_MIN_VERSION = "2.10.1"
 DEFAULT_APP_SETTINGS = Path("~/Library/Application Support/MTPLX/settings.json")
 DEFAULT_PORTS = (18082, 8000, 18083, 18084, 18085)
@@ -109,6 +115,7 @@ def build_mtplx_launch(
         MTPLX_FLASH_OPTIMIZED_SPEED,
     }:
         raise ValueError(f"unsupported MTPLX model: {model_repo}")
+    depth = MTPLX_MEASURED_DEPTHS[model_repo]
     path = Path(model_path).expanduser().resolve()
     command = (
         str(Path(executable).expanduser().resolve()),
@@ -121,6 +128,8 @@ def build_mtplx_launch(
         "127.0.0.1",
         "--port",
         str(port),
+        "--depth",
+        str(depth),
         "--no-auth",
         "--model-id",
         model_id,

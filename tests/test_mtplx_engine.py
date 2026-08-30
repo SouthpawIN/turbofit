@@ -108,6 +108,8 @@ def test_owned_mtplx_launch_uses_published_model_contract(tmp_path: Path) -> Non
         "127.0.0.1",
         "--port",
         "18082",
+        "--depth",
+        "3",
         "--no-auth",
         "--model-id",
         "qwen38-mtplx-quality",
@@ -155,6 +157,8 @@ def test_flash_next_models_are_supported_engine_candidates(tmp_path: Path) -> No
         )
         assert launch.model_id == alias
         assert launch.context_length == 262_144
+        expected_depth = "2" if repository == MTPLX_FLASH_BARE_SPEED else "3"
+        assert launch.command[launch.command.index("--depth") + 1] == expected_depth
 
 
 def test_telemetry_preserves_measured_fields_without_inventing_tps() -> None:
