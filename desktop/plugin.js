@@ -9,6 +9,14 @@ import { jsx, jsxs } from 'react/jsx-runtime'
 
 let api = null
 
+const NEEDLE_TRANSITION = 'transform 700ms cubic-bezier(0.22, 1, 0.36, 1)'
+
+const cardStyle = {
+  border: '1px solid var(--ui-stroke-secondary)',
+  borderRadius: '6px',
+  padding: '9px',
+}
+
 const fieldStyle = {
   width: '100%',
   boxSizing: 'border-box',
@@ -28,6 +36,193 @@ const buttonStyle = {
   cursor: 'pointer',
 }
 
+
+// Turbofit-scoped theming tokens: Hermes themes cascade through var(--ui-*),
+// theme packs override the --tf-* variables on the gauge card.
+const gaugeTokens = {
+  '--tf-needle': 'var(--ui-text-primary)',
+  '--tf-zone-quiet': 'var(--ui-success, var(--ui-accent))',
+  '--tf-zone-pressure': 'var(--ui-warning, var(--ui-text-secondary))',
+  '--tf-zone-heavy': 'var(--ui-accent)',
+  '--tf-redline': 'var(--ui-error)',
+  '--tf-tick': 'var(--ui-text-quaternary)',
+  '--tf-face': 'var(--ui-surface, transparent)',
+  '--tf-glow': 'var(--ui-accent)',
+  '--tf-readout': 'var(--ui-text-primary)',
+}
+
+const GAUGE_CENTER = 100
+const GAUGE_RADIUS = 80
+const GAUGE_START_DEG = 150 // math degrees; 240-degree sweep to 30
+const GAUGE_SWEEP = 240
+
+function polar(deg, radius) {
+  const rad = (deg * Math.PI) / 180
+  return [
+    GAUGE_CENTER + radius * Math.cos(rad),
+    GAUGE_CENTER - radius * Math.sin(rad),
+  ]
+}
+
+function arcPath(fromDeg, toDeg, radius) {
+  const [x1, y1] = polar(fromDeg, radius)
+  const [x2, y2] = polar(toDeg, radius)
+  const largeArc = Math.abs(fromDeg - toDeg) > 180 ? 1 : 0
+  return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${radius} ${radius} 0 ${largeArc} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`
+}
+
+function needleRotation(fraction) {
+  const clamped = Math.max(0, Math.min(1, Number(fraction) || 0))
+  return GAUGE_SWEEP * clamped - (GAUGE_START_DEG - 90)
+}
+
+function Gauge({
+  maxGb,
+  liveGb,
+  mainModel,
+  auxModel,
+  context,
+  expansionPolicy,
+  onExpansionPolicyChange,
+  needleTransition,
+}) {
+  const span = Math.max(24, Number(maxGb) || 32)
+  const live = Number.isFinite(Number(liveGb)) ? Math.max(0, Number(liveGb)) : 0
+  const fraction = live / span
+
+  const zones = [
+    { from: 0, to: 8, token: '--tf-zone-quiet', label: 'Maple' },
+    { from: 8, to: 16, token: '--tf-zone-pressure', label: 'Ornith' },
+    { from: 16, to: span, token: '--tf-zone-heavy', label: 'Unleashed' },
+  ]
+
+  const tickValues = [...new Set([0, 8, 16, 24, span].filter((value) => value <= span))]
+  const rotation = needleRotation(fraction)
+
+  return jsxs('div', {
+    style: { ...cardStyle, ...gaugeTokens, display: 'flex', flexDirection: 'column', gap: '8px' },
+    children: [
+      jsxs('div', { className: 'flex items-baseline justify-between', children: [
+        jsx('div', { className: 'font-medium', children: 'Fit gauge' }),
+        jsx('span', {
+          style: { color: 'var(--ui-text-tertiary)', fontSize: '11px' },
+          children: `${live.toFixed(0)} / ${span} GB usable`,
+        }),
+      ] }),
+      jsx('svg', {
+        viewBox: '0 0 200 132',
+        role: 'img',
+        'aria-label': 'Memory fit gauge',
+        style: { width: '100%', maxWidth: '320px', alignSelf: 'center', background: 'var(--tf-face)', borderRadius: '8px' },
+        children: [
+          ...zones.map((zone) => jsx('path', {
+            key: zone.token,
+            d: arcPath(
+              GAUGE_START_DEG - (zone.from / span) * GAUGE_SWEEP,
+              GAUGE_START_DEG - (zone.to / span) * GAUGE_SWEEP,
+              GAUGE_RADIUS,
+            ),
+            fill: 'none',
+            stroke: `var(${zone.token})`,
+            strokeWidth: '12',
+            strokeLinecap: 'butt',
+            opacity: '0.75',
+          })),
+          jsx('path', {
+            d: arcPath(
+              GAUGE_START_DEG - ((span - 4) / span) * GAUGE_SWEEP,
+              GAUGE_START_DEG,
+              GAUGE_RADIUS + 8,
+            ),
+            fill: 'none',
+            stroke: 'var(--tf-redline)',
+            strokeWidth: '3',
+            strokeLinecap: 'round',
+          }),
+          ...tickValues.map((value) => {
+            const deg = GAUGE_START_DEG - (value / span) * GAUGE_SWEEP
+            const [x1, y1] = polar(deg, GAUGE_RADIUS + 4)
+            const [x2, y2] = polar(deg, GAUGE_RADIUS + 9)
+            const [lx, ly] = polar(deg, GAUGE_RADIUS + 17)
+            return jsxs('g', { key: `tick-${value}`, children: [
+              jsx('line', { x1, y1, x2, y2, stroke: 'var(--tf-tick)', strokeWidth: '1.5' }),
+              jsx('text', {
+                x: lx,
+                y: ly,
+                fill: 'var(--tf-tick)',
+                fontSize: '8',
+                textAnchor: 'middle',
+                dominantBaseline: 'middle',
+                children: `${value}`,
+              }),
+            ] })
+          }),
+          ...zones.map((zone) => {
+            const midDeg = GAUGE_START_DEG - (((zone.from + zone.to) / 2) / span) * GAUGE_SWEEP
+            const [lx, ly] = polar(midDeg, GAUGE_RADIUS - 24)
+            return jsx('text', {
+              key: `label-${zone.label}`,
+              x: lx,
+              y: ly,
+              fill: `var(${zone.token})`,
+              fontSize: '8',
+              textAnchor: 'middle',
+              dominantBaseline: 'middle',
+              children: zone.label,
+            })
+          }),
+          jsx('g', {
+            style: {
+              transform: `rotate(${rotation}deg)`,
+              transformOrigin: `${GAUGE_CENTER}px ${GAUGE_CENTER}px`,
+              transition: needleTransition,
+            },
+            children: jsx('line', {
+              x1: GAUGE_CENTER,
+              y1: GAUGE_CENTER,
+              x2: GAUGE_CENTER,
+              y2: GAUGE_CENTER - (GAUGE_RADIUS - 14),
+              stroke: 'var(--tf-needle)',
+              strokeWidth: '3',
+              strokeLinecap: 'round',
+              style: { filter: 'drop-shadow(0 0 4px var(--tf-glow))' },
+            }),
+          }),
+          jsx('circle', {
+            cx: GAUGE_CENTER,
+            cy: GAUGE_CENTER,
+            r: '5',
+            fill: 'var(--tf-needle)',
+          }),
+        ],
+      }),
+      jsxs('div', {
+        style: { color: 'var(--tf-readout)', textAlign: 'center', fontSize: '12px', lineHeight: '1.5' },
+        children: [
+          jsx('div', { children: mainModel || '—' }),
+          jsxs('div', { style: { color: 'var(--ui-text-tertiary)' }, children: [
+            `aux ${auxModel || '—'} · ctx ${context || '—'}`,
+          ] }),
+        ],
+      }),
+      jsx('label', {
+        className: 'flex flex-col gap-1 text-xs',
+        children: [
+          jsx('span', { style: { color: 'var(--ui-text-secondary)' }, children: 'Expansion policy' }),
+          jsxs('select', {
+            value: expansionPolicy,
+            onChange: (event) => onExpansionPolicyChange(event.target.value),
+            style: { ...fieldStyle, padding: '5px 8px' },
+            children: [
+              jsx('option', { value: 'conservative', children: 'Conservative — one-rung recovery' }),
+              jsx('option', { value: 'jump-to-fit', children: 'Jump-to-fit' }),
+            ],
+          }),
+        ],
+      }),
+    ],
+  })
+}
 
 function Spark({ values }) {
   const nums = (values || []).map((value) => Number(value) || 0)
@@ -130,6 +325,7 @@ function TurbofitPage() {
   const [smoke, setSmoke] = useState(null)
   const [replacement, setReplacement] = useState(null)
   const [audition, setAudition] = useState(null)
+  const [expansionPolicy, setExpansionPolicy] = useState('conservative')
 
   const refresh = useCallback(async () => {
     setBusy(true)
@@ -224,6 +420,7 @@ function TurbofitPage() {
           provider_local_port: Number(providerLocalPort),
           dashboard_https_port: Number(dashboardHttpsPort),
           provider_https_port: Number(providerHttpsPort),
+          expansion_policy: expansionPolicy,
         },
       })
       setMessage(result.restart_required ? 'Saved. Start a new Hermes session to use provider changes.' : 'Saved.')
@@ -339,6 +536,18 @@ function TurbofitPage() {
   const contexts = [...new Set(pairRows.map((item) => item.context))].sort((a, b) => a - b)
   const selectedCombination = pairRows.find((item) => String(item.context) === String(context))
 
+  // Live usable memory for the gauge needle: host pressure probe first, then
+  // GPU usage, then the static hardware fingerprint.
+  const hostUsage = (status && status.usage && status.usage.host) || {}
+  const gpuUsedMb = ((status && status.usage && status.usage.gpus) || [])
+    .reduce((sum, gpu) => sum + (Number(gpu.used_mb) || 0), 0)
+  const liveUsableMb = Number(hostUsage.host_usable_memory_mb)
+    || (gpuUsedMb || 0)
+    || Number(hardware.total_usable_memory_mb)
+    || 0
+  const rawMaxMb = Number(hardware.total_usable_memory_mb) || 32768
+  const gaugeMaxGb = Math.max(24, Math.ceil(rawMaxMb / 1024 / 8) * 8)
+
   return jsxs('div', {
     className: 'flex h-full flex-col gap-4 overflow-auto p-5 text-sm',
     children: [
@@ -349,6 +558,16 @@ function TurbofitPage() {
           children: `Hardware: ${hardware.topology_key || 'scanning'} · usable memory ${hardware.total_usable_memory_mb || '—'} MiB`,
         }),
       ] }),
+      jsx(Gauge, {
+        maxGb: gaugeMaxGb,
+        liveGb: liveUsableMb / 1024,
+        mainModel,
+        auxModel,
+        context,
+        expansionPolicy,
+        onExpansionPolicyChange: setExpansionPolicy,
+        needleTransition: NEEDLE_TRANSITION,
+      }),
       jsxs('section', {
         className: 'grid grid-cols-1 gap-3 md:grid-cols-3',
         children: [

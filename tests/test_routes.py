@@ -26,11 +26,11 @@ def test_builds_shared_main_route_for_24gb_profile() -> None:
     state = build_route_state(profile(24), 0, resolutions, manager_port=11401)
 
     assert state["active"] == "hardware-24gb"
-    assert state["rung_id"] == "local-bonsai-262144"
+    assert state["rung_id"] == "local-unleashed-q3kxl-262144"
     assert state["routes"]["main"] == {
         "kind": "local",
-        "alias": "bonsai-27b-1bit-262k-main",
-        "port": 8092,
+        "alias": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+        "port": 11606,
     }
     assert state["routes"]["aux"] == {"kind": "shared-main"}
 

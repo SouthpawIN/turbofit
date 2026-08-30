@@ -5,11 +5,11 @@ import json
 import os
 from pathlib import Path
 import tempfile
-from typing import Any, Mapping
+from typing import Any, Dict, Mapping, Union
 
 from .runtime_profile import AuxMode, Turbofile
 
-RuntimeResolutions = dict[str, dict[str, dict[str, dict[str, int | str]]]]
+RuntimeResolutions = Dict[str, Dict[str, Dict[str, Dict[str, Union[int, str]]]]]
 
 
 def _large_context_request_policy(context: int) -> dict[str, int] | None:

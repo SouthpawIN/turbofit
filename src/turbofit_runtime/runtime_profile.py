@@ -74,6 +74,7 @@ class RuntimePolicy:
     cooldown_s: float
     flap_failure_limit: int | None = None
     flap_window_s: float | None = None
+    expansion_mode: str = "conservative"
 
     def validate(self) -> None:
         _nonempty(self.recommendation, "recommendation")
@@ -90,6 +91,8 @@ class RuntimePolicy:
             _positive_int(self.flap_failure_limit, "flap_failure_limit")
         if self.flap_window_s is not None:
             _nonnegative_number(self.flap_window_s, "flap_window_s")
+        if self.expansion_mode not in ("conservative", "direct"):
+            raise ValueError("expansion_mode must be 'conservative' or 'direct'")
 
 
 @dataclass(frozen=True)
@@ -199,7 +202,7 @@ class Turbofile:
                 "expansion_margin_gb_per_card",
                 "cooldown_s",
             },
-            optional={"flap_failure_limit", "flap_window_s"},
+            optional={"flap_failure_limit", "flap_window_s", "expansion_mode"},
             where="policy",
         )
         roles_data = _mapping(root["roles"], "roles")
@@ -265,6 +268,7 @@ class Turbofile:
                 cooldown_s=policy_data["cooldown_s"],
                 flap_failure_limit=policy_data.get("flap_failure_limit"),
                 flap_window_s=policy_data.get("flap_window_s"),
+                expansion_mode=policy_data.get("expansion_mode", "conservative"),
             ),
             roles=RoleRoutes(
                 main=roles_data["main"],
@@ -297,6 +301,7 @@ class Turbofile:
         }
         _optional(policy, "flap_failure_limit", self.policy.flap_failure_limit)
         _optional(policy, "flap_window_s", self.policy.flap_window_s)
+        _optional(policy, "expansion_mode", self.policy.expansion_mode)
         rungs: list[dict[str, Any]] = []
         for rung in self.rungs:
             item: dict[str, Any] = {

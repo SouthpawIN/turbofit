@@ -1054,6 +1054,106 @@ def multimodal_snapshot(config: Mapping[str, Any] | None = None) -> dict[str, An
     return payload
 
 
+def _save_configuration_to_all_homes(
+    configured: Mapping[str, Any],
+    *,
+    base_url: str | None = None,
+    primary: bool | None = None,
+    fallback: bool | None = None,
+    fallback_chain: list[Mapping[str, Any]] | None = None,
+    multimodal: Mapping[str, str] | None = None,
+) -> list[dict[str, Any]]:
+    """Persist Turbofit provider registration to every Hermes home (default + profiles).
+
+    Fresh macOS profiles (e.g. turbosovth, sirvir) keep their own
+    config.yaml under ~/.hermes/profiles/<name>/.  Updating only the
+    default ~/.hermes/config.yaml leaves those profiles with an
+    unresolvable turbofit provider — the exact Unknown provider
+    'turbofit' seen on fresh MacBooks.  This helper replays the same
+    configure_hermes result into every home so the provider is resolvable
+    from any session.
+    """
+    from hermes_cli.config import load_config as _load_config, save_config as _save_config
+
+    canonical_base = base_url
+    if canonical_base is None:
+        try:
+            turbo = configured.get("providers", {}).get("turbofit", {})  # type: ignore[union-attr]
+            if isinstance(turbo, Mapping):
+                canonical_base = str(turbo.get("api") or turbo.get("base_url") or "").strip() or None
+        except Exception:
+            canonical_base = None
+
+    saved: list[dict[str, Any]] = []
+    for home in hermes_homes():
+        try:
+            previous = os.environ.get("HERMES_HOME")
+            os.environ["HERMES_HOME"] = str(home)
+            try:
+                home_config = _load_config()
+                home_configured = configure_hermes(
+                    home_config,
+                    primary=bool(primary) if primary is not None else False,
+                    fallback=fallback,
+                    fallback_chain=fallback_chain,
+                    base_url=canonical_base,
+                )
+                if multimodal is not None:
+                    from turbofit_runtime.multimodal import MultimodalCatalog, configure_multimodal
+
+                    home_configured = configure_multimodal(
+                        home_configured,
+                        selections=multimodal,
+                        catalog=MultimodalCatalog.load(MULTIMODAL_CATALOG),
+                    )
+                _save_config(home_configured, merge_existing=False)
+                saved.append({"home": str(home), "ok": True})
+            finally:
+                if previous is None:
+                    os.environ.pop("HERMES_HOME", None)
+                else:
+                    os.environ["HERMES_HOME"] = previous
+        except Exception as exc:
+            saved.append({"home": str(home), "ok": False, "error": str(exc)})
+    return saved
+
+
+def ensure_provider_registered() -> list[dict[str, Any]]:
+    """Ensure ``providers.turbofit`` exists in every Hermes home.
+
+    This is the fresh-install heal: a newly created profile (or a default
+    install that never ran ``/turbofit setup``) has no turbofit entry at
+    all, so ``custom:turbofit``/``turbofit`` is unresolvable and the agent
+    fails with ``Unknown provider 'turbofit'``.  Healing writes a minimal
+    provider registration (no primary switch) to every home that is missing
+    it.  Safe to call on every ``register()`` and ``status_snapshot``.
+    """
+    healed: list[dict[str, Any]] = []
+    for home in hermes_homes():
+        try:
+            previous = os.environ.get("HERMES_HOME")
+            os.environ["HERMES_HOME"] = str(home)
+            try:
+                from hermes_cli.config import load_config as _lc, save_config as _sc
+                cfg = _lc()
+                providers = cfg.get("providers") if isinstance(cfg.get("providers"), dict) else {}
+                if "turbofit" in providers:
+                    healed.append({"home": str(home), "healed": False})
+                    continue
+                # Register without switching primary — just make it resolvable.
+                healed_cfg = configure_hermes(cfg, primary=False, fallback=None, base_url=None)
+                _sc(healed_cfg, merge_existing=False)
+                healed.append({"home": str(home), "healed": True})
+            finally:
+                if previous is None:
+                    os.environ.pop("HERMES_HOME", None)
+                else:
+                    os.environ["HERMES_HOME"] = previous
+        except Exception as exc:
+            healed.append({"home": str(home), "healed": False, "error": str(exc)})
+    return healed
+
+
 def apply_configuration(
     *,
     primary: bool,
@@ -1073,7 +1173,7 @@ def apply_configuration(
     dashboard_https_port: int = 9444,
     provider_https_port: int = 9443,
 ) -> dict[str, Any]:
-    from hermes_cli.config import load_config, save_config
+    from hermes_cli.config import load_config
 
     with _CONFIG_LOCK:
         sirvir = install_sirvir_profile() if install_sirvir else None
@@ -1094,7 +1194,7 @@ def apply_configuration(
             else None
         )
         effective_base_url = publication["provider_base_url"] if publication else base_url
-        configured = configure_hermes(
+        canonical = configure_hermes(
             load_config(),
             primary=primary,
             fallback=fallback,
@@ -1104,15 +1204,23 @@ def apply_configuration(
         if multimodal is not None:
             from turbofit_runtime.multimodal import MultimodalCatalog, configure_multimodal
 
-            configured = configure_multimodal(
-                configured,
+            canonical = configure_multimodal(
+                canonical,
                 selections=multimodal,
                 catalog=MultimodalCatalog.load(MULTIMODAL_CATALOG),
             )
-        save_config(configured, merge_existing=False)
+        homes_saved = _save_configuration_to_all_homes(
+            canonical,
+            base_url=effective_base_url,
+            primary=primary,
+            fallback=fallback,
+            fallback_chain=list(NOUS_FREE_FALLBACK_CHAIN) if fallback_chain is None else fallback_chain,
+            multimodal=multimodal,
+        )
     return {
         "ok": True,
         "configured": True,
+        "homes": homes_saved,
         "selection": selected,
         "tailnet": publication,
         "sirvir": sirvir,

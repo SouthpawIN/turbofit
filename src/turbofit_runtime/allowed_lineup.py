@@ -2,8 +2,11 @@
 
 A 9B must never be recommended. Routing:
 
-- Apple / Metal: OrcaRouter Qwen3.8-27B-Uncensored MLX (4/6/8-bit). Never the
-  MLX 2-bit build (uploader: archival, quality collapse).
+- Apple / Metal: Qwen 3.8 27B Unleashed UD-Q3_K_XL via llama.cpp at 24 GB+
+  unified memory (Fit List winner, evidence
+  qwen-3-8-27b-unleashed-ud-q3-k-xl-auto-262k); Ornith below 24 GB. The
+  OrcaRouter Uncensored MLX band and the MLX 2-bit build (uploader: archival,
+  quality collapse) are retired from the default Apple route.
 - Integrated / RAM-only (non-Apple): Maple at 8 GB total, Ornith at 16 GB,
   and Qwen 3.8 27B Unleashed at 24 GB+.
 - Dedicated 8 GB: Maple, plus Ornith when host RAM can hold offloaded experts.
@@ -43,9 +46,6 @@ ALLOWED_AUX = (
     "carwin-moe-nano",
     "auto",
 )
-
-MLX_REPO = "orcarouter/Qwen3.8-27B-Uncensored-MLX"
-MLX_REVISION = "b4603df5fd2a51e7fed2560ee7090caa4e13e4b7"
 
 _BANNED = re.compile(
     r"(?:^|[-_])9b(?:$|[-_])|ornith-9|qwen3\.5-9b|qwen3\.8-9b|mlx-2bit|uncensored-mlx-2",
@@ -89,13 +89,15 @@ def expert_residency(*, host_ram_gb: float) -> dict[str, object]:
 
 
 def apple_mlx_main(*, unified_ram_gb: float) -> str:
-    """OrcaRouter Uncensored MLX. 2-bit is banned. Sub-24 GB Mac stays Ornith."""
-    if unified_ram_gb >= 48:
-        return "qwen3-8-27b-uncensored-mlx-8bit"
-    if unified_ram_gb >= 32:
-        return "qwen3-8-27b-uncensored-mlx-6bit"
+    """Fit List route for Apple unified memory.
+
+    24 GB+ shared memory runs Qwen 3.8 27B Unleashed UD-Q3_K_XL
+    (evidence: qwen-3-8-27b-unleashed-ud-q3-k-xl-auto-262k), not the
+    retired OrcaRouter Uncensored MLX band. Sub-24 GB Macs stay Ornith;
+    the MLX 2-bit build is banned.
+    """
     if unified_ram_gb >= 24:
-        return "qwen3-8-27b-uncensored-mlx-4bit"
+        return "qwen3-8-27b-unleashed-ud-q3-k-xl"
     return "ornith-1-5-35a3b"
 
 
@@ -204,17 +206,18 @@ def check_local_options(
 
     if apple:
         main = apple_mlx_main(unified_ram_gb=host_ram_gb)
+        is_unleashed = main == "qwen3-8-27b-unleashed-ud-q3-k-xl"
         return [
             {
                 "role": "main",
                 "alias": main,
-                "engine": "mlx" if main.startswith("qwen3-8-27b-uncensored-mlx") else "llama.cpp",
-                "repo": MLX_REPO if main.startswith("qwen3-8-27b-uncensored-mlx") else None,
-                "revision": MLX_REVISION if main.startswith("qwen3-8-27b-uncensored-mlx") else None,
+                "engine": "llama.cpp",
+                "repo": None,
+                "revision": None,
                 "why": (
-                    "Apple Silicon: OrcaRouter Uncensored MLX (4/6/8-bit). "
-                    "MLX 2-bit is banned."
-                    if main.startswith("qwen3-8-27b-uncensored-mlx")
+                    "Apple 24 GB+ unified: Unleashed UD-Q3_K_XL per the Fit List "
+                    "(OrcaRouter Uncensored MLX band is retired)."
+                    if is_unleashed
                     else "Apple under 24 GB unified: Ornith 1.5, not MLX 2-bit."
                 ),
                 "residency": residency if main == "ornith-1-5-35a3b" else None,

@@ -5,10 +5,10 @@ import json
 import os
 import urllib.error
 import urllib.request
-from typing import Callable, Mapping, Sequence
+from typing import Callable, Mapping, Optional, Sequence
 
 
-Transport = Callable[[str, str, dict | None, float], tuple[int, dict]]
+Transport = Callable[[str, str, Optional[dict], float], tuple[int, dict]]
 
 
 def llama_environment(
