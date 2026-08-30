@@ -1,0 +1,202 @@
+#!/usr/bin/env python3
+"""Adopt or manage an MTPLX lane behind Turbofit's stable routes."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shutil
+import sys
+from pathlib import Path
+from typing import Any, Callable
+
+
+def _ensure_modern_python() -> None:
+    if sys.version_info >= (3, 10):
+        return
+    configured = os.environ.get("TURBOFIT_PYTHON")
+    candidates = ([Path(configured).expanduser()] if configured else []) + sorted(
+        Path("~/.local/share/turbofit/runtimes").expanduser().glob(
+            "mlx-lm-*/.venv/bin/python"
+        ),
+        reverse=True,
+    )
+    for candidate in candidates:
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            os.execv(str(candidate), [str(candidate), __file__, *sys.argv[1:]])
+    raise RuntimeError("Turbofit requires Python 3.10+; install the managed MLX runtime first")
+
+
+_ensure_modern_python()
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.managed_engine import (  # noqa: E402
+    EngineLaunch,
+    ManagedEngineRuntime,
+    publish_engine_routes,
+)
+from turbofit_runtime.mtplx_engine import (  # noqa: E402
+    MTPLX_QUALITY_MODEL,
+    MTPLX_SPEED_MODEL,
+    build_mtplx_launch,
+    canonical_mtplx_alias,
+    discover_mtplx,
+    fetch_mtplx_metrics,
+    mtplx_telemetry,
+)
+
+
+def _external_launch(endpoint, executable: Path) -> EngineLaunch:
+    return EngineLaunch(
+        engine_id="mtplx",
+        model_id=canonical_mtplx_alias(endpoint.model_path),
+        model_path=Path(endpoint.model_path),
+        port=endpoint.port,
+        context_length=int(endpoint.health.get("context_window") or 262_144),
+        bind_host="127.0.0.1",
+        upstream_model_id=endpoint.model_id,
+        command=(
+            str(executable),
+            "serve",
+            "--model",
+            endpoint.model_path,
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(endpoint.port),
+        ),
+    )
+
+
+def _detach_routes(path: Path) -> None:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return
+    if payload.get("active") == "apple-mtplx":
+        path.unlink(missing_ok=True)
+
+
+def run_action(
+    action: str,
+    *,
+    runtime: ManagedEngineRuntime,
+    routes_path: Path,
+    discover: Callable[[], Any],
+    executable: Path,
+    model_path: Path | None,
+    model_repo: str | None,
+    model_id: str | None,
+    port: int,
+    timeout_s: float,
+) -> dict[str, Any]:
+    if action == "adopt":
+        endpoint = discover()
+        if endpoint is None:
+            raise RuntimeError("no healthy loopback MTPLX endpoint was discovered")
+        if endpoint.pid is None or endpoint.pid <= 0:
+            raise RuntimeError("the discovered MTPLX endpoint does not report a PID")
+        launch = _external_launch(endpoint, executable)
+        resident = runtime.adopt_external(launch, pid=endpoint.pid)
+        publish_engine_routes(routes_path, launch)
+        return {
+            "ok": True,
+            "action": "adopt",
+            "pid": resident.pid,
+            "owned": False,
+            "telemetry": mtplx_telemetry(endpoint.health, fetch_mtplx_metrics(endpoint)),
+        }
+    if action == "start":
+        if model_path is None or model_repo is None or model_id is None:
+            raise ValueError("start requires model path, repository, and model id")
+        launch = build_mtplx_launch(
+            executable=executable,
+            model_path=model_path,
+            model_repo=model_repo,
+            model_id=model_id,
+            port=port,
+        )
+        resident = runtime.start_owned(launch, timeout_s=timeout_s)
+        publish_engine_routes(routes_path, launch)
+        return {
+            "ok": True,
+            "action": "start",
+            "pid": resident.pid,
+            "owned": True,
+        }
+    if action in {"stop", "detach"}:
+        process_stopped = runtime.stop() if action == "stop" else False
+        _detach_routes(routes_path)
+        return {"ok": True, "action": "stop" if process_stopped else "detach", "process_stopped": process_stopped}
+    if action == "status":
+        endpoint = discover()
+        lifecycle = runtime.inspect()
+        managed = lifecycle.get("runtime") or {}
+        owned = bool(
+            endpoint is not None
+            and lifecycle.get("ok") is True
+            and managed.get("owned") is True
+            and managed.get("pid") == endpoint.pid
+            and managed.get("port") == endpoint.port
+        )
+        return {
+            "ok": endpoint is not None,
+            "action": "status",
+            "endpoint": None if endpoint is None else {
+                "host": endpoint.host,
+                "port": endpoint.port,
+                "model_id": endpoint.model_id,
+                "model_path": endpoint.model_path,
+                "pid": endpoint.pid,
+                "app_launch_id": endpoint.app_launch_id,
+                "owned_by_turbofit": owned,
+                "lifecycle_status": lifecycle.get("status"),
+                "telemetry": mtplx_telemetry(endpoint.health, fetch_mtplx_metrics(endpoint)),
+            },
+        }
+    raise ValueError(f"unsupported action: {action}")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=("adopt", "start", "status", "stop", "detach"))
+    parser.add_argument("--model-path", type=Path)
+    parser.add_argument("--model-repo", choices=(MTPLX_SPEED_MODEL, MTPLX_QUALITY_MODEL))
+    parser.add_argument("--model-id")
+    parser.add_argument("--port", type=int, default=18082)
+    parser.add_argument("--timeout", type=float, default=1200.0)
+    parser.add_argument(
+        "--routes",
+        type=Path,
+        default=Path("~/.local/state/turbofit/runtime-state.json").expanduser(),
+    )
+    parser.add_argument(
+        "--state",
+        type=Path,
+        default=Path("~/.local/state/turbofit/engines/mtplx.json").expanduser(),
+    )
+    parser.add_argument("--executable", type=Path)
+    args = parser.parse_args()
+    executable = args.executable or Path(shutil.which("mtplx") or "mtplx")
+    result = run_action(
+        args.action,
+        runtime=ManagedEngineRuntime(state_path=args.state),
+        routes_path=args.routes,
+        discover=discover_mtplx,
+        executable=executable,
+        model_path=args.model_path,
+        model_repo=args.model_repo,
+        model_id=args.model_id,
+        port=args.port,
+        timeout_s=args.timeout,
+    )
+    print(json.dumps(result, indent=2))
+    return 0 if result.get("ok") else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

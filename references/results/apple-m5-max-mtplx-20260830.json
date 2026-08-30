@@ -1,0 +1,98 @@
+{
+  "schema": "turbofit.apple-mtplx-evidence/v1",
+  "recorded_at": "2026-08-30T21:20:00Z",
+  "tested_turbofit_commit": "98b45598785c4ca8efe5a5d5ea0835782f4ee007",
+  "classification": "measured",
+  "hardware": {
+    "chip": "Apple M5 Max",
+    "architecture": "arm64",
+    "system_memory_gib": 128,
+    "accelerator_memory_kind": "unified",
+    "os": "macOS 26.6.1"
+  },
+  "runtime": {
+    "engine": "MTPLX",
+    "version": "2.10.1",
+    "source_revision": "557e637a3aceba4cad7975582979e434aea7c092",
+    "profile": "turbo",
+    "context_length": 262144,
+    "route": "http://127.0.0.1:8091/v1 model auto"
+  },
+  "models": {
+    "optimized_speed": {
+      "repository": "Youssofal/Qwen3.8-27B-MTPLX-Optimized-Speed",
+      "upstream_revision_observed": "123db8bcc7101455b00d9aad36c0e760c6e7de02",
+      "local_tree_sha256": "d87ea9d73936766f6f7b58ab8b9e92a692e10a066fd3ffe4423e6b81a3b868e1",
+      "screening": {
+        "status": "pass",
+        "quality_pass_rate": 1.0,
+        "context_pass_rate": 1.0,
+        "effective_output_tokens_per_second": 41.975003,
+        "mean_ttft_ms": 671.839,
+        "peak_unified_memory_used_mib": 45562,
+        "raw_evidence_sha256": "sha256:5c534931521f8a3a5472eacc16271eb2cfa27e8b307b5eebfbf22812b48cdd50"
+      },
+      "extended": {
+        "status": "pass",
+        "passkey_context_words": [8192, 32768, 65536],
+        "quality_pass_rate": 1.0,
+        "context_pass_rate": 1.0,
+        "effective_output_tokens_per_second": 66.463529,
+        "mean_ttft_ms": 41392.4736,
+        "peak_unified_memory_used_mib": 65564,
+        "raw_evidence_sha256": "sha256:917af406232ad45fc3d2700b23b3eaa603f759db874cf6f1e708fa748977ea55"
+      },
+      "tune": {
+        "prompt_id": "long_warm_code_continuation",
+        "completion_tokens": 512,
+        "ar_end_to_end_tokens_per_second": 24.57799288235697,
+        "d1_end_to_end_tokens_per_second": 55.733720573030205,
+        "d2_end_to_end_tokens_per_second": 72.01606295772037,
+        "d3_end_to_end_tokens_per_second": 80.74638307794883,
+        "winner": "D3",
+        "quality_passed": true,
+        "raw_result_sha256": "sha256:04801ae2af634790077a5126e88a10b4deadc2073a6552ce3bf64c79aef26440"
+      }
+    },
+    "optimized_quality": {
+      "repository": "Youssofal/Qwen3.8-27B-MTPLX-Optimized-Quality",
+      "upstream_revision_observed": "09f71b39a75c416be3c974840b53f9fbe9aa1841",
+      "local_tree_sha256": "0502f4d65c20d53fd2cc193e723b7a0cfeb5ca7e1e944eb745798e34c4717a62",
+      "screening": {
+        "status": "pass",
+        "quality_pass_rate": 1.0,
+        "context_pass_rate": 1.0,
+        "effective_output_tokens_per_second": 38.435599,
+        "mean_ttft_ms": 688.519667,
+        "peak_unified_memory_used_mib": 53359,
+        "raw_evidence_sha256": "sha256:a6e70637dba248940a98b1cca53037afec6c55b2952eae072e2f8e041440d47e"
+      },
+      "extended": {
+        "status": "pass",
+        "passkey_context_words": [8192, 32768, 65536],
+        "quality_pass_rate": 1.0,
+        "context_pass_rate": 1.0,
+        "effective_output_tokens_per_second": 45.653045,
+        "mean_ttft_ms": 46198.6866,
+        "peak_unified_memory_used_mib": 73475,
+        "raw_evidence_sha256": "sha256:e49082bf83dadaa5682d56d5e3f7065bef23940b4e486d4208cabb0939c84ec1"
+      },
+      "tune": {
+        "prompt_id": "long_warm_code_continuation",
+        "completion_tokens": 512,
+        "ar_end_to_end_tokens_per_second": 16.929982640311664,
+        "d1_end_to_end_tokens_per_second": 41.670293345415814,
+        "d2_end_to_end_tokens_per_second": 55.835605511594125,
+        "d3_end_to_end_tokens_per_second": 57.64189944641718,
+        "winner": "D3",
+        "quality_passed": true,
+        "raw_result_sha256": "sha256:f08c2a6fd21f3f3c48b78e35a0772a22f7592ab517d2886d45240639789caa6c"
+      }
+    }
+  },
+  "limitations": [
+    "The observed upstream model revisions are the current repository heads at evidence-recording time; local tree hashes are the binding identities for the tested artifacts.",
+    "The extended mean TTFT includes 8K, 32K, and 64K prompt prefill and must not be read as short-prompt interactive TTFT.",
+    "Generic MLX and MTPLX use different model artifacts; cross-lane results compare complete configurations, not engine code in isolation."
+  ]
+}

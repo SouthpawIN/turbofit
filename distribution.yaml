@@ -62,6 +62,7 @@ distribution_owned:
   - scripts/install-mlx-runtime
   - scripts/turbofit-gateway-runtime
   - scripts/turbofit-mlx-runtime
+  - scripts/turbofit-mtplx-runtime
   - scripts/install-dspark-runtime
   - scripts/install-lemonade-runtime
   - scripts/install-macos-native-service
