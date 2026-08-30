@@ -1,0 +1,72 @@
+{
+  "schema": "turbofit.apple-runtime-evidence/v1",
+  "recorded_at": "2026-08-30T21:10:45Z",
+  "tested_turbofit_commit": "98b45598785c4ca8efe5a5d5ea0835782f4ee007",
+  "classification": "measured",
+  "hardware": {
+    "model": "MacBook Pro",
+    "chip": "Apple M5 Max",
+    "architecture": "arm64",
+    "system_memory_gib": 128,
+    "accelerator": "Apple GPU",
+    "accelerator_memory_kind": "unified",
+    "os": "macOS 26.6.1"
+  },
+  "artifact": {
+    "family": "qwen3-8-27b-uncensored-mlx-8bit",
+    "repository": "orcarouter/Qwen3.8-27B-Uncensored-MLX",
+    "revision": "b4603df5fd2a51e7fed2560ee7090caa4e13e4b7",
+    "variant": "8-bit",
+    "tree_sha256": "00244f54c1c1065086ac55a39cf842e0319446a816b46509dd69bc15a7c4bd3a"
+  },
+  "runtime": {
+    "engine": "mlx-lm",
+    "mlx_version": "0.32.2",
+    "mlx_lm_version": "0.31.3",
+    "context_length": 262144,
+    "route": "http://127.0.0.1:8091/v1 model auto"
+  },
+  "screening": {
+    "status": "pass",
+    "quality_pass_rate": 1.0,
+    "context_pass_rate": 1.0,
+    "effective_output_tokens_per_second": 15.494402,
+    "measured_prompt_tokens": 1268,
+    "measured_completion_tokens": 78,
+    "peak_unified_memory_used_mib": 52415,
+    "peak_process_rss_mib": 27660,
+    "raw_evidence_sha256": "sha256:3f8dddbac063a01d747c59721e34869d0eaad0e0fd39e24c5a4f09f7e900034a"
+  },
+  "extended": {
+    "status": "pass",
+    "passkey_context_words": [8192, 32768, 65536],
+    "quality_pass_rate": 1.0,
+    "context_pass_rate": 1.0,
+    "effective_output_tokens_per_second": 17.968452,
+    "measured_prompt_tokens": 122055,
+    "measured_completion_tokens": 540,
+    "peak_unified_memory_used_mib": 63631,
+    "peak_process_rss_mib": 27673,
+    "raw_evidence_sha256": "sha256:7924d112fb9ea7d8d9b2cb6772bf94a82a8f050a11df9113d724aea18e914fda"
+  },
+  "matched_long_code": {
+    "prompt_id": "long_warm_code_continuation",
+    "prompt_sha256": "sha256:babfc7f67bd8ec7a23439467a494b5bbe54538251e67ed7d2f8678d3c15fbe91",
+    "sampler": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 20,
+      "seed": 0
+    },
+    "completion_tokens": 512,
+    "finish_reason": "length",
+    "elapsed_seconds": 29.583446,
+    "end_to_end_tokens_per_second": 17.306976,
+    "raw_evidence_sha256": "sha256:13890ab1da62ffa596af0cb288aa2adc80e0291ce86184a4b045fcac375e98fb"
+  },
+  "limitations": [
+    "The generic mlx-lm response did not expose a server-side TTFT metric; no TTFT value is inferred.",
+    "These measurements apply only to the exact artifact, runtime, route, and hardware above.",
+    "The matched MTPLX comparison uses different model artifacts and is an end-product comparison, not an engine-only attribution."
+  ]
+}

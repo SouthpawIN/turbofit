@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+"""Install or verify Turbofit's isolated pinned MLX/MLX-LM runtime."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import platform
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from typing import Callable
+
+
+def _ensure_modern_python() -> None:
+    if sys.version_info >= (3, 10):
+        return
+    uv = shutil.which("uv")
+    if not uv:
+        raise RuntimeError("Python 3.10+ or uv is required to install the MLX runtime")
+    os.execv(uv, [uv, "run", "--python", "3.12", "python", __file__, *sys.argv[1:]])
+
+
+_ensure_modern_python()
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.apple_mlx import MLX_LM_VERSION, MLX_VERSION  # noqa: E402
+
+
+def probe_versions(python: Path) -> dict[str, str]:
+    code = (
+        "import importlib.metadata as m, json; "
+        "print(json.dumps({'mlx': m.version('mlx'), 'mlx-lm': m.version('mlx-lm')}))"
+    )
+    output = subprocess.check_output([str(python), "-c", code], text=True, timeout=30)
+    return json.loads(output)
+
+
+def install(
+    *,
+    runtime_root: Path,
+    uv: str,
+    platform_name: str = sys.platform,
+    architecture: str = platform.machine(),
+    run: Callable[..., object] | None = None,
+    version_probe: Callable[[Path], dict[str, str]] = probe_versions,
+) -> dict[str, object]:
+    if platform_name != "darwin" or architecture.lower() not in {"arm64", "aarch64"}:
+        raise RuntimeError("MLX runtime requires Apple Silicon macOS")
+    execute = run or (lambda command, **kwargs: subprocess.run(command, check=True, **kwargs))
+    target = runtime_root.expanduser().resolve() / f"mlx-lm-{MLX_LM_VERSION}"
+    venv = target / ".venv"
+    python = venv / "bin" / "python"
+    if not python.is_file():
+        target.mkdir(parents=True, exist_ok=True)
+        execute([uv, "venv", "--python", "3.12", str(venv)])
+        execute([
+            uv,
+            "pip",
+            "install",
+            "--python",
+            str(python),
+            f"mlx=={MLX_VERSION}",
+            f"mlx-lm=={MLX_LM_VERSION}",
+        ])
+    versions = version_probe(python)
+    expected = {"mlx": MLX_VERSION, "mlx-lm": MLX_LM_VERSION}
+    if versions != expected:
+        raise RuntimeError(f"MLX runtime version mismatch: {versions} != {expected}")
+    return {
+        "schema": "turbofit.python-runtime-verification/v1",
+        "id": "mlx-lm",
+        "status": "verified",
+        "python": str(python),
+        "versions": versions,
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--runtime-root",
+        type=Path,
+        default=Path("~/.local/share/turbofit/runtimes").expanduser(),
+    )
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args()
+    uv = shutil.which("uv")
+    if not uv:
+        parser.error("uv is required to install the pinned MLX runtime")
+    result = install(runtime_root=args.runtime_root, uv=uv)
+    print(json.dumps(result, indent=2) if args.json else result["python"])
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
