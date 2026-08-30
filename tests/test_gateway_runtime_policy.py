@@ -75,6 +75,14 @@ def test_health_probe_accepts_native_runtime_health(monkeypatch) -> None:
     assert GATEWAY.check_port(8092) is True
 
 
+def test_backend_state_rejects_a_healthy_listener_serving_the_wrong_model(monkeypatch) -> None:
+    monkeypatch.setattr(GATEWAY, "port_is_open", lambda _port: True)
+    monkeypatch.setattr(GATEWAY, "check_port", lambda _port: True)
+    monkeypatch.setattr(GATEWAY, "served_model_ids", lambda _port: {"another-model"}, raising=False)
+
+    assert GATEWAY.backend_state(18081, "expected-model") == "down"
+
+
 def test_explicit_api_fallback_precedes_interactive_profile_provider(tmp_path, monkeypatch) -> None:
     preferences = tmp_path / "preferences.yaml"
     preferences.write_text(
@@ -174,6 +182,28 @@ def test_dynamic_local_main_and_dedicated_aux_routes(tmp_path, monkeypatch) -> N
     assert main["base_url"] == "http://127.0.0.1:8080"
     assert aux["alias"] == "carwin"
     assert aux["mode"] == "dedicated"
+
+
+def test_local_engine_route_can_separate_stable_alias_from_upstream_model_id(
+    tmp_path, monkeypatch
+) -> None:
+    state = tmp_path / "runtime-state.json"
+    write_state(state, {
+        "main": {
+            "kind": "local",
+            "alias": "qwen3-8-27b-uncensored-mlx-8bit",
+            "model_id": "/models/Qwen3.8-27B-Uncensored-MLX/8-bit",
+            "port": 18081,
+        },
+        "aux": {"kind": "shared-main"},
+    })
+    monkeypatch.setattr(GATEWAY, "RUNTIME_STATE", str(state))
+    monkeypatch.setattr(GATEWAY, "backend_state", lambda _port, _alias=None: "ready")
+
+    main = GATEWAY.runtime_override("main")
+
+    assert main["alias"] == "qwen3-8-27b-uncensored-mlx-8bit"
+    assert main["model_id"] == "/models/Qwen3.8-27B-Uncensored-MLX/8-bit"
 
 
 def test_shared_main_aux_route_follows_current_main_without_restart(tmp_path, monkeypatch) -> None:

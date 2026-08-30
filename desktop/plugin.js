@@ -587,7 +587,7 @@ function TurbofitPage() {
         }),
         jsxs('label', { className: 'flex items-center gap-2', children: [
           jsx('input', { type: 'checkbox', checked: installNative, onChange: (event) => setInstallNative(event.target.checked) }),
-          'Install or verify the native adaptive runtime',
+          'Install and activate the native runtime (downloads the selected model and starts local processes)',
         ] }),
         jsxs('label', { className: 'flex items-center gap-2', children: [
           jsx('input', { type: 'checkbox', checked: installFreeToken, onChange: (event) => setInstallFreeToken(event.target.checked) }),

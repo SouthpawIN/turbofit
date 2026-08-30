@@ -33,6 +33,42 @@ def test_selected_artifacts_filters_complete_family() -> None:
     }
 
 
+def test_apple_mlx_8bit_family_is_a_complete_pinned_snapshot() -> None:
+    module = load_script()
+    payload = __import__("json").loads((ROOT / "references/artifact-manifest.json").read_text())
+
+    selected = module.selected_artifacts(
+        payload, {"qwen3-8-27b-uncensored-mlx-8bit"}
+    )
+
+    assert {row["path"] for row in selected} == {
+        "8-bit/README.md",
+        "8-bit/chat_template.jinja",
+        "8-bit/config.json",
+        "8-bit/generation_config.json",
+        "8-bit/model-00001-of-00006.safetensors",
+        "8-bit/model-00002-of-00006.safetensors",
+        "8-bit/model-00003-of-00006.safetensors",
+        "8-bit/model-00004-of-00006.safetensors",
+        "8-bit/model-00005-of-00006.safetensors",
+        "8-bit/model-00006-of-00006.safetensors",
+        "8-bit/model.safetensors.index.json",
+        "8-bit/preprocessor_config.json",
+        "8-bit/processor_config.json",
+        "8-bit/tokenizer.json",
+        "8-bit/tokenizer_config.json",
+        "8-bit/video_preprocessor_config.json",
+        "8-bit/vocab.json",
+    }
+    assert {
+        row["revision"] for row in selected
+    } == {"b4603df5fd2a51e7fed2560ee7090caa4e13e4b7"}
+    assert all(
+        row["destination"].startswith("Qwen3.8-27B-Uncensored-MLX/8-bit/")
+        for row in selected
+    )
+
+
 def test_install_artifact_verifies_before_materializing(tmp_path: Path) -> None:
     module = load_script()
     cached = tmp_path / "cache" / "model.gguf"
