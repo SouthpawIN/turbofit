@@ -59,6 +59,10 @@ distribution_owned:
   - scripts/build-promo-video
   - scripts/download-models.py
   - scripts/download-artifacts
+  - scripts/install-mlx-runtime
+  - scripts/turbofit-gateway-runtime
+  - scripts/turbofit-mlx-runtime
+  - scripts/turbofit-mtplx-runtime
   - scripts/install-dspark-runtime
   - scripts/install-lemonade-runtime
   - scripts/install-macos-native-service
@@ -79,11 +83,13 @@ distribution_owned:
 
   - references/model-recipes.json
   - references/artifact-manifest.json
+  - references/python-runtimes.json
   - references/hardware-tier-tournaments.json
   - references/auxiliary-tier-recommendations.json
   - references/intelligence-scores.json
   - references/external-benchmarks.md
 
-# Installation does not start launchers, watchers, or modify provider credentials.
-# Runtime activation remains an explicit Turbofile selection.
+# Plugin installation alone does not start launchers, watchers, or modify provider
+# credentials. Explicit install_native setup may install a selected model and start
+# its loopback runtime and provider gateway.
 post_install: []

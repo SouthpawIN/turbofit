@@ -361,6 +361,22 @@ def check_port(port):
         return False
 
 
+def served_model_ids(port):
+    """Exact model IDs advertised by a local OpenAI-compatible backend."""
+    try:
+        with urlopen(f"http://127.0.0.1:{port}/v1/models", timeout=3) as response:
+            payload = json.load(response)
+    except Exception:
+        return set()
+    if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
+        return set()
+    return {
+        str(item.get("id"))
+        for item in payload["data"]
+        if isinstance(item, dict) and item.get("id")
+    }
+
+
 def runtime_override(role):
     """Resolve an explicitly activated evidence-backed runtime before catalog roles.
 
@@ -454,7 +470,8 @@ def _runtime_policy_route(state, role):
             port = int(route.get("port") or 0)
         except (TypeError, ValueError):
             return None
-        state_name = backend_state(port, alias)
+        model_id = str(route.get("model_id") or alias).strip()
+        state_name = backend_state(port, model_id)
         if state_name == "down":
             return None
         result = {
@@ -465,6 +482,9 @@ def _runtime_policy_route(state, role):
             "runtime_profile": state.get("active"),
             "runtime_rung": state.get("rung_id"),
         }
+        model_id = str(route.get("model_id") or "").strip()
+        if model_id:
+            result["model_id"] = model_id
         if route.get("context_length"):
             result["context_length"] = route["context_length"]
         if isinstance(route.get("request_policy"), dict):
@@ -496,7 +516,7 @@ def _runtime_policy_route(state, role):
     return None
 
 
-def backend_state(port, alias=None):
+def backend_state(port, expected_model_id=None):
     """Returns one of: 'ready', 'loading', 'down'.
 
     The port-SELF_PORT guard prevents a model registered on the gateway's own
@@ -508,6 +528,8 @@ def backend_state(port, alias=None):
     if not port_is_open(port):
         return "down"
     if check_port(port):
+        if expected_model_id and expected_model_id not in served_model_ids(port):
+            return "down"
         return "ready"
     return "loading"
 
@@ -771,14 +793,14 @@ def resolve_aux():
 
 # ─── Stall-while-loading ─────────────────────────────────────────────────────
 
-def stall_until_ready(port, deadline_ts, alias=None):
-    """Block (with periodic progress logs) until the local model is ready
+def stall_until_ready(port, deadline_ts, expected_model_id=None):
+    """Block (with periodic progress logs) until the exact local model is ready
     OR the deadline elapses. Returns the final state."""
     waited = 0.0
     poll = STALL_POLL_S
     last_log = 0.0
     while time.time() < deadline_ts:
-        state = backend_state(port, alias)
+        state = backend_state(port, expected_model_id)
         if state == "ready":
             if waited > 1.0:
                 log.info(f"Local backend :{port} ready after {waited:.1f}s stall")
@@ -794,7 +816,7 @@ def stall_until_ready(port, deadline_ts, alias=None):
         waited += poll
         # Gentle backoff capped at 5s
         poll = min(poll * 1.1, 5.0)
-    return backend_state(port, alias)  # final state at deadline
+    return backend_state(port, expected_model_id)  # final state at deadline
 
 
 # ─── HTTP handler ─────────────────────────────────────────────────────────────
@@ -906,7 +928,11 @@ class GatewayHandler(BaseHTTPRequestHandler):
             port = backend.get("port", 0)
             log.info(f"Stall-while-loading: :{port} (timeout {STALL_TIMEOUT_S:.0f}s)")
             stalled = True
-            new_state = stall_until_ready(port, deadline, backend.get("alias"))
+            new_state = stall_until_ready(
+                port,
+                deadline,
+                backend.get("model_id") or backend.get("alias"),
+            )
             if new_state == "ready":
                 backend["state"] = "ready"
             else:
@@ -1024,8 +1050,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     payload["chat_template_kwargs"] = template_kwargs
                     payload.setdefault("reasoning_format", "none")
                 payload["model"] = (
-                    backend.get("model_id") if backend.get("is_api")
-                    else backend.get("alias")
+                    backend.get("model_id") or backend.get("alias")
                 ) or payload.get("model")
                 body = json.dumps(payload).encode()
             except Exception:
