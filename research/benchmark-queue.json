@@ -1,706 +1,682 @@
 {
   "entries": [
     {
-      "candidate_id": "huggingface:ASzecsenyi/VQLM",
+      "candidate_id": "huggingface:Aalto-Speech-Synthesis/whisper-large-v3-Icelandic-finetuned-ct2",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "ASzecsenyi/VQLM",
+      "repo_id": "Aalto-Speech-Synthesis/whisper-large-v3-Icelandic-finetuned-ct2",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:AXIOM-TECH/Ouro-2.6B-Thinking-IBNN",
+      "candidate_id": "huggingface:AaronHuangWei/Long-WAM-G1-Dynamic-Task-Deploy",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "AXIOM-TECH/Ouro-2.6B-Thinking-IBNN",
+      "repo_id": "AaronHuangWei/Long-WAM-G1-Dynamic-Task-Deploy",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:Aletheia-ng/SabiYarn_MoE-280M",
+      "candidate_id": "huggingface:Bittoby1040/Affine-5cxncav2du-v1818",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "Aletheia-ng/SabiYarn_MoE-280M",
+      "repo_id": "Bittoby1040/Affine-5cxncav2du-v1818",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:Bc-AI/vacinova-1-checkpoints",
+      "candidate_id": "huggingface:Cactus-Compute/needle2",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "Bc-AI/vacinova-1-checkpoints",
+      "repo_id": "Cactus-Compute/needle2",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:BlueShark1214/koth-miner",
+      "candidate_id": "huggingface:D21WCXZ21/MyAwesomeModel-TestRepository",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "BlueShark1214/koth-miner",
+      "repo_id": "D21WCXZ21/MyAwesomeModel-TestRepository",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:Cameron3T3T/coco10",
+      "candidate_id": "huggingface:Dikshan1234/LLMPretrain",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "Cameron3T3T/coco10",
+      "repo_id": "Dikshan1234/LLMPretrain",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:Cameron3T3T/coco8",
+      "candidate_id": "huggingface:DogContext/GLM-5.3-Flash-Uncensored-Q2-ds4",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "Cameron3T3T/coco8",
+      "repo_id": "DogContext/GLM-5.3-Flash-Uncensored-Q2-ds4",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:Cameron3T3T/coco9",
+      "candidate_id": "huggingface:EllaPriest45/Wan2.2_base",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "Cameron3T3T/coco9",
+      "repo_id": "EllaPriest45/Wan2.2_base",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:ClosRise/RuQwen_Tokenizer",
+      "candidate_id": "huggingface:HJL124232/openstl-hycom-checkpoints",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "ClosRise/RuQwen_Tokenizer",
+      "repo_id": "HJL124232/openstl-hycom-checkpoints",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:GMorgulis/Phi-3-mini-4k-instruct-owl-STEER0.525-ft4.43",
+      "candidate_id": "huggingface:JWei05/DAPO-gemma4-e2b-PT-DeepScaleR-gemma26b-medium-seed42-local2gpu",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "GMorgulis/Phi-3-mini-4k-instruct-owl-STEER0.525-ft4.43",
+      "repo_id": "JWei05/DAPO-gemma4-e2b-PT-DeepScaleR-gemma26b-medium-seed42-local2gpu",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:GohaDAYN/sn99-router",
+      "candidate_id": "huggingface:Jongbin-kr/llama-3.1-8b-instruct_SNI-ours-16x2-plus-generalist-lora-moe",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "GohaDAYN/sn99-router",
+      "repo_id": "Jongbin-kr/llama-3.1-8b-instruct_SNI-ours-16x2-plus-generalist-lora-moe",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:Ichiro1007/koth-router",
+      "candidate_id": "huggingface:Jongbin-kr/llama-3.1-8b-instruct_lbox-generalist_ffn-only",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "Ichiro1007/koth-router",
+      "repo_id": "Jongbin-kr/llama-3.1-8b-instruct_lbox-generalist_ffn-only",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:Ichiro1007/koth-router-2",
+      "candidate_id": "huggingface:JuloEco/opsiom-fr-checkpoints",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "Ichiro1007/koth-router-2",
+      "repo_id": "JuloEco/opsiom-fr-checkpoints",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:LaitMiro/koth-router",
+      "candidate_id": "huggingface:LarryAIDraw/steinillustrious_V173",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "LaitMiro/koth-router",
+      "repo_id": "LarryAIDraw/steinillustrious_V173",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:LaitMiro/koth-router-b",
+      "candidate_id": "huggingface:ManniX-ITA/Qwen3.8-27B-Omnimerge-v6-MTP-GGUF",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "LaitMiro/koth-router-b",
+      "repo_id": "ManniX-ITA/Qwen3.8-27B-Omnimerge-v6-MTP-GGUF",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:Miiche/visualrl-gad-gated-v2",
+      "candidate_id": "huggingface:MilesKimRLWRLD/cosmos3-nano-domino",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "Miiche/visualrl-gad-gated-v2",
+      "repo_id": "MilesKimRLWRLD/cosmos3-nano-domino",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:MoncefAn/mobilellm-r1-grpo-checkpoints",
+      "candidate_id": "huggingface:MinKeonKim/PRO-STEP-PRM-8B",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "MoncefAn/mobilellm-r1-grpo-checkpoints",
+      "repo_id": "MinKeonKim/PRO-STEP-PRM-8B",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:NILKNARFGonzo/floppyx3-MEGAmodel",
+      "candidate_id": "huggingface:MinKeonKim/PRO-STEP-Policy-7B",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "NILKNARFGonzo/floppyx3-MEGAmodel",
+      "repo_id": "MinKeonKim/PRO-STEP-Policy-7B",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:NN-Dataset/checkpoints-imagenet100-epoch-50",
+      "candidate_id": "huggingface:MiradoManjaka/credit-scoring",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "NN-Dataset/checkpoints-imagenet100-epoch-50",
+      "repo_id": "MiradoManjaka/credit-scoring",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:Sharjeelbaig/MiniCPM5-1B-Claude-Opus-Fable5-V2-Thinking-ONNX",
+      "candidate_id": "huggingface:MohamedAhmedAE/llava-medical-1B-clip-vit-stage2",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "Sharjeelbaig/MiniCPM5-1B-Claude-Opus-Fable5-V2-Thinking-ONNX",
+      "repo_id": "MohamedAhmedAE/llava-medical-1B-clip-vit-stage2",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:ShinyUser/sn99-miner1-recency50-v3",
+      "candidate_id": "huggingface:Mohammed422/invoices-donut-model-v1",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "ShinyUser/sn99-miner1-recency50-v3",
+      "repo_id": "Mohammed422/invoices-donut-model-v1",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:ShinyUser/vera-1-sn99-top-router",
+      "candidate_id": "huggingface:Nyalatishailaja/fraud-detector",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "ShinyUser/vera-1-sn99-top-router",
+      "repo_id": "Nyalatishailaja/fraud-detector",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:ShinyUser/vera-121-2-sn99-balanced-router",
+      "candidate_id": "huggingface:Octavian123/civit",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "ShinyUser/vera-121-2-sn99-balanced-router",
+      "repo_id": "Octavian123/civit",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:Tobias1726/sn99-router",
+      "candidate_id": "huggingface:Okaydvns/Cloret_Rosed___",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "Tobias1726/sn99-router",
+      "repo_id": "Okaydvns/Cloret_Rosed___",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:Tobias1726/sn99-router-2",
+      "candidate_id": "huggingface:OliviaRossi/RE-TIES-NSM-Merge",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "Tobias1726/sn99-router-2",
+      "repo_id": "OliviaRossi/RE-TIES-NSM-Merge",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:VALOR0316/koth-miner",
+      "candidate_id": "huggingface:OpenRussianAI/OpenAirAI-X",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "VALOR0316/koth-miner",
+      "repo_id": "OpenRussianAI/OpenAirAI-X",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:VALOR0316/koth-miner-66",
+      "candidate_id": "huggingface:PAkshayV/a2c-PandaReachDense-v3",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "VALOR0316/koth-miner-66",
+      "repo_id": "PAkshayV/a2c-PandaReachDense-v3",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:VALOR0316/koth-miner-92",
+      "candidate_id": "huggingface:Plana-Chan/UCENSORED",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "VALOR0316/koth-miner-92",
+      "repo_id": "Plana-Chan/UCENSORED",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:VALOR0316/koth-miner-99",
+      "candidate_id": "huggingface:Rajiv714/Axion-0.5B-PTE",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "VALOR0316/koth-miner-99",
+      "repo_id": "Rajiv714/Axion-0.5B-PTE",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:Zayaan/sn99-router",
+      "candidate_id": "huggingface:Raphael2099/chujian-ocr-models",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "Zayaan/sn99-router",
+      "repo_id": "Raphael2099/chujian-ocr-models",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:a1o/state_parse_repro",
+      "candidate_id": "huggingface:Reduanul1997/RepositoryResidual3DUNet",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "a1o/state_parse_repro",
+      "repo_id": "Reduanul1997/RepositoryResidual3DUNet",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:aethercompute/aether0-50m",
+      "candidate_id": "huggingface:Riga5544/Acne_detection",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "aethercompute/aether0-50m",
+      "repo_id": "Riga5544/Acne_detection",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:ania3000/ossbert-lemm-v2.1",
+      "candidate_id": "huggingface:SDASD12SAD/MyAwesomeModel-TestRepo",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "ania3000/ossbert-lemm-v2.1",
+      "repo_id": "SDASD12SAD/MyAwesomeModel-TestRepo",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:beyondyourself113/sn99-a",
+      "candidate_id": "huggingface:SaifPunjwani/qwen3-4b-dapo2",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "beyondyourself113/sn99-a",
+      "repo_id": "SaifPunjwani/qwen3-4b-dapo2",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:beyondyourself113/sn99-e",
+      "candidate_id": "huggingface:Shanmuk4622/cardiomamba-baselines-v2",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "beyondyourself113/sn99-e",
+      "repo_id": "Shanmuk4622/cardiomamba-baselines-v2",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:beyondyourself113/sn99-f",
+      "candidate_id": "huggingface:Snapkitty/automated-operator",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "beyondyourself113/sn99-f",
+      "repo_id": "Snapkitty/automated-operator",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:broad555/koth-router",
+      "candidate_id": "huggingface:Snapkitty/sovereign-ada-rtx",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "broad555/koth-router",
+      "repo_id": "Snapkitty/sovereign-ada-rtx",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:broad555/koth-router-b",
+      "candidate_id": "huggingface:Snapkitty/sovereign-mimo-4b",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "broad555/koth-router-b",
+      "repo_id": "Snapkitty/sovereign-mimo-4b",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:broad555/koth-router-c",
+      "candidate_id": "huggingface:Snapkitty/xrex-invariants-formal",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "broad555/koth-router-c",
+      "repo_id": "Snapkitty/xrex-invariants-formal",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:broad555/koth-router-d",
+      "candidate_id": "huggingface:SofiTesfay2010/Qwen3.8-27B-Uncensored-Compressed",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "broad555/koth-router-d",
+      "repo_id": "SofiTesfay2010/Qwen3.8-27B-Uncensored-Compressed",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:chatpbc1/chatpbc-v33",
+      "candidate_id": "huggingface:Sravankumarbonthada/mitoseqgen",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "chatpbc1/chatpbc-v33",
+      "repo_id": "Sravankumarbonthada/mitoseqgen",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:chatpbc1/chatpbc-v4",
+      "candidate_id": "huggingface:Tohirju/sl-larch6",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "chatpbc1/chatpbc-v4",
+      "repo_id": "Tohirju/sl-larch6",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:cossmoss/reverse_distill_assets",
+      "candidate_id": "huggingface:Vxtzq/Crowd-v1",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "cossmoss/reverse_distill_assets",
+      "repo_id": "Vxtzq/Crowd-v1",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:devika-tiwari/gpt2_small_expandedbabyLM_100M_subj_0percent_43",
+      "candidate_id": "huggingface:Wlc7758/Qwen3-Sex",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "devika-tiwari/gpt2_small_expandedbabyLM_100M_subj_0percent_43",
+      "repo_id": "Wlc7758/Qwen3-Sex",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:dsaddsaf/koth-router",
+      "candidate_id": "huggingface:WoojongKim/smolvla_policy_omx_gelsight_env1_square_nogel",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "dsaddsaf/koth-router",
+      "repo_id": "WoojongKim/smolvla_policy_omx_gelsight_env1_square_nogel",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:dsaddsaf/koth-router-b",
+      "candidate_id": "huggingface:a3ilab-llm-uncertainty/gemma4_12B_zhtw_6144_lr1e-6_ep5_64_128_256_turn_v6_no_cot_aug_original_40ver",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "dsaddsaf/koth-router-b",
+      "repo_id": "a3ilab-llm-uncertainty/gemma4_12B_zhtw_6144_lr1e-6_ep5_64_128_256_turn_v6_no_cot_aug_original_40ver",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:dsaddsaf/koth-router-c",
+      "candidate_id": "huggingface:a3ilab-llm-uncertainty/gptoss_20b_all_zhtw_lr5e-7_ep5_64_128_256_simple_cot_v6data_only_answer_loss_aug_all_40ver",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "dsaddsaf/koth-router-c",
+      "repo_id": "a3ilab-llm-uncertainty/gptoss_20b_all_zhtw_lr5e-7_ep5_64_128_256_simple_cot_v6data_only_answer_loss_aug_all_40ver",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:dsaddsaf/koth-router-d",
+      "candidate_id": "huggingface:adraganov/arch-poison-mass-lpi-260903T0800-topic-adapters",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "dsaddsaf/koth-router-d",
+      "repo_id": "adraganov/arch-poison-mass-lpi-260903T0800-topic-adapters",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:dsaddsaf/koth-router-e",
+      "candidate_id": "huggingface:agurung/cobalt-seeded-rl-base-ramp25-stoppen-gen4k-ep2-ncp10-mvs16",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "dsaddsaf/koth-router-e",
+      "repo_id": "agurung/cobalt-seeded-rl-base-ramp25-stoppen-gen4k-ep2-ncp10-mvs16",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:dwdwadawdadw/realisticsnapshotideogram",
+      "candidate_id": "huggingface:ai-mitra/prompt-injection-detector",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "dwdwadawdadw/realisticsnapshotideogram",
+      "repo_id": "ai-mitra/prompt-injection-detector",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:failmint/sn99-router-b5",
+      "candidate_id": "huggingface:arcadia-impact/scimt-dispatch-rlvr-gemma4-26b-v1-runs",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "failmint/sn99-router-b5",
+      "repo_id": "arcadia-impact/scimt-dispatch-rlvr-gemma4-26b-v1-runs",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:failmint/sn99-router-v61",
+      "candidate_id": "huggingface:bimabk/instruct_tenun_26db3da7e5e563257ce0_597dc05e",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "failmint/sn99-router-v61",
+      "repo_id": "bimabk/instruct_tenun_26db3da7e5e563257ce0_597dc05e",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:haven-ai-companion/haven-chat-v3.0.3",
+      "candidate_id": "huggingface:btsee/oron-tts",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "haven-ai-companion/haven-chat-v3.0.3",
+      "repo_id": "btsee/oron-tts",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:healerman221/koth-honest",
+      "candidate_id": "huggingface:burningfeet/backup-2026-09-03-Qwen3.6-35B-A3B-Uncensored-Genesis-Hermes-V13-GGUF",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "healerman221/koth-honest",
+      "repo_id": "burningfeet/backup-2026-09-03-Qwen3.6-35B-A3B-Uncensored-Genesis-Hermes-V13-GGUF",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:healerman221/koth-super-v1",
+      "candidate_id": "huggingface:csukuangfj2/sherpa-onnx-libs",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "healerman221/koth-super-v1",
+      "repo_id": "csukuangfj2/sherpa-onnx-libs",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:huiwon/isaac_wan22_b64_4knoba_fadistill_tf05_vj21pred_4gpufresh",
+      "candidate_id": "huggingface:danielharkin21/Eddie-Cortex",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "huiwon/isaac_wan22_b64_4knoba_fadistill_tf05_vj21pred_4gpufresh",
+      "repo_id": "danielharkin21/Eddie-Cortex",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:insraq/LFM2.5-2.6B-heretic-GGUF",
+      "candidate_id": "huggingface:dtcolligan/suitesmith-qwen3.5-4b-run1-step20",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "insraq/LFM2.5-2.6B-heretic-GGUF",
+      "repo_id": "dtcolligan/suitesmith-qwen3.5-4b-run1-step20",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:jacob-rojic/koth-miner",
+      "candidate_id": "huggingface:elprofessor67/om-logistics-pod-new-v0",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "jacob-rojic/koth-miner",
+      "repo_id": "elprofessor67/om-logistics-pod-new-v0",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:jacobkuchta7/personalized-golf-assistant-rag",
+      "candidate_id": "huggingface:emanlapponi/sai-mash.parquet",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "jacobkuchta7/personalized-golf-assistant-rag",
+      "repo_id": "emanlapponi/sai-mash.parquet",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:josh-a/rivet-1b-pt",
+      "candidate_id": "huggingface:guand1/TRACE",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "josh-a/rivet-1b-pt",
+      "repo_id": "guand1/TRACE",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:just1nseo/llama31-8b-if-rlvr-anchor-pyx01",
+      "candidate_id": "huggingface:hanemay/smartsightCoach",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "just1nseo/llama31-8b-if-rlvr-anchor-pyx01",
+      "repo_id": "hanemay/smartsightCoach",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:knsimon/koth-miner",
+      "candidate_id": "huggingface:hcmusa28/2E5rcv3KbUMFbTOZ",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "knsimon/koth-miner",
+      "repo_id": "hcmusa28/2E5rcv3KbUMFbTOZ",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:knsimon/koth-miner2",
+      "candidate_id": "huggingface:hcmusa28/pVnow6R8vy5slinb",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "knsimon/koth-miner2",
+      "repo_id": "hcmusa28/pVnow6R8vy5slinb",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:laquythang/top",
+      "candidate_id": "huggingface:hodoly163/krishibondhu-jktk",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "laquythang/top",
+      "repo_id": "hodoly163/krishibondhu-jktk",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:layaiyer/snliFT-syn-news-nouns-vanilla",
+      "candidate_id": "huggingface:homura12138/pairtide",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "layaiyer/snliFT-syn-news-nouns-vanilla",
+      "repo_id": "homura12138/pairtide",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:linxin02/drift",
+      "candidate_id": "huggingface:ijoerwiou/RVRT-FineTune",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "linxin02/drift",
+      "repo_id": "ijoerwiou/RVRT-FineTune",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:lordspline/sloppa-4b-training",
+      "candidate_id": "huggingface:khazic/illada-rl-code-d1",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "lordspline/sloppa-4b-training",
+      "repo_id": "khazic/illada-rl-code-d1",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:moises05/koth-miner",
+      "candidate_id": "huggingface:kinglacto/anlp-assignment1-checkpoints",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "moises05/koth-miner",
+      "repo_id": "kinglacto/anlp-assignment1-checkpoints",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:molbal/MiniMax-H3-GGUF",
+      "candidate_id": "huggingface:kkomyoeminaung/qwen3-14b-cpt-lora-bf16-tpu",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "molbal/MiniMax-H3-GGUF",
+      "repo_id": "kkomyoeminaung/qwen3-14b-cpt-lora-bf16-tpu",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:oerdogan/erlm-run-artifacts",
+      "candidate_id": "huggingface:kkomyoeminaung/qwen3-8b-cpt-lora-2048",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "oerdogan/erlm-run-artifacts",
+      "repo_id": "kkomyoeminaung/qwen3-8b-cpt-lora-2048",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:outminer/co-1",
+      "candidate_id": "huggingface:kmpartner/modi-test",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "outminer/co-1",
+      "repo_id": "kmpartner/modi-test",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:outminer/co-2",
+      "candidate_id": "huggingface:licyk/model_bin",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "outminer/co-2",
+      "repo_id": "licyk/model_bin",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:outminer/co-3",
+      "candidate_id": "huggingface:mcptester0606/MyAwesomeModel-TestRepo",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "outminer/co-3",
+      "repo_id": "mcptester0606/MyAwesomeModel-TestRepo",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:outminer/co-4",
+      "candidate_id": "huggingface:mradermacher/Gemma4-Gutenberg-26B-A4B-safetensors-i1-GGUF",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "outminer/co-4",
+      "repo_id": "mradermacher/Gemma4-Gutenberg-26B-A4B-safetensors-i1-GGUF",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:outminer/co-5",
+      "candidate_id": "huggingface:mradermacher/NousCoder-14B-GGUF",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "outminer/co-5",
+      "repo_id": "mradermacher/NousCoder-14B-GGUF",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:outminer/co-6",
+      "candidate_id": "huggingface:mradermacher/Qwen3.6-35B-A3B-Uncensored-Genesis-Hermes-V12-dequantized-GGUF",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "outminer/co-6",
+      "repo_id": "mradermacher/Qwen3.6-35B-A3B-Uncensored-Genesis-Hermes-V12-dequantized-GGUF",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:phost01/co-1",
+      "candidate_id": "huggingface:ntviet/mBart50-hre-viet",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "phost01/co-1",
+      "repo_id": "ntviet/mBart50-hre-viet",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:phost01/co-2",
+      "candidate_id": "huggingface:omaralshareef/football-player-classifier",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "phost01/co-2",
+      "repo_id": "omaralshareef/football-player-classifier",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:phost01/co-3",
+      "candidate_id": "huggingface:papylove/alpaca-crypto-model",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "phost01/co-3",
+      "repo_id": "papylove/alpaca-crypto-model",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:putty77/sn99-router-pig2-v27",
+      "candidate_id": "huggingface:pmoller/pi05_napkin_089000",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "putty77/sn99-router-pig2-v27",
+      "repo_id": "pmoller/pi05_napkin_089000",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:putty77/sn99-router-v27",
+      "candidate_id": "huggingface:prism-drift/qwen35-4b-m0-v4-phase-1-lcb-sft-adapters",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "putty77/sn99-router-v27",
+      "repo_id": "prism-drift/qwen35-4b-m0-v4-phase-1-lcb-sft-adapters",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:reneeice/co248",
+      "candidate_id": "huggingface:qweqwrqwr145/MyAwesomeModel-TestRepo",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "reneeice/co248",
+      "repo_id": "qweqwrqwr145/MyAwesomeModel-TestRepo",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:robert131OO4/albedo-qwen3.6-35b-canon1",
+      "candidate_id": "huggingface:snkii/Sori-1B",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "robert131OO4/albedo-qwen3.6-35b-canon1",
+      "repo_id": "snkii/Sori-1B",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:saracen9/amoral-qwen3.5-9B",
+      "candidate_id": "huggingface:strawberryroboticsinc/bp-e03__syn_swp__10hz-bcexpert-pv__d7243e56__flow-c06__bc__bc-aug__xb9c0af2",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "saracen9/amoral-qwen3.5-9B",
+      "repo_id": "strawberryroboticsinc/bp-e03__syn_swp__10hz-bcexpert-pv__d7243e56__flow-c06__bc__bc-aug__xb9c0af2",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:savior28/koth-mainnet-venus-07",
+      "candidate_id": "huggingface:sundaycoil/barcode-generator",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "savior28/koth-mainnet-venus-07",
-      "revision": null,
-      "status": "needs-onboarding-spec"
-    },
-    {
-      "candidate_id": "huggingface:savior28/koth-mainnet-venus-09",
-      "catalog_model_ids": [],
-      "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "savior28/koth-mainnet-venus-09",
-      "revision": null,
-      "status": "needs-onboarding-spec"
-    },
-    {
-      "candidate_id": "huggingface:savior28/koth-mainnet-venus-10",
-      "catalog_model_ids": [],
-      "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "savior28/koth-mainnet-venus-10",
-      "revision": null,
-      "status": "needs-onboarding-spec"
-    },
-    {
-      "candidate_id": "huggingface:sundaycoil/config-watcher",
-      "catalog_model_ids": [],
-      "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "sundaycoil/config-watcher",
+      "repo_id": "sundaycoil/barcode-generator",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
@@ -713,94 +689,118 @@
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:sundaycoil/support-ticket-system",
+      "candidate_id": "huggingface:sundaycoil/language-learning",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "sundaycoil/support-ticket-system",
+      "repo_id": "sundaycoil/language-learning",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:tmeynier/hepha-act-100-domain-randomized-official",
+      "candidate_id": "huggingface:sundaycoil/smart-reminder",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "tmeynier/hepha-act-100-domain-randomized-official",
+      "repo_id": "sundaycoil/smart-reminder",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:tooldev/MyAwesomeModel-TestRepo",
+      "candidate_id": "huggingface:sundaycoil/spell-checker",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "tooldev/MyAwesomeModel-TestRepo",
+      "repo_id": "sundaycoil/spell-checker",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:tylerbrackin0819/koth-miner",
+      "candidate_id": "huggingface:sundaycoil/stock-portfolio",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "tylerbrackin0819/koth-miner",
+      "repo_id": "sundaycoil/stock-portfolio",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:v32lee/koth-miner",
+      "candidate_id": "huggingface:td-builder/RSI",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "v32lee/koth-miner",
+      "repo_id": "td-builder/RSI",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:vmnk/vulnerability-reasoning-backup",
+      "candidate_id": "huggingface:thirtyspokes/standings",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "vmnk/vulnerability-reasoning-backup",
+      "repo_id": "thirtyspokes/standings",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:webbrain-one/DeepSeek-V4-Flash-0731-Vision-BF16",
+      "candidate_id": "huggingface:vaibhav-mugulavalli-2004/ToolCall-200M-SFT-v2.1-checkpoints",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "webbrain-one/DeepSeek-V4-Flash-0731-Vision-BF16",
+      "repo_id": "vaibhav-mugulavalli-2004/ToolCall-200M-SFT-v2.1-checkpoints",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:webbrain-one/DeepSeek-V4-Flash-0731-Vision-NVFP4",
+      "candidate_id": "huggingface:vanijonny/barbados_htr_model",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "webbrain-one/DeepSeek-V4-Flash-0731-Vision-NVFP4",
+      "repo_id": "vanijonny/barbados_htr_model",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:wg-999/skincare_ingredient_analyst",
+      "candidate_id": "huggingface:vanijonny/qwen3vl8b-htr-ext",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "wg-999/skincare_ingredient_analyst",
+      "repo_id": "vanijonny/qwen3vl8b-htr-ext",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:zatup/sn99-router-v2",
+      "candidate_id": "huggingface:voicist/nm-fill-0510",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "zatup/sn99-router-v2",
+      "repo_id": "voicist/nm-fill-0510",
       "revision": null,
       "status": "needs-onboarding-spec"
     },
     {
-      "candidate_id": "huggingface:zatup/sn99-router-v4a",
+      "candidate_id": "huggingface:yamaama/pst-models",
       "catalog_model_ids": [],
       "next_action": "author strict released-spec, then run turbofit-model-onboard",
-      "repo_id": "zatup/sn99-router-v4a",
+      "repo_id": "yamaama/pst-models",
+      "revision": null,
+      "status": "needs-onboarding-spec"
+    },
+    {
+      "candidate_id": "huggingface:yielden/sn120-intel-archive",
+      "catalog_model_ids": [],
+      "next_action": "author strict released-spec, then run turbofit-model-onboard",
+      "repo_id": "yielden/sn120-intel-archive",
+      "revision": null,
+      "status": "needs-onboarding-spec"
+    },
+    {
+      "candidate_id": "huggingface:zeliang0426/MemAgent-PTE-Qwen3-30B-A3B",
+      "catalog_model_ids": [],
+      "next_action": "author strict released-spec, then run turbofit-model-onboard",
+      "repo_id": "zeliang0426/MemAgent-PTE-Qwen3-30B-A3B",
+      "revision": null,
+      "status": "needs-onboarding-spec"
+    },
+    {
+      "candidate_id": "huggingface:zhaors00/Stroke3D",
+      "catalog_model_ids": [],
+      "next_action": "author strict released-spec, then run turbofit-model-onboard",
+      "repo_id": "zhaors00/Stroke3D",
       "revision": null,
       "status": "needs-onboarding-spec"
     }
   ],
-  "generated_at": "2026-08-23T02:22:47.218665+00:00",
+  "generated_at": "2026-09-03T09:49:13.227118+00:00",
   "schema": "turbofit.discovery-benchmark-queue/v1"
 }
