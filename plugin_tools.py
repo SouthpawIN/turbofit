@@ -307,12 +307,101 @@ def install_native_runtime(backend: str = "auto") -> dict[str, Any]:
     return payload
 
 
-def recommended_artifact_families(usable_memory_mb: int | None = None) -> list[str]:
-    """Auto-chain families for this machine, plus default Ornith auxiliary."""
-    if usable_memory_mb is None:
+def probe_hardware():
+    """Profile-local seam for deterministic setup tests and platform routing."""
+    from turbofit_runtime.hardware import probe_hardware as probe
+
+    return probe()
+
+
+def _apple_mlx_hardware(hardware) -> bool:
+    devices = tuple(getattr(hardware, "devices", ()) or ())
+    return any(
+        getattr(device, "vendor", "") == "apple"
+        or getattr(device, "backend", "") == "metal"
+        for device in devices
+    )
+
+
+def install_mlx_runtime() -> dict[str, Any]:
+    script = PLUGIN_ROOT / "scripts" / "install-mlx-runtime"
+    result = subprocess.run(
+        [str(script), "--json"],
+        text=True,
+        capture_output=True,
+        timeout=1800,
+        check=False,
+    )
+    try:
+        payload = json.loads(result.stdout or result.stderr)
+    except ValueError as exc:
+        raise RuntimeError((result.stdout or result.stderr).strip() or "MLX install failed") from exc
+    if result.returncode:
+        raise RuntimeError(payload.get("error") or "MLX install failed")
+    return payload
+
+
+def activate_apple_mlx_stack() -> dict[str, Any]:
+    model_script = PLUGIN_ROOT / "scripts" / "turbofit-mlx-runtime"
+    gateway_script = PLUGIN_ROOT / "scripts" / "turbofit-gateway-runtime"
+    model = subprocess.run(
+        [str(model_script), "start"],
+        text=True,
+        capture_output=True,
+        timeout=1200,
+        check=False,
+    )
+    if model.returncode:
+        raise RuntimeError((model.stderr or model.stdout or "MLX runtime failed").strip())
+    gateway = subprocess.run(
+        [str(gateway_script), "start"],
+        text=True,
+        capture_output=True,
+        timeout=180,
+        check=False,
+    )
+    if gateway.returncode:
+        subprocess.run([str(model_script), "stop"], check=False, timeout=60)
+        raise RuntimeError((gateway.stderr or gateway.stdout or "gateway failed").strip())
+    return {
+        "ok": True,
+        "engine": "mlx",
+        "model": json.loads(model.stdout),
+        "gateway": json.loads(gateway.stdout),
+    }
+
+
+def recommended_artifact_families(
+    usable_memory_mb: int | None = None,
+    *,
+    hardware=None,
+) -> list[str]:
+    """Return artifacts for the machine's actual memory pool and engine lane."""
+    if hardware is None and usable_memory_mb is None:
         from turbofit_runtime.hardware import probe_hardware
 
-        usable_memory_mb = int(probe_hardware().total_usable_memory_mb)
+        hardware = probe_hardware()
+    if hardware is not None:
+        devices = tuple(getattr(hardware, "devices", ()) or ())
+        backend = str(getattr(devices[0], "backend", "") if devices else "")
+        vendor = str(getattr(devices[0], "vendor", "") if devices else "")
+        if backend == "metal" or vendor == "apple":
+            from turbofit_runtime.allowed_lineup import check_local_options
+
+            options = check_local_options(
+                vram_gb=0,
+                host_ram_gb=float(hardware.system_ram_mb) / 1024,
+                memory_pool="unified",
+                backend=backend or "metal",
+                vendor=vendor or "apple",
+            )
+            mains = [str(item["alias"]) for item in options if item.get("role") == "main"]
+            if not mains:
+                raise RuntimeError("Apple MLX recommendation produced no main model")
+            return [mains[0]]
+        usable_memory_mb = int(hardware.total_usable_memory_mb)
+    if usable_memory_mb is None:
+        raise ValueError("usable memory or hardware is required")
     if usable_memory_mb < 16 * 1024:
         main = "maple-preview-tq2"
     elif usable_memory_mb < 24 * 1024:
@@ -1076,13 +1165,27 @@ def apply_configuration(
     from hermes_cli.config import load_config, save_config
 
     with _CONFIG_LOCK:
+        hardware = probe_hardware()
+        apple_hardware = profile == "auto" and _apple_mlx_hardware(hardware)
+        families = recommended_artifact_families(hardware=hardware) if apple_hardware else None
+        apple_family = families[0] if families else None
+        apple_mlx = apple_family == "qwen3-8-27b-uncensored-mlx-8bit"
+        if apple_family and "-mlx-" in apple_family and not apple_mlx:
+            raise RuntimeError(
+                f"managed Apple MLX artifact is not pinned for {apple_family}; setup is blocked"
+            )
+        if apple_mlx and not install_native:
+            raise ValueError(
+                "Apple MLX auto activation requires install_native=true because it installs "
+                "the pinned runtime and starts loopback model and gateway processes"
+            )
         sirvir = install_sirvir_profile() if install_sirvir else None
         desktop = install_desktop_plugin() if install_desktop else None
         lemonade = install_lemonade_runtime() if install_lemonade else None
-        native = install_native_runtime() if install_native else None
+        native = install_native_runtime() if install_native and not apple_mlx else None
         freetoken = install_freetoken_runtime() if install_freetoken else None
-        models = ensure_recommended_models()
-        selected = select_profile(profile) if profile else None
+        models = ensure_recommended_models(families=families) if families else ensure_recommended_models()
+        mlx_runtime = install_mlx_runtime() if apple_mlx else None
         publication = (
             publish_tailnet(
                 dashboard_local_port=dashboard_local_port,
@@ -1094,8 +1197,9 @@ def apply_configuration(
             else None
         )
         effective_base_url = publication["provider_base_url"] if publication else base_url
+        original_config = load_config()
         configured = configure_hermes(
-            load_config(),
+            original_config,
             primary=primary,
             fallback=fallback,
             fallback_chain=list(NOUS_FREE_FALLBACK_CHAIN) if fallback_chain is None else fallback_chain,
@@ -1110,6 +1214,15 @@ def apply_configuration(
                 catalog=MultimodalCatalog.load(MULTIMODAL_CATALOG),
             )
         save_config(configured, merge_existing=False)
+        try:
+            selected = (
+                activate_apple_mlx_stack()
+                if apple_mlx
+                else (select_profile(profile) if profile else None)
+            )
+        except Exception:
+            save_config(original_config, merge_existing=False)
+            raise
     return {
         "ok": True,
         "configured": True,
@@ -1119,6 +1232,7 @@ def apply_configuration(
         "desktop_plugin": desktop,
         "lemonade": lemonade,
         "native_runtime": native,
+        "mlx_runtime": mlx_runtime,
         "freetoken_runtime": freetoken,
         "models": models,
         "restart_required": True,

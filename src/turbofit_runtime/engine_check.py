@@ -54,6 +54,18 @@ class EngineProbe(EngineCompatibility):
 _SPECS = (
     EngineSpec("llama.cpp", "llama.cpp", 8080, "Install Turbofit's pinned native llama.cpp runtime.", ("llama-server", "llama-server.exe"), ()),
     EngineSpec("mlx", "MLX", 8081, "Install mlx-lm on Apple Silicon macOS.", ("mlx_lm.server",), ("mlx_lm",)),
+    EngineSpec(
+        "mtplx",
+        "MTPLX",
+        8000,
+        "Install MTPLX 2.10.1 or newer on Apple Silicon macOS.",
+        ("mtplx",),
+        ("mtplx",),
+        "https://github.com/youssofal/MTPLX",
+        "v2.10.1",
+        "557e637a3aceba4cad7975582979e434aea7c092",
+        True,
+    ),
     EngineSpec("sglang", "SGLang", 30000, "Install SGLang on native Linux or inside WSL.", ("sglang",), ("sglang",)),
     EngineSpec("vllm", "vLLM", 8000, "Install vLLM on Linux/WSL or vLLM-Metal on Apple Silicon.", ("vllm",), ("vllm",)),
     EngineSpec("freetoken", "FreeToken", 1919, "Install freetoken[accel] on Linux x86_64 with CUDA 13.", ("ft",), ("freetoken",)),
@@ -193,9 +205,10 @@ def _compatibility(
     if spec.engine_id == "llama.cpp":
         compatible = os_name in {"linux", "windows", "darwin"}
         reason = "native cross-platform runtime" if compatible else reason
-    elif spec.engine_id == "mlx":
+    elif spec.engine_id in {"mlx", "mtplx"}:
         compatible = os_name == "darwin" and architecture in {"arm64", "aarch64"} and "metal" in backends
-        reason = "Apple Silicon Metal runtime" if compatible else "MLX requires Apple Silicon macOS with Metal"
+        label = "MTPLX" if spec.engine_id == "mtplx" else "MLX"
+        reason = f"Apple Silicon Metal {label} runtime" if compatible else f"{label} requires Apple Silicon macOS with Metal"
     elif spec.engine_id == "sglang":
         compatible = os_name == "linux" and bool(backends & {"cuda", "rocm"})
         reason = "Linux accelerator runtime" if compatible else "SGLang requires Linux/WSL with a supported accelerator"

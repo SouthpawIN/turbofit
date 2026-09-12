@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""Manage Turbofit's owned generic Apple MLX runtime."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any
+
+
+def _ensure_modern_python() -> None:
+    if sys.version_info >= (3, 10):
+        return
+    configured = os.environ.get("TURBOFIT_PYTHON")
+    candidates = ([Path(configured).expanduser()] if configured else []) + sorted(
+        Path("~/.local/share/turbofit/runtimes").expanduser().glob(
+            "mlx-lm-*/.venv/bin/python"
+        ),
+        reverse=True,
+    )
+    for candidate in candidates:
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            os.execv(str(candidate), [str(candidate), __file__, *sys.argv[1:]])
+    raise RuntimeError("Turbofit requires Python 3.10+; install the managed MLX runtime first")
+
+
+_ensure_modern_python()
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.apple_mlx import build_apple_mlx_launch  # noqa: E402
+from turbofit_runtime.managed_engine import (  # noqa: E402
+    ManagedEngineRuntime,
+    publish_engine_routes,
+)
+
+
+def _remove_own_routes(path: Path) -> None:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return
+    if payload.get("active") == "apple-mlx":
+        path.unlink(missing_ok=True)
+
+
+def run_action(
+    action: str,
+    *,
+    runtime: ManagedEngineRuntime,
+    model_root: Path,
+    runtime_root: Path,
+    routes_path: Path,
+    port: int,
+    timeout_s: float,
+) -> dict[str, Any]:
+    launch = build_apple_mlx_launch(
+        model_root=model_root,
+        runtime_root=runtime_root,
+        port=port,
+    )
+    if action == "start":
+        resident = runtime.start_owned(launch, timeout_s=timeout_s)
+        publish_engine_routes(routes_path, launch)
+        return {
+            "ok": True,
+            "action": "start",
+            "pid": resident.pid,
+            "owned": resident.owned,
+        }
+    if action == "stop":
+        stopped = runtime.stop()
+        if stopped:
+            _remove_own_routes(routes_path)
+        return {"ok": stopped, "action": "stop"}
+    if action == "status":
+        return {"action": "status", **runtime.inspect()}
+    raise ValueError(f"unsupported action: {action}")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=("start", "status", "stop"))
+    parser.add_argument(
+        "--model-root",
+        type=Path,
+        default=Path(os.getenv("TURBOFIT_MODEL_ROOT", "~/Models/storage/gguf")).expanduser(),
+    )
+    parser.add_argument(
+        "--runtime-root",
+        type=Path,
+        default=Path("~/.local/share/turbofit/runtimes").expanduser(),
+    )
+    parser.add_argument(
+        "--state",
+        type=Path,
+        default=Path("~/.local/state/turbofit/engines/mlx.json").expanduser(),
+    )
+    parser.add_argument(
+        "--routes",
+        type=Path,
+        default=Path(
+            os.getenv(
+                "TURBOFIT_RUNTIME_STATE",
+                "~/.local/state/turbofit/runtime-state.json",
+            )
+        ).expanduser(),
+    )
+    parser.add_argument("--port", type=int, default=18081)
+    parser.add_argument("--timeout", type=float, default=900.0)
+    args = parser.parse_args()
+    runtime = ManagedEngineRuntime(state_path=args.state)
+    result = run_action(
+        args.action,
+        runtime=runtime,
+        model_root=args.model_root,
+        runtime_root=args.runtime_root,
+        routes_path=args.routes,
+        port=args.port,
+        timeout_s=args.timeout,
+    )
+    print(json.dumps(result, indent=2))
+    return 0 if result.get("ok") else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

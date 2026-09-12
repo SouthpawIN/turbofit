@@ -26,11 +26,29 @@ def test_artifact_manifest_covers_every_executable_matrix_file() -> None:
     model_root = Path.home() / "Models/storage/gguf"
     expected_destinations = {str(Path(path).relative_to(model_root)) for path in expected}
     actual = {item["destination"] for item in payload["artifacts"]}
+    mlx_destinations = {
+        item["destination"]
+        for item in payload["artifacts"]
+        if "qwen3-8-27b-uncensored-mlx-8bit" in item.get("families", [])
+    }
+    known_non_matrix_destinations = {
+        item["destination"]
+        for item in payload["artifacts"]
+        if item.get("repo_id") == "unsloth/MiniMax-M3-GGUF"
+    }
 
     assert payload["schema"] == "turbofit.artifact-manifest/v1"
     assert expected_destinations <= actual
-    assert len(actual) == 36
-    assert all(len(item["sha256"]) == 64 for item in payload["artifacts"])
+    assert actual == expected_destinations | known_non_matrix_destinations | mlx_destinations
+    assert mlx_destinations
+    assert all(
+        len(item["sha256"]) == 64
+        or (
+            item["sha256"].startswith("snapshot:")
+            and len(item["sha256"].removeprefix("snapshot:")) == 40
+        )
+        for item in payload["artifacts"]
+    )
     assert all(len(item["revision"]) == 40 for item in payload["artifacts"])
     assert all(item["size_bytes"] > 0 for item in payload["artifacts"])
 

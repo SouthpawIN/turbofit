@@ -49,3 +49,15 @@ def test_readme_qwen_variants_match_active_catalog() -> None:
     readme = (ROOT / "README.md").read_text()
     assert "Qwen 3.8 27B Unleashed" in readme
     assert "Ornith 1.5 35A3B" in readme
+
+
+def test_distribution_includes_managed_apple_mlx_runtime_files() -> None:
+    distribution = yaml.safe_load((ROOT / "distribution.yaml").read_text())
+    owned = set(distribution["distribution_owned"])
+
+    assert {
+        "references/python-runtimes.json",
+        "scripts/install-mlx-runtime",
+        "scripts/turbofit-gateway-runtime",
+        "scripts/turbofit-mlx-runtime",
+    } <= owned

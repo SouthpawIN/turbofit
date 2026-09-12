@@ -80,7 +80,7 @@ TURBOFIT_CONFIGURE = {
             },
             "install_native": {
                 "type": "boolean",
-                "description": "Install or verify the pinned native adaptive runtime.",
+                "description": "Explicitly install and activate the pinned native runtime. On supported Apple Silicon this downloads the selected MLX snapshot and starts loopback model and gateway processes.",
             },
             "install_freetoken": {
                 "type": "boolean",

@@ -34,6 +34,7 @@ def test_registry_contains_every_turbofit_check_engine() -> None:
     assert tuple(spec.engine_id for spec in engine_specs()) == (
         "llama.cpp",
         "mlx",
+        "mtplx",
         "sglang",
         "vllm",
         "freetoken",
@@ -49,9 +50,10 @@ def test_registry_contains_every_turbofit_check_engine() -> None:
 def test_linux_cuda_checks_all_engines_and_admits_native_linux_engines() -> None:
     reports = by_id(check_engines(machine("linux", "x86_64", backend="cuda"), driver_major=580))
 
-    assert set(reports) == {"llama.cpp", "mlx", "sglang", "vllm", "freetoken", "turbohaul-manager"}
+    assert set(reports) == {"llama.cpp", "mlx", "mtplx", "sglang", "vllm", "freetoken", "turbohaul-manager"}
     assert reports["llama.cpp"].compatible
     assert not reports["mlx"].compatible
+    assert not reports["mtplx"].compatible
     assert reports["sglang"].compatible
     assert reports["vllm"].compatible
     assert reports["freetoken"].compatible
@@ -63,6 +65,7 @@ def test_macos_apple_silicon_admits_llama_mlx_and_vllm_metal() -> None:
 
     assert reports["llama.cpp"].compatible
     assert reports["mlx"].compatible
+    assert reports["mtplx"].compatible
     assert reports["vllm"].compatible
     assert not reports["sglang"].compatible
     assert not reports["freetoken"].compatible

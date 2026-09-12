@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).parents[1]
 
@@ -448,6 +450,176 @@ def test_apply_configuration_can_install_lemonade_runtime(monkeypatch) -> None:
     assert result["lemonade"] == {"status": "verified", "version": "11.5.1"}
 
 
+def test_apply_configuration_activates_managed_apple_mlx_stack(monkeypatch) -> None:
+    import types
+    import plugin_tools
+    from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
+
+    hardware = HardwareFingerprint(
+        os="darwin",
+        architecture="arm64",
+        system_ram_mb=128 * 1024,
+        devices=(AcceleratorDevice(
+            index=0,
+            uuid="apple-unified-memory",
+            name="Apple Silicon Unified Memory",
+            vendor="apple",
+            backend="metal",
+            memory_total_mb=120 * 1024,
+            compute_capability=None,
+            bus_id=None,
+        ),),
+    )
+    hermes_package = types.ModuleType("hermes_cli")
+    hermes_config = types.ModuleType("hermes_cli.config")
+    setattr(hermes_config, "load_config", lambda: {})
+    setattr(hermes_config, "save_config", lambda *_args, **_kwargs: None)
+    monkeypatch.setitem(sys.modules, "hermes_cli", hermes_package)
+    monkeypatch.setitem(sys.modules, "hermes_cli.config", hermes_config)
+    monkeypatch.setattr(plugin_tools, "probe_hardware", lambda: hardware, raising=False)
+    monkeypatch.setattr(
+        plugin_tools,
+        "ensure_recommended_models",
+        lambda **kwargs: {"ok": True, "families": kwargs["families"], "artifacts": []},
+    )
+    monkeypatch.setattr(
+        plugin_tools,
+        "install_mlx_runtime",
+        lambda: {"status": "verified", "versions": {"mlx-lm": "0.31.3"}},
+        raising=False,
+    )
+    monkeypatch.setattr(
+        plugin_tools,
+        "activate_apple_mlx_stack",
+        lambda: {"ok": True, "engine": "mlx", "gateway": "ready"},
+        raising=False,
+    )
+    monkeypatch.setattr(
+        plugin_tools,
+        "select_profile",
+        lambda _profile: (_ for _ in ()).throw(AssertionError("GGUF profile must not be selected")),
+    )
+
+    result = plugin_tools.apply_configuration(
+        primary=False,
+        fallback=None,
+        profile="auto",
+        base_url=None,
+        install_native=True,
+    )
+
+    assert result["models"]["families"] == ["qwen3-8-27b-uncensored-mlx-8bit"]
+    assert result["mlx_runtime"]["status"] == "verified"
+    assert result["selection"]["engine"] == "mlx"
+
+
+def test_apply_configuration_requires_explicit_native_install_for_apple_mlx(monkeypatch) -> None:
+    import types
+    import plugin_tools
+    from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
+
+    hardware = HardwareFingerprint(
+        os="darwin", architecture="arm64", system_ram_mb=128 * 1024,
+        devices=(AcceleratorDevice(
+            index=0, uuid="apple-unified-memory", name="Apple Unified Memory",
+            vendor="apple", backend="metal", memory_total_mb=120 * 1024,
+            compute_capability=None, bus_id=None,
+        ),),
+    )
+    hermes_package = types.ModuleType("hermes_cli")
+    hermes_config = types.ModuleType("hermes_cli.config")
+    setattr(hermes_config, "load_config", lambda: {})
+    setattr(hermes_config, "save_config", lambda *_args, **_kwargs: None)
+    monkeypatch.setitem(sys.modules, "hermes_cli", hermes_package)
+    monkeypatch.setitem(sys.modules, "hermes_cli.config", hermes_config)
+    monkeypatch.setattr(plugin_tools, "probe_hardware", lambda: hardware)
+    monkeypatch.setattr(
+        plugin_tools,
+        "ensure_recommended_models",
+        lambda **_kwargs: (_ for _ in ()).throw(AssertionError("must fail before download")),
+    )
+
+    with pytest.raises(ValueError, match="install_native=true"):
+        plugin_tools.apply_configuration(
+            primary=False, fallback=None, profile="auto", base_url=None,
+        )
+
+
+def test_apply_configuration_blocks_unpinned_lower_memory_apple_mlx(monkeypatch) -> None:
+    import types
+    import plugin_tools
+    from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
+
+    hardware = HardwareFingerprint(
+        os="darwin", architecture="arm64", system_ram_mb=32 * 1024,
+        devices=(AcceleratorDevice(
+            index=0, uuid="apple-unified-memory", name="Apple Unified Memory",
+            vendor="apple", backend="metal", memory_total_mb=30 * 1024,
+            compute_capability=None, bus_id=None,
+        ),),
+    )
+    hermes_package = types.ModuleType("hermes_cli")
+    hermes_config = types.ModuleType("hermes_cli.config")
+    setattr(hermes_config, "load_config", lambda: {})
+    setattr(hermes_config, "save_config", lambda *_args, **_kwargs: None)
+    monkeypatch.setitem(sys.modules, "hermes_cli", hermes_package)
+    monkeypatch.setitem(sys.modules, "hermes_cli.config", hermes_config)
+    monkeypatch.setattr(plugin_tools, "probe_hardware", lambda: hardware)
+    monkeypatch.setattr(
+        plugin_tools,
+        "ensure_recommended_models",
+        lambda **_kwargs: (_ for _ in ()).throw(AssertionError("must fail before download")),
+    )
+
+    with pytest.raises(RuntimeError, match="not pinned"):
+        plugin_tools.apply_configuration(
+            primary=False, fallback=None, profile="auto", base_url=None,
+            install_native=True,
+        )
+
+
+def test_apple_mlx_activation_failure_restores_previous_hermes_config(monkeypatch) -> None:
+    import types
+    import plugin_tools
+    from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
+
+    hardware = HardwareFingerprint(
+        os="darwin", architecture="arm64", system_ram_mb=128 * 1024,
+        devices=(AcceleratorDevice(
+            index=0, uuid="apple-unified-memory", name="Apple Unified Memory",
+            vendor="apple", backend="metal", memory_total_mb=120 * 1024,
+            compute_capability=None, bus_id=None,
+        ),),
+    )
+    original = {"model": {"default": "old-model", "provider": "old-provider"}}
+    saved = []
+    hermes_package = types.ModuleType("hermes_cli")
+    hermes_config = types.ModuleType("hermes_cli.config")
+    setattr(hermes_config, "load_config", lambda: original)
+    setattr(hermes_config, "save_config", lambda value, **_kwargs: saved.append(value))
+    monkeypatch.setitem(sys.modules, "hermes_cli", hermes_package)
+    monkeypatch.setitem(sys.modules, "hermes_cli.config", hermes_config)
+    monkeypatch.setattr(plugin_tools, "probe_hardware", lambda: hardware)
+    monkeypatch.setattr(
+        plugin_tools, "ensure_recommended_models",
+        lambda **kwargs: {"ok": True, "families": kwargs["families"], "artifacts": []},
+    )
+    monkeypatch.setattr(plugin_tools, "install_mlx_runtime", lambda: {"status": "verified"})
+    monkeypatch.setattr(
+        plugin_tools, "activate_apple_mlx_stack",
+        lambda: (_ for _ in ()).throw(RuntimeError("activation failed")),
+    )
+
+    with pytest.raises(RuntimeError, match="activation failed"):
+        plugin_tools.apply_configuration(
+            primary=True, fallback=None, profile="auto", base_url=None,
+            install_native=True,
+        )
+
+    assert len(saved) == 2
+    assert saved[-1] == original
+
+
 def test_apply_configuration_can_install_native_runtime(monkeypatch) -> None:
     import types
     import plugin_tools
@@ -864,3 +1036,30 @@ def test_select_profile_skips_systemctl_on_windows(monkeypatch) -> None:
     assert payload["configured"] is True
     assert payload["controller_restarted"] is False
     assert all(command[0] != "systemctl" for command in seen)
+
+
+def test_recommended_artifacts_follow_apple_mlx_lane() -> None:
+    import plugin_tools
+    from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
+
+    hardware = HardwareFingerprint(
+        os="darwin",
+        architecture="arm64",
+        system_ram_mb=128 * 1024,
+        devices=(
+            AcceleratorDevice(
+                index=0,
+                uuid="apple-unified-memory",
+                name="Apple Silicon Unified Memory",
+                vendor="apple",
+                backend="metal",
+                memory_total_mb=120 * 1024,
+                compute_capability=None,
+                bus_id=None,
+            ),
+        ),
+    )
+
+    assert plugin_tools.recommended_artifact_families(hardware=hardware) == [
+        "qwen3-8-27b-uncensored-mlx-8bit"
+    ]
