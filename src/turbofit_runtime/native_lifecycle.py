@@ -22,6 +22,22 @@ from typing import Callable
 ENDPOINT_NAME = "lifecycle-endpoint.json"
 STATE_NAME = "lifecycle-state.json"
 MAX_BODY_BYTES = 65536
+# Leases older than this are treated as abandoned by a dead holder instead of
+# orphaning every future owner. Recent leases still fail closed: the holder may
+# be alive and its residency must be reconciled by the operator.
+STALE_LEASE_WALL_S = 24 * 3600
+
+
+def _lease_parts(value):
+    """Split a persisted lease entry into (role, acquired_wall|None).
+
+    Current entries are {"role": ..., "acquired_wall": ...}; entries written
+    before acquisition stamps existed are bare role strings and are treated
+    as fresh so old crashes still fail closed.
+    """
+    if isinstance(value, dict):
+        return value.get("role"), value.get("acquired_wall")
+    return value, None
 
 
 class LifecycleUnavailable(RuntimeError):
@@ -66,7 +82,7 @@ class IdleLifecycle:
             data = json.loads((self.state_dir / STATE_NAME).read_text())
             if not isinstance(data, dict) or data.get("schema") != 2:
                 raise ValueError("unrecognised lifecycle state")
-            self._orphaned = bool(data.get("leases"))
+            self._orphaned = self._has_live_leases(data.get("leases"), wall())
             for role, stamp in data["last_activity_wall"].items():
                 if role in self.roles and type(stamp) in (int, float) and math.isfinite(stamp):
                     self._last_activity[role] = clock() - max(0.0, wall() - stamp)
@@ -75,6 +91,18 @@ class IdleLifecycle:
         except (OSError, ValueError, TypeError, KeyError):
             # Do not reclaim potentially busy residents based on corrupt history.
             self._orphaned = True
+
+    @staticmethod
+    def _has_live_leases(leases, now_wall):
+        if not isinstance(leases, dict):
+            return False
+        for value in leases.values():
+            _, acquired = _lease_parts(value)
+            if not isinstance(acquired, (int, float)) or not math.isfinite(acquired):
+                return True
+            if now_wall - acquired <= STALE_LEASE_WALL_S:
+                return True
+        return False
 
     def _persist(self):
         _atomic_write(self.state_dir / STATE_NAME, {
@@ -115,21 +143,21 @@ class IdleLifecycle:
             if role not in self.roles or len(self._leases) >= 256:
                 raise LifecycleError("invalid role or admission limit reached")
             token = secrets.token_hex(24)
-            self._leases[token] = role
+            self._leases[token] = {"role": role, "acquired_wall": self.wall()}
             self._last_activity[role] = self.clock()
             self._persist()
             return token
 
     def release(self, token):
         with self._lock:
-            role = self._leases.pop(token, None)
+            role, _ = _lease_parts(self._leases.pop(token, None))
             if role:
                 self._last_activity[role] = self.clock()
                 self._persist()
 
     def lease_count(self, role):
         with self._lock:
-            return sum(value == role for value in self._leases.values())
+            return sum(_lease_parts(value)[0] == role for value in self._leases.values())
 
     def wake(self, role, start: Callable[[], None]):
         with self._lock:

@@ -66,6 +66,31 @@ def test_crash_with_lease_or_corrupt_state_fails_closed(tmp_path, corrupt):
         assert not allowed
 
 
+def test_abandoned_lease_does_not_orphan_restart(tmp_path):
+    now = [1000.0]
+    lc = lifecycle(tmp_path, now)
+    token = lc.acquire("main")
+    assert lc.lease_count("main") == 1
+    # A dead holder never releases; a day later a fresh owner must proceed.
+    now[0] += 25 * 3600
+    restart = lifecycle(tmp_path, now)
+    assert restart.acquire("main")
+    assert token not in restart._leases
+
+
+def test_legacy_unstamped_lease_still_fails_closed(tmp_path):
+    now = [1000.0]
+    lc = lifecycle(tmp_path, now)
+    lc.acquire("main")
+    state_file = tmp_path / "lifecycle-state.json"
+    data = json.loads(state_file.read_text())
+    data["leases"] = {token: "main" for token in data["leases"]}
+    state_file.write_text(json.dumps(data))
+    restart = lifecycle(tmp_path, now)
+    with pytest.raises(LifecycleError):
+        restart.acquire("main")
+
+
 def test_singleton(tmp_path):
     first, second = lifecycle(tmp_path), lifecycle(tmp_path)
     first.acquire_singleton()
