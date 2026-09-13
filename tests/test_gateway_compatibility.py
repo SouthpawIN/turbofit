@@ -284,3 +284,10 @@ def test_model_rewritten_to_backing_alias(fake_stack):
     )
     response.read()
     assert captured["payload"]["model"] == "qwen-test"
+
+
+def test_missing_runtime_state_names_env_override(tmp_path, monkeypatch, caplog):
+    monkeypatch.setattr(GATEWAY, "RUNTIME_STATE", str(tmp_path / "absent.json"))
+    with caplog.at_level("ERROR", logger="gate"):
+        assert GATEWAY.active_profile() is None
+    assert "TURBOFIT_RUNTIME_STATE" in caplog.text

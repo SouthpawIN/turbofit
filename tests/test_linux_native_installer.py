@@ -11,5 +11,8 @@ def test_linux_service_installer_installs_controller_and_continuous_gateway() ->
     assert 'gateway = ROOT / "scripts" / "turbofit-gateway.py"' in text
     assert "TURBOFIT_ALLOW_API=true" in text
     assert "TURBOFIT_CAMPAIGN_LEASE=" in text
+    assert "controller.env" in text
+    assert "TURBOFIT_MODEL_ROOT=" in text
+    assert "TURBOFIT_RUNTIME_STATE=" in text
     assert '"enable", "turbofit-controller.service", "turbofit-gateway.service"' in text
     assert '"restart", "turbofit-gateway.service", "turbofit-controller.service"' in text

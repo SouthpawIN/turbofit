@@ -9,6 +9,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 UNIT_PATH = Path.home() / ".config" / "systemd" / "user" / "turbofit-controller.service"
 GATEWAY_UNIT_PATH = UNIT_PATH.with_name("turbofit-gateway.service")
+ENV_PATH = Path.home() / ".config" / "turbofit" / "controller.env"
+
+ENV_TEMPLATE = """\
+# Turbofit service environment. Unset entries fall back to portable defaults.
+# Point these at a deployment layout (for example /srv/turbofit)
+# when models and state live outside the home directory.
+#TURBOFIT_MODEL_ROOT=/srv/turbofit/models
+#TURBOFIT_RUNTIME_STATE=/srv/turbofit/state/runtime-state.json
+"""
 
 
 def unit_text() -> str:
@@ -46,6 +55,7 @@ RestartSec=5
 Environment=PYTHONUNBUFFERED=1
 Environment=TURBOFIT_ALLOW_API=true
 Environment=TURBOFIT_CAMPAIGN_LEASE=%h/.local/state/turbofit/campaign-lease.json
+EnvironmentFile=-%h/.config/turbofit/controller.env
 
 [Install]
 WantedBy=default.target
@@ -64,10 +74,15 @@ def main() -> int:
         print(content, end="")
         print("\n# turbofit-gateway.service")
         print(gateway_content, end="")
+        print("\n# controller.env (written only when absent)")
+        print(ENV_TEMPLATE, end="")
         return 0
     UNIT_PATH.parent.mkdir(parents=True, exist_ok=True)
     UNIT_PATH.write_text(content, encoding="utf-8")
     GATEWAY_UNIT_PATH.write_text(gateway_content, encoding="utf-8")
+    if not ENV_PATH.exists():
+        ENV_PATH.parent.mkdir(parents=True, exist_ok=True)
+        ENV_PATH.write_text(ENV_TEMPLATE, encoding="utf-8")
     subprocess.run(["systemctl", "--user", "daemon-reload"], check=True)
     if args.enable or args.start:
         subprocess.run([

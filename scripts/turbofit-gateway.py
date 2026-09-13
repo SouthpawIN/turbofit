@@ -343,6 +343,13 @@ def active_profile():
     try:
         with open(RUNTIME_STATE, encoding="utf-8-sig") as f:
             return (json.load(f).get("active") or "").strip() or None
+    except FileNotFoundError:
+        log.error(
+            "Runtime state %s is missing; set TURBOFIT_RUNTIME_STATE to the "
+            "controller's runtime-state.json for deployments outside $HOME.",
+            RUNTIME_STATE,
+        )
+        return None
     except Exception:
         return None
 
