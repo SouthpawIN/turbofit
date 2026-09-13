@@ -287,6 +287,23 @@ def test_controller_state_round_trips_atomically(tmp_path) -> None:
     assert not list(tmp_path.glob(".controller.json.*"))
 
 
+def test_stale_monotonic_waits_clamp_on_load(tmp_path) -> None:
+    import json
+
+    controller, _ = controller_for(catalog(), "auto", (24576,))
+    controller.tick(pressure(24576), now=0)
+    path = tmp_path / "controller.json"
+    save_controller_state(path, controller.state)
+    # Simulate a cooldown persisted by a previous boot with a higher clock.
+    raw = json.loads(path.read_text())
+    raw["adaptive"]["cooldown_until"] = 922359.0
+    raw["adaptive"]["quarantine_until"] = 922359.0
+    path.write_text(json.dumps(raw))
+    state = load_controller_state(path, now=100.0)
+    assert state.adaptive.cooldown_until == 100.0 + 3600.0
+    assert state.adaptive.quarantine_until == 100.0 + 3600.0
+
+
 def test_failed_activation_returns_persistable_rollback_state() -> None:
     profiles = catalog()
     choice = profiles.select(hardware(24576), requested="auto")

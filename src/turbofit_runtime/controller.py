@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import json
+import math
 import os
+import time
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 import tempfile
@@ -13,6 +15,11 @@ from .pressure import PressureSnapshot
 from .reconciler import ReconcilerState, RollbackFailedError, RuntimeBackend, transition
 from .runtime_profile import AuxMode, Turbofile
 from .selection import ProfileChoice, SelectionMode
+
+
+# Upper bound for monotonic waits restored from disk. Live cooldowns are tens
+# of seconds; anything beyond an hour cannot come from this boot.
+MAX_PERSISTED_WAIT_S = 3600.0
 
 
 @dataclass(frozen=True)
@@ -153,7 +160,7 @@ def save_controller_state(path: str | Path, state: ControllerState) -> None:
             pass
 
 
-def load_controller_state(path: str | Path) -> ControllerState:
+def load_controller_state(path: str | Path, *, now: float | None = None) -> ControllerState:
     raw: Any = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(raw, Mapping):
         raise ValueError("invalid controller state root")
@@ -191,6 +198,17 @@ def load_controller_state(path: str | Path) -> ControllerState:
     if not isinstance(failures, list):
         raise ValueError("controller failure_times must be a list")
     adaptive_values["failure_times"] = tuple(failures)
+    # Monotonic timestamps do not survive a reboot. A cooldown persisted by a
+    # previous boot would otherwise block transitions for longer than the
+    # machine has been up, so clamp wall-relative waits into a sane window.
+    clock = time.monotonic() if now is None else now
+    for key in ("cooldown_until", "quarantine_until"):
+        stamp = adaptive_values.get(key)
+        if isinstance(stamp, bool) or not isinstance(stamp, (int, float)):
+            raise ValueError(f"controller {key} must be a number")
+        if not math.isfinite(stamp):
+            raise ValueError(f"controller {key} must be finite")
+        adaptive_values[key] = min(max(0.0, stamp), clock + MAX_PERSISTED_WAIT_S)
     state = ControllerState(
         selection_mode=SelectionMode(raw["selection_mode"]),
         profile_id=raw["profile_id"],
