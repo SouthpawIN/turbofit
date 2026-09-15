@@ -52,6 +52,7 @@ def test_universal_model_strings_encode_role_without_a_second_provider():
     assert GATEWAY.parse_provider_model("grm-carwin-262k:aux") == ("grm-carwin-262k", "aux")
 
 
+
 def test_manual_selection_rejects_unknown_profile(tmp_path, monkeypatch):
     monkeypatch.setattr(GATEWAY, "PROFILES", str(_profiles(tmp_path)))
     assert GATEWAY.resolve_requested_profile("not-in-catalog") is None
@@ -134,7 +135,7 @@ def test_aux_stream_reaches_client_and_propagates_disconnect(monkeypatch):
                     self.wfile.flush()
                 self.wfile.write(b"data: [DONE]\n\n")
                 self.wfile.flush()
-            except (BrokenPipeError, ConnectionResetError):
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                 upstream_disconnected.set()
 
         def log_message(self, format, *args):
@@ -348,9 +349,7 @@ def test_disconnect_before_first_upstream_byte_cancels_request(monkeypatch):
             request_started.set()
             while not release_request.wait(timeout=0.05):
                 readable, _, _ = select.select([self.connection], [], [], 0)
-                if readable and not self.connection.recv(
-                    1, socket.MSG_PEEK | socket.MSG_DONTWAIT
-                ):
+                if readable and not self.connection.recv(1, socket.MSG_PEEK):
                     upstream_disconnected.set()
                     return
             try:
@@ -358,7 +357,7 @@ def test_disconnect_before_first_upstream_byte_cancels_request(monkeypatch):
                 self.end_headers()
                 self.wfile.write(b"late")
                 self.wfile.flush()
-            except (BrokenPipeError, ConnectionResetError):
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                 upstream_disconnected.set()
 
         def log_message(self, format, *args):
