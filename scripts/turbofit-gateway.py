@@ -78,6 +78,20 @@ _cache = {"main": None, "aux": None, "ts": 0}
 CACHE_TTL = 10
 
 
+def browser_origin_allowed(origin):
+    """Allow browser access only from loopback-hosted Hermes frontends."""
+    if not origin:
+        return False
+    try:
+        parsed = urlsplit(str(origin).strip())
+    except Exception:
+        return False
+    return (
+        parsed.scheme in {"http", "https"}
+        and parsed.hostname in {"localhost", "127.0.0.1", "::1"}
+    )
+
+
 def campaign_lease_active():
     """Return true only for a live campaign owner; stale markers fail open."""
     if CAMPAIGN_GATEWAY:
@@ -941,6 +955,18 @@ class GatewayHandler(BaseHTTPRequestHandler):
         self._proxy()
     def do_DELETE(self):
         self._proxy()
+    def do_OPTIONS(self):
+        origin = self.headers.get("Origin", "")
+        if not browser_origin_allowed(origin):
+            self._send_empty(403)
+            return
+        self.send_response(204)
+        self._send_cors_headers()
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type")
+        self.send_header("Access-Control-Max-Age", "600")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
 
     def _proxy(self):
         path = self.path
@@ -1239,6 +1265,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
                         "connection",
                         "content-length",
                         "content-encoding",
+                        "access-control-allow-origin",
+                        "access-control-allow-credentials",
                     ):
                         continue
                     if normalized in sent_headers:
@@ -1254,6 +1282,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     str(int((time.time() - start) * 1000)),
                 )
                 self.send_header("X-Turbofit-Timeout-S", str(round(timeout_s, 3)))
+                self._send_cors_headers()
                 if streaming:
                     self.send_header("Cache-Control", "no-cache")
                     self.send_header("X-Accel-Buffering", "no")
@@ -1433,7 +1462,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self.send_response(status)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self._send_cors_headers()
             for key, value in (extra_headers or {}).items():
                 self.send_header(key, value)
             self.end_headers()
@@ -1445,12 +1474,19 @@ class GatewayHandler(BaseHTTPRequestHandler):
         try:
             self.send_response(status)
             self.send_header("Content-Length", "0")
+            self._send_cors_headers()
             for key, value in (extra_headers or {}).items():
                 self.send_header(key, value)
             self.end_headers()
             return True
         except (BrokenPipeError, ConnectionResetError):
             return False
+
+    def _send_cors_headers(self):
+        origin = self.headers.get("Origin", "")
+        if browser_origin_allowed(origin):
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
 
     def _write_body(self, body):
         try:
