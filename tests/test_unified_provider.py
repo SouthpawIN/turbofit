@@ -52,6 +52,37 @@ def test_universal_model_strings_encode_role_without_a_second_provider():
     assert GATEWAY.parse_provider_model("grm-carwin-262k:aux") == ("grm-carwin-262k", "aux")
 
 
+def test_browser_cors_allows_loopback_and_rejects_foreign_origin(monkeypatch):
+    monkeypatch.setattr(GATEWAY, "resolve_main", lambda: {"state": "ready"})
+    monkeypatch.setattr(GATEWAY, "resolve_aux", lambda: {"state": "ready"})
+    gateway = ThreadingHTTPServer(("127.0.0.1", 0), GATEWAY.GatewayHandler)
+    threading.Thread(target=gateway.serve_forever, daemon=True).start()
+    try:
+        for origin, expected in (
+            ("http://127.0.0.1:5174", "http://127.0.0.1:5174"),
+            ("http://localhost:3000", "http://localhost:3000"),
+            ("https://evil.example", None),
+        ):
+            client = http.client.HTTPConnection("127.0.0.1", gateway.server_port, timeout=2)
+            client.request("GET", "/health", headers={"Origin": origin})
+            response = client.getresponse()
+            assert response.status == 200
+            assert response.getheader("Access-Control-Allow-Origin") == expected
+            response.read()
+            client.close()
+
+        client = http.client.HTTPConnection("127.0.0.1", gateway.server_port, timeout=2)
+        client.request("OPTIONS", "/v1/chat/completions", headers={"Origin": "https://evil.example"})
+        response = client.getresponse()
+        assert response.status == 403
+        assert response.getheader("Access-Control-Allow-Origin") is None
+        response.read()
+        client.close()
+    finally:
+        gateway.shutdown()
+        gateway.server_close()
+
+
 def test_manual_selection_rejects_unknown_profile(tmp_path, monkeypatch):
     monkeypatch.setattr(GATEWAY, "PROFILES", str(_profiles(tmp_path)))
     assert GATEWAY.resolve_requested_profile("not-in-catalog") is None
@@ -134,7 +165,7 @@ def test_aux_stream_reaches_client_and_propagates_disconnect(monkeypatch):
                     self.wfile.flush()
                 self.wfile.write(b"data: [DONE]\n\n")
                 self.wfile.flush()
-            except (BrokenPipeError, ConnectionResetError):
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                 upstream_disconnected.set()
 
         def log_message(self, format, *args):
@@ -348,9 +379,7 @@ def test_disconnect_before_first_upstream_byte_cancels_request(monkeypatch):
             request_started.set()
             while not release_request.wait(timeout=0.05):
                 readable, _, _ = select.select([self.connection], [], [], 0)
-                if readable and not self.connection.recv(
-                    1, socket.MSG_PEEK | socket.MSG_DONTWAIT
-                ):
+                if readable and not self.connection.recv(1, socket.MSG_PEEK):
                     upstream_disconnected.set()
                     return
             try:
@@ -358,7 +387,7 @@ def test_disconnect_before_first_upstream_byte_cancels_request(monkeypatch):
                 self.end_headers()
                 self.wfile.write(b"late")
                 self.wfile.flush()
-            except (BrokenPipeError, ConnectionResetError):
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                 upstream_disconnected.set()
 
         def log_message(self, format, *args):
