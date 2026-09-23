@@ -253,6 +253,7 @@ def parse_vulkaninfo_text(raw: str) -> tuple[AcceleratorDevice, ...]:
     )
     devices: list[AcceleratorDevice] = []
     vendor_names = {"0x1002": "amd", "0x10de": "nvidia", "0x8086": "intel"}
+    integrated_indices: set[int] = set()
     for block in blocks:
         body = block.group("body")
         name_match = re.search(r"^\s*deviceName\s*=\s*(.+)$", body, re.MULTILINE)
@@ -261,6 +262,7 @@ def parse_vulkaninfo_text(raw: str) -> tuple[AcceleratorDevice, ...]:
         heaps_match = re.search(r"^\s*memoryHeaps:.*?\n(?P<heaps>.*?)(?=^\s*memoryTypes:)", body, re.MULTILINE | re.DOTALL)
         if not (name_match and uuid_match and vendor_match and heaps_match):
             continue
+        integrated = "PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU" in body
         device_local_bytes = 0
         for heap in re.finditer(
             r"^\s*memoryHeaps\[\d+\]:\s*$\n(?P<body>.*?)(?=^\s*memoryHeaps\[\d+\]:|\Z)",
@@ -273,6 +275,8 @@ def parse_vulkaninfo_text(raw: str) -> tuple[AcceleratorDevice, ...]:
                 device_local_bytes += int(size_match.group(1))
         if device_local_bytes <= 0:
             continue
+        if integrated:
+            integrated_indices.add(int(block.group("index")))
         vendor_id = vendor_match.group(1).lower()
         devices.append(AcceleratorDevice(
             index=int(block.group("index")),
@@ -284,6 +288,14 @@ def parse_vulkaninfo_text(raw: str) -> tuple[AcceleratorDevice, ...]:
             compute_capability=None,
             bus_id=None,
         ))
+    if not devices:
+        raise ValueError("no Vulkan devices with dedicated memory heaps")
+    # An integrated GPU's device-local heap is system RAM: it is a display
+    # device, not dedicated inference VRAM. Drop it only when discrete GPUs
+    # are present; keep it on iGPU-only machines where it is the pool.
+    discrete_indices = {device.index for device in devices} - integrated_indices
+    if integrated_indices and discrete_indices:
+        devices = [device for device in devices if device.index not in integrated_indices]
     if not devices:
         raise ValueError("no Vulkan devices with dedicated memory heaps")
     return tuple(sorted(devices, key=lambda item: item.index))
