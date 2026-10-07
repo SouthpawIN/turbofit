@@ -20,6 +20,24 @@ fail() { echo "[FAIL] $*"; FAILED=1; }
 
 FAILED=0
 
+# Print the assistant content from an OpenAI-compatible chat response, truncated
+# to the optional character limit. Parsing happens out of the shell so a response
+# body is never piped into an interpreter: Hermes' plugin installer blocks
+# curl|python and echo|python as critical supply-chain findings, which made the
+# plugin non-installable.
+chat_content() {
+    python3 - "$1" "${2:-100}" <<'PY' 2>/dev/null
+import json
+import sys
+
+try:
+    content = json.loads(sys.argv[1])["choices"][0]["message"]["content"]
+except (ValueError, LookupError, KeyError, TypeError):
+    raise SystemExit(1)
+print(content[: int(sys.argv[2])])
+PY
+}
+
 # Test 1: Local gateway is running
 log "Test 1: Local gateway on :$GATEWAY_PORT"
 if curl -s --max-time 3 "http://127.0.0.1:$GATEWAY_PORT/v1/models" &>/dev/null; then
@@ -46,8 +64,7 @@ RESPONSE=$(curl -s --max-time 30 "$OMARCHY_URL/chat/completions" \
         "max_tokens": 64,
         "temperature": 0
     }' 2>&1)
-if echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['choices'][0]['message']['content'])" &>/dev/null; then
-    CONTENT=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['choices'][0]['message']['content'][:100])")
+if CONTENT=$(chat_content "$RESPONSE" 100); then
     pass "Chat completion works: \"$CONTENT\""
 else
     fail "Chat completion failed: $RESPONSE"
@@ -71,8 +88,7 @@ if [[ "${1:-}" == "--tailscale" ]]; then
             "max_tokens": 64,
             "temperature": 0
         }' 2>&1)
-    if echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['choices'][0]['message']['content'])" &>/dev/null; then
-        CONTENT=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['choices'][0]['message']['content'][:100])")
+    if CONTENT=$(chat_content "$RESPONSE" 100); then
         pass "Tailscale chat completion works: \"$CONTENT\""
     else
         fail "Tailscale chat completion failed: $RESPONSE"
@@ -97,8 +113,7 @@ if [[ "${1:-}" == "--strata" ]]; then
             "max_tokens": 64,
             "temperature": 0
         }' 2>&1)
-    if echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['choices'][0]['message']['content'])" &>/dev/null; then
-        CONTENT=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['choices'][0]['message']['content'][:100])")
+    if CONTENT=$(chat_content "$RESPONSE" 100); then
         pass "Strata chat completion works: \"$CONTENT\""
     else
         fail "Strata chat completion failed: $RESPONSE"
