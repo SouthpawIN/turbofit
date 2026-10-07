@@ -134,7 +134,7 @@ do {
         $Health = Invoke-RestMethod -Uri "http://127.0.0.1:$Port/health" -TimeoutSec 3
         if ($Health.status -eq "ok") {
             $GatewayHealth = Invoke-RestMethod -Uri "http://127.0.0.1:$GatewayPort/health" -TimeoutSec 3
-            if ($GatewayHealth.status -eq "ok") {
+            if ($GatewayHealth.ok -eq $true) {
                 Write-Host "Turbofit Windows provider verified on http://127.0.0.1:$GatewayPort/v1"
                 exit 0
             }
