@@ -100,12 +100,30 @@ def _run(command: Sequence[str], *, capture: bool = False) -> subprocess.Complet
     )
 
 
+def normalized_patch_bytes(patch: Path) -> bytes:
+    """*patch* bytes with CRLF (or lone CR) normalized to LF.
+
+    Git for Windows ships ``core.autocrlf=true`` by default, which rewrites
+    ``*.patch`` files to CRLF on checkout. ``git apply`` rejects a CRLF patch
+    as corrupt, so never feed git the raw checkout bytes.
+    """
+    return patch.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def _git_apply(source: Path, patch: Path, *, check: bool) -> None:
+    command = ["git", "-C", str(source), "apply"]
+    if check:
+        command.append("--check")
+    command.append("-")
+    subprocess.run(command, input=normalized_patch_bytes(patch), check=True)
+
+
 def apply_patches(source: Path) -> None:
     for patch in PATCHES:
         if not patch.is_file():
             raise FileNotFoundError(patch)
-        _run(["git", "-C", str(source), "apply", "--check", str(patch)])
-        _run(["git", "-C", str(source), "apply", str(patch)])
+        _git_apply(source, patch, check=True)
+        _git_apply(source, patch, check=False)
 
 
 def install(
