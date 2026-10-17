@@ -1,6 +1,7 @@
 """Per-card GPU admission and mandatory clear gates."""
 from __future__ import annotations
 
+import shutil
 import subprocess
 import json
 import platform
@@ -8,6 +9,8 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Callable, Mapping, Sequence
+
+from .intel_xpu import INTEGRATED_BDF_PREFIX
 
 
 @dataclass(frozen=True)
@@ -91,12 +94,48 @@ def parse_nvidia_memory_csv(raw: str) -> tuple[GPUSample, ...]:
 def probe_gpus() -> tuple[GPUSample, ...]:
     if platform.system() == "Windows":
         return probe_windows_gpus()
-    raw = subprocess.check_output([
-        "nvidia-smi",
-        "--query-gpu=index,memory.total,memory.used,memory.free,utilization.gpu",
-        "--format=csv,noheader,nounits",
-    ], text=True)
-    return parse_nvidia_memory_csv(raw)
+    if shutil.which("nvidia-smi"):
+        raw = subprocess.check_output([
+            "nvidia-smi",
+            "--query-gpu=index,memory.total,memory.used,memory.free,utilization.gpu",
+            "--format=csv,noheader,nounits",
+        ], text=True)
+        return parse_nvidia_memory_csv(raw)
+    return probe_intel_xpu_gpus()
+
+
+def parse_xpu_gpu_memory_csv(raw: str) -> tuple[GPUSample, ...]:
+    """Parse xpu-smi GPU memory rows, skipping integrated (shared-aperture) parts."""
+    rows = []
+    for line in raw.strip().splitlines():
+        if not line.strip():
+            continue
+        values = [item.strip() for item in line.split(",")]
+        if len(values) != 7:
+            raise ValueError(f"expected seven xpu-smi memory columns: {line}")
+        gpu, _uuid, bus_id, total, used, free, utilization = values
+        if bus_id.startswith(INTEGRATED_BDF_PREFIX):
+            continue
+        try:
+            rows.append(GPUSample(
+                gpu=int(gpu),
+                total_mb=round(float(total)),
+                used_mb=round(float(used)),
+                free_mb=round(float(free)),
+                utilization_pct=int(round(float(utilization))),
+            ))
+        except ValueError as exc:
+            raise ValueError(f"invalid xpu-smi memory field: {line}") from exc
+    return tuple(rows)
+
+
+def probe_intel_xpu_gpus() -> tuple[GPUSample, ...]:
+    from .intel_xpu import XPU_GPU_MEMORY_QUERY  # local import: avoids cycle
+    raw = subprocess.check_output(list(XPU_GPU_MEMORY_QUERY), text=True, stderr=subprocess.PIPE)
+    samples = parse_xpu_gpu_memory_csv(raw)
+    if not samples:
+        raise ValueError("xpu-smi GPU memory probe returned no discrete devices")
+    return samples
 
 
 def parse_windows_gpu_memory(raw: str) -> tuple[GPUSample, ...]:

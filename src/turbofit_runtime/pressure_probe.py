@@ -10,6 +10,7 @@ from io import StringIO
 from typing import Any, Callable
 
 from .hardware import HardwareFingerprint
+from .intel_xpu import probe_xpu_pressure
 from .pressure import CardMemory, GPUProcess, PressureSnapshot, measure_pressure
 
 CARD_QUERY = [
@@ -56,6 +57,17 @@ def probe_accelerator_pressure(
     backends = {device.backend for device in hardware.devices}
     if backends == {"cuda"}:
         return probe_nvidia_pressure(
+            hardware,
+            manager_status=manager_status,
+            managed_required_mb=managed_required_mb,
+            command_runner=command_runner,
+            desktop_baseline_mb=desktop_baseline_mb,
+            safety_reserve_mb=safety_reserve_mb,
+        )
+    if backends == {"vulkan"} and all(
+        device.vendor == "intel" for device in hardware.devices
+    ):
+        return probe_xpu_pressure_snapshot(
             hardware,
             manager_status=manager_status,
             managed_required_mb=managed_required_mb,
@@ -122,6 +134,41 @@ def probe_nvidia_pressure(
         processes = _parse_processes(runner(list(PROCESS_QUERY)), uuid_to_index)
     except (FileNotFoundError, OSError, subprocess.SubprocessError, ValueError):
         processes = None
+    manager_pids = frozenset(_collect_pids(manager_status))
+    required = managed_required_mb or tuple(0 for _ in hardware.devices)
+    managed_resident = {
+        device.index: value for device, value in zip(hardware.devices, required, strict=True)
+    }
+    desktop = {device.index: desktop_baseline_mb for device in hardware.devices}
+    safety = {device.index: safety_reserve_mb for device in hardware.devices}
+    empty = {device.index: 0 for device in hardware.devices}
+    return measure_pressure(
+        cards=cards,
+        processes=processes,
+        managed_pids=set(manager_pids),
+        runtime_pids=set(manager_pids),
+        managed_resident_mb=managed_resident,
+        desktop_baseline_mb=desktop,
+        safety_reserve_mb=safety,
+        reservations_mb=empty,
+    )
+
+
+def probe_xpu_pressure_snapshot(
+    hardware: HardwareFingerprint,
+    *,
+    manager_status: dict[str, Any],
+    managed_required_mb: tuple[int, ...],
+    command_runner: Callable[[list[str]], str] | None = None,
+    desktop_baseline_mb: int = 256,
+    safety_reserve_mb: int = 512,
+) -> PressureSnapshot:
+    """Intel Arc pressure through xpu-smi, as close to the CUDA model as the
+    Level Zero surface allows: per-card memory plus per-process attribution,
+    with integrated parts filtered out of the fingerprint inventory."""
+    if len(managed_required_mb) not in {0, len(hardware.devices)}:
+        raise ValueError("managed requirements must be empty or match device count")
+    cards, processes = probe_xpu_pressure(hardware.devices, command_runner)
     manager_pids = frozenset(_collect_pids(manager_status))
     required = managed_required_mb or tuple(0 for _ in hardware.devices)
     managed_resident = {
