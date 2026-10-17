@@ -311,7 +311,21 @@ def probe_hardware(
             devices = parse_rocm_smi_json(runner(list(ROCM_INVENTORY_QUERY)))
         except (FileNotFoundError, OSError, ValueError, subprocess.SubprocessError):
             devices = ()
-    if not devices and normalized_os in {"windows", "linux"}:
+    # Intel discrete GPUs answer to xpu-smi; when it reports devices they are
+    # authoritative, because vulkaninfo device-local heaps charge an integrated
+    # part's shared aperture as dedicated VRAM. Integrated parts are excluded
+    # and counted through host RAM only.
+    xpu_answered = False
+    if not devices and normalized_os == "linux":
+        from .intel_xpu import probe_xpu_devices  # local import: avoids cycle
+        try:
+            rows = probe_xpu_devices(runner)
+        except (FileNotFoundError, OSError, ValueError, subprocess.SubprocessError):
+            rows = ()
+        if rows:
+            xpu_answered = True
+            devices = tuple(row.device for row in rows if not row.integrated)
+    if not devices and normalized_os in {"windows", "linux"} and not xpu_answered:
         try:
             devices = parse_vulkaninfo_text(runner(list(VULKAN_INVENTORY_QUERY)))
         except (FileNotFoundError, OSError, ValueError, subprocess.SubprocessError):
