@@ -20,6 +20,12 @@ FAST_TPS = 50.0
 # (16 MiB below the binary tier). Keep the physical tier boundary strict
 # apart from that documented reporting delta.
 DEDICATED_VRAM_REPORTING_TOLERANCE_MB = 16
+# Installed RAM class tolerance for shared-memory machines: firmware/kernel
+# reservations (memory hole, iGPU aperture, ACPI tables) put real MemTotal
+# slightly below the sold capacity, mirroring the dedicated-VRAM reporting
+# delta. Evidence-bound, not a performance claim: Maple's 8 GiB envelope was
+# verified at peak ~5.6 GiB, so a reporting delta here cannot change fit.
+SHARED_MEMORY_CLASS_TOLERANCE_MB = 1024
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _TOPOLOGY_PART_RE = re.compile(r"^(\d+)x(\d+)(?:gb)?$", re.IGNORECASE)
 
@@ -147,16 +153,31 @@ def hardware_satisfies(
 ) -> bool:
     devices = hardware.devices
     shared_local = hardware.shared_memory_pool and constraint.accelerator.lower() == "llama.cpp-local"
+    # Shared-memory class checks measure installed system RAM, not the
+    # post-reserve usable amount: tier floors follow the fit-list definition
+    # (shared total memory, e.g. Maple 8-15GB), and the runtime applies its
+    # own host reserve when actually loading models. Measuring usable memory
+    # would reject every floor-tier machine, since reserve-aware numbers are
+    # always below their installed class.
+    class_memory_mb = (
+        hardware.system_ram_mb
+        if shared_local
+        else hardware.total_usable_memory_mb
+    )
     effective_device_count = constraint.min_devices if shared_local else len(devices)
     if effective_device_count < constraint.min_devices:
         return False
-    if hardware.total_usable_memory_mb < _gb_to_mb(constraint.total_vram_gb):
+    if class_memory_mb < _gb_to_mb(constraint.total_vram_gb) - (
+        SHARED_MEMORY_CLASS_TOLERANCE_MB if shared_local else 0
+    ):
         return False
     minimum_mb = _gb_to_mb(constraint.per_device_min_gb)
     if not shared_local:
         minimum_mb = max(0, minimum_mb - DEDICATED_VRAM_REPORTING_TOLERANCE_MB)
+    else:
+        minimum_mb = max(0, minimum_mb - SHARED_MEMORY_CLASS_TOLERANCE_MB)
     capable_devices = (
-        constraint.min_devices if shared_local and hardware.total_usable_memory_mb >= minimum_mb
+        constraint.min_devices if shared_local and class_memory_mb >= minimum_mb
         else sum(device.memory_total_mb >= minimum_mb for device in devices)
     )
     if capable_devices < constraint.min_devices:
