@@ -11,7 +11,7 @@ tags: [hermes-agent, llama-cpp, llm, accelerator, cpu, adaptive-runtime, turbofi
 
 ## 2.4 model authority
 
-Two ladders converge on Qwen 3.8 Flash Next. Ladder 1 — dedicated VRAM (dense is fine): Bonsai 2 27B PTQ1_0/PQ2_0 at 8–11 GB → Underdog 27B PQ2_0 at 12–15 GB → Qwen 3.8 27B GSQ-RCO IQ3_S at 16–48 GB (262K from 24 GB) → Flash Next IQ3_XXS at 64 GB+. Ladder 2 — unified/CPU (MoE only): Maple Preview 20B-A1B at 8–15 GB → Cyber-Tiel Coder 35B-A3B UD-Q4_K_XL at 16 GB+ → Flash Next → DeepSeek V4.1 (1017) as the top rung (native engine pending). Fit math: model + KV ≤ tier. Cross-cutting: MTP on at every rung; IQ3_S is lossless — do not push a heavier quant past it for the power bill. `serve auto` builds the fit chain from these ladders and walks down on OOM/timeout — the Fit List IS the fallback chain.
+Two ladders converge on Qwen 3.8 Flash Next. Ladder 1 — dedicated VRAM (dense is fine): Bonsai 2 27B PTQ1_0/PQ2_0 at 8–11 GB → Underdog 27B PQ2_0 at 12–15 GB → Qwen 3.8 27B GSQ-RCO IQ3_S at 16–48 GB (262K from 24 GB) → Flash Next IQ3_XXS at 64 GB+. Ladder 2 — unified/CPU (MoE only): Maple Preview 20B-A1B at 8–15 GB → Cyber-Tiel Coder 35B-A3B UD-Q4_K_XL at 16 GB+ → Flash Next → DeepSeek V4.1 (1017) as the top rung (native engine pending). Measured rung (2026-10-27, RTX 3080 10GB + 32GB RAM): Ornith 1.5 35B-A3B Q4_K_M on llama.cpp b11935, ngl 99 ncmoe 30 fa on → pp512 126 t/s, tg128 41 t/s, 21.9 GB GGUF resident, ctx 65536 — the live Windows main. Fit math: model + KV ≤ tier. Cross-cutting: MTP on at every rung; IQ3_S is lossless — do not push a heavier quant past it for the power bill. `serve auto` builds the fit chain from these ladders and walks down on OOM/timeout — the Fit List IS the fallback chain.
 
 ## Use when
 
@@ -60,6 +60,31 @@ Legacy `serve`, direct launchers, and scaling watcher are compatibility tools, n
 Hardware fingerprints classify memory as `dedicated`, `unified`, or `cpu`. Turbofit reserves 5% of host RAM, bounded to 1–8 GiB, and never double-counts unified memory. Dedicated systems can combine VRAM and host RAM through llama.cpp offload; contexts beyond the model's native window move KV cache pressure to host RAM when at least 32 GiB is usable. Unified-memory systems suppress discrete split flags. CPU-only systems use pinned CPU runtimes with both model and draft GPU layers set to zero.
 
 Backend order is CUDA → ROCm → Vulkan → CPU on Linux/Windows and Metal on macOS. Build or verify the current machine's pinned backend with `scripts/install-native-runtimes --backend cuda|rocm|metal|vulkan|cpu`.
+
+## Windows native install
+
+Windows is a separate, user-scoped path: pinned llama.cpp runtime on loopback 8092, gateway on 8091, two limited user scheduled tasks. It wants a C++ build toolchain (CMake, Ninja, MSVC, plus the CUDA toolkit only for the `cuda` backend) — **never Ollama**: Turbofit owns its own `llama-server.exe`, and :8091 is the Turbofit gateway, not an Ollama proxy. Sequence: install the Hermes plugin, download a model artifact, then run the service installer — the plugin alone does not bind 8091, and restarting the messaging gateway will not create it. To avoid the toolchain, pass `-Binary` a prebuilt `llama-server.exe` taken from the **pinned revision's own release tag** (mandatory for Vulkan, which the runtime installer cannot build), accepting that a stock prebuilt lacks the repo's yarn long-context patch.
+
+Turbofit needs **no account, subscription, or API key** — the plugin is a plain git install and the provider is `custom:turbofit` with model `auto`. On a fresh machine give the user a working agent first (Hermes' built-in Local Models provider also needs no account) and do the Turbofit native service last; its GGUF download is the long pole. Run **one** local stack at a time: Hermes' managed Local Models server (port 8080, started and stopped by the app) and Turbofit's owned residency (8092/8091) both want the GPU, and adaptive contraction only works when Turbofit owns the residency.
+
+Two rules that cost a session to learn:
+
+- **`hermes plugins install` finishes with the plugin disabled.** Run `hermes plugins enable turbofit` explicitly; do not gate on `hermes plugins list` containing the word `disabled`, because the listing format does not always show it. Its tools and `/turbofit` command only register after a full Desktop quit and a new session.
+- **Verify the accelerator before believing a speed number.** `llama-server --list-devices` must name the GPU and the extracted folder must hold the backend DLL. A binary that answers `--help` but lists no device runs the model on CPU at roughly 1 tok/s, which surfaces later as "Turbofit is broken."
+
+Dependency table, exact commands, prebuilt acquisition (pinned release tag, not `latest`), `-Model`/`-Context` caveats, LAN sharing, accelerator verification, and how to drive a by-hand install from a weak model: `references/windows-native-install.md`.
+
+Measured on RTX 3080 10GB + 32GB RAM, Ornith-1.5-35B-A3B Q4_K_M, ngl 99 ncmoe 30 fa on (2026-10-27, live-server contention): llama.cpp b10269 pp512 83 t/s / tg128 42.8 t/s; b11935 pp512 126 t/s / tg128 41.3 t/s. Newer builds are a prompt-eval win, decode-neutral — prefer newer prebuilts.
+
+## Sharing the gateway with a remote Hermes (Hermes Cloud, VPS, another box)
+
+Hermes Cloud (portal.nousresearch.com/cloud) is a hosted always-on Hermes **agent** instance sized by VM tier — its RAM is for the agent process, never for hosting GGUFs. The integration direction that matters: route the remote agent's inference to the local Turbofit gateway.
+
+- Expose the gateway: re-run the Windows service installer with `-GatewayHost 0.0.0.0` (or set `TURBOFIT_GATEWAY_HOST`; default `127.0.0.1`). The LAN-sharing recipe itself: `references/windows-native-install.md`.
+- On the remote Hermes: `provider: custom`, `base_url: http://<reachable-ip>:8091/v1`, model id one of the stable route IDs (`auto`, `active:main`, `active:aux`). Never `custom` + a GGUF filename on the client.
+- The gateway authenticates no inbound calls — anything beyond loopback must sit behind a tailnet or tunnel, never raw public. The CORS `browser_origin_allowed` check gates only browser origins; server-to-server calls pass.
+- An always-on remote agent loses its main model whenever the rig sleeps — keep a portal-model fallback in the remote config, and say so before recommending the setup.
+- Manage cloud instances from a local Hermes via the Portal MCP server: `hermes mcp add --url https://portal.nousresearch.com/mcp --auth oauth hermes-cloud` (list/start/stop/create/`update_env`, cost estimates).
 
 ## Non-negotiable safety
 
@@ -132,6 +157,8 @@ No collector may modify runtime profiles, routes, or credentials. Live cron sche
 5. Route-state freshness and stable IDs
 6. Acceptance record blockers
 7. Focused tests, then full `scripts/release-check`
+
+On the Windows rig the gateway mirrors logs to `%LOCALAPPDATA%\hermes\logs\turbofit-gateway.log` (pythonw discards stderr, so without it deaths leave no trace); the `TurbofitGateway` keepalive task restarts it within 5 minutes, so check that log before assuming an outage was long.
 
 If `http://127.0.0.1:8091/v1/models` is connection-refused, the Turbofit provider gateway is not running. That is setup missing. Do not restart the Hermes messaging gateway, do not start with a firewall hunt when nothing listens, and do not invoke TurboSouth until the endpoint answers.
 
