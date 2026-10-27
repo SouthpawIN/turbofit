@@ -61,6 +61,29 @@ Hardware fingerprints classify memory as `dedicated`, `unified`, or `cpu`. Turbo
 
 Backend order is CUDA → ROCm → Vulkan → CPU on Linux/Windows and Metal on macOS. Build or verify the current machine's pinned backend with `scripts/install-native-runtimes --backend cuda|rocm|metal|vulkan|cpu`.
 
+## Windows native install
+
+Windows is a separate, user-scoped path: pinned llama.cpp runtime on loopback 8092, gateway on 8091, two limited user scheduled tasks. It wants a C++ build toolchain (CMake, Ninja, MSVC, plus the CUDA toolkit only for the `cuda` backend) — **never Ollama**: Turbofit owns its own `llama-server.exe`, and :8091 is the Turbofit gateway, not an Ollama proxy. Sequence: install the Hermes plugin, download a model artifact, then run the service installer — the plugin alone does not bind 8091, and restarting the messaging gateway will not create it. To avoid the toolchain, pass `-Binary` a prebuilt `llama-server.exe` taken from the **pinned revision's own release tag** (mandatory for Vulkan, which the runtime installer cannot build), accepting that a stock prebuilt lacks the repo's yarn long-context patch.
+
+Turbofit needs **no account, subscription, or API key** — the plugin is a plain git install and the provider is `custom:turbofit` with model `auto`. On a fresh machine give the user a working agent first (Hermes' built-in Local Models provider also needs no account) and do the Turbofit native service last; its GGUF download is the long pole. Run **one** local stack at a time: Hermes' managed Local Models server (port 8080, started and stopped by the app) and Turbofit's owned residency (8092/8091) both want the GPU, and adaptive contraction only works when Turbofit owns the residency.
+
+Two rules that cost a session to learn:
+
+- **`hermes plugins install` finishes with the plugin disabled.** Run `hermes plugins enable turbofit` explicitly; do not gate on `hermes plugins list` containing the word `disabled`, because the listing format does not always show it. Its tools and `/turbofit` command only register after a full Desktop quit and a new session.
+- **Verify the accelerator before believing a speed number.** `llama-server --list-devices` must name the GPU and the extracted folder must hold the backend DLL. A binary that answers `--help` but lists no device runs the model on CPU at roughly 1 tok/s, which surfaces later as "Turbofit is broken."
+
+Dependency table, exact commands, prebuilt acquisition (pinned release tag, not `latest`), `-Model`/`-Context` caveats, LAN sharing, accelerator verification, and how to drive a by-hand install from a weak model: `references/windows-native-install.md`.
+
+## Sharing the gateway with a remote Hermes (Hermes Cloud, VPS, another box)
+
+Hermes Cloud (portal.nousresearch.com/cloud) is a hosted always-on Hermes **agent** instance sized by VM tier — its RAM is for the agent process, never for hosting GGUFs. The integration direction that matters: route the remote agent's inference to the local Turbofit gateway.
+
+- Expose the gateway: re-run the Windows service installer with `-GatewayHost 0.0.0.0` (or set `TURBOFIT_GATEWAY_HOST`; default `127.0.0.1`). The LAN-sharing recipe itself: `references/windows-native-install.md`.
+- On the remote Hermes: `provider: custom`, `base_url: http://<reachable-ip>:8091/v1`, model id one of the stable route IDs (`auto`, `active:main`, `active:aux`). Never `custom` + a GGUF filename on the client.
+- The gateway authenticates no inbound calls — anything beyond loopback must sit behind a tailnet or tunnel, never raw public. The CORS `browser_origin_allowed` check gates only browser origins; server-to-server calls pass.
+- An always-on remote agent loses its main model whenever the rig sleeps — keep a portal-model fallback in the remote config, and say so before recommending the setup.
+- Manage cloud instances from a local Hermes via the Portal MCP server: `hermes mcp add --url https://portal.nousresearch.com/mcp --auth oauth hermes-cloud` (list/start/stop/create/`update_env`, cost estimates).
+
 ## Non-negotiable safety
 
 - Never kill or signal external accelerator/model processes.
