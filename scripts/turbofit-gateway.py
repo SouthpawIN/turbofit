@@ -34,6 +34,24 @@ logging.basicConfig(
     format="%(asctime)s [gate] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
+
+# pythonw discards stderr, so mirror logs to a rotating file or deaths leave no trace
+_GATE_LOG_DIR = os.path.join(os.path.expanduser("~"), "AppData", "Local", "hermes", "logs")
+try:
+    os.makedirs(_GATE_LOG_DIR, exist_ok=True)
+    from logging.handlers import RotatingFileHandler
+
+    logging.getLogger().addHandler(
+        RotatingFileHandler(
+            os.path.join(_GATE_LOG_DIR, "turbofit-gateway.log"),
+            maxBytes=1_000_000,
+            backupCount=3,
+            encoding="utf-8",
+        )
+    )
+except OSError:
+    pass  # stderr logging still works if the file is unavailable
+
 log = logging.getLogger("gate")
 
 HOME = os.path.expanduser("~")
