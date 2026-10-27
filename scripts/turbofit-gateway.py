@@ -36,14 +36,17 @@ logging.basicConfig(
 )
 
 # pythonw discards stderr, so mirror logs to a rotating file or deaths leave no trace
-_GATE_LOG_DIR = os.path.join(os.path.expanduser("~"), "AppData", "Local", "hermes", "logs")
+if os.name == "nt":
+    _GATE_LOG_DIR = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "hermes" / "logs"
+else:
+    _GATE_LOG_DIR = Path(os.getenv("XDG_STATE_HOME", Path.home() / ".local/state")) / "turbofit"
 try:
-    os.makedirs(_GATE_LOG_DIR, exist_ok=True)
+    _GATE_LOG_DIR.mkdir(parents=True, exist_ok=True)
     from logging.handlers import RotatingFileHandler
 
     logging.getLogger().addHandler(
         RotatingFileHandler(
-            os.path.join(_GATE_LOG_DIR, "turbofit-gateway.log"),
+            _GATE_LOG_DIR / "turbofit-gateway.log",
             maxBytes=1_000_000,
             backupCount=3,
             encoding="utf-8",
