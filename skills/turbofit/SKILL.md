@@ -11,7 +11,7 @@ tags: [hermes-agent, llama-cpp, llm, accelerator, cpu, adaptive-runtime, turbofi
 
 ## 2.4 model authority
 
-Two ladders converge on Qwen 3.8 Flash Next. Ladder 1 — dedicated VRAM (dense is fine): Bonsai 2 27B PTQ1_0/PQ2_0 at 8–11 GB → Underdog 27B PQ2_0 at 12–15 GB → Qwen 3.8 27B GSQ-RCO IQ3_S at 16–48 GB (262K from 24 GB) → Flash Next IQ3_XXS at 64 GB+. Ladder 2 — unified/CPU (MoE only): Maple Preview 20B-A1B at 8–15 GB → Cyber-Tiel Coder 35B-A3B UD-Q4_K_XL at 16 GB+ → Flash Next → DeepSeek V4.1 (1017) as the top rung (native engine pending). Fit math: model + KV ≤ tier. Cross-cutting: MTP on at every rung; IQ3_S is lossless — do not push a heavier quant past it for the power bill. `serve auto` builds the fit chain from these ladders and walks down on OOM/timeout — the Fit List IS the fallback chain.
+Two ladders converge on Qwen 3.8 Flash Next. Ladder 1 — dedicated VRAM (dense is fine): Bonsai 2 27B PTQ1_0/PQ2_0 at 8–11 GB → Underdog 27B PQ2_0 at 12–15 GB → Qwen 3.8 27B GSQ-RCO IQ3_S at 16–48 GB (262K from 24 GB) → Flash Next IQ3_XXS at 64 GB+. Ladder 2 — unified/CPU (MoE only): Maple Preview 20B-A1B at 8–15 GB → Cyber-Tiel Coder 35B-A3B UD-Q4_K_XL at 16 GB+ → Flash Next → DeepSeek V4.1 (1017) as the top rung (native engine pending). Measured rung (2026-10-27, RTX 3080 10GB + 32GB RAM): Ornith 1.5 35B-A3B Q4_K_M on llama.cpp b11935, ngl 99 ncmoe 30 fa on → pp512 126 t/s, tg128 41 t/s, 21.9 GB GGUF resident, ctx 65536 — the live Windows main. Fit math: model + KV ≤ tier. Cross-cutting: MTP on at every rung; IQ3_S is lossless — do not push a heavier quant past it for the power bill. `serve auto` builds the fit chain from these ladders and walks down on OOM/timeout — the Fit List IS the fallback chain.
 
 ## Use when
 
@@ -73,6 +73,8 @@ Two rules that cost a session to learn:
 - **Verify the accelerator before believing a speed number.** `llama-server --list-devices` must name the GPU and the extracted folder must hold the backend DLL. A binary that answers `--help` but lists no device runs the model on CPU at roughly 1 tok/s, which surfaces later as "Turbofit is broken."
 
 Dependency table, exact commands, prebuilt acquisition (pinned release tag, not `latest`), `-Model`/`-Context` caveats, LAN sharing, accelerator verification, and how to drive a by-hand install from a weak model: `references/windows-native-install.md`.
+
+Measured on RTX 3080 10GB + 32GB RAM, Ornith-1.5-35B-A3B Q4_K_M, ngl 99 ncmoe 30 fa on (2026-10-27, live-server contention): llama.cpp b10269 pp512 83 t/s / tg128 42.8 t/s; b11935 pp512 126 t/s / tg128 41.3 t/s. Newer builds are a prompt-eval win, decode-neutral — prefer newer prebuilts.
 
 ## Sharing the gateway with a remote Hermes (Hermes Cloud, VPS, another box)
 
@@ -155,6 +157,8 @@ No collector may modify runtime profiles, routes, or credentials. Live cron sche
 5. Route-state freshness and stable IDs
 6. Acceptance record blockers
 7. Focused tests, then full `scripts/release-check`
+
+On the Windows rig the gateway mirrors logs to `%LOCALAPPDATA%\hermes\logs\turbofit-gateway.log` (pythonw discards stderr, so without it deaths leave no trace); the `TurbofitGateway` keepalive task restarts it within 5 minutes, so check that log before assuming an outage was long.
 
 If `http://127.0.0.1:8091/v1/models` is connection-refused, the Turbofit provider gateway is not running. That is setup missing. Do not restart the Hermes messaging gateway, do not start with a firewall hunt when nothing listens, and do not invoke TurboSouth until the endpoint answers.
 
