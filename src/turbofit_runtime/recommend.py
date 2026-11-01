@@ -20,6 +20,13 @@ FAST_TPS = 50.0
 # (16 MiB below the binary tier). Keep the physical tier boundary strict
 # apart from that documented reporting delta.
 DEDICATED_VRAM_REPORTING_TOLERANCE_MB = 16
+# Dedicated GPUs reserve driver/runtime memory, so the device-local heap is
+# a few hundred MiB below the binary card size. A fixed 16 MiB delta cannot
+# bridge that on 24-128 GiB cards: e.g. a 32 GiB Battlemage exposes 31.89
+# GiB (32656 MiB), which is 112 MiB under the 32752 MiB floor that the
+# fixed delta leaves, and a 2x32 box mis-classifies as 2x24. Scale the
+# reporting allowance with the class, floored at the documented 16 MiB.
+DEDICATED_VRAM_REPORTING_TOLERANCE_FRACTION = 0.01
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _TOPOLOGY_PART_RE = re.compile(r"^(\d+)x(\d+)(?:gb)?$", re.IGNORECASE)
 
@@ -142,6 +149,21 @@ def recommend(
     )
 
 
+def vram_reporting_tolerance_mb(per_device_min_gb: float) -> int:
+    """Reporting allowance for a device class, floored at the documented 16 MiB.
+
+    The 8 GiB tier keeps the pinned 16 MiB Windows Vulkan delta exactly:
+    observed driver reservations grow with card size, but the 8 GiB boundary
+    is a documented contract (8176 MiB reports as 8 GiB, 8175 does not).
+    """
+    if per_device_min_gb <= 8:
+        return DEDICATED_VRAM_REPORTING_TOLERANCE_MB
+    return max(
+        DEDICATED_VRAM_REPORTING_TOLERANCE_MB,
+        int(round(per_device_min_gb * 1024 * DEDICATED_VRAM_REPORTING_TOLERANCE_FRACTION)),
+    )
+
+
 def hardware_satisfies(
     hardware: HardwareFingerprint, constraint: HardwareConstraint
 ) -> bool:
@@ -154,7 +176,7 @@ def hardware_satisfies(
         return False
     minimum_mb = _gb_to_mb(constraint.per_device_min_gb)
     if not shared_local:
-        minimum_mb = max(0, minimum_mb - DEDICATED_VRAM_REPORTING_TOLERANCE_MB)
+        minimum_mb = max(0, minimum_mb - vram_reporting_tolerance_mb(constraint.per_device_min_gb))
     capable_devices = (
         constraint.min_devices if shared_local and hardware.total_usable_memory_mb >= minimum_mb
         else sum(device.memory_total_mb >= minimum_mb for device in devices)
