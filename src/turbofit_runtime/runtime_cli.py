@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Sequence, TextIO
 
@@ -68,14 +69,44 @@ def run(
         try:
             selection = load_selection(selection_path)
         except FileNotFoundError:
+            # No explicit selection: the controller publishes the live route in
+            # runtime-state.json, which is the truth when selection is auto-by-default.
+            state_path = Path(
+                os.getenv(
+                    "TURBOFIT_RUNTIME_STATE",
+                    Path(os.getenv("XDG_STATE_HOME", Path.home() / ".local/state"))
+                    / "turbofit"
+                    / "runtime-state.json",
+                )
+            )
+            try:
+                state = json.loads(state_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                output.write(
+                    json.dumps(
+                        {"configured": False, "selection_path": str(selection_path)},
+                        indent=2,
+                    )
+                    + "\n"
+                )
+                return 1
             output.write(
                 json.dumps(
-                    {"configured": False, "selection_path": str(selection_path)},
+                    {
+                        "configured": True,
+                        "source": str(state_path),
+                        "selection": {
+                            "mode": state.get("selection_mode", "auto"),
+                            "profile_id": state.get("profile_id") or state.get("active"),
+                            "rung_id": state.get("rung_id"),
+                            "context_length": state.get("context_length"),
+                        },
+                    },
                     indent=2,
                 )
                 + "\n"
             )
-            return 1
+            return 0
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             output.write(json.dumps({"configured": False, "error": str(exc)}, indent=2) + "\n")
             return 2
