@@ -568,3 +568,24 @@ def test_remote_discovery_does_not_relay_remote_entries(monkeypatch) -> None:
     monkeypatch.setenv("TURBOFIT_PEERS", "omarchy.ts.net:8091")
     models = GATEWAY._discover_remote_models()
     assert [m["id"] for m in models] == ["omarchy.ts.net/quality-24gb"]
+
+
+def test_a_named_model_is_never_silently_answered_by_a_hosted_api(monkeypatch) -> None:
+    """Naming a local model is a promise; substituting one is invisible to the caller."""
+    monkeypatch.setattr(GATEWAY, "ALLOW_API", True)
+
+    assert GATEWAY.api_fallback_permitted(
+        "omarchy.tail6ff78b.ts.net/qwen3-8-flash-next-strata", {"source": "local", "alias": "x"}
+    ) is False
+    assert GATEWAY.api_fallback_permitted("cyber-tiel-coder-35b-a3b", {"source": "local"}) is False
+    # Router aliases promise "whatever is best here", so the API lane stays legal.
+    assert GATEWAY.api_fallback_permitted("auto", {"source": "local"}) is True
+    assert GATEWAY.api_fallback_permitted("active:aux", {"source": "local"}) is True
+    # And an API backend never "falls back" to another API.
+    assert GATEWAY.api_fallback_permitted("auto", {"source": "api", "is_api": True}) is False
+
+
+def test_api_fallback_stays_off_when_the_operator_disabled_it(monkeypatch) -> None:
+    monkeypatch.setattr(GATEWAY, "ALLOW_API", False)
+
+    assert GATEWAY.api_fallback_permitted("auto", {"source": "local"}) is False

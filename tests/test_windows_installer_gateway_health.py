@@ -53,7 +53,13 @@ def test_windows_installer_gateway_readiness_matches_live_health_schema(monkeypa
         server.shutdown()
         server.server_close()
 
-    assert health == {"ok": True, "main": "ready", "aux": "ready"}
+    # The installer reads ok/main/aux; the payload may also report the federated
+    # surface (remote_models) without breaking readiness.
+    assert health["ok"] is True
+    assert health["main"] == "ready"
+    assert health["aux"] == "ready"
+    assert health["remote_models"] == 0
+    assert "status" not in health, "the installer must never poll a field the endpoint lacks"
     assert "status" not in health
 
     installer = INSTALLER.read_text(encoding="utf-8")

@@ -305,6 +305,18 @@ _remote_cache_lock = threading.Lock()
 _remote_discovery_lock = threading.Lock()
 
 
+def _remote_models_or_empty():
+    """Cached federated catalog for health reporting. Never triggers discovery."""
+    with _remote_cache_lock:
+        cached = dict(_remote_cache)
+    freshest = None
+    for payload in cached.values():
+        stamp = payload.get("ts") if isinstance(payload, dict) else None
+        if isinstance(stamp, (int, float)) and (freshest is None or stamp > freshest[0]):
+            freshest = (stamp, payload.get("models") or [])
+    return freshest[1] if freshest else []
+
+
 def _remote_peers_spec() -> tuple:
     """Stable identity of the peer configuration, used as cache key.
 
@@ -318,6 +330,46 @@ def _remote_peers_spec() -> tuple:
     if os.environ.get("TURBOFIT_PEER_DISCOVERY", "1") != "0":
         return ("auto", ())
     return ("off", ())
+
+
+def _peer_urls() -> list[str]:
+    """Peer gateway URLs from the explicit list or tailnet discovery."""
+    spec = _remote_peers_spec()
+    peers: list[str] = []
+    if spec[0] == "peers":
+        peers = list(spec[1])
+    elif spec[0] == "auto":
+        try:
+            from turbofit_runtime.tailnet import discover_turbofit_peers
+
+            peers = [f"{found['host']}:{found['port']}" for found in discover_turbofit_peers()]
+        except Exception:
+            peers = []
+    urls: list[str] = []
+    for peer in peers:
+        peer = str(peer).strip().rstrip("/")
+        if not peer:
+            continue
+        urls.append(peer if peer.startswith(("http://", "https://")) else f"http://{peer}")
+    return urls
+
+
+def _remote_auto_target() -> str | None:
+    """First peer that is healthy enough to answer a router-alias request.
+
+    A node with no GPU is still a legitimate TurboFit provider: it delegates the
+    whole ``auto`` decision to a peer that owns the hardware, instead of failing
+    the request because it holds no model itself.
+    """
+    for peer in _peer_urls():
+        try:
+            with urlopen(peer + "/health", timeout=3.0) as handle:
+                payload = json.loads(handle.read().decode())
+            if isinstance(payload, dict) and payload.get("ok"):
+                return peer
+        except Exception:
+            continue
+    return None
 
 
 def _discover_remote_models() -> list[dict]:
@@ -597,6 +649,25 @@ def parse_provider_model(model):
         if value.endswith(suffix):
             return value[:-len(suffix)] or "auto", role
     return value, "main"
+
+
+ROUTER_ALIASES = frozenset({"", "auto", "active"})
+
+
+def api_fallback_permitted(model, backend=None):
+    """Whether a failed local backend may be answered by a hosted API instead.
+
+    A caller that names a specific model has asked for that model. Substituting a
+    hosted one and returning 200 is a lie the client cannot detect from the body, so
+    substitution is allowed only for the router aliases (``auto`` / ``active`` /
+    ``active:main`` / ``active:aux``), where the contract is "whatever is best here".
+    """
+    if not ALLOW_API:
+        return False
+    if isinstance(backend, dict) and backend.get("is_api"):
+        return False
+    requested, _role = parse_provider_model(model)
+    return str(requested).strip() in ROUTER_ALIASES
 
 
 def active_profile():
@@ -1313,6 +1384,9 @@ from turbofit_runtime.native_lifecycle import leased_request
 
 
 class GatewayHandler(BaseHTTPRequestHandler):
+    # The model the caller named, so an API substitution can be refused later.
+    _requested_model = None
+
     server_version = "turbofit-gateway/2.0"
 
     def do_GET(self):
@@ -1488,6 +1562,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             except Exception:
                 self.send_error(400, "Request body must be valid JSON")
                 return
+        self._requested_model = model
 
         # Remote Tailscale model — proxy to the peer
         remote = self._resolve_remote_model(model)
@@ -1502,6 +1577,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
             port, _alias = local
             self._proxy_local_port(port, path[len("/v1/"):], body=body)
             return
+
+        # No local model here: a router alias delegates to a peer that has one, so
+        # `auto` keeps meaning "whatever is best on this tailnet" instead of 400.
+        if str(model).strip() in {"auto", "active", "active:main"}:
+            peer = _remote_auto_target()
+            if peer:
+                self._proxy_remote(peer, "auto", "main", path[len("/v1/"):], body=body)
+                return
 
         profile_id, role = parse_provider_model(model)
         selected = resolve_requested_profile(model)
@@ -1549,8 +1632,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
                                    tried=f"local :{port} ({new_state})")
                     return
                 if backend.get("state") == "loading":
-                    # Still loading after the stall timeout. API use remains opt-in.
-                    api_chain = _api_fallback_chain(exclude=backend.get("source")) if ALLOW_API else []
+                    # Still loading after the stall timeout. API use remains opt-in, and an
+                    # explicitly requested model is never substituted.
+                    api_chain = (
+                        _api_fallback_chain(exclude=backend.get("source"))
+                        if api_fallback_permitted(self._requested_model, backend)
+                        else []
+                    )
                     for api in api_chain:
                         backend = {**api, "state": "ready"}
                         break
@@ -1565,8 +1653,9 @@ class GatewayHandler(BaseHTTPRequestHandler):
         if result.get("response_sent"):
             return
 
-        # API fallback is disabled by default; explicit opt-in preserves legacy behavior.
-        if status >= 400 and not backend.get("is_api") and ALLOW_API:
+        # API fallback is disabled by default; explicit opt-in preserves legacy behavior,
+        # and never overrides a model the caller named.
+        if status >= 400 and api_fallback_permitted(self._requested_model, backend):
             for api in _api_fallback_chain(exclude=backend.get("source")):
                 if api.get("source") in tried:
                     continue
@@ -1578,7 +1667,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     return
 
         if status >= 400:
-            self._send_503(f"All backends failed (last status {status})", tried=" → ".join(tried))
+            asked = (self._requested_model or "auto").strip()
+            detail = (
+                f"{asked} is local-only and cannot be substituted"
+                if not api_fallback_permitted(asked, backend)
+                else "All backends failed"
+            )
+            self._send_503(f"{detail} (last status {status})", tried=" → ".join(tried))
 
     @leased_request("aux")
     def _handle_aux(self, path, body=None, required=False):
@@ -1921,11 +2016,19 @@ class GatewayHandler(BaseHTTPRequestHandler):
     def _send_health(self):
         main = resolve_main()
         aux = resolve_aux()
-        ok = (main is not None) or (aux is not None)
+        remote = _remote_models_or_empty()
+        ok = (main is not None) or (aux is not None) or bool(remote)
+        if main is None and remote:
+            # A federation node holds no local model of its own; it is healthy when
+            # at least one peer is serving one, and saying "down" there is wrong.
+            main_state = "federated"
+        else:
+            main_state = (main or {}).get("state", "down")
         self._send_json(200 if ok else 503, {
             "ok": ok,
-            "main": (main or {}).get("state", "down"),
+            "main": main_state,
             "aux": (aux or {}).get("state", "down"),
+            "remote_models": len(remote),
         })
 
     def _send_json(self, status, payload, extra_headers=None):
