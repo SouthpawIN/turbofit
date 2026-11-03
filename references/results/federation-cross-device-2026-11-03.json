@@ -1,0 +1,33 @@
+{
+  "schema": "turbofit.federation-evidence/v1",
+  "recorded_at": "2026-11-03T19:04:00Z",
+  "kind": "cross-device-inference",
+  "summary": "A request addressed to the thin node (VPS, no GPU) was served by a peer's local model through the tailnet, with real llama.cpp timings.",
+  "path": {
+    "client": "hermes-vps (100.110.215.46, linux, no accelerator)",
+    "peer_gateway": "christophers-macbook-pro.tail6ff78b.ts.net:8091 (macOS)",
+    "serving_model": "cyber-tiel-coder-35b-a3b",
+    "request_model": "auto"
+  },
+  "result": {
+    "http_status": 200,
+    "wall_clock_s": 237.09,
+    "prompt_tokens": 201,
+    "prompt_per_second": 124.86,
+    "completion_tokens": 32,
+    "completion_per_second": 27.51,
+    "finish_reason": "length",
+    "self_reported_identity": "Cyber-Tiel-Coder (Ornith-1.5-35 variant)"
+  },
+  "observations": [
+    "Cross-device model use works with a bare 'auto' - the thin node delegated to the peer.",
+    "237 s of the wall clock was cold model load on the peer, not inference: 1.6 s prompt + 1.2 s decode.",
+    "That load path blocked the HTTP request for the whole load, which is why 02b2ded bounds it at TURBOFIT_ACTIVATION_WAIT_S and answers a retryable 503 while the load continues.",
+    "The answer arrived with reasoning_content populated and an empty content field: coding/reasoning models in this slot need a reasoning-aware client."
+  ],
+  "not_covered": [
+    "Same request against a warm peer (model already resident).",
+    "Streaming behaviour through two gateways.",
+    "Any device-specific client (Surface / phone) - those were unreachable or offline at recording time."
+  ]
+}
