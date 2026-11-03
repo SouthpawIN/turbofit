@@ -27,10 +27,12 @@
 - **`/turbofit` on unmeasured hardware**: falls back to the best portable-fit
   lane and says so, instead of reporting "no evidence-backed configuration fits"
   while listing lanes that do.
-- **TurboSouth rename**: the support profile is TurboSouth. `sirvir` remains only
-  as the historical GitHub repository name; `TURBOSOUTH_DISTRIBUTION` is
-  overridable with `TURBOFIT_TURBOSOUTH_SOURCE`, and an unreachable
-  distribution now fails with one actionable sentence before `git clone`.
+- **TurboSouth rename**: the support profile and its repository are TurboSouth
+  (`SouthpawIN/sirvir` → `SouthpawIN/turbosouth`; the old URL redirects). The
+  profile id is now `turbosouth` (distribution 2.3.0), and every `sirvir`
+  reference is gone from both repos. `TURBOSOUTH_DISTRIBUTION` stays overridable
+  with `TURBOFIT_TURBOSOUTH_SOURCE`, and an unreachable distribution fails with
+  one actionable sentence before `git clone`.
 
 ## 2.4.0 — Two-ladder TurboFit List, Strata engine, federated gateway
 
