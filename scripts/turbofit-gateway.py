@@ -77,6 +77,9 @@ SELF_PORT = int(os.environ.get("TURBOFIT_GATEWAY_PORT", "8091"))  # never pick a
 ALLOW_API = os.environ.get("TURBOFIT_ALLOW_API", "").strip().lower() in {"1", "true", "yes"}
 
 _activation_lock = threading.Lock()
+# Profiles whose activation is still running detached: a request for one is a
+# retryable "loading", not an unknown model.
+_loading_profiles: set = set()
 _inflight_lock = threading.Lock()
 _inflight_requests: dict[str, float] = {}
 
@@ -129,6 +132,9 @@ def _peek_flags():
 STALL_TIMEOUT_S = float(os.environ.get("TURBOFIT_STALL_TIMEOUT", "90"))  # max wait while local loads
 STALL_POLL_S = float(os.environ.get("TURBOFIT_STALL_POLL", "2"))  # poll interval while waiting
 PROXY_BACKEND_TIMEOUT_S = float(os.environ.get("TURBOFIT_BACKEND_TIMEOUT", "300"))  # per-request upstream timeout
+# How long a request waits for a cold model to load before answering "retryable".
+# Fifteen minutes of silence is not a latency budget, it is a hang.
+ACTIVATION_WAIT_S = float(os.environ.get("TURBOFIT_ACTIVATION_WAIT_S", "25"))
 AUX_MAX_TOKENS = int(os.environ.get("TURBOFIT_AUX_MAX_TOKENS", "4096"))  # bound aux work to lifecycle deadlines
 AUX_ENABLE_THINKING = os.environ.get("TURBOFIT_AUX_ENABLE_THINKING", "0").lower() in ("1", "true", "yes")
 MAIN_ENABLE_THINKING = os.environ.get("TURBOFIT_MAIN_ENABLE_THINKING", "1").lower() in ("1", "true", "yes")
@@ -710,21 +716,42 @@ def recommend_profile():
         return None
 
 
-def activate_profile(profile):
-    """Activate one tested main+aux pair by its universal catalog ID."""
+def activate_profile(profile, *, wait_s=None):
+    """Activate one tested main+aux pair by its universal catalog ID.
+
+    A cold profile can take minutes to load. The request path waits at most
+    ``wait_s`` seconds and then reports "loading, retry" while activation keeps
+    running detached — a client should never sit blocked for the whole load.
+    """
+    limit = ACTIVATION_WAIT_S if wait_s is None else wait_s
     try:
-        subprocess.run(
+        proc = subprocess.Popen(
             [RUNTIME_CLI, "use", profile],
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
-            timeout=900,
-            check=True,
+            start_new_session=True,
         )
-        _cache.update({"main": None, "aux": None, "ts": 0})
-        return True
     except Exception as exc:
-        log.error("Profile activation failed for %s: %s", profile, exc)
+        log.error("Profile activation could not start for %s: %s", profile, exc)
         return False
+    deadline = time.time() + max(0.0, limit)
+    while time.time() < deadline:
+        if proc.poll() is not None:
+            _loading_profiles.discard(profile)
+            _cache.update({"main": None, "aux": None, "ts": 0})
+            if proc.returncode == 0:
+                return True
+            output = (proc.stdout.read() if proc.stdout else "") or ""
+            log.error("Profile activation failed for %s (rc=%s): %s",
+                      profile, proc.returncode, output.strip()[:400])
+            return False
+        time.sleep(0.5)
+    # Still loading: leave it running so the next request finds it warm.
+    _loading_profiles.add(profile)
+    log.info("Profile %s is loading; answered early instead of blocking", profile)
+    _cache.update({"main": None, "aux": None, "ts": 0})
+    return False
 
 
 def resolve_requested_profile(model):
@@ -1596,6 +1623,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
         profile_id, role = parse_provider_model(model)
         selected = resolve_requested_profile(model)
         if not selected:
+            if profile_id in _loading_profiles or "auto" in _loading_profiles:
+                self._send_503(
+                    f"Model {profile_id} is loading; retry shortly",
+                    tried=profile_id,
+                    retryable=True,
+                )
+                return
             self.send_error(400, f"Unknown or unavailable Turbofit model: {profile_id}")
             return
         suffix = path[len("/v1/"):]
@@ -1999,14 +2033,19 @@ class GatewayHandler(BaseHTTPRequestHandler):
     def _send_502(self, message):
         self._send_json(502, {"error": {"message": message, "type": "bad_gateway"}})
 
-    def _send_503(self, reason, tried=None):
-        log.error(f"503: {reason} (tried={tried})")
-        self._send_json(503, {
+    def _send_503(self, reason, tried=None, retryable=False):
+        payload = {
             "error": "no_backend",
             "message": reason,
             "tried": tried,
             "hint": "If this persists, run `scripts/turbofit-runtime status` and verify the configured API login.",
-        }, {"Retry-After": "5"})
+        }
+        if retryable:
+            payload["retryable"] = True
+            log.info(f"503 (retryable): {reason} (tried={tried})")
+        else:
+            log.error(f"503: {reason} (tried={tried})")
+        self._send_json(503, payload, {"Retry-After": "15" if retryable else "5"})
 
     def _send_status(self):
         main = resolve_main()
