@@ -167,6 +167,53 @@ class ResolvedRecipe:
     aux_residency: dict | None = None
 
 
+class UnknownRecipeError(ValueError):
+    """An unresolvable recipe name, carrying the closest declared candidates."""
+
+    def __init__(self, requested: str, known: tuple[str, ...]) -> None:
+        normalized = _normalized_recipe_name(requested)
+        scored = sorted(
+            ((_closeness(normalized, _normalized_recipe_name(name)), name) for name in known),
+            reverse=True,
+        )
+        self.requested = requested
+        self.candidates = tuple(name for score, name in scored if score > 0)[:5]
+        hint = f"; did you mean one of {list(self.candidates)}" if self.candidates else ""
+        super().__init__(f"unknown model family: {requested}{hint}")
+
+
+def _normalized_recipe_name(name: str) -> str:
+    """Fold the slugs that appear in the wild onto one comparable key.
+
+    Hand-written profiles and resolutions use several spellings of the same
+    model (``qwen38-27b-unleashed``, ``qwen3.8-27b-unleashed``,
+    ``Qwen 3.8 27B``), so comparison is alphanumeric-only and case-folded.
+    """
+    return re.sub(r"[^a-z0-9]", "", str(name).lower())
+
+
+def _declared_aliases(entry: Any) -> tuple[str, ...]:
+    if not isinstance(entry, Mapping):
+        return ()
+    found: list[str] = []
+    alias = entry.get("alias")
+    if isinstance(alias, str) and alias:
+        found.append(alias)
+    extra = entry.get("aliases")
+    if isinstance(extra, list):
+        found.extend(str(item) for item in extra if isinstance(item, str) and item)
+    return tuple(found)
+
+
+def _closeness(left: str, right: str) -> int:
+    """Length of the longest common prefix, used only to order suggestions."""
+    limit = min(len(left), len(right))
+    index = 0
+    while index < limit and left[index] == right[index]:
+        index += 1
+    return index
+
+
 class RecipeBook:
     def __init__(
         self,
@@ -181,6 +228,7 @@ class RecipeBook:
         self.data = data
         self.models = data.get("models") or {}
         self.variants = data.get("variants") or {}
+        self.recipes_by_alias = self._build_alias_index()
         self.platform_name = platform_name or sys.platform
         self.hardware = hardware
         self.model_root = Path(
@@ -219,6 +267,21 @@ class RecipeBook:
         except KeyError as exc:
             raise ValueError(f"no method recipe for context {context}") from exc
 
+    def _build_alias_index(self) -> dict[str, tuple[str, str]]:
+        """Map every declared spelling of a recipe onto its canonical entry.
+
+        Exact keys win over aliases so a variant alias can never shadow a
+        model family of the same name.
+        """
+        index: dict[str, tuple[str, str]] = {}
+        for kind, entries in (("model", self.models), ("variant", self.variants)):
+            for key, entry in entries.items():
+                for alias in _declared_aliases(entry):
+                    index.setdefault(alias, (kind, key))
+                    index.setdefault(_normalized_recipe_name(alias), (kind, key))
+                index.setdefault(_normalized_recipe_name(key), (kind, key))
+        return index
+
     def _spec(self, name: str) -> tuple[str, dict]:
         variant = self.variants.get(name)
         if variant is not None:
@@ -227,8 +290,24 @@ class RecipeBook:
                 raise ValueError(f"unknown recipe family for variant {name}: {family}")
             return family, {**self.models[family], **{key: value for key, value in variant.items() if key != "family"}}
         if name not in self.models:
-            raise ValueError(f"unknown model family: {name}")
+            resolved = self.recipes_by_alias.get(name) or self.recipes_by_alias.get(
+                _normalized_recipe_name(name)
+            )
+            if resolved is None:
+                raise UnknownRecipeError(name, self._known_recipe_names())
+            kind, key = resolved
+            if kind == "variant":
+                return self._spec(key)
+            name = key
         return name, dict(self.models[name])
+
+    def _known_recipe_names(self) -> tuple[str, ...]:
+        names = set(self.variants) | set(self.models)
+        for entry in list(self.variants.values()) + list(self.models.values()):
+            for alias in _declared_aliases(entry):
+                names.add(alias)
+        return tuple(sorted(names))
+
 
     def _component(
         self,

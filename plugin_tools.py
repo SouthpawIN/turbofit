@@ -12,8 +12,9 @@ import threading
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Mapping
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 import yaml
 
@@ -21,6 +22,9 @@ import yaml
 # projects.  Make the repository's src-layout importable from that real load
 # path instead of relying on a developer-set PYTHONPATH.
 PLUGIN_ROOT = Path(__file__).resolve().parent
+# Canonical TurboSouth distribution. Override with TURBOFIT_TURBOSOUTH_SOURCE
+# when the persona lives under another repository name or a private mirror.
+TURBOSOUTH_DISTRIBUTION = "https://github.com/SouthpawIN/turbosouth.git"
 MULTIMODAL_CATALOG = PLUGIN_ROOT / "references" / "multimodal-models.json"
 SRC_ROOT = PLUGIN_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
@@ -108,6 +112,39 @@ def install_sovthpaw_pet(*, hermes_home: Path | None = None) -> dict[str, Any]:
     }
 
 
+def distribution_source() -> str:
+    """Canonical TurboSouth distribution URL, overridable per deployment."""
+    return (os.getenv("TURBOFIT_TURBOSOUTH_SOURCE") or TURBOSOUTH_DISTRIBUTION).strip()
+
+
+def probe_distribution_source(url: str) -> None:
+    """Fail early when a GitHub distribution is missing or private.
+
+    ``hermes profile install`` shells out to git, so an unreachable repo
+    surfaces as a raw clone error in the caller's UI. Checking first turns it
+    into one sentence that says what to do. Network errors stay non-fatal:
+    only a definitive HTTP answer blocks the install.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return
+    target = url[:-4] if url.endswith(".git") else url
+    try:
+        with urlopen(Request(target, method="HEAD"), timeout=15):
+            return
+    except HTTPError as exc:
+        if exc.code in {401, 403, 404}:
+            raise RuntimeError(
+                f"TurboSouth distribution is not reachable: {url} (HTTP {exc.code}). "
+                "The repository is missing or private, so `git clone` cannot see it. "
+                "Publish it under that name or set TURBOFIT_TURBOSOUTH_SOURCE to the "
+                "real distribution URL."
+            ) from exc
+        return
+    except (URLError, OSError):
+        return
+
+
 def install_turbosouth_profile(*, hermes_home: Path | None = None) -> dict[str, Any]:
     """Install or update TurboSouth from its canonical GitHub distribution."""
     executable = shutil.which("hermes")
@@ -116,6 +153,9 @@ def install_turbosouth_profile(*, hermes_home: Path | None = None) -> dict[str, 
     root = Path(hermes_home or os.getenv("HERMES_HOME") or Path.home() / ".hermes")
     target = root / "profiles" / "turbosouth"
     updated = (target / "distribution.yaml").is_file()
+    source = distribution_source()
+    if not updated:
+        probe_distribution_source(source)
     command = (
         [executable, "profile", "update", "turbosouth", "--yes"]
         if updated else
@@ -123,7 +163,7 @@ def install_turbosouth_profile(*, hermes_home: Path | None = None) -> dict[str, 
             executable,
             "profile",
             "install",
-            "https://github.com/SouthpawIN/turbosouth.git",
+            source,
             "--name",
             "turbosouth",
             "--yes",
@@ -153,7 +193,7 @@ def install_turbosouth_profile(*, hermes_home: Path | None = None) -> dict[str, 
         "updated": updated,
         "profile": "turbosouth",
         "path": str(target),
-        "source": "https://github.com/SouthpawIN/turbosouth.git",
+        "source": source,
         "version": str(manifest.get("version") or "unknown"),
         "pet": pet,
     }

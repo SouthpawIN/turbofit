@@ -142,6 +142,38 @@ class ProfileCatalog:
             filtered.append(selected)
         return ProfileCatalog(filtered)
 
+    def without_rungs(
+        self, drop: Mapping[str, set[str]]
+    ) -> tuple["ProfileCatalog", dict[str, str]]:
+        """Drop named rungs from profiles, reporting why each one went.
+
+        A ladder may not be emptied: a profile that loses every local rung is
+        kept intact so the caller can report a real configuration fault
+        instead of silently serving an empty ladder.
+        """
+        problems: dict[str, str] = {}
+        filtered: list[Turbofile] = []
+        for profile in self._profiles:
+            dropped = drop.get(profile.id, set())
+            if not dropped:
+                filtered.append(profile)
+                continue
+            kept = [rung for rung in profile.rungs if rung.id not in dropped]
+            if not kept or not any(rung.aux_mode is not AuxMode.API for rung in kept):
+                filtered.append(profile)
+                continue
+            for rung_id in dropped:
+                problems[f"{profile.id}/{rung_id}"] = "unavailable"
+            rungs = tuple(kept)
+            selected = replace(
+                profile,
+                rungs=rungs,
+                revision=profile.revision + (rungs != profile.rungs),
+            )
+            selected.validate()
+            filtered.append(selected)
+        return ProfileCatalog(filtered), problems
+
     def select(self, hardware: HardwareFingerprint, *, requested: str = "auto") -> ProfileChoice:
         if requested == "auto":
             profile = self._auto(hardware)

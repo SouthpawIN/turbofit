@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import sys
+from typing import Mapping
 
 _PLUGIN_SRC = Path(__file__).resolve().parent / "src"
 if str(_PLUGIN_SRC) not in sys.path:
@@ -48,7 +49,45 @@ def _slash_turbofit(raw_args: str) -> str:
                 return json.dumps(applied)
         except Exception as exc:
             return json.dumps({"ok": False, "error": str(exc), "snapshot": snapshot})
-        return json.dumps({"ok": True, "snapshot": snapshot, "message": "no evidence-backed configuration fits this machine"})
+        # Nothing has on-box evidence on this hardware yet. The portable-fit
+        # lanes still describe configurations that fit, so a fresh machine must
+        # get a working selection instead of a dead end that says "nothing fits"
+        # while listing three lanes that do.
+        lanes = [
+            lane for lane in (snapshot.get("compatible_lanes") or [])
+            if isinstance(lane, Mapping) and lane.get("profile")
+        ]
+        if lanes:
+            best = dict(lanes[0])
+            try:
+                applied = _apply(
+                    str(best["profile"]),
+                    reason="portable-fit fallback from /turbofit: no on-box evidence yet",
+                    extra={
+                        "snapshot": snapshot,
+                        "evidence_scope": best.get("evidence_scope"),
+                        "validation_required": bool(best.get("validation_required")),
+                    },
+                )
+            except Exception as exc:
+                return json.dumps({
+                    "ok": False,
+                    "error": str(exc),
+                    "snapshot": snapshot,
+                    "next_step": best.get("command"),
+                })
+            applied["message"] = (
+                f"No on-box evidence for this hardware yet, so no measured lane was promoted. "
+                f"Applied the best portable-fit lane '{best['profile']}' "
+                f"({best.get('main')} @ context {best.get('context')}). Treat its speed as "
+                f"unmeasured until a benchmark campaign runs on this machine."
+            )
+            return json.dumps(applied)
+        return json.dumps({
+            "ok": False,
+            "snapshot": snapshot,
+            "message": "no local configuration fits this machine; the current selection is unchanged",
+        })
     if lowered in {"intelligence", "quality", "balanced", "context", "speed"}:
         try:
             return json.dumps(recommendation_snapshot(lowered))

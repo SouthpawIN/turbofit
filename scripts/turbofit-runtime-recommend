@@ -97,8 +97,16 @@ def fit_requirements(
 
     spill_mb = 0
     reasons: list[str] = []
+    known_devices = set(available_budgets)
     for device, need in requirements.items():
-        budget = max(0, available_budgets.get(device, 0) - safety_floor_mb)
+        if device not in known_devices:
+            # Requirements recorded on a different machine can name device
+            # indices this box does not have (llama.cpp layer splits land in
+            # host RAM). Report that as host spill, not as a phantom card.
+            spill_mb += need
+            reasons.append(f"host spill {need} MiB (no device {device} here)")
+            continue
+        budget = max(0, available_budgets[device] - safety_floor_mb)
         resident = min(need, budget)
         spill = max(0, need - resident)
         spill_mb += spill

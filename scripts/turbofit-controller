@@ -29,11 +29,12 @@ except ImportError:
         os.execv(str(_venv), [str(_venv), str(Path(__file__).resolve()), *sys.argv[1:]])
 
 from turbofit_runtime.hardware import probe_hardware  # noqa: E402
-from turbofit_runtime.native_backend import NativeRuntimeBackend  # noqa: E402
+from turbofit_runtime.native_backend import NativeRuntimeBackend, rung_artifact_problem  # noqa: E402
 from turbofit_runtime.native_lifecycle import IdleLifecycle, LifecycleEndpoint  # noqa: E402
 from turbofit_runtime.pressure_probe import probe_accelerator_pressure  # noqa: E402
 from turbofit_runtime.recipes import RecipeBook  # noqa: E402
 from turbofit_runtime.routes import load_runtime_resolutions_many  # noqa: E402
+from turbofit_runtime.runtime_profile import AuxMode  # noqa: E402
 from turbofit_runtime.runtime_service import RuntimeService  # noqa: E402
 from turbofit_runtime.selection import ProfileCatalog  # noqa: E402
 
@@ -81,6 +82,26 @@ def build_runtime(args: argparse.Namespace) -> RuntimeService:
             verification_timeout_s=args.verification_timeout,
         )
 
+    # One missing model file must cost that rung, not the whole ladder: a rung
+    # that cannot launch here is dropped (and reported) instead of wedging
+    # every tick with the same resolution error.
+    unavailable: dict[str, set[str]] = {}
+    reasons: dict[str, str] = {}
+    for profile in catalog.profiles:
+        for rung in profile.rungs:
+            if rung.aux_mode is AuxMode.API:
+                continue
+            problem = rung_artifact_problem(profile, rung.id, resolutions, recipe_book)
+            if problem is not None:
+                unavailable.setdefault(profile.id, set()).add(rung.id)
+                reasons[f"{profile.id}/{rung.id}"] = problem
+    if unavailable:
+        catalog, _ = catalog.without_rungs(unavailable)
+        for key, problem in sorted(reasons.items()):
+            if key.split("/", 1)[0] in unavailable:
+                print(json.dumps({"skipped_rung": key, "reason": problem}, sort_keys=True),
+                      file=sys.stderr, flush=True)
+
     return RuntimeService(
         catalog=catalog,
         resolutions=resolutions,
@@ -99,6 +120,17 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--once", action="store_true", help="run one bounded controller tick")
     parser.add_argument("--interval", type=float, default=2.0)
+    parser.add_argument("--error-interval", type=float, default=60.0,
+                        help="minimum seconds between repeats of an identical tick error")
+    parser.add_argument("--error-exit-after", type=int, default=0,
+                        help="exit non-zero after N consecutive errors; 0 keeps retrying")
+    parser.add_argument(
+        "--status-file",
+        type=Path,
+        default=Path(os.getenv("TURBOFIT_CONTROLLER_STATUS",
+                               Path.home() / ".local/state/turbofit/controller-status.json")),
+        help="where the last tick outcome is published",
+    )
     parser.add_argument("--manager-port", type=int, default=8092)
     parser.add_argument("--verification-timeout", type=float, default=900.0)
     parser.add_argument("--idle-release", type=float, default=0.0,
@@ -128,6 +160,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     args = parser.parse_args(argv)
     if args.interval <= 0:
         parser.error("--interval must be positive")
+    if args.error_interval <= 0:
+        parser.error("--error-interval must be positive")
+    if args.error_exit_after < 0:
+        parser.error("--error-exit-after must be non-negative")
     if args.verification_timeout <= 0:
         parser.error("--verification-timeout must be positive")
     if not math.isfinite(args.idle_release) or args.idle_release < 0:
@@ -179,10 +215,28 @@ def run_tick(runtime, args, lifecycle=None):
         return result
 
 
+def _write_status(path: Path, payload: dict) -> None:
+    """Publish the last tick outcome so a wedged controller is visible.
+
+    A controller that only prints to stderr looks idle, not broken; operators
+    and the dashboard need the failure where they already look.
+    """
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        os.replace(temporary, path)
+    except OSError:
+        pass
+
+
 def main(argv: list[str]) -> int:
     args = parse_args(argv[1:])
     runtime = build_runtime(args)
     lifecycle = endpoint = None
+    last_error: str | None = None
+    last_error_at = 0.0
+    error_count = 0
     if args.idle_release:
         lifecycle = IdleLifecycle(state_dir=args.runtime_state_dir,
                                   idle_timeout_s=args.idle_release,
@@ -194,21 +248,50 @@ def main(argv: list[str]) -> int:
                                          resolve_role=runtime.residency_role)
             endpoint.start()
         while True:
+            payload: dict = {"at": time.time(), "pid": os.getpid(), "degraded": False}
             try:
                 result = run_tick(runtime, args, lifecycle)
                 if result is not None:
+                    payload.update({
+                        "profile_id": result.state.profile_id,
+                        "mode": result.state.selection_mode.value,
+                        "rung_index": result.state.adaptive.current_index,
+                        "released": result.state.adaptive.released,
+                        "action": result.action.value,
+                        "transitioned": result.transitioned,
+                        "reason": result.reason,
+                    })
                     print(json.dumps({
                         "profile_id": result.state.profile_id,
                         "mode": result.state.selection_mode.value,
                         "rung_index": result.state.adaptive.current_index,
+                        "released": result.state.adaptive.released,
                         "action": result.action.value,
                         "transitioned": result.transitioned,
                         "reason": result.reason,
                     }, sort_keys=True), flush=True)
+                last_error = None
             except Exception as exc:
-                print(json.dumps({"error": str(exc)}, sort_keys=True), file=sys.stderr, flush=True)
+                error_count += 1
+                message = str(exc)
+                # An identical failure repeats every tick: report it when it
+                # changes and then once a minute, never 30 times a minute.
+                now = time.monotonic()
+                if message != last_error or now - last_error_at >= args.error_interval:
+                    print(json.dumps({"error": message, "count": error_count},
+                                     sort_keys=True), file=sys.stderr, flush=True)
+                    last_error, last_error_at = message, now
+                payload.update({"degraded": True, "last_error": message,
+                                "error_count": error_count})
+                _write_status(args.status_file, payload)
                 if args.once:
                     return 1
+                if args.error_exit_after and error_count >= args.error_exit_after:
+                    print(json.dumps({"fatal": "unrecoverable controller errors", "error": message},
+                                     sort_keys=True), file=sys.stderr, flush=True)
+                    return 1
+            else:
+                _write_status(args.status_file, payload)
             if args.once:
                 return 0
             time.sleep(args.interval)

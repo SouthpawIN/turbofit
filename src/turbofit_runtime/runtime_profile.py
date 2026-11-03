@@ -8,6 +8,8 @@ from enum import Enum
 from typing import Any, Mapping, Sequence
 
 SCHEMA = "turbofit.runtime/v1"
+LAUNCHER_SYSTEMD_UNIT = "systemd-unit"
+_UNIT_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9@._-]{0,127}$")
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 _SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _SECRET_KEYS = frozenset(
@@ -119,11 +121,26 @@ class RuntimeRung:
     aux_api_policy: str | None = None
     main_context: int | None = None
     auxiliary_context: int | None = None
+    # A rung whose process is owned by an init system rather than launched as a
+    # child. Declaring the unit is what makes it ours: lifecycle actions become
+    # `systemctl --user start|stop <unit>`, never signals to a PID.
+    launcher: str | None = None
+    unit: str | None = None
 
     def validate(self, *, terminal: bool) -> None:
         _slug(self.id, "rung id")
         _positive_int(self.context, "context")
         _nonempty(self.evidence, "evidence")
+        if self.launcher is not None:
+            if self.launcher != LAUNCHER_SYSTEMD_UNIT:
+                raise ValueError(f"launcher must equal {LAUNCHER_SYSTEMD_UNIT!r}")
+            _nonempty(self.unit, "unit")
+            if self.aux_mode is AuxMode.API:
+                raise ValueError("API rung cannot name a launcher unit")
+            if not _UNIT_NAME.fullmatch(str(self.unit)):
+                raise ValueError("unit must be a plain systemd unit name")
+        elif self.unit is not None:
+            raise ValueError("unit requires launcher")
         if self.main_context is not None:
             _positive_int(self.main_context, "main_context")
         if self.auxiliary_context is not None:
@@ -234,6 +251,8 @@ class Turbofile:
                     "aux_api_policy",
                     "main_context",
                     "auxiliary_context",
+                    "launcher",
+                    "unit",
                 },
                 where=f"rungs[{index}]",
             )
@@ -253,6 +272,8 @@ class Turbofile:
                     aux_api_policy=data.get("aux_api_policy"),
                     main_context=data.get("main_context"),
                     auxiliary_context=data.get("auxiliary_context"),
+                    launcher=data.get("launcher"),
+                    unit=data.get("unit"),
                 )
             )
         profile = cls(
@@ -327,6 +348,8 @@ class Turbofile:
                 "aux_api_policy",
                 "main_context",
                 "auxiliary_context",
+                "launcher",
+                "unit",
             ):
                 _optional(item, key, getattr(rung, key))
             rungs.append(item)

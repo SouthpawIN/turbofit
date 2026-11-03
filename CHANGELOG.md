@@ -1,5 +1,37 @@
 # Changelog
 
+## 2.4.1 — pressure yield, external-unit rungs, naming
+
+- **Yield under external GPU pressure**: when a card is contended and no cheaper
+  rung fits, policy returns `release` and residency is unloaded instead of
+  squatting on the card (`external_gpu_priority: absolute` finally enforced on
+  single-rung and top-rung profiles). Residency is restored on the same rung
+  once the pressure clears; a yielded rung is never reloaded while contended.
+- **Unavailable rungs no longer wedge the controller**: startup prunes rungs
+  whose artifacts are missing and logs one `skipped_rung` line each. Previously
+  one missing model file made every tick fail before pressure was measured.
+- **Optional vision**: a missing projector GGUF serves the text model instead of
+  failing the rung.
+- **Externally managed rungs**: a portable rung may declare
+  `launcher: systemd-unit` + `unit: <name>`. Lifecycle is
+  `systemctl --user start|stop`, never a signal to a PID TurboFit did not
+  launch. Strata can therefore be a real ladder rung that pressure can release.
+- **Controller observability**: last tick published to
+  `controller-status.json` (`degraded`, `last_error`, `error_count`); an
+  identical tick error is logged once a minute instead of every interval.
+- **Recipe aliases**: declared `aliases` plus alphanumeric normalization resolve
+  hand-written spellings; unknown names fail with the closest candidates
+  instead of a bare `unknown model family`.
+- **Fit reporting**: a requirement recorded against a device index this box does
+  not have is reported as host spill, not as a phantom card.
+- **`/turbofit` on unmeasured hardware**: falls back to the best portable-fit
+  lane and says so, instead of reporting "no evidence-backed configuration fits"
+  while listing lanes that do.
+- **TurboSouth rename**: the support profile is TurboSouth. `sirvir` remains only
+  as the historical GitHub repository name; `TURBOSOUTH_DISTRIBUTION` is
+  overridable with `TURBOFIT_TURBOSOUTH_SOURCE`, and an unreachable
+  distribution now fails with one actionable sentence before `git clone`.
+
 ## 2.4.0 — Two-ladder TurboFit List, Strata engine, federated gateway
 
 - Version surfaces are `2.4.0`.

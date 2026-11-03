@@ -19,6 +19,10 @@ class ActionKind(str, Enum):
     NONE = "none"
     ACTIVATE = "activate"
     ROLLBACK = "rollback"
+    # Yield: free VRAM by releasing the resident rung when a co-resident GPU app
+    # needs the card and no cheaper rung can be launched. An external app being
+    # present is not a reason to keep squatting on memory it cannot use.
+    RELEASE = "release"
 
 
 @dataclass(frozen=True)
@@ -32,8 +36,14 @@ class AdaptiveState:
     cooldown_until: float = 0
     failure_times: tuple[float, ...] = ()
     quarantine_until: float = 0
+    # True while residency is intentionally yielded to an external GPU app.
+    # Distinct from an idle release: exclusion is driven by measured pressure
+    # and cleared only when that pressure is gone.
+    released: bool = False
 
     def __post_init__(self) -> None:
+        if not isinstance(self.released, bool):
+            raise ValueError("released must be a boolean")
         for name in ("current_index", "target_ceiling_index"):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
@@ -84,6 +94,9 @@ class CapacitySnapshot:
     contended_per_card: tuple[bool, ...] = ()
     host_ram_available_mb: int = 0
     host_ram_mb_by_rung: tuple[tuple[int, ...], ...] = ()
+    # A local rung can be released to make room for an external GPU app. API
+    # rungs hold no VRAM of their own, so there is nothing to yield.
+    current_rung_releaseable: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "available_mb_per_card", tuple(self.available_mb_per_card))
@@ -127,6 +140,8 @@ class CapacitySnapshot:
             raise ValueError("host_ram_mb_by_rung length must match required_mb_by_rung")
         if self.activation_succeeded and self.activation_failed:
             raise ValueError("activation cannot both succeed and fail")
+        if not isinstance(self.current_rung_releaseable, bool):
+            raise ValueError("current_rung_releaseable must be a boolean")
 
 
 @dataclass(frozen=True)
@@ -146,6 +161,9 @@ def reconcile(
     _validate_inputs(state, snapshot, profile, now)
     if state.pending_index is not None:
         return _resolve_pending(state, snapshot, profile, now)
+
+    if state.released:
+        return _released_plan(state, snapshot, profile, now)
 
     if now < state.cooldown_until:
         return _none(state, "cooldown active")
@@ -169,6 +187,18 @@ def reconcile(
         )
         target = _contraction_target(state.current_index, fit_snapshot, profile)
         if target is None:
+            if contended_occupied and snapshot.current_rung_releaseable:
+                # Nothing smaller can be launched, so the only way to honour
+                # external_gpu_priority: absolute is to stop squatting on the
+                # card: release the resident rung and restore it once the
+                # co-resident app is done.
+                yielded = replace(contracted_state, released=True, deficit_since=None)
+                return ActionPlan(
+                    ActionKind.RELEASE,
+                    state.current_index,
+                    "external GPU pressure with no fitting contraction rung",
+                    yielded,
+                )
             return _none(contracted_state, "no contraction rung fits")
         planned = replace(
             contracted_state,
@@ -211,6 +241,49 @@ def reconcile(
         surplus_since=None,
     )
     return ActionPlan(ActionKind.ACTIVATE, target, "sustained expansion headroom", planned)
+
+
+def _released_plan(
+    state: AdaptiveState,
+    snapshot: CapacitySnapshot,
+    profile: Turbofile,
+    now: float,
+) -> ActionPlan:
+    """Hold residency yielded while pressure persists; restore once it clears.
+
+    Clearing is dwell-gated like expansion: a single quiet sample is not a
+    promise that the co-resident app is finished. Without the dwell a noisy
+    pressure signal (a recorder or compositor hovering near the threshold)
+    makes the model unload and reload every tick.
+    """
+    requirement = snapshot.required_mb_by_rung[state.current_index]
+    host_requirement = (
+        snapshot.host_ram_mb_by_rung[state.current_index] if snapshot.host_ram_mb_by_rung else ()
+    )
+    still_contended = _contended_occupied(requirement, snapshot)
+    still_deficit = not _fits(requirement, snapshot.available_mb_per_card, margin_mb=0) or (
+        not _host_ram_fits(host_requirement, snapshot.host_ram_available_mb)
+    )
+    if still_contended or still_deficit:
+        return _none(replace(state, surplus_since=None), "residency yielded to external GPU pressure")
+    if state.surplus_since is None:
+        return _none(replace(state, surplus_since=now), "pressure cleared; restore dwell started")
+    if now - state.surplus_since < profile.policy.expansion_dwell_s:
+        return _none(state, "pressure cleared; restore dwell active")
+    restored = replace(
+        state,
+        released=False,
+        pending_index=state.current_index,
+        last_stable_index=state.current_index,
+        deficit_since=None,
+        surplus_since=None,
+    )
+    return ActionPlan(
+        ActionKind.ACTIVATE,
+        state.current_index,
+        "external pressure cleared; restoring residency",
+        restored,
+    )
 
 
 def _resolve_pending(

@@ -10,7 +10,7 @@ from pathlib import Path
 import tempfile
 from typing import Any, Mapping, Sequence
 
-from .policy import ActionKind, AdaptiveState, CapacitySnapshot, reconcile
+from .policy import ActionKind, ActionPlan, AdaptiveState, CapacitySnapshot, reconcile
 from .pressure import PressureSnapshot
 from .reconciler import ReconcilerState, RollbackFailedError, RuntimeBackend, transition
 from .runtime_profile import AuxMode, Turbofile
@@ -201,7 +201,7 @@ def load_controller_state(path: str | Path, *, now: float | None = None) -> Cont
         raise ValueError("invalid controller state root")
     adaptive_raw = raw["adaptive"]
     reconciler_raw = raw["reconciler"]
-    if not isinstance(adaptive_raw, Mapping) or set(adaptive_raw) != {
+    required_adaptive = {
         "current_index",
         "last_stable_index",
         "pending_index",
@@ -211,7 +211,10 @@ def load_controller_state(path: str | Path, *, now: float | None = None) -> Cont
         "cooldown_until",
         "failure_times",
         "quarantine_until",
-    }:
+    }
+    if not isinstance(adaptive_raw, Mapping) or not required_adaptive <= set(adaptive_raw) or (
+        set(adaptive_raw) - required_adaptive - {"released"}
+    ):
         raise ValueError("invalid adaptive controller state")
     if not isinstance(reconciler_raw, Mapping) or set(reconciler_raw) != {
         "profile_id",
@@ -283,6 +286,91 @@ class AdaptiveController:
         self.backend = backend
         self.state = state
         self._next_readiness_check = 0.0
+        self._next_release_check = 0.0
+
+    def _enforce_release(self, now: float) -> ControllerResult | None:
+        """A yielded rung that came back must be yielded again, not ignored.
+
+        Something outside TurboFit (an unrelated `systemctl start`, a wrapper
+        script, a scout) can revive a unit we released. Silence there would let
+        the card fill up again while the state claims residency is yielded.
+        """
+        if not self.state.adaptive.released:
+            return None
+        if now < self._next_release_check:
+            return None
+        self._next_release_check = now + 30.0
+        rung = self.profile.rungs[self.state.adaptive.current_index]
+        if not self.backend.verify_rung(rung.id):
+            return None
+        release = getattr(self.backend, "release_current", None)
+        if release is None:
+            return None
+        try:
+            outcome = release()
+        except Exception as exc:
+            return ControllerResult(
+                self.state, False, ActionKind.RELEASE, f"re-release failed: {exc}"
+            )
+        if outcome in {"absent", "not-local"}:
+            return None
+        return ControllerResult(
+            self.state, True, ActionKind.RELEASE, "release did not hold; re-released residency"
+        )
+
+    def _yield_residency(self, plan: ActionPlan) -> ControllerResult:
+        """Release the resident rung so an external GPU app can use the card."""
+        self.state = replace(self.state, adaptive=plan.state)
+        release = getattr(self.backend, "release_current", None)
+        if release is None:
+            return ControllerResult(
+                self.state, False, ActionKind.RELEASE, "backend cannot release residency"
+            )
+        try:
+            outcome = release()
+        except Exception as exc:
+            # Keep the intent unset on failure: the rung is still resident, so a
+            # later tick must be free to retry instead of believing it yielded.
+            self.state = replace(self.state, adaptive=replace(plan.state, released=False))
+            return ControllerResult(
+                self.state, False, ActionKind.RELEASE, f"release failed: {exc}"
+            )
+        if outcome in {"absent", "not-local"}:
+            # Nothing of ours was holding VRAM; do not claim a yield we did not make.
+            self.state = replace(self.state, adaptive=replace(plan.state, released=False))
+            return ControllerResult(
+                self.state, False, ActionKind.RELEASE, f"{plan.reason} (nothing resident)"
+            )
+        return ControllerResult(
+            self.state, True, ActionKind.RELEASE, f"{plan.reason} ({outcome})"
+        )
+
+    def _restore_in_place(
+        self, plan: ActionPlan, capacity: CapacitySnapshot, now: float
+    ) -> ControllerResult:
+        """Bring a released rung back on the same index once pressure clears."""
+        index = self.state.adaptive.current_index
+        try:
+            self.backend.restore(self.state.reconciler)
+        except Exception as exc:
+            failed = replace(capacity, activation_failed=True)
+            rollback = reconcile(plan.state, failed, self.profile, now)
+            self.state = replace(self.state, adaptive=rollback.state)
+            return ControllerResult(
+                self.state,
+                False,
+                ActionKind.ROLLBACK,
+                f"residency restore failed: {exc}",
+            )
+        committed = reconcile(
+            plan.state, replace(capacity, activation_succeeded=True), self.profile, now
+        )
+        self.state = replace(
+            self.state,
+            adaptive=committed.state,
+            reconciler=replace(self.state.reconciler, rung_index=index),
+        )
+        return ControllerResult(self.state, True, ActionKind.ACTIVATE, plan.reason)
 
     def _ensure_current_rung_ready(
         self, available: tuple[int, ...], now: float
@@ -323,15 +411,30 @@ class AdaptiveController:
                     f"rung {index} requirement card count does not match pressure card count"
                 )
         contended = tuple(card.contended for card in pressure.cards)
+        current_rung = self.profile.rungs[self.state.adaptive.current_index]
         capacity = CapacitySnapshot(
             available_mb_per_card=available,
             required_mb_by_rung=self.requirements.required_mb_by_rung,
             contended_per_card=contended,
+            current_rung_releaseable=current_rung.aux_mode is not AuxMode.API,
         )
         plan = reconcile(self.state.adaptive, capacity, self.profile, now)
+        if plan.action is ActionKind.RELEASE:
+            return self._yield_residency(plan)
+        if plan.action is ActionKind.ACTIVATE and plan.target_index == self.state.adaptive.current_index:
+            # transition() is a no-op for same-index moves, so a yielded rung
+            # must be brought back here rather than through the ladder.
+            return self._restore_in_place(plan, capacity, now)
         if plan.action is not ActionKind.ACTIVATE:
             self.state = replace(self.state, adaptive=plan.state)
-            restored = restore_current and self._ensure_current_rung_ready(available, now)
+            enforced = self._enforce_release(now)
+            if enforced is not None:
+                return enforced
+            restored = (
+                restore_current
+                and not self.state.adaptive.released
+                and self._ensure_current_rung_ready(available, now)
+            )
             if restored:
                 return ControllerResult(
                     self.state, True, ActionKind.ACTIVATE, "restored missing current rung"

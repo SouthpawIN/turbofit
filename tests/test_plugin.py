@@ -278,6 +278,7 @@ def test_install_turbosouth_profile_uses_current_github_distribution(monkeypatch
     import types
     import plugin_tools
     monkeypatch.setattr(plugin_tools, "ensure_recommended_models", lambda **_: {"ok": True, "families": ["bonsai-27b"], "artifacts": []})
+    monkeypatch.setattr(plugin_tools, "probe_distribution_source", lambda url: None)
 
     calls = []
     profile = tmp_path / "profiles" / "turbosouth"
@@ -330,6 +331,37 @@ def test_install_turbosouth_profile_updates_github_distribution_and_preserves_us
     assert result["updated"] is True
     assert result["version"] == "2.1.0"
     assert user_memory.read_text() == "keep me"
+
+
+def test_install_turbosouth_profile_reports_a_missing_distribution_before_git(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """A 404 distribution must not surface as a raw `git clone` failure."""
+    import plugin_tools
+
+    monkeypatch.setattr(plugin_tools.shutil, "which", lambda name: "/usr/bin/hermes" if name == "hermes" else None)
+
+    def must_not_run(*args, **kwargs):
+        raise AssertionError("install must not shell out to git for an absent repository")
+
+    monkeypatch.setattr(plugin_tools.subprocess, "run", must_not_run)
+
+    with pytest.raises(RuntimeError) as excinfo:
+        plugin_tools.install_turbosouth_profile(hermes_home=tmp_path)
+
+    message = str(excinfo.value)
+    assert "not reachable" in message
+    assert "TURBOFIT_TURBOSOUTH_SOURCE" in message
+
+
+def test_distribution_source_is_overridable(monkeypatch) -> None:
+    import plugin_tools
+
+    monkeypatch.setenv("TURBOFIT_TURBOSOUTH_SOURCE", "https://github.com/example/turbosouth-mirror.git")
+    assert plugin_tools.distribution_source() == "https://github.com/example/turbosouth-mirror.git"
+
+    monkeypatch.delenv("TURBOFIT_TURBOSOUTH_SOURCE")
+    assert plugin_tools.distribution_source() == plugin_tools.TURBOSOUTH_DISTRIBUTION
 
 
 def test_readme_prominently_includes_turbosouth_and_reciprocal_install() -> None:
