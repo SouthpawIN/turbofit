@@ -1,0 +1,196 @@
+{
+  "schema": "turbofit.fallback-chain/v1",
+  "updated": "2026-11-03",
+  "policy": [
+    "Context first, then model class. Shedding context is cheaper, faster and invisible to the",
+    "user than swapping models, so every level that can drop its window before a smaller model",
+    "is reached does so. Reaching for a smaller model only happens when the context floor still",
+    "does not fit. Yield (release residency entirely) is the last level, never the first.",
+    "A level is only promoted into the default chain when it has on-box evidence. Options are",
+    "listed per level but never silently substituted: an option needs the same evidence to become",
+    "the default for that slot."
+  ],
+  "context_floor": 32768,
+  "lanes": {
+    "dedicated": {
+      "label": "Dedicated VRAM (dense allowed)",
+      "levels": [
+        {
+          "id": "d0",
+          "kind": "model",
+          "model": "qwen3-8-flash-next-strata",
+          "engine": "strata",
+          "context": 262144,
+          "needs_mb_per_card": 22000,
+          "evidence": "measured",
+          "evidence_source": "omarchy 2x3090: 20554 + 22534 MiB resident",
+          "options": [
+            {
+              "model": "deepseek-v4-1-flash",
+              "quant": "GSQ-RCO",
+              "engine": "strata",
+              "evidence": "candidate",
+              "note": "763B/16B MoE; top rung above Flash Next; engine pending"
+            },
+            {
+              "model": "deepseek-v4-1-flash",
+              "quant": "GSQ-RCO",
+              "engine": "llama.cpp",
+              "evidence": "candidate",
+              "note": "same weights through TurboFit's pinned llama.cpp"
+            },
+            {
+              "model": "muse-glimmer-30b-hermes-agentic",
+              "engine": "llama.cpp",
+              "evidence": "candidate",
+              "note": "agentic-tuned 30B; benchmark against this slot before promotion"
+            }
+          ]
+        },
+        {
+          "id": "d1",
+          "kind": "context",
+          "model": "qwen3-8-flash-next-strata",
+          "engine": "strata",
+          "context": 131072,
+          "needs_mb_per_card": 19000,
+          "evidence": "portable-fit"
+        },
+        {
+          "id": "d2",
+          "kind": "context",
+          "model": "qwen3-8-flash-next-strata",
+          "engine": "strata",
+          "context": 65536,
+          "needs_mb_per_card": 17500,
+          "evidence": "portable-fit"
+        },
+        {
+          "id": "d3",
+          "kind": "model",
+          "model": "qwen3-8-27b-gsq-rco-iq3s",
+          "engine": "llama.cpp",
+          "context": 262144,
+          "needs_mb_per_card": 17400,
+          "evidence": "measured",
+          "evidence_source": "runtime-profiles/rung-requirements.json hardware-48gb",
+          "options": [
+            {
+              "model": "lfm-24a2b",
+              "engine": "llama.cpp",
+              "evidence": "candidate",
+              "note": "24B total / 2B active MoE; needs on-box fit + TPS before promotion"
+            },
+            {
+              "model": "groot",
+              "engine": "llama.cpp",
+              "evidence": "candidate",
+              "note": "identity and artifacts not yet pinned in this repo"
+            },
+            {
+              "model": "muse-glimmer-30b-hermes-agentic",
+              "engine": "llama.cpp",
+              "evidence": "candidate",
+              "note": "candidate for the agentic slot; benchmark head-to-head with GSQ-RCO"
+            },
+            {
+              "model": "ternary-bonsai-2-27b-ptq1",
+              "engine": "llama.cpp",
+              "evidence": "measured",
+              "note": "cheaper dense rung; promoted default at 8-11 GB"
+            }
+          ]
+        },
+        {
+          "id": "d4",
+          "kind": "context",
+          "model": "qwen3-8-27b-gsq-rco-iq3s",
+          "engine": "llama.cpp",
+          "context": 65536,
+          "needs_mb_per_card": 12200,
+          "evidence": "measured",
+          "evidence_source": "runtime-profiles/rung-requirements.json hardware-48gb"
+        },
+        {
+          "id": "d5",
+          "kind": "model",
+          "model": "ternary-bonsai-2-27b-ptq1",
+          "engine": "llama.cpp",
+          "context": 131072,
+          "needs_mb_per_card": 11200,
+          "evidence": "measured",
+          "evidence_source": "runtime-profiles/rung-requirements.json hardware-48gb"
+        },
+        {
+          "id": "d6",
+          "kind": "yield",
+          "model": null,
+          "engine": null,
+          "context": 0,
+          "needs_mb_per_card": 0,
+          "evidence": "measured",
+          "note": "release residency; restore after expansion_dwell_s of clear pressure"
+        }
+      ]
+    },
+    "unified": {
+      "label": "Unified / CPU (MoE only)",
+      "levels": [
+        {
+          "id": "u0",
+          "kind": "model",
+          "model": "qwen3-8-flash-next-strata",
+          "engine": "strata",
+          "context": 262144,
+          "needs_mb_per_card": 22000,
+          "evidence": "portable-fit",
+          "options": [
+            {
+              "model": "deepseek-v4-1-flash",
+              "quant": "GSQ-RCO",
+              "engine": "strata",
+              "evidence": "candidate",
+              "note": "top rung above Flash Next on the unified ladder"
+            }
+          ]
+        },
+        {
+          "id": "u1",
+          "kind": "model",
+          "model": "cyber-tiel-coder-35b-a3b",
+          "engine": "llama.cpp",
+          "context": 262144,
+          "needs_mb_per_card": 20000,
+          "evidence": "portable-fit"
+        },
+        {
+          "id": "u2",
+          "kind": "context",
+          "model": "cyber-tiel-coder-35b-a3b",
+          "engine": "llama.cpp",
+          "context": 65536,
+          "needs_mb_per_card": 15000,
+          "evidence": "portable-fit"
+        },
+        {
+          "id": "u3",
+          "kind": "model",
+          "model": "maple-preview-20b-a1b",
+          "engine": "llama.cpp",
+          "context": 131072,
+          "needs_mb_per_card": 8000,
+          "evidence": "portable-fit"
+        },
+        {
+          "id": "u4",
+          "kind": "yield",
+          "model": null,
+          "engine": null,
+          "context": 0,
+          "needs_mb_per_card": 0,
+          "evidence": "measured"
+        }
+      ]
+    }
+  }
+}

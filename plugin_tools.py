@@ -938,6 +938,7 @@ def status_snapshot(config: Mapping[str, Any], *, probe: bool = True) -> dict[st
         and isinstance(item.get("model"), str)
         and item.get("model")
     ]
+    usage = _live_usage() if probe else {"gpus": [], "host": {}, "tps": None}
     return {
         "ok": True,
         "provider": {
@@ -955,10 +956,25 @@ def status_snapshot(config: Mapping[str, Any], *, probe: bool = True) -> dict[st
         "gateway": gateway_health(endpoint) if probe else {"reachable": None, "endpoint": endpoint},
         "tailnet": tailnet_status(),
         "platform": {"os": os.name, "sys_platform": sys.platform},
-        "usage": _live_usage() if probe else {"gpus": [], "host": {}, "tps": None},
+        "usage": usage,
         "catalog": _provider_catalog(config),
         "scale_ladder": _local_scale_ladder(selection),
+        "dials": _dials(selection, usage),
     }
+
+
+def _dials(selection: Mapping[str, Any] | None, usage: Mapping[str, Any] | None) -> dict[str, Any]:
+    """The three dials: memory pressure, context window, and the fallback chain.
+
+    Never raises: a status call must still answer when the chain document is missing or
+    a probe came back empty.
+    """
+    try:
+        from turbofit_runtime.chain import dials_for_selection
+
+        return dials_for_selection(usage=usage, selection=selection)
+    except Exception as exc:  # pragma: no cover - defensive surface
+        return {"error": str(exc)}
 
 
 def select_profile(profile: str) -> dict[str, Any]:
