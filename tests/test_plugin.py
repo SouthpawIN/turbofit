@@ -340,6 +340,10 @@ def test_install_turbosouth_profile_reports_a_missing_distribution_before_git(
     import plugin_tools
 
     monkeypatch.setattr(plugin_tools.shutil, "which", lambda name: "/usr/bin/hermes" if name == "hermes" else None)
+    monkeypatch.setenv(
+        "TURBOFIT_TURBOSOUTH_SOURCE",
+        "https://github.com/SouthpawIN/turbosouth-distribution-does-not-exist.git",
+    )
 
     def must_not_run(*args, **kwargs):
         raise AssertionError("install must not shell out to git for an absent repository")

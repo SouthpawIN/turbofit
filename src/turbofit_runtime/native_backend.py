@@ -469,7 +469,7 @@ class NativeRuntimeBackend:
                 for role, item in self._roles(rung.id).items()
             }
         result = {}
-        for role, item in self._roles(rung.id).items():
+        for role, item in self._launch_roles(rung).items():
             component = self._component(role, item, rung.context)
             resident = self._owned.get(role)
             state = "error" if role in self._lost_roles else "unknown"
@@ -481,6 +481,10 @@ class NativeRuntimeBackend:
             result[role] = {"backing_model": component.alias,
                             "context_length": int(item.get("context", rung.context)),
                             "residency": state}
+        if rung.aux_mode is AuxMode.SHARED_MAIN and "main" in result:
+            # The auxiliary role is served by main; report it as such rather
+            # than inventing a second residency it does not have.
+            result["aux"] = dict(result["main"])
         return result
 
     def release_idle_role(self, role: str) -> str:
@@ -549,8 +553,12 @@ class NativeRuntimeBackend:
     def ensure_role(self, role: str) -> None:
         """Wake one current local role without unloading the other GPU lane."""
         rung = self.profile.rungs[self.current_state.rung_index]
-        item = self._roles(rung.id).get(role)
-        if item is None or role not in {"main", "aux"}:
+        if role not in {"main", "aux"}:
+            raise ReconcileError("no native resolution for requested role")
+        if role == "aux" and rung.aux_mode is AuxMode.SHARED_MAIN:
+            role = "main"
+        item = self._launch_roles(rung).get(role)
+        if item is None:
             raise ReconcileError("no native resolution for requested role")
         component = self._component(role, item, rung.context)
         resident = self._owned.get(role)
@@ -687,6 +695,19 @@ class NativeRuntimeBackend:
                 return False
             self.sleep(min(1.0, max(0.0, deadline - self.clock())))
 
+    def _launch_roles(self, rung) -> dict[str, dict[str, int | str]]:
+        """Roles that own a process for this rung.
+
+        A ``shared-main`` rung serves auxiliary requests from the main process.
+        An aux resolution on such a rung is metadata describing that shared
+        lane, not a second server: starting it would double VRAM for a rung the
+        profile calls shared.
+        """
+        roles = self._roles(rung.id)
+        if rung.aux_mode is AuxMode.SHARED_MAIN and "main" in roles:
+            return {"main": roles["main"]}
+        return roles
+
     def activate_local(self, rung_id: str) -> None:
         rung = next((item for item in self.profile.rungs if item.id == rung_id), None)
         if rung is None or rung.aux_mode is AuxMode.API:
@@ -701,7 +722,7 @@ class NativeRuntimeBackend:
             self._target_rung_id = rung_id
             self._target_aux_mode = rung.aux_mode
             return
-        roles = self._roles(rung_id)
+        roles = self._launch_roles(rung)
         for role in ("aux", "main"):
             item = roles.get(role)
             if item is not None:
@@ -733,7 +754,7 @@ class NativeRuntimeBackend:
             return self._unit_active(unit) and all(
                 self._port_healthy(port) for port in self._unit_ports(rung_id)
             )
-        roles = self._roles(rung_id)
+        roles = self._launch_roles(rung)
         if set(roles) != set(self._owned):
             return False
         return all(self._wait_healthy(runtime) for runtime in self._owned.values())

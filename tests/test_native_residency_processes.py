@@ -24,7 +24,17 @@ def component(role, unhealthy=False):
 
 
 def test_real_native_children_idle_stop_and_coalesced_request_wake(tmp_path, monkeypatch):
+    from dataclasses import replace
+
+    from turbofit_runtime.runtime_profile import AuxMode
+
     runtime = backend(tmp_path)
+    # Two GPU lanes are only real on a dedicated-aux rung; a shared-main rung
+    # deliberately serves aux from the main process.
+    runtime.profile = replace(
+        runtime.profile,
+        rungs=tuple(replace(rung, aux_mode=AuxMode.DEDICATED) for rung in runtime.profile.rungs),
+    )
     runtime.verification_timeout_s = 3
     components = {role: component(role) for role in ('main', 'aux')}
     monkeypatch.setattr(runtime, '_roles', lambda rung: {r: {} for r in components})
