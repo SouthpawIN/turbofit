@@ -186,8 +186,9 @@ def _normalized_recipe_name(name: str) -> str:
     """Fold the slugs that appear in the wild onto one comparable key.
 
     Hand-written profiles and resolutions use several spellings of the same
-    model (``qwen38-27b-unleashed``, ``qwen3.8-27b-unleashed``,
-    ``Qwen 3.8 27B``), so comparison is alphanumeric-only and case-folded.
+    model (``qwen38-27b-gsq-rco-iq3s``, ``qwen3.8-27b-gsq-rco``,
+    ``Qwen 3.8 27B GSQ-RCO IQ3_S``), so comparison is alphanumeric-only and
+    case-folded.
     """
     return re.sub(r"[^a-z0-9]", "", str(name).lower())
 

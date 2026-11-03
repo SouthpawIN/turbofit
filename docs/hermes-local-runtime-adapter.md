@@ -85,7 +85,7 @@ The seam that makes your models authoritative without touching Hermes core:
 2. **TurboFit owns staging.** `references/model-recipes.json` (variants, quants, projectors,
    drafts) decides what lands in `models_dir` — Bonsai 2 27B PTQ1_0/PQ2_0, Underdog 27B PQ2_0,
    Qwen 3.8 27B GSQ-RCO IQ3_S/IQ2_XS, Flash Next, Maple Preview, Cyber-Tiel 35B-A3B,
-   Qwen 3.8 27B Unleashed, DeepSeek V4.1 — instead of the five packaged entries.
+   DeepSeek V4.1 — instead of the five packaged entries.
 3. **TurboFit owns ordering and refusals.** Hermes' preset planner is fit-only; it has no
    ladder order, no tier doctrine ("IQ3_S is lossless; do not push heavier past it") and no
    evidence gate. Those stay in the Turbofile and are applied as: which GGUFs are staged,
