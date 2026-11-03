@@ -1560,6 +1560,27 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 return model["base_url"], model["remote_model"], role
         return None
 
+    def _resolve_bare_remote_model(self, model_id):
+        """Resolve a bare model name that this node does not serve but a peer does.
+
+        A user who saw `cyber-tiel-coder-35b-a3b` on their laptop should be able to
+        name it on their phone. The peer-prefixed form still wins when given; this
+        only fills the gap when the node itself holds no such model.
+        """
+        wanted = str(model_id or "").strip()
+        if not wanted or "/" in wanted:
+            return None
+        matches = [
+            model
+            for model in _discover_remote_models()
+            if str(model.get("remote_model")) == wanted
+        ]
+        if not matches:
+            return None
+        chosen = matches[0]
+        role = str((chosen.get("metadata") or {}).get("role") or "main").strip()
+        return chosen["base_url"], chosen["remote_model"], role
+
     def _proxy_remote(self, base_url, remote_model, role, path, body=None):
         """Proxy a request to a remote TurboFit peer."""
         upstream = f"{base_url}/{role}/v1/{path.lstrip('/')}"
@@ -1619,6 +1640,12 @@ class GatewayHandler(BaseHTTPRequestHandler):
             if peer:
                 self._proxy_remote(peer, "auto", "main", path[len("/v1/"):], body=body)
                 return
+
+        bare_remote = self._resolve_bare_remote_model(model)
+        if bare_remote:
+            base_url, remote_model, remote_role = bare_remote
+            self._proxy_remote(base_url, remote_model, remote_role, path[len("/v1/"):], body=body)
+            return
 
         profile_id, role = parse_provider_model(model)
         selected = resolve_requested_profile(model)
