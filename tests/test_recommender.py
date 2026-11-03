@@ -241,3 +241,21 @@ def test_auto_auxiliary_intelligence_uses_runtime_recipe_alias() -> None:
 
     assert ("bonsai-27b", "auto:bonsai-27b", 65_536) in recipes
     assert ("bonsai-27b", "auto", 65_536) not in recipes
+
+
+def test_recommender_distinguishes_no_fit_from_a_real_failure(monkeypatch, capsys) -> None:
+    """'Evaluated, nothing fits' is an answer (3), not a crash (1)."""
+    import runpy
+    import sys as _sys
+
+    module = runpy.run_path(
+        str(Path(__file__).resolve().parents[1] / "scripts/turbofit-runtime-recommend"),
+        run_name="turbofit_runtime_recommend_exit",
+    )
+    module["rank_profiles"] = lambda args: []
+    monkeypatch.setattr(_sys, "argv", ["turbofit-runtime-recommend", "--fit-only", "--json"])
+
+    code = module["main"]()
+
+    assert code == 3
+    assert capsys.readouterr().out.strip() == "[]"

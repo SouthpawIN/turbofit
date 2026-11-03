@@ -693,9 +693,16 @@ def recommend_profile():
             capture_output=True,
             text=True,
             timeout=60,
-            check=True,
+            check=False,
         )
-        rows = json.loads(result.stdout)
+        # 3 means "evaluated, nothing fits here" - a normal answer on a node with no
+        # accelerator, not a crash worth an error line.
+        if result.returncode not in (0, 3):
+            raise RuntimeError(
+                (result.stderr or result.stdout or "").strip()
+                or f"recommender exited {result.returncode}"
+            )
+        rows = json.loads(result.stdout or "[]")
         profile = rows[0].get("profile") if rows else None
         return profile if profile in runtime_profiles() else None
     except Exception as exc:

@@ -497,7 +497,10 @@ def main() -> int:
     ranked = rank_profiles(args)[: args.limit]
     if args.json:
         print(json.dumps([asdict(item) for item in ranked], indent=2))
-        return 0 if ranked else 1
+        # 3 = evaluated successfully, nothing fits. 1 is reserved for a real failure
+        # (bad inventory, unreadable catalog) so callers stop logging "failed" for a
+        # machine that simply has no accelerators to recommend for.
+        return 0 if ranked else 3
     print(f"Evidence-backed runtime recommendations — context >= {args.context:,}")
     print("Priority: measured intelligence -> 128K -> 30 tok/s -> 262K -> 50 tok/s -> 1M")
     print(f"Fit basis: {'current free accelerator memory plus safe host spill' if args.live else 'physical accelerator memory plus safe host spill'}; safety floor {args.safety_floor_mb} MiB/device")
@@ -511,7 +514,7 @@ def main() -> int:
     if ranked:
         best = next((item for item in ranked if item.fit), ranked[0])
         print(f"\nRECOMMEND: {best.profile}\nRUN: {best.command}\nEVIDENCE: {best.evidence}")
-    return 0 if ranked else 1
+    return 0 if ranked else 3
 
 
 if __name__ == "__main__":
