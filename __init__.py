@@ -190,17 +190,22 @@ def register(ctx) -> None:
         args_hint="[scan|status|tiers|update|shift up|shift down|shift <model>|serve|smoke|setup]",
     )
     ctx.register_skill("turbofit", Path(__file__).parent / "SKILL.md")
+    # These are independent heal paths. Importing them together meant one missing
+    # name (ensure_provider_registered was referenced but never defined) raised
+    # before activate_slash_commands() ran, so registration silently stopped
+    # publishing /turbofit into profile homes -- issue #48.
     try:
-        from .plugin_tools import activate_slash_commands, ensure_provider_registered
+        from .plugin_tools import activate_slash_commands
 
         activate_slash_commands()
-        # Fresh-profile heal — ensures every home (including newly created
-        # ones like turbosovth/turbosouth) has providers.turbofit so
-        # custom:turbofit never fails with Unknown provider on first use.
-        try:
-            ensure_provider_registered()
-        except Exception:
-            pass
+    except Exception:
+        pass
+    try:
+        # Fresh-profile heal — every home (TurboSouth included) needs
+        # providers.turbofit so custom:turbofit never fails with Unknown provider.
+        from .plugin_tools import ensure_provider_registered
+
+        ensure_provider_registered()
     except Exception:
         pass
 

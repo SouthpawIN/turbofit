@@ -56,6 +56,8 @@ git clone https://github.com/SouthpawIN/turbofit.git
 cd turbofit && scripts/install.sh
 ```
 
+Hermes scans a plugin's files the first time it installs it, so expect a couple of minutes with no output before `✓ Plugin turbofit enabled.` A script that gives up after 60 s will look like a hang; it is not.
+
 **Verify — any path.** A refused `http://127.0.0.1:8091/v1/models` means the *TurboFit* gateway is down, not the Hermes messaging gateway. Then:
 
 ```bash

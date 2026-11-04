@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import yaml
+
 import json
 from pathlib import Path
 
@@ -219,7 +221,7 @@ def test_serve_tailnet_publishes_provider_url(monkeypatch, tmp_path) -> None:
     hermes_cli = types.ModuleType("hermes_cli")
     config = types.ModuleType("hermes_cli.config")
     config.load_config = lambda: {}
-    config.save_config = lambda *a, **k: saved.setdefault("saved", True)
+    config.save_config = lambda *a, **k: saved.setdefault("saved", True)  # unused now
     monkeypatch.setitem(__import__("sys").modules, "hermes_cli", hermes_cli)
     monkeypatch.setitem(__import__("sys").modules, "hermes_cli.config", config)
 
@@ -228,5 +230,10 @@ def test_serve_tailnet_publishes_provider_url(monkeypatch, tmp_path) -> None:
     assert result["served"] is True
     assert result["provider_base_url"].endswith(":9443/v1")
     assert saved["url"] == "https://box.tailnet.ts.net:9443/v1"
-    assert saved["saved"] is True
+    # Every home gets its own config.yaml with the tailnet URL. The old stub called
+    # save_config (which always targets the active home) once per profile, so the
+    # URL never reached a profile at all.
+    for home in (hermes_home, hermes_home / "profiles" / "default"):
+        payload = yaml.safe_load((home / "config.yaml").read_text())
+        assert payload["providers"]["turbofit"]["api"] == "https://box.tailnet.ts.net:9443/v1"
 
