@@ -98,10 +98,18 @@ def ensure_hermes_on_path() -> Path | None:
     Returns the root that provided ``hermes_cli``, or None.
     """
     global _path_checked
+    # An editable Hermes install maps hermes_cli only; pm and hermes_platform --
+    # which its own submodules import -- stay unmapped, so importing the package
+    # succeeding is not the same as the runtime being usable. Put the install root
+    # (the parent of the hermes_cli package) on the path either way.
     try:
-        import_module("hermes_cli")
-        return None
-    except Exception:  # noqa: BLE001 - any import failure means "not here"
+        package = import_module("hermes_cli")
+        root = Path(package.__file__).resolve().parent.parent
+        if str(root) not in sys.path:
+            sys.path.append(str(root))
+        _path_checked = True
+        return root
+    except Exception:  # noqa: BLE001 - any import failure means "not here yet"
         pass
     for root in _hermes_roots():
         if (root / "hermes_cli").is_dir():
