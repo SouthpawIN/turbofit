@@ -150,6 +150,18 @@ Start the local endpoint with `/turbofit serve` (background: `scripts/turbofit-g
 - A model you name explicitly is **never** silently answered by a hosted API — you get a retryable `503` naming it. Substitution is legal only for `auto`/`active`, and only when `TURBOFIT_ALLOW_API=true`.
 - Plain HTTP is honoured only on loopback and Tailscale addresses; anything else needs HTTPS.
 
+## Built on Hermes' own runtime
+
+TurboFit is a plugin *on top of* Hermes, not a parallel stack. Hermes already ships a managed llama.cpp runtime — PM-pinned engines, one supervised router-mode server, a context ladder with growth, a hardware budget with physics checks, MTP launch flags, idle unload. Those are adopted rather than re-implemented:
+
+```bash
+scripts/turbofit-hermes-bridge        # 10 of 10 primitives adopted from Hermes
+```
+
+What TurboFit adds, because Hermes has no equivalent: external pressure sensing, residency yield and restore, the two evidence-gated ladders, the federated gateway, and the benchmark campaigns. Hermes keeps deciding *how* a server lives; TurboFit decides *what* runs and *when it steps aside*.
+
+Strata gets the same treatment — `scripts/turbofit-strata` prints the plan the engine will be launched with, from the 0.2.10 rules (8 GB cards start at 128K, DFlash2 by default, the all-cards split engine when two sm 8.6 cards have the RAM).
+
 ## Keeping it current
 
 ```bash
