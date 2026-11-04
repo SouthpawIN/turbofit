@@ -149,8 +149,22 @@ def check_runtime_state():
     ), declared
 
 
+def _strata_unit_exec() -> str | None:
+    """Strata is often a systemd unit with its own venv, not a PATH binary."""
+    unit = UNIT_DIR / "turbofit-strata.service"
+    if not unit.is_file():
+        return None
+    line = doctor.unit_exec_line(unit.read_text(encoding="utf-8", errors="replace"))
+    if not line:
+        return None
+    for token in line.split():
+        if token.endswith(("strata", "strata.exe")) or "/strata" in token:
+            return token
+    return None
+
+
 def check_strata():
-    binary = shutil.which("strata")
+    binary = shutil.which("strata") or _strata_unit_exec()
     version = None
     if binary:
         try:
@@ -163,7 +177,13 @@ def check_strata():
     problems = strata.version_problems(
         found[0] if found else None, found[1] if len(found) > 1 else None
     )
-    return doctor.diagnose_strata(installed=version, problems=problems)
+    finding = doctor.diagnose_strata(installed=version, problems=problems)
+    if version is None and (UNIT_DIR / "turbofit-strata.service").is_file():
+        finding = doctor.Finding(
+            "strata", doctor.OK,
+            "installed as turbofit-strata.service (no strata binary on PATH)",
+        )
+    return finding
 
 
 def check_engine_pins():
