@@ -8,7 +8,13 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+try:
+    from fastapi import APIRouter, HTTPException
+except ImportError as exc:  # the dashboard is an optional extra, the plugin is not
+    raise ImportError(
+        "the TurboFit dashboard needs fastapi: pip install 'turbofit[dashboard]'. "
+        "The plugin itself (and /turbofit) works without it."
+    ) from exc
 
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]

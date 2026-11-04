@@ -4,16 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "turbofit"
-version = "2.4.0"
+version = "2.4.1"
 description = "Turbofit - adaptive local inference provider"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-dependencies = [
-    "pyyaml>=6.0",
-    "fastapi>=0.133.1",
-    "huggingface_hub>=1.24.0",
-]
+# Zero required dependencies on purpose. `hermes plugins install --enable` runs
+# non-interactively in agents, scripts and CI, and Hermes refuses to enable a
+# plugin whose dependencies it cannot install in that mode -- the install then
+# ends "installed but disabled" and /turbofit never appears. YAML ships vendored
+# (pure Python, no C extension) and everything else is optional.
+dependencies = []
+
+[project.optional-dependencies]
+dashboard = ["fastapi>=0.133.1"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

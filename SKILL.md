@@ -1,7 +1,7 @@
 ---
 name: turbofit
 description: "Operate the Turbofit adaptive local inference plugin."
-version: 2.4.0
+version: 2.4.1
 author: SouthpawIN + Nous Girl
 license: MIT
 tags: [hermes-agent, plugin, llama-cpp, adaptive-runtime]
