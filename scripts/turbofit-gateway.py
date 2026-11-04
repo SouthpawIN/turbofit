@@ -1896,10 +1896,12 @@ class GatewayHandler(BaseHTTPRequestHandler):
                         "transfer-encoding",
                         "connection",
                         "content-length",
-                        "content-encoding",
                         "access-control-allow-origin",
                         "access-control-allow-credentials",
                     ):
+                        # content-encoding is relayed: the body below is the upstream's
+                        # bytes, and dropping the header hands the client gzip it cannot
+                        # decode (observed against a hosted backend that compresses).
                         continue
                     if normalized in sent_headers:
                         continue

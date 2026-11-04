@@ -70,23 +70,55 @@
       "id": "strata",
       "kind": "python-cli",
       "repository": "https://github.com/Niko1221/Strata.git",
-      "revision": "main",
-      "purpose": "Qwen 3.8 Flash Next 125B MoE via expert tiering. 64+ GB RAM required.",
+      "revision": "v0.2.10",
+      "purpose": "Qwen 3.8 Flash Next and DeepSeek-V4.1-Flash (ISTA-DAS Coder) with expert tiering, DFlash2 drafter and the all-cards split engine. 8 GB cards start at 128K context; the split engine needs about 43 GiB free RAM.",
       "executable": "~/.local/share/turbofit/runtimes/strata/.venv/bin/python",
-      "launch_command": "setup.py",
+      "launch_command": "strata launch",
       "port": 8082,
       "requirements": {
-        "os": "linux",
-        "architecture": "x86_64",
-        "backend": "cuda",
-        "driver_min": 580,
-        "cuda_toolkit_min": "12.0",
-        "min_vram_gb": 12,
-        "min_system_ram_gb": 64,
-        "multimodal": false,
+        "os": [
+          "linux",
+          "windows",
+          "darwin"
+        ],
+        "architecture": [
+          "x86_64",
+          "amd64",
+          "arm64",
+          "aarch64"
+        ],
+        "backend": [
+          "cuda",
+          "rocm",
+          "metal",
+          "sycl",
+          "vulkan"
+        ],
+        "min_vram_gb": 8,
+        "min_vram_gb_native_context": 12,
+        "small_card_context_tokens": 131072,
+        "split_engine": {
+          "os": [
+            "linux"
+          ],
+          "shapes": [
+            "2x nvidia sm_86",
+            "2x nvidia sm_120",
+            "4x radeon ai pro r9700"
+          ],
+          "max_context_tokens": 131072,
+          "free_ram_mb": 44032
+        },
+        "multimodal": true,
         "model_format": "gguf"
       },
-      "status": "production"
+      "status": "production",
+      "engine_version": "0.1.56",
+      "install_command": "download install.sh from https://github.com/Niko1221/Strata/releases/latest and run it with bash",
+      "feed": {
+        "x86_64": "https://github.com/Niko1221/Strata/releases/latest/download/strata-feed.json",
+        "aarch64": "https://github.com/Niko1221/Strata/releases/latest/download/strata-feed-linux-aarch64.json"
+      }
     },
     {
       "id": "maple-flash-moe",

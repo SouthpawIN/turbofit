@@ -408,22 +408,32 @@ class RecipeBook:
             if fit == "on":
                 command.append("--fit")
         elif runtime_flavor == "strata":
-            # Strata engine: <binary> <binary_args> --family <family> --model <quant>
-            # Uses expert tiering: hot experts on GPU, all experts in RAM
-            binary_args = spec.get("binary_args", ["setup.py", "serve"])
-            if "serve" in binary_args:
-                binary_args = [arg for arg in binary_args if arg != "serve"]
-            strata_family = spec.get("strata_family", "qwen")
-            strata_model = spec.get("strata_model", "IQ2_XS")
-            command = [binary, *binary_args, "--family", strata_family, "--model", strata_model]
-            command.extend([
+            # Strata 0.2.10 CLI (`strata launch`). Only flags the release notes
+            # document are composed here: --model, --context, --drafting,
+            # --parallel, --split-engine. The old builder ran `setup.py serve` and
+            # invented --family/--gpu/--yes/--no-browser; none of those exist.
+            # Anything a Turbofile needs beyond this set goes in strata_extra_args
+            # rather than being guessed here.
+            drafted = str(spec.get("drafting") or "auto").strip().lower()
+            if drafted not in {"auto", "mtp", "dflash2", "off"}:
+                raise ValueError(
+                    f"drafting must be auto|mtp|dflash2|off, got {drafted!r}"
+                )
+            split = str(spec.get("split_engine") or "off").strip().lower()
+            if split not in {"auto", "on", "off"}:
+                raise ValueError(
+                    f"split_engine must be auto|on|off, got {split!r}"
+                )
+            model_id = spec.get("strata_model") or "qwen3.8-flash-next"
+            command = [
+                binary, "launch",
+                "--model", str(model_id),
                 "--context", str(context),
-                "--port", str(port),
-                "--gpu", "0",
-                "--yes", "--no-browser",
-            ])
-            if spec.get("data_dir"):
-                command.extend(["--data-dir", spec["data_dir"]])
+                "--drafting", drafted,
+                "--parallel", str(max(1, int(spec.get("parallel") or 1))),
+                "--split-engine", split,
+            ]
+            command.extend(str(arg) for arg in spec.get("strata_extra_args") or ())
         elif runtime_flavor == "mainline":
             command = [
                 binary, "-m", model,

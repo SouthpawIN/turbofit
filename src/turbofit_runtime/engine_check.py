@@ -298,16 +298,23 @@ def _compatibility(
             compatible = True
             reason = "MrTrenchTrucker Turbohaul Manager on Linux NVIDIA CUDA"
     elif spec.engine_id == "strata":
-        mode = "wsl" if is_wsl else ("wsl" if os_name == "windows" else "native")
-        if os_name != "linux":
-            reason = "Strata currently requires Linux/WSL"
-        elif architecture not in {"x86_64", "amd64"}:
-            reason = "Strata currently requires Linux x86_64"
-        elif not backends & {"cuda", "rocm"}:
-            reason = "Strata currently requires an NVIDIA or AMD GPU"
+        # Strata 0.2.10 ships signed Windows installers, a notarized macOS dmg
+        # (Metal), Linux x86_64 and Linux ARM64 (DGX Spark), plus Intel SYCL --
+        # and 8 GB cards start at 128K context. The old Linux-x86_64-CUDA-only
+        # rule refused machines Strata now runs on.
+        accelerator = bool(backends & {"cuda", "rocm", "metal", "sycl", "vulkan"})
+        linux_or_dgx = os_name == "linux" and architecture in {
+            "x86_64", "amd64", "aarch64", "arm64",
+        }
+        windows = os_name == "windows" and architecture in {"x86_64", "amd64", "arm64"}
+        mac = os_name == "darwin" and architecture in {"arm64", "aarch64"} and "metal" in backends
+        if not (linux_or_dgx or windows or mac):
+            reason = "Strata requires Linux (x86_64/ARM64), Windows or Apple Silicon"
+        elif not accelerator:
+            reason = "Strata needs a CUDA, ROCm, Metal, SYCL or Vulkan accelerator"
         else:
             compatible = True
-            reason = "Niko1221 Strata on Linux NVIDIA/AMD (expert tiering)"
+            reason = "Niko1221 Strata 0.2.10 (DFlash2 drafter, expert tiering, 8 GB+ cards)"
     elif spec.engine_id == "prism-llama.cpp":
         compatible = os_name in {"linux", "windows", "darwin"}
         reason = "PrismML llama.cpp fork (CUDA, Metal, CPU)" if compatible else "Prism llama.cpp requires Linux, Windows, or macOS"

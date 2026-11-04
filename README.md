@@ -12,7 +12,7 @@ hermes plugins install --enable https://github.com/SouthpawIN/turbofit.git
 
 ---
 
-## Start here: TurboSouth
+## TurboSouth
 
 **TurboSouth is TurboFit's support profile — an agent that installs TurboFit for you.** It inventories your hardware, compares it against the current catalog, installs the model that fits, proves it with a real completion, and fixes what breaks. When it finds a reusable bug it opens a tested PR against TurboFit.
 
@@ -27,7 +27,7 @@ Configure auto for this machine with no cloud fallback.
 Auto keeps picking the wrong model for my card — fix it.
 ```
 
-TurboSouth is a *profile*, not a second product: one TurboFit implementation, one support surface, and the sovthpaw pet arrives with it. `hermes profile install https://github.com/SouthpawIN/turbosouth.git --name turbosouth --yes` works too — but Hermes does not act on a distribution's `dependencies:`, so run the plugin install **first** (or just use `scripts/install`, which does both and verifies it).
+TurboSouth installs TurboFit when it is missing, then verifies it with a real completion. **Install TurboSouth** with `scripts/install` (it installs the plugin first and proves it with a real completion) or with `hermes profile install`. TurboSouth is a *profile*, not a second product: one TurboFit implementation, one support surface, and the sovthpaw pet arrives with it. `hermes profile install https://github.com/SouthpawIN/turbosouth.git --name turbosouth --yes` works too — but Hermes does not act on a distribution's `dependencies:`, so run the plugin install **first** (or just use `scripts/install`, which does both and verifies it).
 
 ## Install
 
@@ -103,6 +103,8 @@ Two ladders, never one. Dense on dedicated VRAM; Mixture-of-Experts on unified/C
 | 16–63 GB | Cyber-Tiel Coder 35B-A3B (UD-IQ3_XXS → Q6_K_XL by band) | 262k |
 | 64 GB+ | Qwen 3.8 Flash Next (Strata) | 262k |
 
+**Auxiliary slots** — same catalog, same evidence rules: **MiniMax Music 3** (music), **NVIDIA Parakeet TDT 0.6B v3** (transcription), **Soprano TTS** (speech), with **Ornith 1.5 35A3B** and Maple Preview 20B-A1B eligible for the light text slots.
+
 Rules that hold at every rung: MTP on wherever the model supports it; **IQ3_S is lossless**, so 32 GB and 48 GB both stay on it rather than paying for a heavier quant; DFlash2 drafters belong to Qwen only, Bonsai keeps its own Prism DSpark sidecar.
 
 **Chain options** — `references/fallback-chain.json`, swappable per slot, all `candidate` until measured on the box in question:
@@ -141,6 +143,8 @@ tailscale serve --bg --https=443 http://127.0.0.1:8091
 provider: custom:turbofit   base_url: https://<node>.your-tailnet.ts.net/v1   model: auto
 ```
 
+Start the local endpoint with `/turbofit serve` (background: `scripts/turbofit-gateway.py`), prove it from the other device with `/turbofit smoke`, and point clients at the tailnet address. TurboFit never uses Funnel — nothing here needs public ingress, and a peer is only ever reachable across your own tailnet.
+
 - `auto` on a node with no GPU delegates to a healthy peer instead of failing.
 - A peer's model is addressable as `peer.ts.net/model-name`; a bare `model-name` resolves to whichever peer serves it.
 - A model you name explicitly is **never** silently answered by a hosted API — you get a retryable `503` naming it. Substitution is legal only for `auto`/`active`, and only when `TURBOFIT_ALLOW_API=true`.
@@ -154,6 +158,14 @@ scripts/install-self-update --dry-run  # print the units first
 ```
 
 Engine binaries are PM-pinned and never downloaded at boot. TurboFit tracks upstream llama.cpp (stock and atomic forks), Strata, MLX, Prism/DSpark and DFlash2 by version; `references/binary-selection.md` decides stock-vs-fork per model, not per machine.
+
+## Troubleshooting
+
+- **`WinError 10061` on Windows** — connection refused on `127.0.0.1:8091`: nothing is listening there. That port belongs to the TurboFit gateway, not the Hermes messaging gateway. Start it (`/turbofit setup`, or `scripts/turbofit-gateway.py`) and confirm with `curl http://127.0.0.1:8091/health`.
+- **"no evidence-backed configuration fits"** — your topology has no measured rung yet. Run `scripts/turbofit-catalog-campaign`, or pick from `compatible_lanes` in the `/turbofit` report.
+- **A model answers from the cloud** — only `auto`/`active` may cross to an API backend, and only with `TURBOFIT_ALLOW_API=true`. Naming a local model returns a retryable `503` instead of a substituted answer.
+- **Windows specifics** — [`docs/windows-native-install.md`](docs/windows-native-install.md) covers the native install, the 8091 port check and the WinError 10061 path.
+- **Strata feels slower after an update** — run `scripts/turbofit-strata`: the app (0.2.10) and its engine packages (0.1.56) version independently, and so do its drafters.
 
 ## Docs
 

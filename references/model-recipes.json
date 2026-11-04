@@ -1366,8 +1366,44 @@
   },
   "strata": {
     "binary": "strata",
-    "model": "qwen3.8-flash-next-iq2_xs",
+    "launch": "launch",
+    "app_version": "0.2.10",
+    "engine_version": "0.1.56",
     "port": 8082,
+    "models": {
+      "qwen3.8-flash-next": {
+        "family": "qwen3.8-flash-next",
+        "quant": "IQ3_S",
+        "split_quant": "UD-Q4_K_XL",
+        "context_tokens": {
+          "8gb": 131072,
+          "12gb+": 262144,
+          "split": 131072
+        },
+        "drafting": {
+          "default": "dflash2",
+          "split": "mtp",
+          "parallel_2+": "mtp"
+        },
+        "vision": true
+      },
+      "ista-das-coder": {
+        "family": "deepseek-v4.1-flash",
+        "cli_model": "ISTA-DAS-Coder",
+        "experts": "192 of 384 per layer",
+        "drafting": {
+          "default": "mtp"
+        },
+        "measured_tps": {
+          "4x_r9700": 59.2,
+          "1x_r9700": 22.8,
+          "strix_halo": "20.9-21.9",
+          "m5_max": "19.1-22.5",
+          "rtx_pro_6000": 100
+        },
+        "source": "Strata 0.2.10 release notes"
+      }
+    },
     "methods": {
       "65536": "baseline",
       "131072": "baseline",
