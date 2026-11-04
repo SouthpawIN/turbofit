@@ -21,6 +21,7 @@ ENV_TEMPLATE = """\
 
 
 def unit_text() -> str:
+    runner = ROOT / "scripts" / "turbofit-run"
     controller = ROOT / "scripts" / "turbofit-controller"
     return f"""[Unit]
 Description=Turbofit native adaptive runtime controller
@@ -29,7 +30,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart={controller}
+ExecStart={runner} {controller}
 Restart=on-failure
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
@@ -41,6 +42,7 @@ WantedBy=default.target
 
 
 def gateway_unit_text() -> str:
+    runner = ROOT / "scripts" / "turbofit-run"
     gateway = ROOT / "scripts" / "turbofit-gateway.py"
     return f"""[Unit]
 Description=Turbofit provider gateway with campaign-safe API continuity
@@ -49,7 +51,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart={gateway}
+ExecStart={runner} {gateway}
 Restart=on-failure
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1

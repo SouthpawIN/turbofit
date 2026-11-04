@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Run a TurboFit script under the best interpreter available.
+#
+# TurboFit's own services are not Hermes itself: they are standalone systemd
+# units with their own Python. When Hermes' install is beside them, that Python
+# is the wrong one -- it lacks the dependencies Hermes' local runtime imports
+# (psutil, for the supervisor), so TurboFit reports primitives as missing while
+# they sit two directories away, fully usable.
+#
+# Resolution order:
+#   $TURBOFIT_PYTHON            explicit override, always wins
+#   $HERMES_HOME/hermes-agent/.venv/bin/python
+#   ~/.hermes/hermes-agent/.venv/bin/python
+#   python3
+#
+# Usage: turbofit-run <script> [args...]
+set -euo pipefail
+
+script="${1:-}"
+if [ -z "$script" ]; then
+    echo "usage: turbofit-run <script> [args...]" >&2
+    exit 2
+fi
+shift
+
+candidates=()
+[ -n "${TURBOFIT_PYTHON:-}" ] && candidates+=("$TURBOFIT_PYTHON")
+[ -n "${HERMES_HOME:-}" ] && candidates+=("$HERMES_HOME/hermes-agent/.venv/bin/python")
+candidates+=("$HOME/.hermes/hermes-agent/.venv/bin/python")
+
+python=""
+for candidate in "${candidates[@]}"; do
+    if [ -x "$candidate" ]; then
+        python="$candidate"
+        break
+    fi
+done
+if [ -z "$python" ]; then
+    python="$(command -v python3)"
+fi
+
+# The script's own directory is on the path first so lib/ and src/ resolve.
+export PYTHONPATH="$(cd "$(dirname "$script")/.." && pwd)/src:${PYTHONPATH:-}"
+export PYTHONUNBUFFERED="${PYTHONUNBUFFERED:-1}"
+
+exec "$python" "$script" "$@"
