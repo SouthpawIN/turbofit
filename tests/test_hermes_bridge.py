@@ -135,3 +135,34 @@ def test_unload_reports_false_when_the_supervisor_cannot(without_hermes):
 
     assert without_hermes.unload(Bare(), "anything") is False
     assert without_hermes.idle_release(Bare()) == []
+
+
+def test_a_hermes_install_beside_the_service_is_put_on_the_path(tmp_path, monkeypatch):
+    root = tmp_path / "hermes-agent"
+    (root / "hermes_cli").mkdir(parents=True)
+    monkeypatch.setattr(hermes_bridge, "HERMES_ROOTS", ("{HERMES_SOURCE}", "{HERMES_HOME}/nope"))
+    monkeypatch.setenv("HERMES_SOURCE", str(root))
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "empty-home"))
+    monkeypatch.setattr(hermes_bridge, "_path_checked", False)
+
+    def absent(name):
+        raise ImportError(name)
+
+    monkeypatch.setattr(hermes_bridge, "import_module", absent)
+
+    found = hermes_bridge.ensure_hermes_on_path()
+
+    assert found == root
+    assert str(root) in __import__("sys").path
+
+
+def test_a_missing_hermes_install_is_not_invented(tmp_path, monkeypatch):
+    monkeypatch.setattr(hermes_bridge, "HERMES_ROOTS", ("{HERMES_SOURCE}",))
+    monkeypatch.setenv("HERMES_SOURCE", str(tmp_path / "nothing-here"))
+    monkeypatch.setattr(hermes_bridge, "_path_checked", False)
+    monkeypatch.setattr(
+        hermes_bridge, "import_module",
+        lambda name: (_ for _ in ()).throw(ImportError(name)),
+    )
+
+    assert hermes_bridge.ensure_hermes_on_path() is None

@@ -20,7 +20,10 @@ on first use and reports honestly when it is absent.
 
 from __future__ import annotations
 
+import os
+import sys
 from importlib import import_module
+from pathlib import Path
 from typing import Any, Callable
 
 PACKAGE = "hermes_cli.local_runtime"
@@ -60,6 +63,55 @@ _FALLBACK_STEPS = (262_144, 131_072, 65_536, 32_768)
 #: Why a primitive could not be resolved, keyed by primitive name.
 _REASONS: dict[str, str] = {}
 
+#: Where a Hermes install might keep its source, in preference order.
+HERMES_ROOTS = (
+    "{HERMES_SOURCE}",
+    "{HERMES_HOME}/hermes-agent",
+    "~/.hermes/hermes-agent",
+    "/opt/hermes",
+)
+
+_path_checked = False
+
+
+def _hermes_roots() -> list[Path]:
+    roots: list[Path] = []
+    for template in HERMES_ROOTS:
+        expanded = template.format(
+            HERMES_SOURCE=os.environ.get("HERMES_SOURCE", ""),
+            HERMES_HOME=os.environ.get("HERMES_HOME", str(Path.home())),
+        )
+        if not expanded or expanded.startswith("{"):
+            continue
+        roots.append(Path(expanded).expanduser())
+    return roots
+
+
+def ensure_hermes_on_path() -> Path | None:
+    """Put a Hermes install on this interpreter's path, if one is not already there.
+
+    TurboFit's gateway and controller run as standalone services with their own
+    Python; Hermes' runtime is usually installed beside them and simply not on
+    that path. Adoption is only real if the import actually resolves, so rather
+    than declaring the primitives missing we look for the install.
+
+    Returns the root that provided ``hermes_cli``, or None.
+    """
+    global _path_checked
+    try:
+        import_module("hermes_cli")
+        return None
+    except Exception:  # noqa: BLE001 - any import failure means "not here"
+        pass
+    for root in _hermes_roots():
+        if (root / "hermes_cli").is_dir():
+            if str(root) not in sys.path:
+                sys.path.append(str(root))
+            _path_checked = True
+            return root
+    _path_checked = True
+    return None
+
 
 def _resolve(name: str) -> Any | None:
     """Import one Hermes primitive, or None when this Hermes has no such thing."""
@@ -67,8 +119,15 @@ def _resolve(name: str) -> Any | None:
     try:
         module = import_module(f"{PACKAGE}.{module_name}")
     except Exception as exc:  # noqa: BLE001 - a dependency error must not be fatal
-        _REASONS[name] = f"{type(exc).__name__}: {exc}"
-        return None
+        if not _path_checked and ensure_hermes_on_path() is not None:
+            try:
+                module = import_module(f"{PACKAGE}.{module_name}")
+            except Exception as retry_exc:  # noqa: BLE001
+                _REASONS[name] = f"{type(retry_exc).__name__}: {retry_exc}"
+                return None
+        else:
+            _REASONS[name] = f"{type(exc).__name__}: {exc}"
+            return None
     if attribute is None:
         _REASONS.pop(name, None)
         return module
@@ -179,10 +238,12 @@ def idle_release(supervisor_instance: Any) -> list[str]:
 
 
 __all__ = [
+    "HERMES_ROOTS",
     "PACKAGE",
     "PRIMITIVES",
     "REPLACES",
     "available",
+    "ensure_hermes_on_path",
     "context_ladder",
     "idle_release",
     "probe_budget",
