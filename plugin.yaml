@@ -5,6 +5,12 @@ author: SouthpawIN
 license: MIT
 homepage: https://github.com/SouthpawIN/turbofit
 kind: standalone
+# Nothing goes into Hermes' shared environment: YAML ships vendored (pure Python)
+# and fastapi is an optional dashboard extra. Without this key Hermes sees a
+# pyproject.toml, treats the plugin as needing a dependency install, and refuses
+# to enable it in any non-interactive run -- which is every agent, script and CI
+# install. That refusal is what left /turbofit missing for users.
+python_runtime: external
 provides_tools:
   - turbofit_status
   - turbofit_configure
