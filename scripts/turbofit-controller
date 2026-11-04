@@ -120,6 +120,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--once", action="store_true", help="run one bounded controller tick")
     parser.add_argument("--interval", type=float, default=2.0)
+    parser.add_argument("--log-interval", type=float, default=300.0,
+                        help="seconds between repeats of an unchanged reconcile record")
     parser.add_argument("--error-interval", type=float, default=60.0,
                         help="minimum seconds between repeats of an identical tick error")
     parser.add_argument("--error-exit-after", type=int, default=0,
@@ -160,6 +162,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     args = parser.parse_args(argv)
     if args.interval <= 0:
         parser.error("--interval must be positive")
+    if args.log_interval <= 0:
+        parser.error("--log-interval must be positive")
     if args.error_interval <= 0:
         parser.error("--error-interval must be positive")
     if args.error_exit_after < 0:
@@ -247,6 +251,8 @@ def main(argv: list[str]) -> int:
             endpoint = LifecycleEndpoint(lifecycle, ensure_ready=runtime.ensure_residency,
                                          resolve_role=runtime.residency_role)
             endpoint.start()
+        last_record: dict | None = None
+        last_record_at = 0.0
         while True:
             payload: dict = {"at": time.time(), "pid": os.getpid(), "degraded": False}
             try:
@@ -261,7 +267,10 @@ def main(argv: list[str]) -> int:
                         "transitioned": result.transitioned,
                         "reason": result.reason,
                     })
-                    print(json.dumps({
+                    # A steady state repeats every tick. Report the record when it
+                    # changes, and otherwise at most once per --log-interval, so a
+                    # 2 s tick does not bury a real transition in its own echo.
+                    record = {
                         "profile_id": result.state.profile_id,
                         "mode": result.state.selection_mode.value,
                         "rung_index": result.state.adaptive.current_index,
@@ -269,7 +278,11 @@ def main(argv: list[str]) -> int:
                         "action": result.action.value,
                         "transitioned": result.transitioned,
                         "reason": result.reason,
-                    }, sort_keys=True), flush=True)
+                    }
+                    now = time.monotonic()
+                    if record != last_record or now - last_record_at >= args.log_interval:
+                        print(json.dumps(record, sort_keys=True), flush=True)
+                        last_record, last_record_at = record, now
                 last_error = None
             except Exception as exc:
                 error_count += 1

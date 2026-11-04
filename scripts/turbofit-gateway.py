@@ -45,6 +45,10 @@ FALLBACK_PATH = os.environ.get(
     "TURBOFIT_FALLBACK_MANIFEST",
     f"{HOME}/.config/turbofit/fallback-models.yaml",
 )
+CONTROLLER_STATUS = os.environ.get(
+    "TURBOFIT_CONTROLLER_STATUS",
+    f"{STATE_HOME}/turbofit/controller-status.json",
+)
 RUNTIME_STATE = os.environ.get(
     "TURBOFIT_RUNTIME_STATE",
     f"{STATE_HOME}/turbofit/runtime-state.json",
@@ -2088,23 +2092,66 @@ class GatewayHandler(BaseHTTPRequestHandler):
         }
         self._send_json(200, response)
 
+    @staticmethod
+    def _declared_local_route(role: str) -> dict | None:
+        """The local backend the controller published for this role, if any."""
+        try:
+            with open(RUNTIME_STATE, encoding="utf-8-sig") as handle:
+                state = json.load(handle)
+        except (OSError, ValueError):
+            return None
+        if not isinstance(state, dict):
+            return None
+        route = (state.get("routes") or {}).get(role)
+        if isinstance(route, dict) and route.get("kind") == "local":
+            return {**route, "rung_id": state.get("rung_id")}
+        return None
+
+    @staticmethod
+    def _controller_released() -> bool:
+        try:
+            with open(CONTROLLER_STATUS, encoding="utf-8-sig") as handle:
+                return bool(json.load(handle).get("released"))
+        except (OSError, ValueError, AttributeError):
+            return False
+
     def _send_health(self):
         main = resolve_main()
         aux = resolve_aux()
         remote = _remote_models_or_empty()
         ok = (main is not None) or (aux is not None) or bool(remote)
+        declared = self._declared_local_route("main")
+        is_api = bool((main or {}).get("is_api"))
         if main is None and remote:
             # A federation node holds no local model of its own; it is healthy when
             # at least one peer is serving one, and saying "down" there is wrong.
             main_state = "federated"
+        elif is_api and declared:
+            # The controller published a local rung but it is not serving: either it
+            # yielded residency to external GPU pressure or it fell back. Saying
+            # "ready" here hid a hosted answer behind a local promise (observed on
+            # omarchy: main=ready while every token came from the Nous API).
+            main_state = "yielded" if self._controller_released() else "api-fallback"
         else:
             main_state = (main or {}).get("state", "down")
-        self._send_json(200 if ok else 503, {
+        payload = {
             "ok": ok,
             "main": main_state,
             "aux": (aux or {}).get("state", "down"),
             "remote_models": len(remote),
-        })
+            "backend": "api-fallback" if is_api else ("local" if main else "none"),
+            "local": bool(main) and not is_api,
+            "cloud_fallback": is_api,
+        }
+        if declared and is_api:
+            payload["declared_rung"] = declared.get("rung_id")
+            payload["note"] = (
+                "the local rung yielded to external GPU pressure; this node is "
+                "answering from a hosted API"
+                if main_state == "yielded"
+                else "the local rung is not serving; this node is answering from a hosted API"
+            )
+        self._send_json(200 if ok else 503, payload)
 
     def _send_json(self, status, payload, extra_headers=None):
         body = json.dumps(payload, indent=2).encode()
