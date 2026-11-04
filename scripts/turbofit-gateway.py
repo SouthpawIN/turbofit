@@ -2143,6 +2143,16 @@ class GatewayHandler(BaseHTTPRequestHandler):
             "local": bool(main) and not is_api,
             "cloud_fallback": is_api,
         }
+        try:
+            from turbofit_runtime import hermes_bridge
+
+            bridge = hermes_bridge.report()
+            payload["hermes_runtime"] = {
+                "summary": bridge["summary"],
+                "adopted": bridge["adopted"],
+            }
+        except Exception:  # noqa: BLE001 - health must answer even if the bridge does not
+            payload["hermes_runtime"] = {"summary": "unavailable"}
         if declared and is_api:
             payload["declared_rung"] = declared.get("rung_id")
             payload["note"] = (

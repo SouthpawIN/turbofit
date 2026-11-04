@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+"""What TurboFit adopts from Hermes' built-in local runtime, and what it keeps.
+
+TurboFit is an extension of the Hermes local runtime, not a parallel stack. This
+prints the adoption report: which primitives TurboFit delegates to Hermes, which
+implementation each one replaces, and what TurboFit still owns on its own.
+
+    turbofit-hermes-bridge          # human summary
+    turbofit-hermes-bridge --json
+    turbofit-hermes-bridge --ladder 262144
+
+Run it with Hermes' own interpreter (the one that can `import hermes_cli`) or from
+inside a Hermes session -- a primitive can look missing only because this Python
+lacks the dependency the Hermes module imports.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from turbofit_runtime import hermes_bridge  # noqa: E402
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--ladder", type=int, default=None,
+                        help="print the context shed ladder for this native window")
+    args = parser.parse_args(argv)
+
+    if args.ladder:
+        steps = hermes_bridge.context_ladder(args.ladder)
+        if args.json:
+            print(json.dumps({"native": args.ladder, "steps": steps}, indent=2))
+        else:
+            print(" -> ".join(f"{step:,}" for step in steps) + " tokens")
+        return 0
+
+    report = hermes_bridge.report()
+    if args.json:
+        print(json.dumps(report, indent=2))
+        return 0
+
+    print(f"Hermes local runtime: {report['summary']}")
+    print()
+    if report["adopted"]:
+        print("adopted:")
+        for name in report["adopted"]:
+            print(f"  · {name:16} replaces {report['replaces'][name]}")
+    else:
+        print("adopted: nothing — this Hermes has no importable local runtime")
+    if report["missing"]:
+        print()
+        print("missing here:")
+        for name in report["missing"]:
+            print(f"  · {name:16} {report['missing_reasons'].get(name, '')}")
+    print()
+    print("TurboFit still owns:")
+    for item in report["kept_by_turbofit"]:
+        print(f"  · {item}")
+    print()
+    print("context ladder (262144 native):")
+    print("  " + " -> ".join(f"{s:,}" for s in hermes_bridge.context_ladder(262_144)))
+    budget = hermes_bridge.probe_budget()
+    print(f"  live budget from Hermes: {'yes' if budget is not None else 'no'}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
