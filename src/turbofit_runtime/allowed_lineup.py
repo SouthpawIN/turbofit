@@ -38,7 +38,17 @@ ALLOWED_MAIN = (
     "qwen3-8-27b-uncensored-mlx-8bit",
     "cyber-tiel-coder-35b-a3b",
     "qwen3-8-flash-next-strata",
+    "qwen3-8-flash-next-iq3xxs",
     "darwin-180b-rsi-strata",
+    "arete-27b-q3",
+    "arete-27b-q4",
+    "arete-27b-q5",
+    "arete-27b-q8",
+    "nanbeige-33b-iq3xs",
+    "nanbeige-33b-iq4xs",
+    "flint-40a2-5b-mix12g",
+    "flint-40a2-5b-mix24g",
+    "deepseek-v4-1-flash-1017-iq1m",
 )
 
 ALLOWED_AUX = (
@@ -238,7 +248,7 @@ def check_local_options(
 
     if unified:
         main = shared_main_for_total_memory_gb(host_ram_gb)
-        return [
+        options = [
             {
                 "role": "main",
                 "alias": main,
@@ -249,6 +259,23 @@ def check_local_options(
                 ),
                 "residency": residency if main == "ornith-1-5-35a3b" else None,
             },
+        ]
+        # Dense exception: a 27B at q3+ fits a 16 GB unified pool, but it is not
+        # the default because MoE decodes far faster on shared memory.
+        if host_ram_gb >= 16:
+            dense = "arete-27b-q4" if host_ram_gb >= 24 else "arete-27b-q3"
+            options.append(
+                {
+                    "role": "main",
+                    "alias": dense,
+                    "engine": "llama.cpp",
+                    "why": (
+                        "Dense-exception option: Arete 27B at q3+ fits the unified "
+                        "pool, but expect fewer tokens/sec than the MoE default."
+                    ),
+                }
+            )
+        return options + [
             {
                 "role": "aux",
                 "alias": "maple-preview-tq2",
@@ -270,6 +297,18 @@ def check_local_options(
                 "why": "20B-A1B Maple TQ2_0 fits within the dedicated 8 GB VRAM band.",
             },
         ]
+        if vram_gb >= 12:
+            options.append(
+                {
+                    "role": "main",
+                    "alias": "arete-27b-q3",
+                    "engine": "llama.cpp",
+                    "why": (
+                        "Arete 27B Q3_K_S (~11.6 GiB weights) fits a 12 GB card at "
+                        "reduced context; the smallest tier that clears q3."
+                    ),
+                }
+            )
         if host_ram_gb >= 16:
             options.append(
                 {
@@ -284,7 +323,7 @@ def check_local_options(
                 }
             )
         return options
-    return [
+    options = [
         {
             "role": "main",
             "alias": local_main_for_vram_gb(vram_gb),
@@ -297,14 +336,86 @@ def check_local_options(
             "engine": "llama.cpp",
             "why": "Speed: Ornith MoE / MTP instead of dense 27B.",
         },
+    ]
+    # Named alternatives across the matrix. These never displace the band default;
+    # they are the "every model this machine can run" set from the Fit List.
+    if vram_gb < 24:
+        options.append(
+            {
+                "role": "main",
+                "alias": "arete-27b-q4",
+                "engine": "llama.cpp",
+                "why": "Arete 27B Q4_K_M (~16 GiB) at 131K context on a 16-23 GB card.",
+            }
+        )
+        options.append(
+            {
+                "role": "main",
+                "alias": "flint-40a2-5b-mix12g",
+                "engine": "llama.cpp",
+                "why": "Flint 40A2.5B Mix-12G: MoE decode speed at a 12 GB footprint.",
+            }
+        )
+    elif vram_gb < 64:
+        options.append(
+            {
+                "role": "main",
+                "alias": "arete-27b-q5",
+                "engine": "llama.cpp",
+                "why": "Arete 27B Q5_K_M (~19 GiB) at 262K context: the dense quality pick.",
+            }
+        )
+        options.append(
+            {
+                "role": "main",
+                "alias": "nanbeige-33b-iq4xs",
+                "engine": "llama.cpp",
+                "why": "Nanbeige 4.3 33B IQ4_XS (~17 GiB): a 33B dense alternative.",
+            }
+        )
+        options.append(
+            {
+                "role": "main",
+                "alias": "flint-40a2-5b-mix24g",
+                "engine": "llama.cpp",
+                "why": "Flint 40A2.5B Mix-24G for the larger card in this band.",
+            }
+        )
+    else:
+        options.append(
+            {
+                "role": "main",
+                "alias": "arete-27b-q8",
+                "engine": "llama.cpp",
+                "why": "Arete 27B Q8_0 (~26.7 GiB): near-lossless dense at 64 GB+.",
+            }
+        )
+        options.append(
+            {
+                "role": "main",
+                "alias": "qwen3-8-flash-next-iq3xxs",
+                "engine": "strata",
+                "why": "Qwen 3.8 Flash Next IQ3_XXS (~70 GiB) served through Strata expert tiering.",
+            }
+        )
+        options.append(
+            {
+                "role": "main",
+                "alias": "flint-40a2-5b-mix24g",
+                "engine": "llama.cpp",
+                "why": "Flint 40A2.5B Mix-24G for the larger card in this band.",
+            }
+        )
+    options.append(
         {
             "role": "aux",
             "alias": local_aux_for_host(vram_gb=vram_gb, host_ram_gb=host_ram_gb),
             "engine": "llama.cpp",
             "why": "Default aux is MTP Ornith when total VRAM can hold it next to main.",
             "residency": residency,
-        },
-    ]
+        }
+    )
+    return options
 
 
 def filter_aliases(aliases: Iterable[str], *, role: str) -> list[str]:
