@@ -983,6 +983,54 @@
         "131072": "baseline",
         "262144": "baseline"
       }
+    },
+    "glm-5-3-flash-maya-xs": {
+      "family": "GLM 5.3 Flash (Strata)",
+      "alias": "glm-5-3-flash-maya-xs",
+      "model": "${TURBOFIT_MODEL_ROOT}/glm-5.3-flash-maya/Maya-XS/GLM-5.3-Flash-Maya-XS-IQ1_S-00001-of-00002.gguf",
+      "draft": "",
+      "strata_model": "Maya-XS",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      }
+    },
+    "glm-5-3-flash-maya-s24": {
+      "family": "GLM 5.3 Flash (Strata)",
+      "alias": "glm-5-3-flash-maya-s24",
+      "model": "${TURBOFIT_MODEL_ROOT}/glm-5.3-flash-maya/Maya-S24/GLM-5.3-Flash-Maya-S24-IQ2_XXS_S-00001-of-00003.gguf",
+      "draft": "",
+      "strata_model": "Maya-S24",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      }
+    },
+    "glm-5-3-flash-maya-m": {
+      "family": "GLM 5.3 Flash (Strata)",
+      "alias": "glm-5-3-flash-maya-m",
+      "model": "${TURBOFIT_MODEL_ROOT}/glm-5.3-flash-maya/Maya-M/GLM-5.3-Flash-Maya-M-IQ2_S-00001-of-00003.gguf",
+      "draft": "",
+      "strata_model": "Maya-M",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      }
+    },
+    "glm-5-3-flash-maya-l": {
+      "family": "GLM 5.3 Flash (Strata)",
+      "alias": "glm-5-3-flash-maya-l",
+      "model": "${TURBOFIT_MODEL_ROOT}/glm-5.3-flash-maya/Maya-L/GLM-5.3-Flash-Maya-L-IQ3_S-00001-of-00004.gguf",
+      "draft": "",
+      "strata_model": "Maya-L",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      }
     }
   },
   "models": {
@@ -1572,6 +1620,32 @@
       "data_dir": "~/.local/share/turbofit/strata-data",
       "strata_family": "deepseek",
       "strata_model": "GSQ-RCO-IQ1_M"
+    },
+    "GLM 5.3 Flash (Strata)": {
+      "alias": "glm-5-3-flash",
+      "kind": "process",
+      "binary": "~/.local/share/turbofit/runtimes/strata/.venv/bin/python",
+      "binary_args": [
+        "setup.py",
+        "serve"
+      ],
+      "model_root": "${TURBOFIT_MODEL_ROOT}/glm-5.3-flash-maya",
+      "model": "Maya-XS/GLM-5.3-Flash-Maya-XS-IQ1_S-00001-of-00002.gguf",
+      "projector": "${TURBOFIT_MODEL_ROOT}/glm-5.3-flash-maya/vision/mmproj-GLM-5.3-Flash-F16.gguf",
+      "port": 11644,
+      "large": true,
+      "native_context": 131072,
+      "max_context": 131072,
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      },
+      "runtime_flavor": "strata",
+      "working_dir": "~/.local/share/turbofit/runtimes/strata",
+      "data_dir": "~/.local/share/turbofit/strata-data",
+      "strata_family": "glm",
+      "strata_model": "Maya-XS"
     }
   },
   "native_binaries": {

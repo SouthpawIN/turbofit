@@ -1100,6 +1100,64 @@
       "path": "DeepSeek-V4.1-Flash-1017-GSQ-RCO-IQ1_M-00001-of-00006.gguf",
       "sha256": "3e8ddd11441edd4bc19bacaef5dbe38818af2cbdf0820fb70f1d2d851fcc192a",
       "size_bytes": 5780704
+    },
+    {
+      "destination": "glm-5.3-flash-maya/Maya-L/GLM-5.3-Flash-Maya-L-IQ3_S-00001-of-00004.gguf",
+      "families": [
+        "glm-5-3-flash-maya-l"
+      ],
+      "repo_id": "peasantsmith/GLM-5.3-Flash-Maya-GGUF",
+      "revision": "a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+      "path": "Maya-L/GLM-5.3-Flash-Maya-L-IQ3_S-00001-of-00004.gguf",
+      "sha256": "c41aeaf3a3e0022150b7c355e7f4df6c92ba68c4794e3e827e02e56b54886b9e",
+      "size_bytes": 47718550176
+    },
+    {
+      "destination": "glm-5.3-flash-maya/Maya-M/GLM-5.3-Flash-Maya-M-IQ2_S-00001-of-00003.gguf",
+      "families": [
+        "glm-5-3-flash-maya-m"
+      ],
+      "repo_id": "peasantsmith/GLM-5.3-Flash-Maya-GGUF",
+      "revision": "a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+      "path": "Maya-M/GLM-5.3-Flash-Maya-M-IQ2_S-00001-of-00003.gguf",
+      "sha256": "3f740d1b1022b4a0ddad50cd861bb071dd415bde94afa1292d0476641186c638",
+      "size_bytes": 47678327584
+    },
+    {
+      "destination": "glm-5.3-flash-maya/Maya-S24/GLM-5.3-Flash-Maya-S24-IQ2_XXS_S-00001-of-00003.gguf",
+      "families": [
+        "glm-5-3-flash-maya-s24"
+      ],
+      "repo_id": "peasantsmith/GLM-5.3-Flash-Maya-GGUF",
+      "revision": "a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+      "path": "Maya-S24/GLM-5.3-Flash-Maya-S24-IQ2_XXS_S-00001-of-00003.gguf",
+      "sha256": "8ebd5c74bcf65ece2a8699b7b6fd2b8d177f350ed252cee252fdd99b86a0138c",
+      "size_bytes": 46886573024
+    },
+    {
+      "destination": "glm-5.3-flash-maya/Maya-XS/GLM-5.3-Flash-Maya-XS-IQ1_S-00001-of-00002.gguf",
+      "families": [
+        "glm-5-3-flash-maya-xs"
+      ],
+      "repo_id": "peasantsmith/GLM-5.3-Flash-Maya-GGUF",
+      "revision": "a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+      "path": "Maya-XS/GLM-5.3-Flash-Maya-XS-IQ1_S-00001-of-00002.gguf",
+      "sha256": "711b427e55fa6da1cbe28933eb00174424f6201f0210b5e4a216d5e33b6222c7",
+      "size_bytes": 47584640960
+    },
+    {
+      "destination": "glm-5.3-flash-maya/vision/mmproj-GLM-5.3-Flash-F16.gguf",
+      "families": [
+        "glm-5-3-flash-maya-l",
+        "glm-5-3-flash-maya-m",
+        "glm-5-3-flash-maya-s24",
+        "glm-5-3-flash-maya-xs"
+      ],
+      "repo_id": "peasantsmith/GLM-5.3-Flash-Maya-GGUF",
+      "revision": "a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+      "path": "vision/mmproj-GLM-5.3-Flash-F16.gguf",
+      "sha256": "3627575df16bd152db0f3fd7e488d270b33f3a9e6c7fa3b1b8ac381faafde882",
+      "size_bytes": 1128046944
     }
   ]
 }

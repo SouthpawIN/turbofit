@@ -151,3 +151,19 @@ def test_unified_offers_arete_as_dense_exception() -> None:
     mains = [o["alias"] for o in options if o["role"] == "main"]
     assert "arete-27b-q3" in mains
     assert mains[0] == "ornith-1-5-35a3b", "MoE stays the unified default"
+
+
+def test_glm_maya_is_offered_where_project_maya_says_it_runs() -> None:
+    """Maya-XS targets 64 GB RAM + a 24 GB card; it must not appear without the RAM."""
+    thin = [o["alias"] for o in check_local_options(vram_gb=24, host_ram_gb=32)]
+    assert "glm-5-3-flash-maya-xs" not in thin
+
+    rich = [o["alias"] for o in check_local_options(vram_gb=24, host_ram_gb=64)]
+    assert "glm-5-3-flash-maya-xs" in rich
+    assert rich[0] == "qwen3-8-27b-gsq-rco-iq3s", "band default unchanged"
+
+    big = [o["alias"] for o in check_local_options(vram_gb=64, host_ram_gb=64)]
+    assert "glm-5-3-flash-maya-xs" in big and "glm-5-3-flash-maya-s24" in big
+
+    small = [o["alias"] for o in check_local_options(vram_gb=8, host_ram_gb=64)]
+    assert not any(a.startswith("glm-5-3-flash") for a in small)

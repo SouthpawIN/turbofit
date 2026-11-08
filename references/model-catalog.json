@@ -1373,6 +1373,102 @@
         131072,
         262144
       ]
+    },
+    {
+      "id": "glm-5-3-flash-maya-xs",
+      "name": "GLM 5.3 Flash Maya-XS",
+      "family": "GLM 5.3 Flash",
+      "source": "https://huggingface.co/peasantsmith/GLM-5.3-Flash-Maya-GGUF",
+      "revision": "a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+      "artifact": "Maya-XS/GLM-5.3-Flash-Maya-XS-IQ1_S-00001-of-00002.gguf",
+      "quantization": "Maya-XS (IQ1_S routed / Q4_K attention)",
+      "vision": true,
+      "moe": true,
+      "runtime_features": [
+        "expert-tiering",
+        "mtp",
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "supported_contexts": [
+        65536,
+        131072
+      ],
+      "upstream_source": "https://huggingface.co/zai-org/GLM-5.3-Flash"
+    },
+    {
+      "id": "glm-5-3-flash-maya-s24",
+      "name": "GLM 5.3 Flash Maya-S24",
+      "family": "GLM 5.3 Flash",
+      "source": "https://huggingface.co/peasantsmith/GLM-5.3-Flash-Maya-GGUF",
+      "revision": "a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+      "artifact": "Maya-S24/GLM-5.3-Flash-Maya-S24-IQ2_XXS_S-00001-of-00003.gguf",
+      "quantization": "Maya-S24 (IQ2_XXS routed / Q4_K attention)",
+      "vision": true,
+      "moe": true,
+      "runtime_features": [
+        "expert-tiering",
+        "mtp",
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "supported_contexts": [
+        65536,
+        131072
+      ],
+      "upstream_source": "https://huggingface.co/zai-org/GLM-5.3-Flash"
+    },
+    {
+      "id": "glm-5-3-flash-maya-m",
+      "name": "GLM 5.3 Flash Maya-M",
+      "family": "GLM 5.3 Flash",
+      "source": "https://huggingface.co/peasantsmith/GLM-5.3-Flash-Maya-GGUF",
+      "revision": "a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+      "artifact": "Maya-M/GLM-5.3-Flash-Maya-M-IQ2_S-00001-of-00003.gguf",
+      "quantization": "Maya-M (IQ2_S routed / Q6_K attention)",
+      "vision": true,
+      "moe": true,
+      "runtime_features": [
+        "expert-tiering",
+        "mtp",
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "supported_contexts": [
+        65536,
+        131072
+      ],
+      "upstream_source": "https://huggingface.co/zai-org/GLM-5.3-Flash"
+    },
+    {
+      "id": "glm-5-3-flash-maya-l",
+      "name": "GLM 5.3 Flash Maya-L",
+      "family": "GLM 5.3 Flash",
+      "source": "https://huggingface.co/peasantsmith/GLM-5.3-Flash-Maya-GGUF",
+      "revision": "a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+      "artifact": "Maya-L/GLM-5.3-Flash-Maya-L-IQ3_S-00001-of-00004.gguf",
+      "quantization": "Maya-L (IQ3_S routed / Q6_K attention)",
+      "vision": true,
+      "moe": true,
+      "runtime_features": [
+        "expert-tiering",
+        "mtp",
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "supported_contexts": [
+        65536,
+        131072
+      ],
+      "upstream_source": "https://huggingface.co/zai-org/GLM-5.3-Flash"
     }
   ]
 }

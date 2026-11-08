@@ -49,6 +49,10 @@ ALLOWED_MAIN = (
     "flint-40a2-5b-mix12g",
     "flint-40a2-5b-mix24g",
     "deepseek-v4-1-flash-1017-iq1m",
+    "glm-5-3-flash-maya-xs",
+    "glm-5-3-flash-maya-s24",
+    "glm-5-3-flash-maya-m",
+    "glm-5-3-flash-maya-l",
 )
 
 ALLOWED_AUX = (
@@ -381,6 +385,20 @@ def check_local_options(
                 "why": "Flint 40A2.5B Mix-24G for the larger card in this band.",
             }
         )
+        if host_ram_gb >= 64:
+            options.append(
+                {
+                    "role": "main",
+                    "alias": "glm-5-3-flash-maya-xs",
+                    "engine": "strata",
+                    "why": (
+                        "GLM 5.3 Flash Maya-XS (321B MoE, ~18B active, 73.4 GiB): Project Maya "
+                        "keeps hot experts on the GPU, the rest in RAM/SSD. Documented target is "
+                        "64 GB RAM + one 24 GB card at 128K with int8 KV."
+                    ),
+                    "residency": residency,
+                }
+            )
     else:
         options.append(
             {
@@ -396,6 +414,22 @@ def check_local_options(
                 "alias": "qwen3-8-flash-next-iq3xxs",
                 "engine": "strata",
                 "why": "Qwen 3.8 Flash Next IQ3_XXS (~70 GiB) served through Strata expert tiering.",
+            }
+        )
+        options.append(
+            {
+                "role": "main",
+                "alias": "glm-5-3-flash-maya-xs",
+                "engine": "strata",
+                "why": "GLM 5.3 Flash Maya-XS: 92.4% of FP8 accuracy in 73.4 GiB, expert-tiered.",
+            }
+        )
+        options.append(
+            {
+                "role": "main",
+                "alias": "glm-5-3-flash-maya-s24",
+                "engine": "strata",
+                "why": "GLM 5.3 Flash Maya-S24: 97.7% accuracy, tuned for 24 GB cards (+14% decode).",
             }
         )
         options.append(

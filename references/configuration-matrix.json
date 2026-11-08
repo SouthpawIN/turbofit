@@ -9100,6 +9100,286 @@
       "auxiliary": "auto",
       "context": 262144,
       "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-xs--maple-preview-tq2--64k",
+      "main": "glm-5-3-flash-maya-xs",
+      "auxiliary": "maple-preview-tq2",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-xs--maple-preview-tq2--128k",
+      "main": "glm-5-3-flash-maya-xs",
+      "auxiliary": "maple-preview-tq2",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-xs--ornith-1-5-35a3b--64k",
+      "main": "glm-5-3-flash-maya-xs",
+      "auxiliary": "ornith-1-5-35a3b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-xs--ornith-1-5-35a3b--128k",
+      "main": "glm-5-3-flash-maya-xs",
+      "auxiliary": "ornith-1-5-35a3b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-xs--qwen3-8-flash-next-strata--64k",
+      "main": "glm-5-3-flash-maya-xs",
+      "auxiliary": "qwen3-8-flash-next-strata",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-xs--qwen3-8-flash-next-strata--128k",
+      "main": "glm-5-3-flash-maya-xs",
+      "auxiliary": "qwen3-8-flash-next-strata",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-xs--carwin-nano--64k",
+      "main": "glm-5-3-flash-maya-xs",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-xs--carwin-nano--128k",
+      "main": "glm-5-3-flash-maya-xs",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-xs--auto--64k",
+      "main": "glm-5-3-flash-maya-xs",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-xs--auto--128k",
+      "main": "glm-5-3-flash-maya-xs",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-s24--maple-preview-tq2--64k",
+      "main": "glm-5-3-flash-maya-s24",
+      "auxiliary": "maple-preview-tq2",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-s24--maple-preview-tq2--128k",
+      "main": "glm-5-3-flash-maya-s24",
+      "auxiliary": "maple-preview-tq2",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-s24--ornith-1-5-35a3b--64k",
+      "main": "glm-5-3-flash-maya-s24",
+      "auxiliary": "ornith-1-5-35a3b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-s24--ornith-1-5-35a3b--128k",
+      "main": "glm-5-3-flash-maya-s24",
+      "auxiliary": "ornith-1-5-35a3b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-s24--qwen3-8-flash-next-strata--64k",
+      "main": "glm-5-3-flash-maya-s24",
+      "auxiliary": "qwen3-8-flash-next-strata",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-s24--qwen3-8-flash-next-strata--128k",
+      "main": "glm-5-3-flash-maya-s24",
+      "auxiliary": "qwen3-8-flash-next-strata",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-s24--carwin-nano--64k",
+      "main": "glm-5-3-flash-maya-s24",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-s24--carwin-nano--128k",
+      "main": "glm-5-3-flash-maya-s24",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-s24--auto--64k",
+      "main": "glm-5-3-flash-maya-s24",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-s24--auto--128k",
+      "main": "glm-5-3-flash-maya-s24",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-m--maple-preview-tq2--64k",
+      "main": "glm-5-3-flash-maya-m",
+      "auxiliary": "maple-preview-tq2",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-m--maple-preview-tq2--128k",
+      "main": "glm-5-3-flash-maya-m",
+      "auxiliary": "maple-preview-tq2",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-m--ornith-1-5-35a3b--64k",
+      "main": "glm-5-3-flash-maya-m",
+      "auxiliary": "ornith-1-5-35a3b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-m--ornith-1-5-35a3b--128k",
+      "main": "glm-5-3-flash-maya-m",
+      "auxiliary": "ornith-1-5-35a3b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-m--qwen3-8-flash-next-strata--64k",
+      "main": "glm-5-3-flash-maya-m",
+      "auxiliary": "qwen3-8-flash-next-strata",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-m--qwen3-8-flash-next-strata--128k",
+      "main": "glm-5-3-flash-maya-m",
+      "auxiliary": "qwen3-8-flash-next-strata",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-m--carwin-nano--64k",
+      "main": "glm-5-3-flash-maya-m",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-m--carwin-nano--128k",
+      "main": "glm-5-3-flash-maya-m",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-m--auto--64k",
+      "main": "glm-5-3-flash-maya-m",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-m--auto--128k",
+      "main": "glm-5-3-flash-maya-m",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-l--maple-preview-tq2--64k",
+      "main": "glm-5-3-flash-maya-l",
+      "auxiliary": "maple-preview-tq2",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-l--maple-preview-tq2--128k",
+      "main": "glm-5-3-flash-maya-l",
+      "auxiliary": "maple-preview-tq2",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-l--ornith-1-5-35a3b--64k",
+      "main": "glm-5-3-flash-maya-l",
+      "auxiliary": "ornith-1-5-35a3b",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-l--ornith-1-5-35a3b--128k",
+      "main": "glm-5-3-flash-maya-l",
+      "auxiliary": "ornith-1-5-35a3b",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-l--qwen3-8-flash-next-strata--64k",
+      "main": "glm-5-3-flash-maya-l",
+      "auxiliary": "qwen3-8-flash-next-strata",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-l--qwen3-8-flash-next-strata--128k",
+      "main": "glm-5-3-flash-maya-l",
+      "auxiliary": "qwen3-8-flash-next-strata",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-l--carwin-nano--64k",
+      "main": "glm-5-3-flash-maya-l",
+      "auxiliary": "carwin-nano",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-l--carwin-nano--128k",
+      "main": "glm-5-3-flash-maya-l",
+      "auxiliary": "carwin-nano",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-l--auto--64k",
+      "main": "glm-5-3-flash-maya-l",
+      "auxiliary": "auto",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "glm-5-3-flash-maya-l--auto--128k",
+      "main": "glm-5-3-flash-maya-l",
+      "auxiliary": "auto",
+      "context": 131072,
+      "status": "candidate"
     }
   ]
 }
