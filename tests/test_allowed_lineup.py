@@ -78,7 +78,10 @@ def test_integrated_unified_uses_total_memory_bands() -> None:
     igpu = check_local_options(
         vram_gb=8, host_ram_gb=32, memory_pool="unified", backend="vulkan", vendor="amd"
     )
-    assert [item["alias"] for item in igpu] == ["qwen3-8-27b-gsq-rco-iq3s", "maple-preview-tq2"]
+    aliases = [item["alias"] for item in igpu]
+    assert aliases[0] == "qwen3-8-27b-gsq-rco-iq3s", "MoE stays the unified default"
+    assert "arete-27b-q4" in aliases, "dense exception is offered at 24 GB+ pool"
+    assert aliases[-1] == "maple-preview-tq2", "aux stays last"
     small = check_local_options(
         vram_gb=2, host_ram_gb=8, memory_pool="unified", backend="vulkan", vendor="amd"
     )
@@ -113,3 +116,54 @@ def test_eight_gb_vram_thirty_two_gb_ram_is_maple_or_ornith_not_dense_27b() -> N
     assert main_matches_recommendable("ornith-1-5-35a3b", allowed)
     assert not main_matches_recommendable("qwen3-8-27b-gsq-rco-iq3s", allowed)
     assert not main_matches_recommendable("qwen3-8-27b-q4-k-m", allowed)
+
+
+def test_arete_is_offered_from_twelve_gb_up() -> None:
+    """Arete 27B is a q3+ option on every dedicated tier that can hold it."""
+    eight = [o["alias"] for o in check_local_options(vram_gb=8, host_ram_gb=64)]
+    twelve = [o["alias"] for o in check_local_options(vram_gb=12, host_ram_gb=64)]
+    sixteen = [o["alias"] for o in check_local_options(vram_gb=16, host_ram_gb=64)]
+    twentyfour = [o["alias"] for o in check_local_options(vram_gb=24, host_ram_gb=64)]
+    sixtyfour = [o["alias"] for o in check_local_options(vram_gb=64, host_ram_gb=64)]
+
+    assert "arete-27b-q3" not in eight, "q3 weights do not fit an 8-11 GB card"
+    assert "arete-27b-q3" in twelve
+    assert "arete-27b-q4" in sixteen
+    assert "arete-27b-q5" in twentyfour
+    assert "arete-27b-q8" in sixtyfour
+    for alias in ("arete-27b-q3", "arete-27b-q4", "arete-27b-q5", "arete-27b-q8"):
+        assert is_allowed_main(alias), f"{alias} must survive filter_aliases"
+
+
+def test_matrix_alternatives_are_offered_not_defaulted() -> None:
+    """New families appear as options; the band default is unchanged."""
+    sixteen = [o["alias"] for o in check_local_options(vram_gb=16, host_ram_gb=64)]
+    assert "flint-40a2-5b-mix12g" in sixteen
+    assert sixteen[0] == "qwen3-8-27b-gsq-rco-iq3xxs", "default must not shift"
+    sixtyfour = [o["alias"] for o in check_local_options(vram_gb=64, host_ram_gb=64)]
+    assert "qwen3-8-flash-next-iq3xxs" in sixtyfour
+
+
+def test_unified_offers_arete_as_dense_exception() -> None:
+    options = check_local_options(
+        vram_gb=0, host_ram_gb=16, memory_pool="unified", backend="cpu", vendor="other"
+    )
+    mains = [o["alias"] for o in options if o["role"] == "main"]
+    assert "arete-27b-q3" in mains
+    assert mains[0] == "ornith-1-5-35a3b", "MoE stays the unified default"
+
+
+def test_glm_maya_is_offered_where_project_maya_says_it_runs() -> None:
+    """Maya-XS targets 64 GB RAM + a 24 GB card; it must not appear without the RAM."""
+    thin = [o["alias"] for o in check_local_options(vram_gb=24, host_ram_gb=32)]
+    assert "glm-5-3-flash-maya-xs" not in thin
+
+    rich = [o["alias"] for o in check_local_options(vram_gb=24, host_ram_gb=64)]
+    assert "glm-5-3-flash-maya-xs" in rich
+    assert rich[0] == "qwen3-8-27b-gsq-rco-iq3s", "band default unchanged"
+
+    big = [o["alias"] for o in check_local_options(vram_gb=64, host_ram_gb=64)]
+    assert "glm-5-3-flash-maya-xs" in big and "glm-5-3-flash-maya-s24" in big
+
+    small = [o["alias"] for o in check_local_options(vram_gb=8, host_ram_gb=64)]
+    assert not any(a.startswith("glm-5-3-flash") for a in small)

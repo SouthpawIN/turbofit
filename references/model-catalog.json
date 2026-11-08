@@ -1151,6 +1151,324 @@
       ],
       "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next",
       "upstream_revision": "236dfdf89930c86186243e53713065e7785b7a67"
+    },
+    {
+      "id": "arete-27b-q3",
+      "name": "Arete 27B Q3_K_S",
+      "family": "Arete 27B",
+      "source": "https://huggingface.co/bartowski/NousResearch_Arete-27B-GGUF",
+      "artifact": "NousResearch_Arete-27B-Q3_K_S.gguf",
+      "quantization": "Q3_K_S",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "9762c8502a79bd2b8634735d75f426b9febe092c",
+      "upstream_source": "https://huggingface.co/NousResearch/Arete-27B",
+      "supported_contexts": [
+        65536,
+        131072
+      ]
+    },
+    {
+      "id": "arete-27b-q4",
+      "name": "Arete 27B Q4_K_M",
+      "family": "Arete 27B",
+      "source": "https://huggingface.co/bartowski/NousResearch_Arete-27B-GGUF",
+      "artifact": "NousResearch_Arete-27B-Q4_K_M.gguf",
+      "quantization": "Q4_K_M",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "9762c8502a79bd2b8634735d75f426b9febe092c",
+      "upstream_source": "https://huggingface.co/NousResearch/Arete-27B",
+      "supported_contexts": [
+        65536,
+        131072,
+        262144
+      ]
+    },
+    {
+      "id": "arete-27b-q5",
+      "name": "Arete 27B Q5_K_M",
+      "family": "Arete 27B",
+      "source": "https://huggingface.co/bartowski/NousResearch_Arete-27B-GGUF",
+      "artifact": "NousResearch_Arete-27B-Q5_K_M.gguf",
+      "quantization": "Q5_K_M",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "9762c8502a79bd2b8634735d75f426b9febe092c",
+      "upstream_source": "https://huggingface.co/NousResearch/Arete-27B",
+      "supported_contexts": [
+        65536,
+        131072,
+        262144
+      ]
+    },
+    {
+      "id": "arete-27b-q8",
+      "name": "Arete 27B Q8_0",
+      "family": "Arete 27B",
+      "source": "https://huggingface.co/bartowski/NousResearch_Arete-27B-GGUF",
+      "artifact": "NousResearch_Arete-27B-Q8_0.gguf",
+      "quantization": "Q8_0",
+      "vision": true,
+      "moe": false,
+      "runtime_features": [
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "9762c8502a79bd2b8634735d75f426b9febe092c",
+      "upstream_source": "https://huggingface.co/NousResearch/Arete-27B",
+      "supported_contexts": [
+        65536,
+        131072,
+        262144
+      ]
+    },
+    {
+      "id": "nanbeige-33b-iq3xs",
+      "name": "Nanbeige 4.3 33B IQ3_XS",
+      "family": "Nanbeige 4.3 33B",
+      "source": "https://huggingface.co/abenzerps/Nanbeige4.3-33B-GSQ-RCO-GGUF",
+      "artifact": "Nanbeige4.3-33B-GSQ-RCO-IQ3_XS.gguf",
+      "quantization": "IQ3_XS",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [],
+      "roles": [
+        "main"
+      ],
+      "revision": "76c254c0f736c65acdf9444ce9e15d8d654ad9c0",
+      "supported_contexts": [
+        65536,
+        131072
+      ]
+    },
+    {
+      "id": "nanbeige-33b-iq4xs",
+      "name": "Nanbeige 4.3 33B IQ4_XS",
+      "family": "Nanbeige 4.3 33B",
+      "source": "https://huggingface.co/abenzerps/Nanbeige4.3-33B-GSQ-RCO-GGUF",
+      "artifact": "Nanbeige4.3-33B-GSQ-RCO-IQ4_XS.gguf",
+      "quantization": "IQ4_XS",
+      "vision": false,
+      "moe": false,
+      "runtime_features": [],
+      "roles": [
+        "main"
+      ],
+      "revision": "76c254c0f736c65acdf9444ce9e15d8d654ad9c0",
+      "supported_contexts": [
+        65536,
+        131072,
+        262144
+      ]
+    },
+    {
+      "id": "flint-40a2-5b-mix12g",
+      "name": "Flint 40A2.5B Mix-12G",
+      "family": "Flint 40A2.5B",
+      "source": "https://huggingface.co/orcarouter/Flint-abliterated-GGUF",
+      "artifact": "Flint-abliterated-Mix-12G.gguf",
+      "quantization": "Mix-12G",
+      "vision": false,
+      "moe": true,
+      "runtime_features": [
+        "expert-offload"
+      ],
+      "roles": [
+        "main",
+        "aux"
+      ],
+      "revision": "4d618d1cb1d7782d4b08762fb664487bf5e4d3c4",
+      "supported_contexts": [
+        65536,
+        131072
+      ]
+    },
+    {
+      "id": "flint-40a2-5b-mix24g",
+      "name": "Flint 40A2.5B Mix-24G",
+      "family": "Flint 40A2.5B",
+      "source": "https://huggingface.co/orcarouter/Flint-abliterated-GGUF",
+      "artifact": "Flint-abliterated-Mix-24G.gguf",
+      "quantization": "Mix-24G",
+      "vision": false,
+      "moe": true,
+      "runtime_features": [
+        "expert-offload"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "4d618d1cb1d7782d4b08762fb664487bf5e4d3c4",
+      "supported_contexts": [
+        65536,
+        131072,
+        262144
+      ]
+    },
+    {
+      "id": "qwen3-8-flash-next-iq3xxs",
+      "name": "Qwen 3.8 Flash Next IQ3_XXS",
+      "family": "Qwen 3.8 Flash Next",
+      "source": "https://huggingface.co/ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF",
+      "artifact": "IQ3_XXS",
+      "quantization": "GSQ-RCO-IQ3_XXS",
+      "vision": true,
+      "moe": true,
+      "runtime_features": [
+        "expert-tiering",
+        "mtp",
+        "chunked-prefill"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "ed59f92082b1e93c0e96d60a8b11aab089b52f09",
+      "supported_contexts": [
+        65536,
+        131072,
+        262144
+      ]
+    },
+    {
+      "id": "deepseek-v4-1-flash-1017-iq1m",
+      "name": "DeepSeek V4.1 Flash 1017 IQ1_M",
+      "family": "DeepSeek V4.1 Flash",
+      "source": "https://huggingface.co/ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-GGUF",
+      "artifact": "DeepSeek-V4.1-Flash-1017-GSQ-RCO-IQ1_M",
+      "quantization": "GSQ-RCO-IQ1_M",
+      "vision": true,
+      "moe": true,
+      "runtime_features": [
+        "expert-tiering",
+        "engram",
+        "chunked-prefill"
+      ],
+      "roles": [
+        "main"
+      ],
+      "revision": "65d53bc8be65123e255ff02f3ded958b6dbf54fd",
+      "supported_contexts": [
+        65536,
+        131072,
+        262144
+      ]
+    },
+    {
+      "id": "glm-5-3-flash-maya-xs",
+      "name": "GLM 5.3 Flash Maya-XS",
+      "family": "GLM 5.3 Flash",
+      "source": "https://huggingface.co/peasantsmith/GLM-5.3-Flash-Maya-GGUF",
+      "revision": "a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+      "artifact": "Maya-XS/GLM-5.3-Flash-Maya-XS-IQ1_S-00001-of-00002.gguf",
+      "quantization": "Maya-XS (IQ1_S routed / Q4_K attention)",
+      "vision": true,
+      "moe": true,
+      "runtime_features": [
+        "expert-tiering",
+        "mtp",
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "supported_contexts": [
+        65536,
+        131072
+      ],
+      "upstream_source": "https://huggingface.co/zai-org/GLM-5.3-Flash"
+    },
+    {
+      "id": "glm-5-3-flash-maya-s24",
+      "name": "GLM 5.3 Flash Maya-S24",
+      "family": "GLM 5.3 Flash",
+      "source": "https://huggingface.co/peasantsmith/GLM-5.3-Flash-Maya-GGUF",
+      "revision": "a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+      "artifact": "Maya-S24/GLM-5.3-Flash-Maya-S24-IQ2_XXS_S-00001-of-00003.gguf",
+      "quantization": "Maya-S24 (IQ2_XXS routed / Q4_K attention)",
+      "vision": true,
+      "moe": true,
+      "runtime_features": [
+        "expert-tiering",
+        "mtp",
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "supported_contexts": [
+        65536,
+        131072
+      ],
+      "upstream_source": "https://huggingface.co/zai-org/GLM-5.3-Flash"
+    },
+    {
+      "id": "glm-5-3-flash-maya-m",
+      "name": "GLM 5.3 Flash Maya-M",
+      "family": "GLM 5.3 Flash",
+      "source": "https://huggingface.co/peasantsmith/GLM-5.3-Flash-Maya-GGUF",
+      "revision": "a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+      "artifact": "Maya-M/GLM-5.3-Flash-Maya-M-IQ2_S-00001-of-00003.gguf",
+      "quantization": "Maya-M (IQ2_S routed / Q6_K attention)",
+      "vision": true,
+      "moe": true,
+      "runtime_features": [
+        "expert-tiering",
+        "mtp",
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "supported_contexts": [
+        65536,
+        131072
+      ],
+      "upstream_source": "https://huggingface.co/zai-org/GLM-5.3-Flash"
+    },
+    {
+      "id": "glm-5-3-flash-maya-l",
+      "name": "GLM 5.3 Flash Maya-L",
+      "family": "GLM 5.3 Flash",
+      "source": "https://huggingface.co/peasantsmith/GLM-5.3-Flash-Maya-GGUF",
+      "revision": "a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+      "artifact": "Maya-L/GLM-5.3-Flash-Maya-L-IQ3_S-00001-of-00004.gguf",
+      "quantization": "Maya-L (IQ3_S routed / Q6_K attention)",
+      "vision": true,
+      "moe": true,
+      "runtime_features": [
+        "expert-tiering",
+        "mtp",
+        "vision-projector"
+      ],
+      "roles": [
+        "main"
+      ],
+      "supported_contexts": [
+        65536,
+        131072
+      ],
+      "upstream_source": "https://huggingface.co/zai-org/GLM-5.3-Flash"
     }
   ]
 }

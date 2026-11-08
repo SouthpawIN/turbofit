@@ -862,6 +862,175 @@
         "1048576": "baseline",
         "32768": "baseline"
       }
+    },
+    "arete-27b-q3": {
+      "family": "Arete 27B",
+      "alias": "arete-27b-q3",
+      "model": "${TURBOFIT_MODEL_ROOT}/Arete-27B/NousResearch_Arete-27B-Q3_K_S.gguf",
+      "draft": "",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      },
+      "projector": "${TURBOFIT_MODEL_ROOT}/Arete-27B/mmproj-NousResearch_Arete-27B-f16.gguf"
+    },
+    "arete-27b-q4": {
+      "family": "Arete 27B",
+      "alias": "arete-27b-q4",
+      "model": "${TURBOFIT_MODEL_ROOT}/Arete-27B/NousResearch_Arete-27B-Q4_K_M.gguf",
+      "draft": "",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline"
+      },
+      "projector": "${TURBOFIT_MODEL_ROOT}/Arete-27B/mmproj-NousResearch_Arete-27B-f16.gguf"
+    },
+    "arete-27b-q5": {
+      "family": "Arete 27B",
+      "alias": "arete-27b-q5",
+      "model": "${TURBOFIT_MODEL_ROOT}/Arete-27B/NousResearch_Arete-27B-Q5_K_M.gguf",
+      "draft": "",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline"
+      },
+      "projector": "${TURBOFIT_MODEL_ROOT}/Arete-27B/mmproj-NousResearch_Arete-27B-f16.gguf"
+    },
+    "arete-27b-q8": {
+      "family": "Arete 27B",
+      "alias": "arete-27b-q8",
+      "model": "${TURBOFIT_MODEL_ROOT}/Arete-27B/NousResearch_Arete-27B-Q8_0.gguf",
+      "draft": "",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline"
+      },
+      "projector": "${TURBOFIT_MODEL_ROOT}/Arete-27B/mmproj-NousResearch_Arete-27B-f16.gguf"
+    },
+    "nanbeige-33b-iq3xs": {
+      "family": "Nanbeige 4.3 33B",
+      "alias": "nanbeige-33b-iq3xs",
+      "model": "${TURBOFIT_MODEL_ROOT}/Nanbeige4.3-33B/Nanbeige4.3-33B-GSQ-RCO-IQ3_XS.gguf",
+      "draft": "",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      }
+    },
+    "nanbeige-33b-iq4xs": {
+      "family": "Nanbeige 4.3 33B",
+      "alias": "nanbeige-33b-iq4xs",
+      "model": "${TURBOFIT_MODEL_ROOT}/Nanbeige4.3-33B/Nanbeige4.3-33B-GSQ-RCO-IQ4_XS.gguf",
+      "draft": "",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline"
+      }
+    },
+    "flint-40a2-5b-mix12g": {
+      "family": "Flint 40A2.5B",
+      "alias": "flint-40a2-5b-mix12g",
+      "model": "${TURBOFIT_MODEL_ROOT}/Flint-40A2.5B/Flint-abliterated-Mix-12G.gguf",
+      "draft": "",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      }
+    },
+    "flint-40a2-5b-mix24g": {
+      "family": "Flint 40A2.5B",
+      "alias": "flint-40a2-5b-mix24g",
+      "model": "${TURBOFIT_MODEL_ROOT}/Flint-40A2.5B/Flint-abliterated-Mix-24G.gguf",
+      "draft": "",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline"
+      }
+    },
+    "qwen3-8-flash-next-iq3xxs": {
+      "family": "Qwen 3.8 Flash Next (Strata)",
+      "alias": "qwen3-8-flash-next-iq3xxs",
+      "model": "${TURBOFIT_MODEL_ROOT}/flash-next-gsq/IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00001-of-00002.gguf",
+      "draft": "",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline"
+      }
+    },
+    "deepseek-v4-1-flash-1017-iq1m": {
+      "family": "Qwen 3.8 Flash Next (Strata)",
+      "alias": "deepseek-v4-1-flash-1017-iq1m",
+      "model": "${TURBOFIT_MODEL_ROOT}/deepseek-v4.1-flash-1017-gsq/DeepSeek-V4.1-Flash-1017-GSQ-RCO-IQ1_M-00001-of-00006.gguf",
+      "draft": "",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline"
+      }
+    },
+    "glm-5-3-flash-maya-xs": {
+      "family": "GLM 5.3 Flash (Strata)",
+      "alias": "glm-5-3-flash-maya-xs",
+      "model": "${TURBOFIT_MODEL_ROOT}/glm-5.3-flash-maya/Maya-XS/GLM-5.3-Flash-Maya-XS-IQ1_S-00001-of-00002.gguf",
+      "draft": "",
+      "strata_model": "Maya-XS",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      }
+    },
+    "glm-5-3-flash-maya-s24": {
+      "family": "GLM 5.3 Flash (Strata)",
+      "alias": "glm-5-3-flash-maya-s24",
+      "model": "${TURBOFIT_MODEL_ROOT}/glm-5.3-flash-maya/Maya-S24/GLM-5.3-Flash-Maya-S24-IQ2_XXS_S-00001-of-00003.gguf",
+      "draft": "",
+      "strata_model": "Maya-S24",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      }
+    },
+    "glm-5-3-flash-maya-m": {
+      "family": "GLM 5.3 Flash (Strata)",
+      "alias": "glm-5-3-flash-maya-m",
+      "model": "${TURBOFIT_MODEL_ROOT}/glm-5.3-flash-maya/Maya-M/GLM-5.3-Flash-Maya-M-IQ2_S-00001-of-00003.gguf",
+      "draft": "",
+      "strata_model": "Maya-M",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      }
+    },
+    "glm-5-3-flash-maya-l": {
+      "family": "GLM 5.3 Flash (Strata)",
+      "alias": "glm-5-3-flash-maya-l",
+      "model": "${TURBOFIT_MODEL_ROOT}/glm-5.3-flash-maya/Maya-L/GLM-5.3-Flash-Maya-L-IQ3_S-00001-of-00004.gguf",
+      "draft": "",
+      "strata_model": "Maya-L",
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      }
     }
   },
   "models": {
@@ -1355,6 +1524,128 @@
       "data_dir": "~/.local/share/turbofit/strata-data",
       "strata_family": "qwen",
       "strata_model": "MQ-Q5-SSD-PLE-BF16"
+    },
+    "Arete 27B": {
+      "alias": "arete-27b",
+      "kind": "process",
+      "native_binaries": {
+        "cuda": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "rocm": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-rocm/bin/llama-server",
+        "metal": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-metal/bin/llama-server",
+        "cpu": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cpu/bin/llama-server",
+        "vulkan": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-vulkan/bin/llama-server"
+      },
+      "binary": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+      "model_root": "${TURBOFIT_MODEL_ROOT}/Arete-27B",
+      "model": "NousResearch_Arete-27B-Q4_K_M.gguf",
+      "port": 11640,
+      "large": true,
+      "native_context": 131072,
+      "max_context": 131072,
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      },
+      "projector": "${TURBOFIT_MODEL_ROOT}/Arete-27B/mmproj-NousResearch_Arete-27B-f16.gguf"
+    },
+    "Nanbeige 4.3 33B": {
+      "alias": "nanbeige-33b",
+      "kind": "process",
+      "native_binaries": {
+        "cuda": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "rocm": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-rocm/bin/llama-server",
+        "metal": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-metal/bin/llama-server",
+        "cpu": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cpu/bin/llama-server",
+        "vulkan": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-vulkan/bin/llama-server"
+      },
+      "binary": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+      "model_root": "${TURBOFIT_MODEL_ROOT}/Nanbeige4.3-33B",
+      "model": "Nanbeige4.3-33B-GSQ-RCO-IQ4_XS.gguf",
+      "port": 11641,
+      "large": true,
+      "native_context": 131072,
+      "max_context": 131072,
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      }
+    },
+    "Flint 40A2.5B": {
+      "alias": "flint-40a2-5b",
+      "kind": "process",
+      "native_binaries": {
+        "cuda": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "rocm": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-rocm/bin/llama-server",
+        "metal": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-metal/bin/llama-server",
+        "cpu": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cpu/bin/llama-server",
+        "vulkan": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-vulkan/bin/llama-server"
+      },
+      "binary": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+      "model_root": "${TURBOFIT_MODEL_ROOT}/Flint-40A2.5B",
+      "model": "Flint-abliterated-Mix-12G.gguf",
+      "port": 11642,
+      "large": true,
+      "native_context": 131072,
+      "max_context": 131072,
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      }
+    },
+    "DeepSeek V4.1 Flash": {
+      "alias": "deepseek-v4-1-flash",
+      "kind": "process",
+      "binary": "~/.local/share/turbofit/runtimes/strata/.venv/bin/python",
+      "binary_args": [
+        "setup.py",
+        "serve"
+      ],
+      "model_root": "${TURBOFIT_MODEL_ROOT}/deepseek-v4.1-flash-1017-gsq",
+      "model": "DeepSeek-V4.1-Flash-1017-GSQ-RCO-IQ1_M-00001-of-00006.gguf",
+      "port": 11643,
+      "large": true,
+      "native_context": 262144,
+      "max_context": 262144,
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline",
+        "32768": "baseline"
+      },
+      "runtime_flavor": "strata",
+      "working_dir": "~/.local/share/turbofit/runtimes/strata",
+      "data_dir": "~/.local/share/turbofit/strata-data",
+      "strata_family": "deepseek",
+      "strata_model": "GSQ-RCO-IQ1_M"
+    },
+    "GLM 5.3 Flash (Strata)": {
+      "alias": "glm-5-3-flash",
+      "kind": "process",
+      "binary": "~/.local/share/turbofit/runtimes/strata/.venv/bin/python",
+      "binary_args": [
+        "setup.py",
+        "serve"
+      ],
+      "model_root": "${TURBOFIT_MODEL_ROOT}/glm-5.3-flash-maya",
+      "model": "Maya-XS/GLM-5.3-Flash-Maya-XS-IQ1_S-00001-of-00002.gguf",
+      "projector": "${TURBOFIT_MODEL_ROOT}/glm-5.3-flash-maya/vision/mmproj-GLM-5.3-Flash-F16.gguf",
+      "port": 11644,
+      "large": true,
+      "native_context": 131072,
+      "max_context": 131072,
+      "methods": {
+        "32768": "baseline",
+        "65536": "baseline",
+        "131072": "baseline"
+      },
+      "runtime_flavor": "strata",
+      "working_dir": "~/.local/share/turbofit/runtimes/strata",
+      "data_dir": "~/.local/share/turbofit/strata-data",
+      "strata_family": "glm",
+      "strata_model": "Maya-XS"
     }
   },
   "native_binaries": {
