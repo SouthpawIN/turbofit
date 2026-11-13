@@ -1351,7 +1351,12 @@ def _save_configuration_to_all_homes(config: dict | str, *, base_url: str | None
             config["providers"] = merged_providers
         # A non-mapping providers section is not ours to rewrite: leave the
         # configuration exactly as the caller built it.
-    for home in hermes_homes():
+    current = Path(os.getenv("HERMES_HOME") or Path.home() / ".hermes")
+    default = _default_hermes_home(current)
+    for home in hermes_homes(current):
+        # A sibling directory without config.yaml may be plugin data or a deleted profile.
+        if home not in (default, current) and not (home / "config.yaml").is_file():
+            continue
         try:
             _write_home_config(home, config)
         except OSError:

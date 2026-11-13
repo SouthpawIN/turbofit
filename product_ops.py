@@ -205,8 +205,6 @@ def serve_tailnet(
     provider_https_port: int = 9443,
 ) -> dict[str, Any]:
     """Publish the local Turbofit /v1 gateway on the private tailnet."""
-    from hermes_cli.config import load_config
-
     publication = plugin_tools.publish_tailnet(
         dashboard_local_port=dashboard_local_port,
         provider_local_port=provider_local_port,
@@ -214,14 +212,9 @@ def serve_tailnet(
         provider_https_port=provider_https_port,
     )
     with plugin_tools._CONFIG_LOCK:
-        canonical = plugin_tools.configure_hermes(
-            load_config(),
-            base_url=publication["provider_base_url"],
-        )
-        # Fan the tailnet URL to every profile home (same fix as
-        # plugin_tools.apply_configuration — see _save_configuration_to_all_homes).
+        # Merge just the Turbofit provider into each home's own configuration.
         plugin_tools._save_configuration_to_all_homes(
-            canonical,
+            {},
             base_url=publication["provider_base_url"],
         )
     return {
