@@ -1257,6 +1257,83 @@
    "path": "mmproj-NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB.gguf",
    "sha256": "0ee891eadc7bf0cae6289b249c74eb1ef420534351f6ef8b64d49f0ca6a926b0",
    "size_bytes": 1733692736
+  },
+  {
+   "destination": "Arete 27B Uncensored V2/arete-v2-Q4_K_M.gguf",
+   "families": [
+    "arete-27b-uncensored-v2"
+   ],
+   "repo_id": "SargeDev/Arete-27B-Uncensored-V2-GGUF",
+   "revision": "41f719aa5be73310453c6a85e9f659ad26761656",
+   "path": "arete-v2-Q4_K_M.gguf",
+   "sha256": "ca36764097e013ed997596a6a62f7d3363431729594e453aaaf0e077f472fadb",
+   "size_bytes": 16810714496
+  },
+  {
+   "destination": "Qwen 3.8 27B Unleashed/Qwen3.8-27B-Unleashed-UD-Q4_K_M.gguf",
+   "families": [
+    "qwen3-8-27b-unleashed"
+   ],
+   "repo_id": "outsourc-e/Qwen3.8-27B-Unleashed-GGUF",
+   "revision": "67a999218fd7002f11bf82bc81d6289beea60841",
+   "path": "Qwen3.8-27B-Unleashed-UD-Q4_K_M.gguf",
+   "sha256": "996c66cdd53346c1c8a7db2c61eeb3ff4bd341120469f12a50d79bf32c4ba35d",
+   "size_bytes": 16519489376
+  },
+  {
+   "destination": "Qwen 3.6 35B-A3B Abliterated/Huihui-Qwen3.6-35B-A3B-abliterated-ggml-model-Q4_K.gguf",
+   "families": [
+    "qwen3-6-35b-a3b-abliterated"
+   ],
+   "repo_id": "huihui-ai/Huihui-Qwen3.6-35B-A3B-abliterated-MTP-GGUF",
+   "revision": "1fbb5305060b5365c84879612a619d0d2c0b137a",
+   "path": "Huihui-Qwen3.6-35B-A3B-abliterated-ggml-model-Q4_K.gguf",
+   "sha256": "63b75afb4b68fc61059c78115b580037074de88146e0762f4a496081e410cf81",
+   "size_bytes": 21712409824
+  },
+  {
+   "destination": "LFM2.5 24B-A2B Uncensored/LFM2.5-24B-A2B-Uncensored-AD-Q4_K_M.gguf",
+   "families": [
+    "lfm2-5-24b-a2b-uncensored"
+   ],
+   "repo_id": "AtomicChat/LFM2.5-24B-A2B-Uncensored-GGUF",
+   "revision": "b0f357bb729bcf03269e7f138cd4d30060515dee",
+   "path": "LFM2.5-24B-A2B-Uncensored-AD-Q4_K_M.gguf",
+   "sha256": "17a5de7f9718d8f6133ef08579d35845dd69bb51f329204ead0fc0ee97a75a41",
+   "size_bytes": 15359771360
+  },
+  {
+   "destination": "Flint 40B-A2.5B Abliterated/Flint-40B-A2.5B-abliterated-Q4_K_M.gguf",
+   "families": [
+    "flint-40b-abliterated"
+   ],
+   "repo_id": "dima6312/Flint-40B-A2.5B-abliterated-GGUF",
+   "revision": "1be756925ce786f5d7eb10725195764a46d596fc",
+   "path": "Flint-40B-A2.5B-abliterated-Q4_K_M.gguf",
+   "sha256": "5ac7c931803a9fff117c5cde1cda6b7bd840f5678b28a31cfe77870e9c201cf7",
+   "size_bytes": 24166842272
+  },
+  {
+   "destination": "Nemotron Bolt 74B Abliterated/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-Abliterated-24GB.gguf",
+   "families": [
+    "nemotron-bolt-74b-abliterated"
+   ],
+   "repo_id": "BoldingBuilds/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-Abliterated-24GB-GGUF",
+   "revision": "b6360e7379899484c800116f6bcf85448fc4925b",
+   "path": "NVIDIA-Nemotron-3.5-Bolt-74B-A9B-Abliterated-24GB.gguf",
+   "sha256": "666250fc4f8c07bfbdde5e80785cc69fd1c208f12ccdf8d988d472e3ee24ddcc",
+   "size_bytes": 22018326528
+  },
+  {
+   "destination": "Qwen 3.8 Flash Next Abliterated/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+   "families": [
+    "qwen3-8-flash-next-abliterated"
+   ],
+   "repo_id": "SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF",
+   "revision": "90a3350cd800ec1fe0d1660a38414ad9e985782f",
+   "path": "IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+   "sha256": "40f369eca301ec6ea318dbb671b3132c26a2f0b89aa5458a7051b33215ee296c",
+   "size_bytes": 55063448064
   }
  ]
 }

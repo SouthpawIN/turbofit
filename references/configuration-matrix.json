@@ -9730,6 +9730,566 @@
    "auxiliary": "auto",
    "context": 65536,
    "status": "candidate"
+  },
+  {
+   "id": "arete-27b-uncensored-v2--maple-preview-tq2--64k",
+   "main": "arete-27b-uncensored-v2",
+   "auxiliary": "maple-preview-tq2",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "arete-27b-uncensored-v2--maple-preview-tq2--128k",
+   "main": "arete-27b-uncensored-v2",
+   "auxiliary": "maple-preview-tq2",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "arete-27b-uncensored-v2--ornith-1-5-35a3b--64k",
+   "main": "arete-27b-uncensored-v2",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "arete-27b-uncensored-v2--ornith-1-5-35a3b--128k",
+   "main": "arete-27b-uncensored-v2",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "arete-27b-uncensored-v2--qwen3-8-flash-next-strata--64k",
+   "main": "arete-27b-uncensored-v2",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "arete-27b-uncensored-v2--qwen3-8-flash-next-strata--128k",
+   "main": "arete-27b-uncensored-v2",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "arete-27b-uncensored-v2--carwin-nano--64k",
+   "main": "arete-27b-uncensored-v2",
+   "auxiliary": "carwin-nano",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "arete-27b-uncensored-v2--carwin-nano--128k",
+   "main": "arete-27b-uncensored-v2",
+   "auxiliary": "carwin-nano",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "arete-27b-uncensored-v2--auto--64k",
+   "main": "arete-27b-uncensored-v2",
+   "auxiliary": "auto",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "arete-27b-uncensored-v2--auto--128k",
+   "main": "arete-27b-uncensored-v2",
+   "auxiliary": "auto",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--maple-preview-tq2--64k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "maple-preview-tq2",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--maple-preview-tq2--128k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "maple-preview-tq2",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--maple-preview-tq2--262k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "maple-preview-tq2",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--ornith-1-5-35a3b--64k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--ornith-1-5-35a3b--128k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--ornith-1-5-35a3b--262k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--qwen3-8-flash-next-strata--64k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--qwen3-8-flash-next-strata--128k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--qwen3-8-flash-next-strata--262k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--carwin-nano--64k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "carwin-nano",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--carwin-nano--128k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "carwin-nano",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--carwin-nano--262k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "carwin-nano",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--auto--64k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "auto",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--auto--128k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "auto",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-27b-unleashed--auto--262k",
+   "main": "qwen3-8-27b-unleashed",
+   "auxiliary": "auto",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--64k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "maple-preview-tq2",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--128k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "maple-preview-tq2",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--262k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "maple-preview-tq2",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--ornith-1-5-35a3b--64k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--ornith-1-5-35a3b--128k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--ornith-1-5-35a3b--262k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--qwen3-8-flash-next-strata--64k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--qwen3-8-flash-next-strata--128k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--qwen3-8-flash-next-strata--262k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--carwin-nano--64k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "carwin-nano",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--carwin-nano--128k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "carwin-nano",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--carwin-nano--262k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "carwin-nano",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--auto--64k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "auto",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--auto--128k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "auto",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated--auto--262k",
+   "main": "qwen3-6-35b-a3b-abliterated",
+   "auxiliary": "auto",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "lfm2-5-24b-a2b-uncensored--maple-preview-tq2--64k",
+   "main": "lfm2-5-24b-a2b-uncensored",
+   "auxiliary": "maple-preview-tq2",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "lfm2-5-24b-a2b-uncensored--maple-preview-tq2--128k",
+   "main": "lfm2-5-24b-a2b-uncensored",
+   "auxiliary": "maple-preview-tq2",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "lfm2-5-24b-a2b-uncensored--ornith-1-5-35a3b--64k",
+   "main": "lfm2-5-24b-a2b-uncensored",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "lfm2-5-24b-a2b-uncensored--ornith-1-5-35a3b--128k",
+   "main": "lfm2-5-24b-a2b-uncensored",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "lfm2-5-24b-a2b-uncensored--qwen3-8-flash-next-strata--64k",
+   "main": "lfm2-5-24b-a2b-uncensored",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "lfm2-5-24b-a2b-uncensored--qwen3-8-flash-next-strata--128k",
+   "main": "lfm2-5-24b-a2b-uncensored",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "lfm2-5-24b-a2b-uncensored--carwin-nano--64k",
+   "main": "lfm2-5-24b-a2b-uncensored",
+   "auxiliary": "carwin-nano",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "lfm2-5-24b-a2b-uncensored--carwin-nano--128k",
+   "main": "lfm2-5-24b-a2b-uncensored",
+   "auxiliary": "carwin-nano",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "lfm2-5-24b-a2b-uncensored--auto--64k",
+   "main": "lfm2-5-24b-a2b-uncensored",
+   "auxiliary": "auto",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "lfm2-5-24b-a2b-uncensored--auto--128k",
+   "main": "lfm2-5-24b-a2b-uncensored",
+   "auxiliary": "auto",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "flint-40b-abliterated--maple-preview-tq2--64k",
+   "main": "flint-40b-abliterated",
+   "auxiliary": "maple-preview-tq2",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "flint-40b-abliterated--maple-preview-tq2--128k",
+   "main": "flint-40b-abliterated",
+   "auxiliary": "maple-preview-tq2",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "flint-40b-abliterated--ornith-1-5-35a3b--64k",
+   "main": "flint-40b-abliterated",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "flint-40b-abliterated--ornith-1-5-35a3b--128k",
+   "main": "flint-40b-abliterated",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "flint-40b-abliterated--qwen3-8-flash-next-strata--64k",
+   "main": "flint-40b-abliterated",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "flint-40b-abliterated--qwen3-8-flash-next-strata--128k",
+   "main": "flint-40b-abliterated",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "flint-40b-abliterated--carwin-nano--64k",
+   "main": "flint-40b-abliterated",
+   "auxiliary": "carwin-nano",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "flint-40b-abliterated--carwin-nano--128k",
+   "main": "flint-40b-abliterated",
+   "auxiliary": "carwin-nano",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "flint-40b-abliterated--auto--64k",
+   "main": "flint-40b-abliterated",
+   "auxiliary": "auto",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "flint-40b-abliterated--auto--128k",
+   "main": "flint-40b-abliterated",
+   "auxiliary": "auto",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "nemotron-bolt-74b-abliterated--maple-preview-tq2--64k",
+   "main": "nemotron-bolt-74b-abliterated",
+   "auxiliary": "maple-preview-tq2",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "nemotron-bolt-74b-abliterated--ornith-1-5-35a3b--64k",
+   "main": "nemotron-bolt-74b-abliterated",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "nemotron-bolt-74b-abliterated--qwen3-8-flash-next-strata--64k",
+   "main": "nemotron-bolt-74b-abliterated",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "nemotron-bolt-74b-abliterated--carwin-nano--64k",
+   "main": "nemotron-bolt-74b-abliterated",
+   "auxiliary": "carwin-nano",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "nemotron-bolt-74b-abliterated--auto--64k",
+   "main": "nemotron-bolt-74b-abliterated",
+   "auxiliary": "auto",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--maple-preview-tq2--64k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "maple-preview-tq2",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--maple-preview-tq2--128k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "maple-preview-tq2",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--maple-preview-tq2--262k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "maple-preview-tq2",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--ornith-1-5-35a3b--64k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--ornith-1-5-35a3b--128k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--ornith-1-5-35a3b--262k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "ornith-1-5-35a3b",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--qwen3-8-flash-next-strata--64k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--qwen3-8-flash-next-strata--128k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--qwen3-8-flash-next-strata--262k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "qwen3-8-flash-next-strata",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--carwin-nano--64k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "carwin-nano",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--carwin-nano--128k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "carwin-nano",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--carwin-nano--262k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "carwin-nano",
+   "context": 262144,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--auto--64k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "auto",
+   "context": 65536,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--auto--128k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "auto",
+   "context": 131072,
+   "status": "candidate"
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated--auto--262k",
+   "main": "qwen3-8-flash-next-abliterated",
+   "auxiliary": "auto",
+   "context": 262144,
+   "status": "candidate"
   }
  ]
 }

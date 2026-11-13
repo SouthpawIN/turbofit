@@ -63,7 +63,7 @@ def test_artifact_manifest_covers_every_executable_matrix_file() -> None:
 def test_model_catalog_pins_every_source_revision() -> None:
     catalog = ModelCatalog.load(ROOT / "references/model-catalog.json")
 
-    assert len(catalog.models) == 76  # + Arete x4, Nanbeige x2, Flint x2, Flash Next IQ3, DeepSeek IQ1, GLM Maya x4
+    assert len(catalog.models) == 88  # + Qwen 3.6/3.5, LFM2.5, LFM3 Omni, Nemotron, 7 uncensored builds
     assert all(len(model.revision) == 40 for model in catalog.models)
 
 

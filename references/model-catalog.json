@@ -1584,6 +1584,159 @@
    "supported_contexts": [
     65536
    ]
+  },
+  {
+   "id": "arete-27b-uncensored-v2",
+   "name": "Arete 27B Uncensored V2 Q4_K_M",
+   "family": "Arete 27B Uncensored V2",
+   "source": "https://huggingface.co/SargeDev/Arete-27B-Uncensored-V2-GGUF",
+   "artifact": "arete-v2-Q4_K_M.gguf",
+   "quantization": "Q4_K_M",
+   "vision": false,
+   "moe": false,
+   "runtime_features": [],
+   "roles": [
+    "main"
+   ],
+   "revision": "41f719aa5be73310453c6a85e9f659ad26761656",
+   "upstream_source": "https://huggingface.co/SargeDev/Arete-27B-Uncensored-V2-GGUF",
+   "supported_contexts": [
+    65536,
+    131072
+   ]
+  },
+  {
+   "id": "qwen3-8-27b-unleashed",
+   "name": "Qwen 3.8 27B Unleashed UD-Q4_K_M",
+   "family": "Qwen 3.8 27B Unleashed",
+   "source": "https://huggingface.co/outsourc-e/Qwen3.8-27B-Unleashed-GGUF",
+   "artifact": "Qwen3.8-27B-Unleashed-UD-Q4_K_M.gguf",
+   "quantization": "UD-Q4_K_M",
+   "vision": false,
+   "moe": false,
+   "runtime_features": [],
+   "roles": [
+    "main"
+   ],
+   "revision": "67a999218fd7002f11bf82bc81d6289beea60841",
+   "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B",
+   "supported_contexts": [
+    65536,
+    131072,
+    262144
+   ]
+  },
+  {
+   "id": "qwen3-6-35b-a3b-abliterated",
+   "name": "Qwen 3.6 35B-A3B Abliterated Q4_K (MTP)",
+   "family": "Qwen 3.6 35B-A3B Abliterated",
+   "source": "https://huggingface.co/huihui-ai/Huihui-Qwen3.6-35B-A3B-abliterated-MTP-GGUF",
+   "artifact": "Huihui-Qwen3.6-35B-A3B-abliterated-ggml-model-Q4_K.gguf",
+   "quantization": "Q4_K",
+   "vision": false,
+   "moe": true,
+   "runtime_features": [
+    "mtp",
+    "expert-offload"
+   ],
+   "roles": [
+    "main"
+   ],
+   "revision": "1fbb5305060b5365c84879612a619d0d2c0b137a",
+   "upstream_source": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B",
+   "supported_contexts": [
+    65536,
+    131072,
+    262144
+   ]
+  },
+  {
+   "id": "lfm2-5-24b-a2b-uncensored",
+   "name": "LFM2.5 24B-A2B Uncensored AD-Q4_K_M",
+   "family": "LFM2.5 24B-A2B Uncensored",
+   "source": "https://huggingface.co/AtomicChat/LFM2.5-24B-A2B-Uncensored-GGUF",
+   "artifact": "LFM2.5-24B-A2B-Uncensored-AD-Q4_K_M.gguf",
+   "quantization": "AD-Q4_K_M",
+   "vision": false,
+   "moe": true,
+   "runtime_features": [
+    "expert-offload"
+   ],
+   "roles": [
+    "main"
+   ],
+   "revision": "b0f357bb729bcf03269e7f138cd4d30060515dee",
+   "upstream_source": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B",
+   "supported_contexts": [
+    65536,
+    131072
+   ]
+  },
+  {
+   "id": "flint-40b-abliterated",
+   "name": "Flint 40B-A2.5B Abliterated Q4_K_M",
+   "family": "Flint 40B-A2.5B Abliterated",
+   "source": "https://huggingface.co/dima6312/Flint-40B-A2.5B-abliterated-GGUF",
+   "artifact": "Flint-40B-A2.5B-abliterated-Q4_K_M.gguf",
+   "quantization": "Q4_K_M",
+   "vision": false,
+   "moe": true,
+   "runtime_features": [
+    "expert-offload"
+   ],
+   "roles": [
+    "main"
+   ],
+   "revision": "1be756925ce786f5d7eb10725195764a46d596fc",
+   "upstream_source": "https://huggingface.co/RecursiveSI/flint",
+   "supported_contexts": [
+    65536,
+    131072
+   ]
+  },
+  {
+   "id": "nemotron-bolt-74b-abliterated",
+   "name": "Nemotron Bolt 74B-A9B Abliterated (24GB)",
+   "family": "Nemotron Bolt 74B Abliterated",
+   "source": "https://huggingface.co/BoldingBuilds/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-Abliterated-24GB-GGUF",
+   "artifact": "NVIDIA-Nemotron-3.5-Bolt-74B-A9B-Abliterated-24GB.gguf",
+   "quantization": "native-24GB",
+   "vision": false,
+   "moe": true,
+   "runtime_features": [
+    "expert-offload"
+   ],
+   "roles": [
+    "main"
+   ],
+   "revision": "b6360e7379899484c800116f6bcf85448fc4925b",
+   "upstream_source": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB",
+   "supported_contexts": [
+    65536
+   ]
+  },
+  {
+   "id": "qwen3-8-flash-next-abliterated",
+   "name": "Qwen 3.8 Flash Next Abliterated IQ3_S",
+   "family": "Qwen 3.8 Flash Next Abliterated",
+   "source": "https://huggingface.co/SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF",
+   "artifact": "IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+   "quantization": "GSQ-RCO-IQ3_S",
+   "vision": false,
+   "moe": true,
+   "runtime_features": [
+    "expert-offload"
+   ],
+   "roles": [
+    "main"
+   ],
+   "revision": "90a3350cd800ec1fe0d1660a38414ad9e985782f",
+   "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next",
+   "supported_contexts": [
+    65536,
+    131072,
+    262144
+   ]
   }
  ]
 }
