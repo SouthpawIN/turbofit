@@ -1737,6 +1737,32 @@
     131072,
     262144
    ]
+  },
+  {
+   "id": "inkling-2-small",
+   "name": "Inkling 2 Small (vLLM)",
+   "family": "Inkling 2 Small",
+   "source": "https://huggingface.co/thinkingmachines/Inkling-2-Small",
+   "artifact": "Inkling-2-Small",
+   "quantization": "bf16",
+   "vision": true,
+   "moe": true,
+   "runtime_features": [
+    "vllm",
+    "vision",
+    "mtp",
+    "expert-offload"
+   ],
+   "roles": [
+    "main"
+   ],
+   "revision": "ef5bf64c1b8e7d0e57b284e10c6891f8db6304c4",
+   "supported_contexts": [
+    65536,
+    131072,
+    262144,
+    1048576
+   ]
   }
  ]
 }

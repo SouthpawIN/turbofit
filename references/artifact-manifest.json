@@ -1334,6 +1334,17 @@
    "path": "IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
    "sha256": "40f369eca301ec6ea318dbb671b3132c26a2f0b89aa5458a7051b33215ee296c",
    "size_bytes": 55063448064
+  },
+  {
+   "destination": "Inkling-2-Small",
+   "families": [
+    "inkling-2-small"
+   ],
+   "repo_id": "thinkingmachines/Inkling-2-Small",
+   "revision": "ef5bf64c1b8e7d0e57b284e10c6891f8db6304c4",
+   "path": "",
+   "sha256": "snapshot:ef5bf64c1b8e7d0e57b284e10c6891f8db6304c4",
+   "size_bytes": 393489000000
   }
  ]
 }

@@ -425,3 +425,60 @@ def test_unified_memory_qwen_1m_uses_one_shared_pool_without_host_gpu_double_cou
         context=1_048_576,
     )
     assert direct.gpu == "0"
+
+def test_vllm_flavor_serves_a_checkpoint_directory(tmp_path) -> None:
+    payload = json.loads(RECIPES.read_text())
+    model_dir = tmp_path / "Inkling-2-Small"
+    model_dir.mkdir()
+    payload["models"]["Inkling Test"] = {
+        "alias": "inkling-test",
+        "kind": "process",
+        "binary": "/opt/vllm/bin/vllm",
+        "model_root": str(model_dir.parent),
+        "model": model_dir.name,
+        "port": 11999,
+        "native_context": 131072,
+        "max_context": 131072,
+        "runtime_flavor": "vllm",
+        "tensor_parallel_size": 2,
+        "gpu_memory_utilization": 0.9,
+        "methods": {"131072": "baseline"},
+    }
+    payload["variants"]["inkling-test"] = {
+        "family": "Inkling Test",
+        "alias": "inkling-test",
+        "model": str(model_dir),
+        "draft": "",
+        "methods": {"131072": "baseline"},
+    }
+    path = tmp_path / "recipes.json"
+    path.write_text(json.dumps(payload))
+    component = RecipeBook.load(path, platform_name="linux").resolve(
+        row("Inkling Test", "auto", 131_072)
+    ).components[0]
+    command = list(component.command)
+    assert command[1] == "serve"
+    assert command[2] == str(model_dir)
+    assert command[command.index("--served-model-name") + 1] == "inkling-test"
+    assert command[command.index("--max-model-len") + 1] == "131072"
+    assert command[command.index("--tensor-parallel-size") + 1] == "2"
+    assert command[command.index("--gpu-memory-utilization") + 1] == "0.9"
+
+
+def test_vllm_flavor_rejects_a_gguf_file(tmp_path) -> None:
+    payload = json.loads(RECIPES.read_text())
+    payload["models"]["Inkling Test"] = {
+        "alias": "inkling-test", "kind": "process", "binary": "/opt/vllm/bin/vllm",
+        "model_root": str(tmp_path), "model": "model.gguf", "port": 11998,
+        "native_context": 65536, "max_context": 65536, "runtime_flavor": "vllm",
+        "methods": {"65536": "baseline"},
+    }
+    payload["variants"]["inkling-test"] = {
+        "family": "Inkling Test", "alias": "inkling-test",
+        "model": str(tmp_path / "model.gguf"), "draft": "",
+        "methods": {"65536": "baseline"},
+    }
+    path = tmp_path / "recipes.json"
+    path.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="vllm flavor"):
+        RecipeBook.load(path, platform_name="linux").resolve(row("Inkling Test", "auto", 65_536))

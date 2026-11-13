@@ -434,6 +434,33 @@ class RecipeBook:
                 "--split-engine", split,
             ]
             command.extend(str(arg) for arg in spec.get("strata_extra_args") or ())
+        elif runtime_flavor == "vllm":
+            # vLLM serves raw Hugging Face checkpoints (safetensors directories)
+            # that llama.cpp cannot load. `vllm serve <path>` is the documented
+            # entry point; the model argument is a directory, not a .gguf.
+            # Resolution is planning, not execution: the checkpoint directory may
+            # not be materialized yet. Only reject a single-file artifact, which
+            # vLLM cannot serve.
+            if Path(model).suffix.lower() in {".gguf", ".bin", ".safetensors"}:
+                raise ValueError(
+                    f"vllm flavor for {family} needs a checkpoint directory, got {model!r}"
+                )
+            command = [
+                binary, "serve", model,
+                "--host", "127.0.0.1",
+                "--port", str(port),
+                "--served-model-name", alias,
+                "--max-model-len", str(context),
+            ]
+            parallel = int(spec.get("tensor_parallel_size") or 1)
+            if parallel > 1:
+                command.extend(["--tensor-parallel-size", str(parallel)])
+            utilization = spec.get("gpu_memory_utilization")
+            if utilization is not None:
+                command.extend(["--gpu-memory-utilization", str(float(utilization))])
+            if spec.get("enable_prefix_caching"):
+                command.append("--enable-prefix-caching")
+            command.extend(str(arg) for arg in spec.get("vllm_extra_args") or ())
         elif runtime_flavor == "mainline":
             command = [
                 binary, "-m", model,
