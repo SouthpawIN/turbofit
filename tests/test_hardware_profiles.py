@@ -187,6 +187,28 @@ def test_large_shared_memory_pools_are_not_rejected_by_discrete_card_topology() 
     assert hardware_satisfies(apple, profile.hardware)
 
 
+def test_shared_memory_machine_gets_the_class_profile_at_the_tier_floor() -> None:
+    # Maple is evidence-backed inside an 8 GiB CPU process envelope
+    # (references/results/maple-preview-small-device-evidence.json: peak
+    # ~5.6 GiB at 65K/128K), so an installed-8GiB shared-memory laptop is
+    # the hardware-8gb tier by the fit-list definition. A real "8 GB"
+    # laptop reports ~7.8 GiB of MemTotal and reserves 1 GiB+ for the
+    # runtime, so the class gate must measure installed system RAM, not
+    # the post-reserve usable amount, or every floor-tier machine on the
+    # shared list is rejected by its own class floor.
+    from turbofit_runtime.selection import ProfileCatalog
+
+    eight_gib_laptop = HardwareFingerprint("linux", "x86_64", 7_828)
+    profile = load_yaml_profile(ROOT / "runtime-profiles" / "8gb.yaml")
+    assert hardware_satisfies(eight_gib_laptop, profile.hardware)
+
+    choice = ProfileCatalog([profile]).select(eight_gib_laptop, requested="auto")
+    assert choice.profile.id == "hardware-8gb"
+
+    undersized = HardwareFingerprint("linux", "x86_64", 6_144)
+    assert not hardware_satisfies(undersized, profile.hardware)
+
+
 def test_tournament_ranking_uses_current_30_and_50_tps_milestones() -> None:
     ranking = json.loads((ROOT / "references/hardware-tier-tournaments.json").read_text())["ranking"]
 
