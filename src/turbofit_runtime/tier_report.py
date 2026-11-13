@@ -11,6 +11,7 @@ import yaml
 from .executor import production_recipe_sha256
 from .hardware import HardwareFingerprint
 from .intelligence import canonical_intelligence_recipe
+from .recommend import vram_reporting_tolerance_mb
 from .recipes import RecipeBook
 from .schema import MatrixRow
 
@@ -106,7 +107,9 @@ def _exact_physical_topology(hardware: HardwareFingerprint, constraint: dict[str
         not is_open_ended and len(hardware.devices) != required_devices
     ):
         return False
-    minimum_mb = int(constraint["per_device_min_gb"]) * 1024
+    minimum_mb = int(constraint["per_device_min_gb"]) * 1024 - vram_reporting_tolerance_mb(
+        int(constraint["per_device_min_gb"])
+    )
     return sum(device.memory_total_mb >= minimum_mb for device in hardware.devices) >= required_devices
 
 
