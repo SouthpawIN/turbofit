@@ -37,6 +37,9 @@ def test_artifact_manifest_covers_every_executable_matrix_file() -> None:
     known_non_matrix_repos = {
         "unsloth/MiniMax-M3-GGUF",
         "Baekpica/Darwin-180B-RSI-Mixed-Quant-GGUF",
+        # vLLM serves the checkpoint directory as a unit; the manifest tracks it
+        # with a snapshot digest rather than one row per safetensors shard.
+        "thinkingmachines/Inkling-2-Small",
     }
     known_non_matrix_destinations = {
         item["destination"]
@@ -63,7 +66,7 @@ def test_artifact_manifest_covers_every_executable_matrix_file() -> None:
 def test_model_catalog_pins_every_source_revision() -> None:
     catalog = ModelCatalog.load(ROOT / "references/model-catalog.json")
 
-    assert len(catalog.models) == 88  # + Qwen 3.6/3.5, LFM2.5, LFM3 Omni, Nemotron, 7 uncensored builds
+    assert len(catalog.models) == 89  # + Qwen 3.6/3.5, LFM2.5, LFM3 Omni, Nemotron, 7 uncensored builds, Inkling 2 Small (vLLM)
     assert all(len(model.revision) == 40 for model in catalog.models)
 
 

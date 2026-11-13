@@ -1157,6 +1157,18 @@
     "131072": "baseline",
     "262144": "baseline"
    }
+  },
+  "inkling-2-small": {
+   "family": "Inkling 2 Small",
+   "alias": "inkling-2-small",
+   "model": "${TURBOFIT_MODEL_ROOT}/Inkling-2-Small",
+   "draft": "",
+   "methods": {
+    "65536": "baseline",
+    "131072": "baseline",
+    "262144": "baseline",
+    "1048576": "baseline"
+   }
   }
  },
  "models": {
@@ -2042,6 +2054,28 @@
     "131072": "baseline",
     "262144": "baseline"
    }
+  },
+  "Inkling 2 Small": {
+   "alias": "inkling-2-small",
+   "kind": "process",
+   "native_binaries": {},
+   "binary": "~/.local/share/turbofit/runtimes/vllm/bin/vllm",
+   "model_root": "${TURBOFIT_MODEL_ROOT}",
+   "model": "Inkling-2-Small",
+   "port": 11900,
+   "large": true,
+   "native_context": 1048576,
+   "max_context": 1048576,
+   "methods": {
+    "65536": "baseline",
+    "131072": "baseline",
+    "262144": "baseline",
+    "1048576": "baseline"
+   },
+   "runtime_flavor": "vllm",
+   "tensor_parallel_size": 2,
+   "gpu_memory_utilization": 0.9,
+   "enable_prefix_caching": true
   }
  },
  "native_binaries": {
