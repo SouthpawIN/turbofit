@@ -1,10 +1,12 @@
 # TurboFit
 
-![Turbofit — unified backend, amber and mint aesthetic](https://github.com/SouthpawIN/agent-wiki/blob/wiki/wiki-topics/turbofit/wiki/assets/turbofit-hero.png)
+![Turbofit — unified backend, amber and mint aesthetic](https://github.com/SouthpawIN/bot-wiki/blob/wiki/wiki-topics/turbofit/wiki/assets/turbofit-hero.png)
 
-**One model provider. Every machine you own. The largest local model your hardware can actually hold — and it gets out of the way the moment something else needs the GPU.**
+**One model provider. Every machine you own. Every runtime that can serve a model. The largest thing your hardware can actually hold — and it gets out of the way the moment something else needs the GPU.**
 
 TurboFit is a first-class [Hermes Agent](https://github.com/NousResearch/hermes-agent) provider for local inference. Install it, set it as a provider, pick `auto`, and stop thinking about local models. It picks the model your machine fits, keeps it resident, and steps aside — context first, then model class, then the whole model — when a game, a render, or six browser tabs want the card. When the pressure is gone it climbs back on its own.
+
+It is not a llama.cpp wrapper. TurboFit is a **multi-engine coordinator**: one catalog, one fit ladder, one gateway, and whichever runtime actually serves the checkpoint — llama.cpp, Strata, vLLM, or a media runtime for image, video, music and speech.
 
 ```bash
 hermes plugins install --enable https://github.com/SouthpawIN/turbofit.git
@@ -83,7 +85,23 @@ hermes → Turbofit gateway :8091 → route state → local runtime
               adaptive controller ┘  probe → policy → reconcile → publish
 ```
 
+## Engines
+
+Four serving paths, dispatched per model by `runtime_flavor` in its recipe. A model names its engine once; the ladder, the pressure policy and the gateway do not care which one answers.
+
+| Engine | `runtime_flavor` | Serves | Why it exists |
+|---|---|---|---|
+| **llama.cpp** (mainline) | `mainline` | GGUF quantizations | the default: every quantized build |
+| **llama.cpp** (Prism fork) | `prism` | ternary GGUF | mainline cannot load ternary weights |
+| **Strata** | `strata` | large MoE on small VRAM | its own CLI and split-engine; 8 GB cards start at 128K |
+| **vLLM** | `vllm` | raw HF checkpoints | models with no GGUF at all, e.g. Inkling 2 Small |
+| **media runtimes** | per-model `runtime` | image, video, music, TTS, STT | diffusers, ACE-Step, faster-whisper, PersonaPlex |
+
+A vLLM recipe composes `vllm serve <checkpoint-dir>` with tensor parallelism and a GPU-memory fraction; a Strata recipe composes `strata launch`; a llama.cpp recipe composes `llama-server`. Resolution is planning, not execution — a checkpoint directory that has not been materialized yet is still a valid rung.
+
 ## Models
+
+**89 catalog entries, 86 main models, four contexts (64K / 128K / 262K / 1M), 1,490 matrix rows.** Every entry pins a Hugging Face revision and a sha256.
 
 Two ladders, never one. Dense on dedicated VRAM; Mixture-of-Experts on unified/CPU, because dense crawls there.
 
@@ -91,11 +109,11 @@ Two ladders, never one. Dense on dedicated VRAM; Mixture-of-Experts on unified/C
 
 | Band | Model | Context |
 |---|---|---|
-| 8–11 GB | Ternary Bonsai 2 27B (PTQ1_0 / PQ2_0) | 131k |
-| 12–15 GB | Underdog 27B (PQ2_0) | 131k |
-| 16–23 GB | Qwen 3.8 27B GSQ-RCO **IQ3_S** | 131k |
-| 24–63 GB | Qwen 3.8 27B GSQ-RCO **IQ3_S** | 262k |
-| 64 GB+ | Qwen 3.8 Flash Next (Strata) | 262k |
+| 8–11 GB | Ternary Bonsai 2 27B (PTQ1_0 / PQ2_0) · LFM3 Omni 2B | 131k |
+| 12–15 GB | Underdog 27B (PQ2_0) · LFM2.5 24B-A2B **Q4_K_M** · Arete 27B Uncensored V2 | 131k |
+| 16–23 GB | Qwen 3.8 27B GSQ-RCO **IQ3_S** · Qwen 3.6 35B-A3B **UD-Q4_K_M (MTP)** · Qwen 3.5 35B-A3B (MTP) · Nemotron Bolt 74B-A9B (24GB) · Flint 40B-A2.5B Abliterated | 131k–262k |
+| 24–63 GB | Qwen 3.8 27B GSQ-RCO **IQ3_S** · DeepSeek V4.1 Flash IQ2_XS | 262k |
+| 64 GB+ | Qwen 3.8 Flash Next (Strata) · Qwen 3.8 Flash Next Abliterated (IQ3_S) · Inkling 2 Small (**vLLM**) | 262k–1M |
 
 **Ladder 2 — unified / CPU / Apple Silicon (MoE only)**
 
@@ -103,9 +121,23 @@ Two ladders, never one. Dense on dedicated VRAM; Mixture-of-Experts on unified/C
 |---|---|---|
 | 8–15 GB | Maple Preview 20B-A1B (TQ2_0) | 131k |
 | 16–63 GB | Cyber-Tiel Coder 35B-A3B (UD-IQ3_XXS → Q6_K_XL by band) | 262k |
-| 64 GB+ | Qwen 3.8 Flash Next (Strata) | 262k |
+| 64 GB+ | Qwen 3.8 Flash Next (Strata) · DeepSeek V4.1 Flash (Strata) | 262k |
 
-**Auxiliary slots** — same catalog, same evidence rules: **MiniMax Music 3** (music), **NVIDIA Parakeet TDT 0.6B v3** (transcription), **Soprano TTS** (speech), with **Ornith 1.5 35A3B** and Maple Preview 20B-A1B eligible for the light text slots.
+**Also in the catalog, deliberately not a band default** — Arete 27B (Q3_K_S → Q8_0, the one sanctioned dense exception on the unified side), Nanbeige 4.3 33B, GLM 5.3 Flash and its Maya quants, Darwin 180B RSI, Cyber-Tiel Coder, and a full uncensored line: Qwen 3.8 27B Unleashed, Qwen 3.6 35B-A3B Abliterated, LFM2.5 24B-A2B Uncensored, Flint 40B Abliterated, Nemotron Bolt Abliterated.
+
+A variant never displaces a band default. It is offered *at* the band it fits, beside the default, and evidence decides.
+
+**Multimodal — 16 entries, each with the runtime that serves it**
+
+| Modality | Models |
+|---|---|
+| image | MiniMax H3 Image (diffusers) |
+| video | MiniMax H3 (diffusers) |
+| music | MiniMax Music 3, ACE-Step 1.5 2B / 4B |
+| tts | Qwen3 TTS CustomVoice, Darwin TTS 1.7B, **Soprano TTS**, PersonaPlex (duplex), Edge TTS |
+| stt | **NVIDIA Parakeet TDT 0.6B v3**, Nemotron ASR 0.6B, faster-whisper, PersonaPlex (duplex) |
+
+**Auxiliary text slots** stay in the main catalog: **Ornith 1.5 35A3B** and **Maple Preview 20B-A1B** are eligible for the light slots. `recommend_multimodal()` ranks every modality against the detected hardware and returns `fit`, an action and the reason — `use-now`, `install-adapter`, `run-turbofit-local`, or `insufficient-accelerator-memory`.
 
 Rules that hold at every rung: MTP on wherever the model supports it; **IQ3_S is lossless**, so 32 GB and 48 GB both stay on it rather than paying for a heavier quant; DFlash2 drafters belong to Qwen only, Bonsai keeps its own Prism DSpark sidecar.
 
@@ -160,6 +192,7 @@ Engine binaries are PM-pinned and never downloaded at boot. TurboFit tracks upst
 - **`WinError 10061` on Windows** — connection refused on `127.0.0.1:8091`: nothing is listening there. That port belongs to the TurboFit gateway, not the Hermes messaging gateway. Start it (`/turbofit setup`, or `scripts/turbofit-gateway.py`) and confirm with `curl http://127.0.0.1:8091/health`.
 - **"no evidence-backed configuration fits"** — your topology has no measured rung yet. Run `scripts/turbofit-catalog-campaign`, or pick from `compatible_lanes` in the `/turbofit` report.
 - **A model answers from the cloud** — only `auto`/`active` may cross to an API backend, and only with `TURBOFIT_ALLOW_API=true`. Naming a local model returns a retryable `503` instead of a substituted answer.
+- **`vllm flavor needs a checkpoint directory`** — that family is served by vLLM and expects the HF checkpoint directory, not a `.gguf`. Check `references/artifact-manifest.json` for the snapshot digest.
 - **Windows specifics** — [`docs/windows-native-install.md`](docs/windows-native-install.md) covers the native install, the 8091 port check and the WinError 10061 path.
 - **Strata feels slower after an update** — run `scripts/turbofit-strata`: the app (0.2.10) and its engine packages (0.1.56) version independently, and so do its drafters.
 
@@ -169,9 +202,9 @@ Engine binaries are PM-pinned and never downloaded at boot. TurboFit tracks upst
 - How TurboFit maps onto Hermes' built-in local runtime — [`docs/hermes-local-runtime-adapter.md`](docs/hermes-local-runtime-adapter.md)
 - Chain data — [`references/fallback-chain.json`](references/fallback-chain.json) · ladders — [`references/fit-lists.json`](references/fit-lists.json) · catalog — [`references/model-catalog.json`](references/model-catalog.json)
 - Binary selection — [`references/binary-selection.md`](references/binary-selection.md) · troubleshooting — [`docs/turbofit-check.md`](docs/turbofit-check.md)
-- Changelog — [`CHANGELOG.md`](CHANGELOG.md) · roadmap — [`ROADMAP.md`](ROADMAP.md) · full wiki topic — [agent-wiki](https://github.com/SouthpawIN/agent-wiki/blob/wiki/wiki-topics/turbofit/index.md)
+- Changelog — [`CHANGELOG.md`](CHANGELOG.md) · roadmap — [`ROADMAP.md`](ROADMAP.md) · full wiki topic — [bot-wiki](https://github.com/SouthpawIN/bot-wiki/blob/wiki/wiki-topics/turbofit/index.md)
 
 MIT.
 
 ---
-> _This README is generated from the [TurboFit wiki](https://github.com/SouthpawIN/agent-wiki/blob/wiki/wiki-topics/turbofit/README.md) — the single source of truth. To change it, edit the wiki hub and re-run `tools/sync-wiki-readme.sh`._
+> _This README is generated from the [TurboFit wiki](https://github.com/SouthpawIN/bot-wiki/blob/wiki/wiki-topics/turbofit/README.md) — the single source of truth. To change it, edit the wiki hub and re-run `tools/sync-wiki-readme.sh`._
