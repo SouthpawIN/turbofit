@@ -1043,6 +1043,48 @@
     "131072": "mtp",
     "262144": "mtp"
    }
+  },
+  "qwen3-5-35b-a3b-q4": {
+   "family": "Qwen 3.5 35B-A3B",
+   "alias": "qwen3-5-35b-a3b-q4",
+   "model": "${TURBOFIT_MODEL_ROOT}/Qwen 3.5 35B-A3B/Qwen3.5-35B-A3B-UD-Q4_K_M.gguf",
+   "draft": "",
+   "methods": {
+    "65536": "mtp",
+    "131072": "mtp",
+    "262144": "mtp"
+   },
+   "projector": "${TURBOFIT_MODEL_ROOT}/Qwen 3.5 35B-A3B/mmproj-F16.gguf"
+  },
+  "lfm2-5-24b-a2b-q4": {
+   "family": "LFM2.5 24B-A2B",
+   "alias": "lfm2-5-24b-a2b-q4",
+   "model": "${TURBOFIT_MODEL_ROOT}/LFM2.5 24B-A2B/LFM2.5-24B-A2B-Q4_K_M.gguf",
+   "draft": "",
+   "methods": {
+    "65536": "baseline",
+    "131072": "baseline"
+   }
+  },
+  "lfm3-omni-2b-q4": {
+   "family": "LFM3 Omni 2B",
+   "alias": "lfm3-omni-2b-q4",
+   "model": "${TURBOFIT_MODEL_ROOT}/LFM3 Omni 2B/LFM3-Omni-2B-Q4_K_M.gguf",
+   "draft": "",
+   "methods": {
+    "65536": "baseline"
+   },
+   "projector": "${TURBOFIT_MODEL_ROOT}/LFM3 Omni 2B/mmproj-LFM3-Omni-2B-Q4_K_M.gguf"
+  },
+  "nemotron-bolt-74b-24gb": {
+   "family": "Nemotron Bolt 74B-A9B",
+   "alias": "nemotron-bolt-74b-24gb",
+   "model": "${TURBOFIT_MODEL_ROOT}/Nemotron Bolt 74B-A9B/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB.gguf",
+   "draft": "",
+   "methods": {
+    "65536": "baseline"
+   },
+   "projector": "${TURBOFIT_MODEL_ROOT}/Nemotron Bolt 74B-A9B/mmproj-NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB.gguf"
   }
  },
  "models": {
@@ -1682,6 +1724,96 @@
     "262144": "mtp"
    },
    "projector": "${TURBOFIT_MODEL_ROOT}/Qwen3.6-35B-A3B/mmproj-F16.gguf"
+  },
+  "Qwen 3.5 35B-A3B": {
+   "alias": "qwen3-5-35b-a3b-q4",
+   "kind": "process",
+   "native_binaries": {
+    "cuda": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+    "rocm": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-rocm/bin/llama-server",
+    "metal": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-metal/bin/llama-server",
+    "cpu": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cpu/bin/llama-server",
+    "vulkan": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-vulkan/bin/llama-server"
+   },
+   "binary": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+   "model_root": "${TURBOFIT_MODEL_ROOT}/Qwen 3.5 35B-A3B",
+   "model": "Qwen3.5-35B-A3B-UD-Q4_K_M.gguf",
+   "port": 11680,
+   "large": true,
+   "native_context": 262144,
+   "max_context": 262144,
+   "methods": {
+    "65536": "mtp",
+    "131072": "mtp",
+    "262144": "mtp"
+   },
+   "projector": "${TURBOFIT_MODEL_ROOT}/Qwen 3.5 35B-A3B/mmproj-F16.gguf"
+  },
+  "LFM2.5 24B-A2B": {
+   "alias": "lfm2-5-24b-a2b-q4",
+   "kind": "process",
+   "native_binaries": {
+    "cuda": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+    "rocm": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-rocm/bin/llama-server",
+    "metal": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-metal/bin/llama-server",
+    "cpu": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cpu/bin/llama-server",
+    "vulkan": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-vulkan/bin/llama-server"
+   },
+   "binary": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+   "model_root": "${TURBOFIT_MODEL_ROOT}/LFM2.5 24B-A2B",
+   "model": "LFM2.5-24B-A2B-Q4_K_M.gguf",
+   "port": 11700,
+   "large": true,
+   "native_context": 131072,
+   "max_context": 131072,
+   "methods": {
+    "65536": "baseline",
+    "131072": "baseline"
+   }
+  },
+  "LFM3 Omni 2B": {
+   "alias": "lfm3-omni-2b-q4",
+   "kind": "process",
+   "native_binaries": {
+    "cuda": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+    "rocm": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-rocm/bin/llama-server",
+    "metal": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-metal/bin/llama-server",
+    "cpu": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cpu/bin/llama-server",
+    "vulkan": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-vulkan/bin/llama-server"
+   },
+   "binary": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+   "model_root": "${TURBOFIT_MODEL_ROOT}/LFM3 Omni 2B",
+   "model": "LFM3-Omni-2B-Q4_K_M.gguf",
+   "port": 11720,
+   "large": true,
+   "native_context": 65536,
+   "max_context": 65536,
+   "methods": {
+    "65536": "baseline"
+   },
+   "projector": "${TURBOFIT_MODEL_ROOT}/LFM3 Omni 2B/mmproj-LFM3-Omni-2B-Q4_K_M.gguf"
+  },
+  "Nemotron Bolt 74B-A9B": {
+   "alias": "nemotron-bolt-74b-24gb",
+   "kind": "process",
+   "native_binaries": {
+    "cuda": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+    "rocm": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-rocm/bin/llama-server",
+    "metal": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-metal/bin/llama-server",
+    "cpu": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cpu/bin/llama-server",
+    "vulkan": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-vulkan/bin/llama-server"
+   },
+   "binary": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+   "model_root": "${TURBOFIT_MODEL_ROOT}/Nemotron Bolt 74B-A9B",
+   "model": "NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB.gguf",
+   "port": 11740,
+   "large": true,
+   "native_context": 65536,
+   "max_context": 65536,
+   "methods": {
+    "65536": "baseline"
+   },
+   "projector": "${TURBOFIT_MODEL_ROOT}/Nemotron Bolt 74B-A9B/mmproj-NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB.gguf"
   }
  },
  "native_binaries": {
