@@ -842,7 +842,7 @@
     "darwin-180b-rsi-strata"
    ],
    "path": "MQ-Q5-SSD-PLE-BF16/Darwin-180B-RSI-MQ-Q5-SSD-PLE-BF16-00001-of-00003.gguf",
-   "size_bytes": 22155745872,
+   "size_bytes": 32066883744,
    "sha256": "a2e760539586f3c366e8d28843f7237095b0498059b8229b59704a14e4e30479"
   },
   {
@@ -853,7 +853,7 @@
     "darwin-180b-rsi-strata"
    ],
    "path": "MQ-Q5-SSD-PLE-BF16/Darwin-180B-RSI-MQ-Q5-SSD-PLE-BF16-00002-of-00003.gguf",
-   "size_bytes": 24177690864,
+   "size_bytes": 31811595296,
    "sha256": "9776c2f7e64c33d6621888467e258d3355b6a009622e22e4118a93b49129c4d2"
   },
   {
@@ -864,7 +864,7 @@
     "darwin-180b-rsi-strata"
    ],
    "path": "MQ-Q5-SSD-PLE-BF16/Darwin-180B-RSI-MQ-Q5-SSD-PLE-BF16-00003-of-00003.gguf",
-   "size_bytes": 23488239432,
+   "size_bytes": 19396505568,
    "sha256": "f4e07c0897781d3c9c191e0e03840c9336397d54a93b0600d8a87e634639b45e"
   },
   {
