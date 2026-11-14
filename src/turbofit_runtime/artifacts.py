@@ -362,6 +362,30 @@ _LOAD_ERROR_MARKERS = (
 )
 
 
+def log_tail(log_path: str | Path | None, limit: int = 15) -> list[str]:
+    """The last ``limit`` non-empty lines of a process log (best effort).
+
+    A readiness or load failure must be explained with the engine's own words.
+    Summarising the log as a guessed cause is how a healthy engine that exited
+    after serving got reported as a tokenizer/architecture mismatch.
+    """
+    if not log_path:
+        return []
+    try:
+        raw = Path(log_path).read_bytes()
+    except OSError:
+        return []
+    if not raw:
+        return []
+    # Read a bounded tail: engine logs can be many megabytes.
+    window = raw[-65536:]
+    if len(window) < len(raw):
+        newline = window.find(b"\n")
+        window = window[newline + 1:] if newline >= 0 else window
+    lines = window.decode("utf-8", errors="replace").splitlines()
+    return [line.rstrip() for line in lines if line.strip()][-limit:]
+
+
 def _log_evidence(log_path: str | Path | None, limit: int = 3) -> str:
     if not log_path:
         return ""
@@ -402,36 +426,66 @@ def describe_load_failure(
     expected_bytes: int | None = None,
     log_path: str | Path | None = None,
     missing_shards: Iterable[str] | None = None,
+    log_tail_lines: Iterable[str] | None = None,
+    exit_code: int | None = None,
 ) -> str:
     """Build the operator-facing message for an engine load exit.
 
-    Names the model, the file, actual versus expected size and the likely
-    cause, instead of a bare ``exited during load``.
+    Names the model, the file and actual versus expected size, then quotes the
+    engine's own last log lines. It never guesses a cause that the log already
+    answers: a complete file plus a working engine is not a tokenizer mismatch.
     """
     identity = f"{role} failed to load model {model or '<unknown>'}"
+    tail = list(log_tail_lines if log_tail_lines is not None else log_tail(log_path))
+    exit_note = f" (exit code {exit_code})" if exit_code is not None else ""
+    tail_note = ""
+
     if not file:
-        return f"{identity}: the recipe did not resolve a model file.{_log_evidence(log_path)}"
-    target = Path(file)
-    if target.is_dir():
-        return (
-            f"{identity}: {target} is a checkpoint directory, so the failure is inside the "
-            f"checkpoint rather than a truncated single-file download."
-            f"{_log_evidence(log_path)}"
+        detail = "the recipe did not resolve a model file"
+        cause = "no weights file reached the engine"
+        state = None
+    elif Path(file).is_dir():
+        detail = (
+            f"{Path(file)} is a checkpoint directory, so the failure is inside the "
+            "checkpoint rather than a truncated single-file download"
         )
-    state = inspect_file(file, expected_bytes)
-    detail = state.describe()
-    shards = list(missing_shards or ())
-    if shards:
-        detail += f"; shard set is incomplete, missing {', '.join(shards)}"
-        cause = "a sharded model is only partially materialized"
+        cause = "the checkpoint itself is rejected by the engine"
+        state = None
     else:
-        cause = likely_cause(state)
-    remedy = "Re-run `scripts/download-artifacts --family <family>` (it replaces stub files)"
-    if log_path:
-        remedy += " and inspect the engine log" + _log_evidence(log_path)
-    return (
-        f"{identity}: {detail}. Likely cause: {cause}. {remedy}"
+        state = inspect_file(file, expected_bytes)
+        detail = state.describe()
+        shards = list(missing_shards or ())
+        if shards:
+            detail += f"; shard set is incomplete, missing {', '.join(shards)}"
+            cause = "a sharded model is only partially materialized"
+        else:
+            cause = likely_cause(state)
+
+    remedy = (
+        "Re-run `scripts/download-artifacts --family <family>` (it replaces stub files) "
+        "and inspect the engine log"
     )
+    if tail and not (state is not None and state.present):
+        # The file is not verifiably complete: quote the engine and the cause.
+        return (
+            f"{identity}{exit_note}: {detail}. Likely cause: {cause}. {remedy}."
+            f" Engine log {log_path} (last {len(tail)} lines):\n" + "\n".join(tail)
+        )
+    if tail:
+        return (
+            f"{identity}{exit_note}: {detail}. The weights are present and the right size, "
+            f"so this is not a truncated-model failure. Engine log {log_path} "
+            f"(last {len(tail)} lines):\n" + "\n".join(tail)
+        )
+    if state is not None and state.present:
+        # Nothing to quote, but the file is verifiably complete: say so instead
+        # of inventing a tokenizer/architecture explanation for the exit.
+        cause = (
+            "the weights are present and the right size, so the engine exited for "
+            "its own reason rather than because of a truncated model "
+            f"(no engine log content at {log_path or '<path unavailable>'})"
+        )
+    return f"{identity}{exit_note}: {detail}. Likely cause: {cause}. {remedy}."
 
 
 _MANIFEST_CACHE: dict[str, list[dict[str, Any]]] = {}
