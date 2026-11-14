@@ -176,7 +176,7 @@ def test_missing_engine_binary_names_the_binary_and_family(tmp_path) -> None:
 
     from turbofit_runtime.backend import CampaignBackend
 
-    (tmp_path / "x.gguf").write_bytes(b"gguf")
+    (tmp_path / "x.gguf").write_bytes(b"gguf" + b"\0" * (1024 * 1024))
     component = SimpleNamespace(
         command=["/nonexistent/llama-server", "-m", "x.gguf"],
         gpu="0", port=1, role="main", alias="arete-27b", family="Arete 27B",

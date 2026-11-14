@@ -6,16 +6,23 @@ an Ornith row pointing at a directory. Both only surfaced when a user's machine
 failed to download them. This checks the manifest against Hugging Face before
 that happens again.
 
+``--local`` checks the model root instead: a file that exists but is a 15-byte
+placeholder is reported as absent, which is the state that produced a bare
+"failed to load model" from llama.cpp while the installer said "complete".
+
 Usage:
     tools/check-artifact-existence            # human table + exit code
     tools/check-artifact-existence --json     # machine readable
+    tools/check-artifact-existence --local    # verify the on-disk model root
+    tools/check-artifact-existence --local --model-root /path/to/gguf
 
-Exit codes: 0 all reachable, 1 one or more missing, 2 network unavailable.
+Exit codes: 0 all reachable/complete, 1 one or more missing, 2 network unavailable.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -23,7 +30,50 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.artifacts import inspect_file  # noqa: E402
+
 MANIFEST = ROOT / "references/artifact-manifest.json"
+
+
+def local_check(artifacts: list[dict], model_root: Path) -> list[dict]:
+    """Report every artifact that is not usable on disk right now."""
+    findings: list[dict] = []
+    for artifact in artifacts:
+        destination = str(artifact.get("destination") or "")
+        if not destination:
+            continue
+        target = model_root / destination
+        if str(artifact.get("sha256") or "").startswith("snapshot:"):
+            # Directory snapshots (MLX/mlx-lm checkpoints) are materialized as a
+            # tree; the file-level rules do not apply.
+            if target.is_dir():
+                continue
+            findings.append({
+                "destination": destination,
+                "status": "snapshot-missing",
+                "size_bytes": 0,
+                "expected_bytes": artifact.get("size_bytes"),
+                "detail": f"{target} is not a materialized directory snapshot",
+            })
+            continue
+        raw = artifact.get("size_bytes")
+        expected = raw if isinstance(raw, int) and not isinstance(raw, bool) and raw > 0 else None
+        state = inspect_file(target, expected)
+        if state.present:
+            continue
+        findings.append({
+            "destination": destination,
+            "status": state.reason,
+            "size_bytes": state.size_bytes,
+            "expected_bytes": state.expected_bytes,
+            "detail": state.describe(),
+        })
+    return findings
+
 
 
 def check(artifact: dict) -> tuple[str, str]:
@@ -49,9 +99,26 @@ def check(artifact: dict) -> tuple[str, str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true", help="machine readable output")
+    parser.add_argument("--local", action="store_true", help="verify the on-disk model root")
+    parser.add_argument("--model-root", type=Path, help="override TURBOFIT_MODEL_ROOT for --local")
     args = parser.parse_args()
 
     artifacts = json.loads(MANIFEST.read_text(encoding="utf-8"))["artifacts"]
+    if args.local:
+        root = Path(
+            args.model_root
+            or os.environ.get("TURBOFIT_MODEL_ROOT", "~/Models/storage/gguf")
+        ).expanduser()
+        findings = local_check(artifacts, root)
+        if args.json:
+            print(json.dumps({"total": len(artifacts), "missing": findings}, indent=1))
+        else:
+            print(f"checked {len(artifacts)} artifacts under {root}")
+            for row in findings:
+                print(f"  {row['status'].upper():18} {row['detail']}")
+            print(f"unusable {len(findings)} of {len(artifacts)}")
+        return 1 if findings else 0
+
     with ThreadPoolExecutor(max_workers=8) as pool:
         results = list(pool.map(check, artifacts))
 

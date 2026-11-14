@@ -18,6 +18,14 @@ from typing import Any, Callable
 
 from .hardware import _nvidia_compatibility_library_dir
 from .gpu import probe_gpus
+from .artifacts import (
+    describe_load_failure,
+    expected_size_for_model_root,
+    inspect_file,
+    is_weight_path,
+    parse_shard,
+    shard_names,
+)
 from .recipes import ResolvedComponent, ResolvedRecipe, resolve_native_backend
 from .runtime_backends import llama_environment
 
@@ -236,9 +244,21 @@ class CampaignBackend:
             self.result_dir.mkdir(parents=True, exist_ok=True)
             if component.kind != "process":
                 raise RuntimeError(f"unsupported native component kind: {component.kind}")
-            model = Path(component.model_path)
-            if not model.exists():
-                raise FileNotFoundError(model)
+            model = Path(component.model_path) if component.model_path else None
+            if model is not None and is_weight_path(model):
+                # Checkpoints that are directories (vLLM/MLX) are validated by
+                # the engine; single weight files are where placeholders hide.
+                expected = expected_size_for_model_root(model)
+                state = inspect_file(model, expected)
+                if not state.present:
+                    # Catch placeholders/partial downloads before llama.cpp
+                    # prints a bare "failed to load model" the user cannot act on.
+                    raise RuntimeError(describe_load_failure(
+                        role=component.role,
+                        model=component.family or component.alias,
+                        file=model,
+                        expected_bytes=expected,
+                    ))
             log_path = self.result_dir / f"campaign-{component.role}-{component.port}.log"
             log = log_path.open("w")
             env = self.process_environment(
@@ -271,6 +291,32 @@ class CampaignBackend:
                 self._resume_production()
             raise
 
+    def _load_failure(self, component: ResolvedComponent, handle: dict[str, Any]) -> str:
+        """Explain a load exit with model, file, sizes and likely cause.
+
+        The engine log only says ``failed to load model``; that reads like a
+        runtime bug when the real state is a 15-byte placeholder left by an
+        interrupted download.
+        """
+        path = Path(component.model_path) if component.model_path else None
+        expected = expected_size_for_model_root(path) if path else None
+        missing: list[str] = []
+        if path is not None:
+            parsed = parse_shard(path.name)
+            if parsed is not None:
+                for name in shard_names(path.name, parsed[1]):
+                    sibling = path.with_name(name)
+                    if not inspect_file(sibling).present:
+                        missing.append(name)
+        return describe_load_failure(
+            role=component.role,
+            model=component.family or component.alias,
+            file=path,
+            expected_bytes=expected,
+            log_path=handle.get("log"),
+            missing_shards=missing,
+        )
+
     def wait_ready(self, component: ResolvedComponent, handle: dict[str, Any]) -> dict:
         deadline = time.monotonic() + 1800
         last: dict = {}
@@ -287,7 +333,7 @@ class CampaignBackend:
                         "health": health,
                     }
             if handle["process"].poll() is not None:
-                raise RuntimeError(f"{component.role} process exited during load; log={handle.get('log')}")
+                raise RuntimeError(self._load_failure(component, handle))
             time.sleep(2)
         raise RuntimeError(f"{component.role} failed readiness on {component.port}: {last}")
 
