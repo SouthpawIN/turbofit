@@ -200,7 +200,7 @@
     "main",
     "aux"
    ],
-   "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9"
   },
   {
    "id": "ternary-bonsai-27b-dspark-bf16",
@@ -218,7 +218,7 @@
     "main",
     "aux"
    ],
-   "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9"
   },
   {
    "id": "ternary-bonsai-27b-dspark",
@@ -236,7 +236,7 @@
     "main",
     "aux"
    ],
-   "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9"
   },
   {
    "id": "ternary-bonsai-27b-compact-vision-bf16",
@@ -253,7 +253,7 @@
    "roles": [
     "main"
    ],
-   "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9"
   },
   {
    "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16",
@@ -271,7 +271,7 @@
    "roles": [
     "main"
    ],
-   "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9"
   },
   {
    "id": "ternary-bonsai-27b-compact-vision-bf16-dspark-q4",
@@ -289,7 +289,7 @@
    "roles": [
     "main"
    ],
-   "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9"
   },
   {
    "id": "ternary-bonsai-27b-fp16",
@@ -304,7 +304,7 @@
    "roles": [
     "main"
    ],
-   "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9"
   },
   {
    "id": "ternary-bonsai-27b-fp16-dspark-bf16",
@@ -321,7 +321,7 @@
    "roles": [
     "main"
    ],
-   "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9"
   },
   {
    "id": "ternary-bonsai-27b-fp16-dspark-q4",
@@ -338,7 +338,7 @@
    "roles": [
     "main"
    ],
-   "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9"
   },
   {
    "id": "ternary-bonsai-27b-fp16-vision-bf16",
@@ -355,7 +355,7 @@
    "roles": [
     "main"
    ],
-   "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9"
   },
   {
    "id": "ternary-bonsai-27b-fp16-vision-dspark",
@@ -373,7 +373,7 @@
    "roles": [
     "main"
    ],
-   "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9"
   },
   {
    "id": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
@@ -391,7 +391,7 @@
    "roles": [
     "main"
    ],
-   "revision": "abbae723028d71be674e71e1a71201a6f43fab22"
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9"
   },
   {
    "id": "bonsai-27b",
@@ -875,7 +875,7 @@
    "roles": [
     "main"
    ],
-   "revision": "b71b542000a34ed0eb1e6a3a92f906e593728c65",
+   "revision": "d562806dbafae37109975e970aae91b43e73b440",
    "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B"
   },
   {
@@ -893,7 +893,7 @@
    "roles": [
     "main"
    ],
-   "revision": "b71b542000a34ed0eb1e6a3a92f906e593728c65",
+   "revision": "d562806dbafae37109975e970aae91b43e73b440",
    "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B"
   },
   {
@@ -911,7 +911,7 @@
    "roles": [
     "main"
    ],
-   "revision": "b71b542000a34ed0eb1e6a3a92f906e593728c65",
+   "revision": "d562806dbafae37109975e970aae91b43e73b440",
    "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B"
   },
   {
@@ -929,7 +929,7 @@
    "roles": [
     "main"
    ],
-   "revision": "b71b542000a34ed0eb1e6a3a92f906e593728c65",
+   "revision": "d562806dbafae37109975e970aae91b43e73b440",
    "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B"
   },
   {
@@ -975,7 +975,7 @@
     "main",
     "aux"
    ],
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9",
    "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B"
   },
   {
@@ -995,7 +995,7 @@
     "main",
     "aux"
    ],
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9",
    "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B"
   },
   {
@@ -1014,7 +1014,7 @@
    "roles": [
     "main"
    ],
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+   "revision": "839bd57023c1558945afea70a74fa83c054f35f9",
    "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B"
   },
   {
