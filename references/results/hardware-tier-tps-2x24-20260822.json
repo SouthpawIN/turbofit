@@ -428,8 +428,7 @@
   ],
   "missing": [
     "Qwen3.8-27B-Unleashed-UD-IQ3_XXS.gguf",
-    "Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf",
-    "Ornith-1.5-35B-Q4_K_M.gguf"
+    "Qwen3.8-27B-Unleashed-UD-Q3_K_XL.gguf"
   ],
   "best_per_band": {
     "8GB-class model": {

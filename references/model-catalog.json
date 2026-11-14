@@ -8,7 +8,7 @@
  ],
  "auxiliary_options": [
   "maple-preview-tq2",
-  "ornith-1-5-35a3b",
+  "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
   "qwen3-8-flash-next-strata",
   "carwin-nano",
   "auto"
@@ -779,45 +779,6 @@
    "upstream_source": "https://huggingface.co/unsloth/Laguna-S-2.1-GGUF"
   },
   {
-   "id": "ornith-1-5-35a3b",
-   "name": "Ornith 1.5 35B-A3B Q4_K_M",
-   "family": "Ornith 1.5 35A3B",
-   "source": "https://huggingface.co/ornith-ai/Ornith-1.5-35B-A3B-GGUF",
-   "artifact": "Ornith-1.5-35B-Q4_K_M.gguf",
-   "quantization": "Q4_K_M",
-   "vision": true,
-   "moe": true,
-   "runtime_features": [
-    "expert-offload",
-    "vision-projector"
-   ],
-   "roles": [
-    "aux"
-   ],
-   "revision": "fbbaed45c2f0e200276ffa51701a24d45dc7f57e",
-   "upstream_source": "https://huggingface.co/ornith-ai/Ornith-1.5-35B-A3B"
-  },
-  {
-   "id": "ornith-1-5-oq4e-mtp",
-   "name": "Ornith 1.5 35B-A3B oQ4e MTP",
-   "family": "Ornith 1.5 35A3B",
-   "source": "https://huggingface.co/dotyerts/Ornith-1.5-35B-A3B-oQ4e-mtp",
-   "artifact": "Ornith-1.5-35B-A3B-oQ4e-mtp",
-   "quantization": "oQ4e-MTP",
-   "vision": true,
-   "moe": true,
-   "runtime_features": [
-    "mtp",
-    "mlx"
-   ],
-   "roles": [
-    "aux",
-    "main"
-   ],
-   "revision": "74d4e12c62e9bcd7b69cb290dee4eed76222e308",
-   "upstream_source": "https://huggingface.co/ornith-ai/Ornith-1.5-35B-A3B"
-  },
-  {
    "id": "maple-preview-tq2",
    "name": "Maple Preview 20B-A1B TQ2_0",
    "family": "Maple Preview 20B-A1B",
@@ -839,26 +800,6 @@
    ],
    "revision": "0afcb98771d39ab4de25252ee006ea9f9eab1920",
    "upstream_source": "https://huggingface.co/deepgrove/maple-preview"
-  },
-  {
-   "id": "ornith-1-5-oq8e-mtp",
-   "name": "Ornith 1.5 35B-A3B oQ8e MTP",
-   "family": "Ornith 1.5 35A3B",
-   "source": "https://huggingface.co/dotyerts/Ornith-1.5-35B-A3B-oQ8e-mtp",
-   "artifact": "Ornith-1.5-35B-A3B-oQ8e-mtp",
-   "quantization": "oQ8e-MTP",
-   "vision": true,
-   "moe": true,
-   "runtime_features": [
-    "mtp",
-    "mlx"
-   ],
-   "roles": [
-    "aux",
-    "main"
-   ],
-   "revision": "867508b47eb34dc273f98c3dabad0012373b2b90",
-   "upstream_source": "https://huggingface.co/ornith-ai/Ornith-1.5-35B-A3B"
   },
   {
    "id": "qwen3-8-27b-gsq-rco-iq3s",
@@ -1070,7 +1011,8 @@
     "expert-offload"
    ],
    "roles": [
-    "main"
+    "main",
+    "aux"
    ],
    "revision": "e59f05c5bda27883c2846bd6163acba3f5e00a8e",
    "upstream_source": "https://huggingface.co/peculiar-ragdoll/Tiel-Coder-35B-A3B"

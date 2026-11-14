@@ -4,13 +4,13 @@ A 9B must never be recommended. Routing:
 
 - Apple / Metal: Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL via llama.cpp at 24 GB+
   unified memory (Fit List winner, evidence
-  qwen-3-8-27b-gsq-rco-iq3s-auto-262k); Ornith below 24 GB. The
+  qwen-3-8-27b-gsq-rco-iq3s-auto-262k); Cyber-Tiel Coder below 24 GB. The
   OrcaRouter Uncensored MLX band and the MLX 2-bit build (uploader: archival,
   quality collapse) are retired from the default Apple route.
-- Integrated / RAM-only (non-Apple): Maple at 8 GB total, Ornith at 16 GB,
+- Integrated / RAM-only (non-Apple): Maple at 8 GB total, Cyber-Tiel Coder at 16 GB,
   and Qwen 3.8 27B GSQ-RCO at 24 GB+.
-- Dedicated 8 GB: Maple, plus Ornith when host RAM can hold offloaded experts.
-- Dedicated 16 GB+: GSQ-RCO GGUF + Ornith aux.
+- Dedicated 8 GB: Maple, plus Cyber-Tiel Coder when host RAM can hold offloaded experts.
+- Dedicated 16 GB+: GSQ-RCO GGUF + Cyber-Tiel Coder aux.
 
 The Asha/Escha mixed 2-bit (EschaLabs/Qwen3.8-27B-Escha-W2) is a research
 candidate only: custom SGLang kernels, no llama.cpp recipe, no TurboFit TPS.
@@ -25,9 +25,9 @@ ALLOWED_MAIN = (
     "bonsai-27b",
     "bonsai-27b-q1",
     "bonsai-27b-1bit",
-    "ornith-1-5-35a3b",
-    "ornith-1-5-oq4e-mtp",
-    "ornith-1-5-oq8e-mtp",
+    "cyber-tiel-coder-35b-a3b-ud-iq3-xxs",
+    "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+    "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
     "qwen3-8-27b-gsq-rco-iq3xxs",
     "qwen3-8-27b-gsq-rco-iq3s",
     "qwen3-8-27b-gsq-rco",
@@ -57,9 +57,9 @@ ALLOWED_MAIN = (
 
 ALLOWED_AUX = (
     "maple-preview-tq2",
-    "ornith-1-5-35a3b",
-    "ornith-1-5-oq4e-mtp",
-    "ornith-1-5-oq8e-mtp",
+    "cyber-tiel-coder-35b-a3b-ud-iq3-xxs",
+    "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+    "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
     "carwin-nano",
     "carwin-moe-nano",
     "qwen3-8-flash-next-strata",
@@ -67,7 +67,7 @@ ALLOWED_AUX = (
 )
 
 _BANNED = re.compile(
-    r"(?:^|[-_])9b(?:$|[-_])|ornith-9|qwen3\.5-9b|qwen3\.8-9b|mlx-2bit|uncensored-mlx-2",
+    r"(?:^|[-_])9b(?:$|[-_])|qwen3\.5-9b|qwen3\.8-9b|mlx-2bit|uncensored-mlx-2",
     re.IGNORECASE,
 )
 
@@ -96,7 +96,7 @@ def is_allowed_aux(alias: str) -> bool:
     return (
         token in allowed
         or token.startswith("auto-")
-        or token.startswith("ornith-1-5")
+        or token.startswith("cyber-tiel-coder")
         or token.startswith("carwin")
     )
 
@@ -112,12 +112,12 @@ def apple_mlx_main(*, unified_ram_gb: float) -> str:
 
     24 GB+ shared memory runs Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL
     (evidence: qwen-3-8-27b-gsq-rco-iq3s-auto-262k), not the
-    retired OrcaRouter Uncensored MLX band. Sub-24 GB Macs stay Ornith;
+    retired OrcaRouter Uncensored MLX band. Sub-24 GB Macs stay Cyber-Tiel Coder;
     the MLX 2-bit build is banned.
     """
     if unified_ram_gb >= 24:
         return "qwen3-8-27b-gsq-rco-iq3s"
-    return "ornith-1-5-35a3b"
+    return "cyber-tiel-coder-35b-a3b-ud-iq3-xxs"
 
 
 def local_main_for_vram_gb(vram_gb: float) -> str:
@@ -135,19 +135,19 @@ def speed_main_for_vram_gb(vram_gb: float) -> str:
     if vram_gb < 16:
         return "maple-preview-tq2"
     if vram_gb < 24:
-        return "ornith-1-5-35a3b"
+        return "cyber-tiel-coder-35b-a3b-ud-iq3-xxs"
     if vram_gb < 48:
-        return "ornith-1-5-oq4e-mtp"
-    return "ornith-1-5-oq8e-mtp"
+        return "cyber-tiel-coder-35b-a3b-ud-q4-k-xl"
+    return "cyber-tiel-coder-35b-a3b-ud-q5-k-xl"
 
 
 def speed_family_rank(alias: str) -> int:
     token = normalize(alias)
-    if "oq8e" in token:
+    if "ud-q5-k-xl" in token:
         return 50
-    if "oq4e" in token:
+    if "ud-q4-k-xl" in token:
         return 45
-    if token.startswith("ornith"):
+    if token.startswith("cyber-tiel-coder"):
         return 40
     if token.startswith("maple"):
         return 30
@@ -161,7 +161,7 @@ def shared_main_for_total_memory_gb(total_memory_gb: float) -> str:
     if total_memory_gb < 16:
         return "maple-preview-tq2"
     if total_memory_gb < 24:
-        return "ornith-1-5-35a3b"
+        return "cyber-tiel-coder-35b-a3b-ud-iq3-xxs"
     return "qwen3-8-27b-gsq-rco-iq3s"
 
 
@@ -170,14 +170,14 @@ def local_aux_for_host(*, vram_gb: float, host_ram_gb: float) -> str:
 
     Maple TQ2_0 is tiny (~6 GB on disk), streams from host RAM / disk, and
     never blocks the main model's VRAM — ideal as a lightweight auxiliary
-    across every VRAM tier. Ornith MTP variants remain available as an
+    across every VRAM tier. Larger MoE variants remain available as an
     explicit opt-in for boxes that can stack the extra model alongside main.
     """
     return "maple-preview-tq2"
 
 
 def low_vram_moe_main() -> str:
-    return "ornith-1-5-35a3b"
+    return "cyber-tiel-coder-35b-a3b-ud-iq3-xxs"
 
 
 def recommendable_mains_for_hardware(hardware: object) -> frozenset[str]:
@@ -234,9 +234,9 @@ def check_local_options(
                     "Apple 24 GB+ unified: GSQ-RCO IQ3_S per the Fit List "
                     "(OrcaRouter Uncensored MLX band is retired)."
                     if is_gsq_rco
-                    else "Apple under 24 GB unified: Ornith 1.5, not MLX 2-bit."
+                    else "Apple under 24 GB unified: Cyber-Tiel Coder 35B-A3B, not MLX 2-bit."
                 ),
-                "residency": residency if main == "ornith-1-5-35a3b" else None,
+                "residency": residency if main == "cyber-tiel-coder-35b-a3b-ud-iq3-xxs" else None,
             },
             {
                 "role": "aux",
@@ -259,9 +259,9 @@ def check_local_options(
                 "engine": "llama.cpp",
                 "why": (
                     "Integrated/unified memory uses total-memory bands: "
-                    "Maple at 8 GB, Ornith at 16 GB, GSQ-RCO at 24 GB+."
+                    "Maple at 8 GB, Cyber-Tiel Coder at 16 GB, GSQ-RCO at 24 GB+."
                 ),
-                "residency": residency if main == "ornith-1-5-35a3b" else None,
+                "residency": residency if main == "cyber-tiel-coder-35b-a3b-ud-iq3-xxs" else None,
             },
         ]
         # Dense exception: a 27B at q3+ fits a 16 GB unified pool, but it is not
@@ -317,7 +317,7 @@ def check_local_options(
             options.append(
                 {
                     "role": "main",
-                    "alias": "ornith-1-5-35a3b",
+                    "alias": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs",
                     "engine": "llama.cpp",
                     "why": (
                         "35A3B MoE alternative when host RAM can hold offloaded "
@@ -338,7 +338,7 @@ def check_local_options(
             "role": "main",
             "alias": speed_main_for_vram_gb(vram_gb),
             "engine": "llama.cpp",
-            "why": "Speed: Ornith MoE / MTP instead of dense 27B.",
+            "why": "Speed: Cyber-Tiel Coder MoE instead of dense 27B.",
         },
     ]
     # Named alternatives across the matrix. These never displace the band default;
@@ -445,7 +445,7 @@ def check_local_options(
             "role": "aux",
             "alias": local_aux_for_host(vram_gb=vram_gb, host_ram_gb=host_ram_gb),
             "engine": "llama.cpp",
-            "why": "Default aux is MTP Ornith when total VRAM can hold it next to main.",
+            "why": "Default aux is Maple Preview when total VRAM can hold it next to main.",
             "residency": residency,
         }
     )

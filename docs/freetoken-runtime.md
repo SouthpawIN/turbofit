@@ -1,6 +1,6 @@
 # FreeToken candidate runtime
 
-TurboFit integrates [FreeToken](https://github.com/FlashML-org/FreeToken) as an **optional, evidence-gated candidate backend** for supported NVIDIA MoE checkpoints. It is not an Auto rung and does not change the active Qwen 3.8 GSQ-RCO / Ornith / Bonsai model authority.
+TurboFit integrates [FreeToken](https://github.com/FlashML-org/FreeToken) as an **optional, evidence-gated candidate backend** for supported NVIDIA MoE checkpoints. It is not an Auto rung and does not change the active Qwen 3.8 GSQ-RCO / Cyber-Tiel Coder / Bonsai model authority.
 
 ## Why it is worth integrating
 
@@ -27,7 +27,7 @@ Current runtime requirements from FreeToken's own install contract:
 - text-only serving (FreeToken currently drops multimodal input);
 - a FreeToken-supported MoE architecture.
 
-TurboFit's active Qwen 3.8 GSQ-RCO and Ornith artifacts are not listed as supported FreeToken checkpoints at this revision. FreeToken therefore cannot replace the active native runtime today. It is integrated now so future supported MoE candidates can enter the normal artifact, context, tool-call, TPS, intelligence, pressure, and rollback campaigns without an ad-hoc side path.
+TurboFit's active Qwen 3.8 GSQ-RCO and Cyber-Tiel Coder artifacts are not listed as supported FreeToken checkpoints at this revision. FreeToken therefore cannot replace the active native runtime today. It is integrated now so future supported MoE candidates can enter the normal artifact, context, tool-call, TPS, intelligence, pressure, and rollback campaigns without an ad-hoc side path.
 
 ## Install or verify
 

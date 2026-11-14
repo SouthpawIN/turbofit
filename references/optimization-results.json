@@ -772,20 +772,6 @@
       "tok_s": 0
     },
     {
-      "config": "ornith-35b/stock/q8_0/none/128K",
-      "status": "skip_oom",
-      "needed_gb": 25.1,
-      "free_gb": 1.1,
-      "tok_s": 0
-    },
-    {
-      "config": "ornith-35b/stock/q4_0/none/128K",
-      "status": "skip_oom",
-      "needed_gb": 22.9,
-      "free_gb": 1.1,
-      "tok_s": 0
-    },
-    {
       "config": "heretic-35b-a3b-apex-mtp/stock/q8_0/none/128K",
       "status": "skip_oom",
       "needed_gb": 21.2,

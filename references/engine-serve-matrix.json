@@ -39,7 +39,7 @@
       "detect": {"commands": ["llama-server", "llama-server.exe"], "modules": []},
       "maple_gguf": "stamsam/llama.cpp prism fork only; mainline cannot load maple or TQ2_0 type 35",
       "qwen38_gguf": "pinned mainline llama.cpp",
-      "ornith_gguf": "pinned mainline llama.cpp with --cpu-moe"
+      "cyber_tiel_gguf": "pinned mainline llama.cpp with --cpu-moe"
     },
     "mlx": {
       "serves": "MLX weights via mlx-lm or mlx-lm-deepgrove",
@@ -52,7 +52,7 @@
       "detect": {"commands": ["mlx_lm.server"], "modules": ["mlx_lm"]},
       "maple_gguf": "incompatible; use deepgrove/maple-preview-2bit-mlx with mlx-lm-deepgrove --flash-head",
       "qwen38_gguf": "incompatible; use OrcaRouter Uncensored MLX 4/6/8-bit",
-      "ornith_gguf": "incompatible"
+      "cyber_tiel_gguf": "incompatible"
     },
     "sglang": {
       "serves": "HuggingFace / FP8 / some standard GGUF via sglang.launch_server",
@@ -66,7 +66,7 @@
       "windows": "WSL only",
       "maple_gguf": "incompatible; maple arch is not in SGLang",
       "qwen38_gguf": "prefer Qwen/Qwen3.8-27B HF; standard Qwen GGUF is optional and unproven here",
-      "ornith_gguf": "unproven"
+      "cyber_tiel_gguf": "unproven"
     },
     "vllm": {
       "serves": "HuggingFace / FP8 / NVFP4 via vllm serve",
@@ -80,7 +80,7 @@
       "windows": "WSL only",
       "maple_gguf": "incompatible; maple arch is not in vLLM",
       "qwen38_gguf": "prefer Qwen/Qwen3.8-27B or NVFP4/FP8 recipes, not GSQ-RCO GGUF",
-      "ornith_gguf": "unproven"
+      "cyber_tiel_gguf": "unproven"
     },
     "freetoken": {
       "serves": "HF safetensors or FTW MoE via ft on Linux x86_64 CUDA 13 / driver r580+",
@@ -94,7 +94,7 @@
       "windows": "WSL only",
       "maple_gguf": "incompatible; FreeToken does not load maple GGUF",
       "qwen38_gguf": "incompatible as GGUF; only if a supported HF MoE recipe exists",
-      "ornith_gguf": "candidate only after an exact FreeToken recipe"
+      "cyber_tiel_gguf": "candidate only after an exact FreeToken recipe"
     },
     "turbohaul-manager": {
       "serves": "OpenAI/Ollama-compatible manager over a llama.cpp backend",
@@ -111,7 +111,7 @@
       "revision": "905b4506883313b17e1d4e0480a8e6ca6c63399b",
       "maple_gguf": "only if the managed llama.cpp binary is the Maple fork",
       "qwen38_gguf": "preferred manager over pinned mainline llama.cpp",
-      "ornith_gguf": "preferred manager over pinned mainline llama.cpp"
+      "cyber_tiel_gguf": "preferred manager over pinned mainline llama.cpp"
     },
     "strata": {
       "serves": "Qwen3.8 Flash Next (125B MoE) via expert tiering: hot experts on GPU, all in RAM, n-gram on SSD",
@@ -128,7 +128,7 @@
       "revision": "",
       "maple_gguf": "incompatible",
       "qwen38_gguf": "incompatible; Strata serves Flash Next, not Qwen 3.8 27B",
-      "ornith_gguf": "incompatible",
+      "cyber_tiel_gguf": "incompatible",
       "flash_next": "IQ2_XS recommended; 12-24 GB VRAM + 64 GB RAM; 60-95 tok/s on RTX 5070"
     },
     "prism-llama.cpp": {
@@ -146,7 +146,7 @@
       "revision": "",
       "maple_gguf": "incompatible",
       "qwen38_gguf": "incompatible; Prism fork serves Ternary Bonsai 2 / Underdog, not Qwen 3.8 27B",
-      "ornith_gguf": "incompatible",
+      "cyber_tiel_gguf": "incompatible",
       "bonsai2_gguf": "PTQ1_0 (5.95 GB) or PQ2_0 (7.21 GB); 262K context; ~47 tok/s on M5 Max"
     },
     "salt-core": {
@@ -242,12 +242,6 @@
       "apple_alternate": "mlx",
       "hf_engines": ["vllm", "sglang"],
       "low_vram_dense_candidates": ["salt-core", "saliency"]
-    },
-    "ornith-1-5-35a3b": {
-      "artifact": "GGUF MoE",
-      "priority": ["llama.cpp", "turbohaul-manager"],
-      "eligible_engines": ["llama.cpp", "turbohaul-manager"],
-      "ineligible_engines": ["mlx"]
     },
     "qwen3-8-flash-next-strata": {
       "artifact": "Strata engine (expert tiering), IQ2_XS",

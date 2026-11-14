@@ -52,7 +52,7 @@ The same controls are available in Hermes Desktop under **Turbofit** and through
 ## Invariants
 
 - Stable model IDs are `auto`, `active:main`, and `active:aux`.
-- FreeToken support is candidate-only: no active Qwen 3.8/Ornith replacement, no source TPS inheritance, and no Auto promotion without exact hardware/model evidence.
+- FreeToken support is candidate-only: no active Qwen 3.8/Cyber-Tiel Coder replacement, no source TPS inheritance, and no Auto promotion without exact hardware/model evidence.
 - External GPU processes are read-only pressure signals and are never terminated or signaled.
 - The hardware recommendation remains the healing ceiling; transient pressure changes only the effective rung.
 - Runtime activation and model lifecycle remain owned by `NativeRuntimeBackend`, which signals only PID-verified children it launched.

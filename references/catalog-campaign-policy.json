@@ -2,7 +2,7 @@
   "schema": "turbofit.catalog-campaign-policy/v1",
   "updated_at": "2026-08-14T16:42:52.799595+00:00",
   "deferred_models": [],
-  "reason": "DeepSeek V4 Flash 0731 removed. Active main chain is Bonsai 27B (8GB), Qwen 3.8 27B GSQ-RCO UD-IQ3_XXS (16GB), UD-Q3_K_XL (24-95GB), and Qwen 3.8 27B 16-bit (96GB+) until GSQ-RCO FP16 GGUF is published. Auxiliary is Ornith 1.5 35A3B or auto.",
+  "reason": "DeepSeek V4 Flash 0731 removed. Active main chain is Bonsai 27B (8GB), Qwen 3.8 27B GSQ-RCO UD-IQ3_XXS (16GB), UD-Q3_K_XL (24-95GB), and Qwen 3.8 27B 16-bit (96GB+) until GSQ-RCO FP16 GGUF is published. Auxiliary is Cyber-Tiel Coder 35B-A3B or auto.",
   "replacement_candidate": "qwen3-8-27b-gsq-rco-iq3s",
   "replacement": {
     "family": "Qwen 3.8 27B",

@@ -11,9 +11,9 @@ def report() -> dict:
         if capacity == 48:
             status = "physically-validated"
             winner = {
-                "configuration_id": "qwen--ornith--128k",
+                "configuration_id": "qwen--cyber-tiel--128k",
                 "main": {"name": "Qwen"},
-                "auxiliary": {"name": "Ornith"},
+                "auxiliary": {"name": "Cyber-Tiel Coder"},
                 "context": 131072,
                 "fit": {
                     "physically_demonstrated": True,
@@ -45,7 +45,7 @@ def test_turbofit_list_contains_only_exact_evidence_backed_hardware_winners() ->
     assert payload["schema"] == "turbofit.list/v1"
     assert payload["name"] == "TurboFit List"
     assert [item["hardware_level_gb"] for item in payload["levels"]] == [8, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384]
-    assert next(item for item in payload["levels"] if item["hardware_level_gb"] == 48)["winner"]["configuration_id"] == "qwen--ornith--128k"
+    assert next(item for item in payload["levels"] if item["hardware_level_gb"] == 48)["winner"]["configuration_id"] == "qwen--cyber-tiel--128k"
     assert next(item for item in payload["levels"] if item["hardware_level_gb"] == 8)["status"] == "pending-benchmarks"
 
 

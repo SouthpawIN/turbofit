@@ -22,21 +22,21 @@ Tier report host: linux x86_64 · [24576, 24576] accelerators · native tier 48 
 ### 8 GB — catalog-candidates-only
 - Winner: **Binary Bonsai 27B Q1_0** (bonsai-27b--auto--128k) · top catalog candidate (no measured scores on this tier yet)
 - Serve: native (default)
-- Runners-up: bonsai-27b--auto--64k, bonsai-27b--ornith-1-5-35a3b--64k
+- Runners-up: bonsai-27b--auto--64k, bonsai-27b--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k
 
 ### 16 GB — catalog-candidates-only
 - Winner: **Qwen 3.8 27B GSQ-RCO UD-IQ3_XXS** (qwen3-8-27b-gsq-rco-iq3xxs--auto--128k) · top catalog candidate (no measured scores on this tier yet)
 - Serve: turbohaul-manager, llama.cpp (matrix) · GGUF GSQ-RCO · priority turbohaul-manager
 - Apple alternate: mlx
 - HF serving (not local): vllm, sglang
-- Runners-up: qwen3-8-27b-gsq-rco-iq3xxs--auto--64k, qwen3-8-27b-gsq-rco-iq3xxs--ornith-1-5-35a3b--64k
+- Runners-up: qwen3-8-27b-gsq-rco-iq3xxs--auto--64k, qwen3-8-27b-gsq-rco-iq3xxs--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k
 
 ### 24 GB — catalog-candidates-only
 - Winner: **Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL** (qwen3-8-27b-gsq-rco-iq3s--auto--128k) · top catalog candidate (no measured scores on this tier yet)
 - Serve: turbohaul-manager, llama.cpp (matrix) · GGUF GSQ-RCO · priority turbohaul-manager
 - Apple alternate: mlx
 - HF serving (not local): vllm, sglang
-- Runners-up: qwen3-8-27b-gsq-rco-iq3s--auto--64k, qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--64k
+- Runners-up: qwen3-8-27b-gsq-rco-iq3s--auto--64k, qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k
 
 ### 48 GB — physically-validated
 - Winner: **Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL** (qwen3-8-27b-gsq-rco-iq3s--auto--262k) · measured winner from physically-validated evidence
@@ -45,31 +45,31 @@ Tier report host: linux x86_64 · [24576, 24576] accelerators · native tier 48 
 - Serve: turbohaul-manager, llama.cpp (matrix) · GGUF GSQ-RCO · priority turbohaul-manager
 - Apple alternate: mlx
 - HF serving (not local): vllm, sglang
-- Runners-up: qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--128k, qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--64k
+- Runners-up: qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k, qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k
 
 ### 64 GB — catalog-candidates-only
 - Winner: **Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL** (qwen3-8-27b-gsq-rco-iq3s--auto--262k) · top catalog candidate (no measured scores on this tier yet)
 - Serve: turbohaul-manager, llama.cpp (matrix) · GGUF GSQ-RCO · priority turbohaul-manager
 - Apple alternate: mlx
 - HF serving (not local): vllm, sglang
-- Runners-up: qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--262k, qwen3-8-27b-gsq-rco-iq3xxs--auto--262k
+- Runners-up: qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--262k, qwen3-8-27b-gsq-rco-iq3xxs--auto--262k
 
 ### 96 GB — catalog-candidates-only
-- Winner: **Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL** (qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--1m) · top catalog candidate (no measured scores on this tier yet)
+- Winner: **Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL** (qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--1m) · top catalog candidate (no measured scores on this tier yet)
 - Serve: turbohaul-manager, llama.cpp (matrix) · GGUF GSQ-RCO · priority turbohaul-manager
 - Apple alternate: mlx
 - HF serving (not local): vllm, sglang
-- Runners-up: qwen3-8-27b-bf16--ornith-1-5-35a3b--262k, qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--262k
+- Runners-up: qwen3-8-27b-bf16--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--262k, qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--262k
 
 ### 200 GB — catalog-candidates-only
 - Winner: **Qwen 3.8 27B BF16** (qwen3-8-27b-bf16--auto--1m) · top catalog candidate (no measured scores on this tier yet)
 - Serve: native (default)
-- Runners-up: qwen3-8-27b-bf16--ornith-1-5-35a3b--1m, qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--1m
+- Runners-up: qwen3-8-27b-bf16--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--1m, qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--1m
 
 ### 300 GB — catalog-candidates-only
-- Winner: **Qwen 3.8 27B BF16** (qwen3-8-27b-bf16--ornith-1-5-35a3b--1m) · top catalog candidate (no measured scores on this tier yet)
+- Winner: **Qwen 3.8 27B BF16** (qwen3-8-27b-bf16--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--1m) · top catalog candidate (no measured scores on this tier yet)
 - Serve: native (default)
-- Runners-up: qwen3-8-27b-bf16-mtp--ornith-1-5-35a3b--1m, qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--1m
+- Runners-up: qwen3-8-27b-bf16-mtp--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--1m, qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--1m
 
 ## Method
 

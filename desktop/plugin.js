@@ -92,7 +92,7 @@ function Gauge({
 
   const zones = [
     { from: 0, to: 8, token: '--tf-zone-quiet', label: 'Maple' },
-    { from: 8, to: 16, token: '--tf-zone-pressure', label: 'Ornith' },
+    { from: 8, to: 16, token: '--tf-zone-pressure', label: 'Cyber-Tiel Coder' },
     { from: 16, to: span, token: '--tf-zone-heavy', label: 'GSQ-RCO' },
   ]
 
@@ -912,7 +912,7 @@ function TurbofitPage() {
         jsx('h2', { className: 'font-semibold', children: 'Compatible local lanes — same Fit List only' }),
         jsx('div', {
           style: { color: 'var(--ui-text-tertiary)' },
-          children: 'Only Maple or Ornith on 8 GB VRAM. A dense 27B that spills into RAM is not a lane — it will crawl.',
+          children: 'Only Maple or Cyber-Tiel Coder on 8 GB VRAM. A dense 27B that spills into RAM is not a lane — it will crawl.',
         }),
         ...compatibleLanes.map((item) => jsxs('div', {
           key: item.profile,

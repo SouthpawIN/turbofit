@@ -35,7 +35,7 @@ Hermes Agent  ──provider custom:turbofit──▶  TurboFit gateway  :8091
   userspace HTTP proxy. Its keep-alive wrapper lives outside the repo
   (`/opt/data/bin/turbofit-gateway-up.py`), because it is deployment glue, not product.
 - **omarchy (2× RTX 3090)**: the real host. Controller + gateway + Strata unit; profile
-  `omarchy-2x3090` with rungs `strata-flashnext-32k` (unit-managed) → `iq3s-262k` → `iq3s-65k`.
+  `omarchy-2x3090` with rungs `strata-flashnext-64k` (unit-managed) → `iq3s-262k` → `iq3s-65k`.
 - **MacBook**: gateway + native Metal/MLX runtimes, federated into the same surface.
 - **Phone**: consumes the tailnet gateway; does not serve models.
 

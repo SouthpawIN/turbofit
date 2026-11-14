@@ -47,17 +47,6 @@
       "has_vision": true
     },
     {
-      "name": "ornith-35b",
-      "tier": "f",
-      "role": "main",
-      "ctx": 262144,
-      "tok_s": 129.8,
-      "tokens": 512,
-      "time_s": 3.94,
-      "has_mtp": false,
-      "has_vision": false
-    },
-    {
       "name": "darwin-apex-36b",
       "tier": "s",
       "role": "main",
@@ -67,18 +56,6 @@
       "time_s": 4.24,
       "has_mtp": false,
       "has_vision": true
-    },
-    {
-      "name": "ornith-1-5-35a3b",
-      "tier": "sf",
-      "role": "aux",
-      "ctx": 262144,
-      "tok_s": 0,
-      "tokens": 0,
-      "time_s": 0,
-      "has_mtp": false,
-      "has_vision": true,
-      "notes": "MoE 35A3B. Low-VRAM path is --cpu-moe, not a 9B shrink."
     }
   ]
 }

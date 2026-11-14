@@ -51,14 +51,6 @@
           7600
         ],
         "host_ram_mb_per_card": []
-      },
-      {
-        "rung_id": "local-underdog-pq2-32768",
-        "evidence": "sha256:0323602de8a7f7aaca8e89535cd94fd82d1dfef2ca64656aae8c61762f947c74",
-        "required_mb_per_card": [
-          7400
-        ],
-        "host_ram_mb_per_card": []
       }
     ],
     "hardware-16gb": [
@@ -75,14 +67,6 @@
         "evidence": "sha256:f215afc21c18bbad0ef3f4cb42d727c7f8b2ea28f39df021dc549a792ffe4d22",
         "required_mb_per_card": [
           12200
-        ],
-        "host_ram_mb_per_card": []
-      },
-      {
-        "rung_id": "local-gsq-rco-iq3s-32768",
-        "evidence": "sha256:f215afc21c18bbad0ef3f4cb42d727c7f8b2ea28f39df021dc549a792ffe4d22",
-        "required_mb_per_card": [
-          12000
         ],
         "host_ram_mb_per_card": []
       }
@@ -473,7 +457,7 @@
     ],
     "apple-16gb": [
       {
-        "rung_id": "local-ornith-131k",
+        "rung_id": "local-cyber-tiel-131k",
         "evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         "required_mb_per_card": [
           12200

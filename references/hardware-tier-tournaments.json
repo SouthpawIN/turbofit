@@ -16,13 +16,13 @@
       "candidates": [
         "ternary-bonsai-2-27b-ptq1--auto--64k",
         "ternary-bonsai-2-27b-ptq1--carwin-nano--64k",
-        "ternary-bonsai-2-27b-ptq1--ornith-1-5-35a3b--64k",
+        "ternary-bonsai-2-27b-ptq1--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "ternary-bonsai-2-27b-ptq1--auto--128k",
         "ternary-bonsai-2-27b-ptq1--carwin-nano--128k",
-        "ternary-bonsai-2-27b-ptq1--ornith-1-5-35a3b--128k",
+        "ternary-bonsai-2-27b-ptq1--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k",
         "ternary-bonsai-2-27b-ptq1--auto--262k",
         "ternary-bonsai-2-27b-ptq1--carwin-nano--262k",
-        "ternary-bonsai-2-27b-ptq1--ornith-1-5-35a3b--262k"
+        "ternary-bonsai-2-27b-ptq1--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--262k"
       ],
       "winner": {
         "configuration": "ternary-bonsai-2-27b-ptq1--auto--64k",
@@ -37,13 +37,13 @@
       "candidates": [
         "underdog-27b-pq2--auto--64k",
         "underdog-27b-pq2--carwin-nano--64k",
-        "underdog-27b-pq2--ornith-1-5-35a3b--64k",
+        "underdog-27b-pq2--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "underdog-27b-pq2--auto--128k",
         "underdog-27b-pq2--carwin-nano--128k",
-        "underdog-27b-pq2--ornith-1-5-35a3b--128k",
+        "underdog-27b-pq2--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k",
         "underdog-27b-pq2--auto--262k",
         "underdog-27b-pq2--carwin-nano--262k",
-        "underdog-27b-pq2--ornith-1-5-35a3b--262k"
+        "underdog-27b-pq2--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--262k"
       ],
       "winner": {
         "configuration": "underdog-27b-pq2--auto--64k",
@@ -58,10 +58,10 @@
       "candidates": [
         "qwen3-8-27b-gsq-rco-iq3s--auto--64k",
         "qwen3-8-27b-gsq-rco-iq3s--carwin-nano--64k",
-        "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--64k",
+        "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "qwen3-8-27b-gsq-rco-iq3s--auto--128k",
         "qwen3-8-27b-gsq-rco-iq3s--carwin-nano--128k",
-        "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--128k"
+        "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k"
       ],
       "winner": {
         "configuration": "qwen3-8-27b-gsq-rco-iq3s--auto--128k",
@@ -76,13 +76,13 @@
       "candidates": [
         "qwen3-8-27b-gsq-rco-iq3s--auto--64k",
         "qwen3-8-27b-gsq-rco-iq3s--carwin-nano--64k",
-        "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--64k",
+        "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "qwen3-8-27b-gsq-rco-iq3s--auto--128k",
         "qwen3-8-27b-gsq-rco-iq3s--carwin-nano--128k",
-        "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--128k",
+        "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k",
         "qwen3-8-27b-gsq-rco-iq3s--auto--262k",
         "qwen3-8-27b-gsq-rco-iq3s--carwin-nano--262k",
-        "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--262k"
+        "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--262k"
       ],
       "winner": {
         "configuration": "qwen3-8-27b-gsq-rco-iq3s--auto--262k",
@@ -97,13 +97,13 @@
       "candidates": [
         "qwen3-8-27b-gsq-rco-iq3s--auto--64k",
         "qwen3-8-27b-gsq-rco-iq3s--carwin-nano--64k",
-        "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--64k",
+        "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "qwen3-8-27b-gsq-rco-iq3s--auto--128k",
         "qwen3-8-27b-gsq-rco-iq3s--carwin-nano--128k",
-        "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--128k",
+        "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k",
         "qwen3-8-27b-gsq-rco-iq3s--auto--262k",
         "qwen3-8-27b-gsq-rco-iq3s--carwin-nano--262k",
-        "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--262k"
+        "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--262k"
       ],
       "winner": {
         "configuration": "qwen3-8-27b-gsq-rco-iq3s--auto--262k",
@@ -118,13 +118,13 @@
       "candidates": [
         "qwen3-8-27b-gsq-rco-iq3s--auto--64k",
         "qwen3-8-27b-gsq-rco-iq3s--carwin-nano--64k",
-        "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--64k",
+        "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "qwen3-8-27b-gsq-rco-iq3s--auto--128k",
         "qwen3-8-27b-gsq-rco-iq3s--carwin-nano--128k",
-        "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--128k",
+        "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k",
         "qwen3-8-27b-gsq-rco-iq3s--auto--262k",
         "qwen3-8-27b-gsq-rco-iq3s--carwin-nano--262k",
-        "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--262k",
+        "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--262k",
         "qwen3-8-27b-q4-dflash2--auto--64k"
       ],
       "winner": {
@@ -140,10 +140,10 @@
       "candidates": [
         "qwen3-8-flash-next-strata--auto--64k",
         "qwen3-8-flash-next-strata--carwin-nano--64k",
-        "qwen3-8-flash-next-strata--ornith-1-5-35a3b--64k",
+        "qwen3-8-flash-next-strata--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "qwen3-8-flash-next-strata--auto--128k",
         "qwen3-8-flash-next-strata--carwin-nano--128k",
-        "qwen3-8-flash-next-strata--ornith-1-5-35a3b--128k"
+        "qwen3-8-flash-next-strata--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k"
       ],
       "winner": {
         "configuration": "qwen3-8-flash-next-strata--auto--128k",
@@ -158,10 +158,10 @@
       "candidates": [
         "qwen3-8-flash-next-strata--auto--64k",
         "qwen3-8-flash-next-strata--carwin-nano--64k",
-        "qwen3-8-flash-next-strata--ornith-1-5-35a3b--64k",
+        "qwen3-8-flash-next-strata--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "qwen3-8-flash-next-strata--auto--128k",
         "qwen3-8-flash-next-strata--carwin-nano--128k",
-        "qwen3-8-flash-next-strata--ornith-1-5-35a3b--128k"
+        "qwen3-8-flash-next-strata--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k"
       ],
       "winner": {
         "configuration": "qwen3-8-flash-next-strata--auto--128k",
@@ -176,10 +176,10 @@
       "candidates": [
         "qwen3-8-flash-next-strata--auto--64k",
         "qwen3-8-flash-next-strata--carwin-nano--64k",
-        "qwen3-8-flash-next-strata--ornith-1-5-35a3b--64k",
+        "qwen3-8-flash-next-strata--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "qwen3-8-flash-next-strata--auto--128k",
         "qwen3-8-flash-next-strata--carwin-nano--128k",
-        "qwen3-8-flash-next-strata--ornith-1-5-35a3b--128k"
+        "qwen3-8-flash-next-strata--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k"
       ],
       "winner": {
         "configuration": "qwen3-8-flash-next-strata--auto--128k",
@@ -194,10 +194,10 @@
       "candidates": [
         "qwen3-8-flash-next-strata--auto--64k",
         "qwen3-8-flash-next-strata--carwin-nano--64k",
-        "qwen3-8-flash-next-strata--ornith-1-5-35a3b--64k",
+        "qwen3-8-flash-next-strata--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "qwen3-8-flash-next-strata--auto--128k",
         "qwen3-8-flash-next-strata--carwin-nano--128k",
-        "qwen3-8-flash-next-strata--ornith-1-5-35a3b--128k"
+        "qwen3-8-flash-next-strata--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k"
       ],
       "winner": {
         "configuration": "qwen3-8-flash-next-strata--auto--128k",
@@ -212,10 +212,10 @@
       "candidates": [
         "qwen3-8-flash-next-strata--auto--64k",
         "qwen3-8-flash-next-strata--carwin-nano--64k",
-        "qwen3-8-flash-next-strata--ornith-1-5-35a3b--64k",
+        "qwen3-8-flash-next-strata--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "qwen3-8-flash-next-strata--auto--128k",
         "qwen3-8-flash-next-strata--carwin-nano--128k",
-        "qwen3-8-flash-next-strata--ornith-1-5-35a3b--128k"
+        "qwen3-8-flash-next-strata--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k"
       ],
       "winner": {
         "configuration": "qwen3-8-flash-next-strata--auto--128k",
@@ -230,10 +230,10 @@
       "candidates": [
         "qwen3-8-flash-next-strata--auto--64k",
         "qwen3-8-flash-next-strata--carwin-nano--64k",
-        "qwen3-8-flash-next-strata--ornith-1-5-35a3b--64k",
+        "qwen3-8-flash-next-strata--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "qwen3-8-flash-next-strata--auto--128k",
         "qwen3-8-flash-next-strata--carwin-nano--128k",
-        "qwen3-8-flash-next-strata--ornith-1-5-35a3b--128k"
+        "qwen3-8-flash-next-strata--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k"
       ],
       "winner": {
         "configuration": "qwen3-8-flash-next-strata--auto--128k",

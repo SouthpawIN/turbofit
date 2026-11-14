@@ -3367,7 +3367,7 @@ except Exception:
     def local_main_for_vram_gb(vram_gb):
         return "bonsai-27b"
     def local_aux_for_host(*, vram_gb, host_ram_gb):
-        return "ornith-1-5-35a3b" if host_ram_gb >= 32 else "auto"
+        return "cyber-tiel-coder-35b-a3b-ud-q4-k-xl" if host_ram_gb >= 32 else "auto"
 
 cat_path = sys.argv[1]
 with open(cat_path) as f:

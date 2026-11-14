@@ -10,7 +10,7 @@
     "listed per level but never silently substituted: an option needs the same evidence to become",
     "the default for that slot."
   ],
-  "context_floor": 32768,
+  "context_floor": 65536,
   "lanes": {
     "dedicated": {
       "label": "Dedicated VRAM (dense allowed)",

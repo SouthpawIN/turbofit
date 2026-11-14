@@ -479,7 +479,7 @@ def recommended_artifact_families(
         main = "qwen3-8-27b-gsq-rco-iq3s"
     else:
         main = "qwen3-8-27b-bf16"
-    return [main, "ornith-1-5-35a3b"]
+    return [main, "cyber-tiel-coder-35b-a3b-ud-q4-k-xl"]
 
 
 def ensure_recommended_models(

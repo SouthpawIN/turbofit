@@ -105,29 +105,32 @@
       "context_8k_ok": null,
       "context_32k_ok": null,
       "note": "Newly registered — pending first benchmark"
-    },
-    "ornith-35b": {
-      "alias": "ornith-35b",
-      "size_gb": 20.0,
-      "tier": "sf",
-      "ctx": 262144,
-      "healthy": true,
-      "speed_small_tok_s": null,
-      "speed_large_tok_s": null,
-      "context_8k_ok": null,
-      "context_32k_ok": null,
-      "note": "Newly registered — pending first benchmark"
     }
   },
   "history": [
     {
       "date": "2026-06-27",
       "models": {
-        "darwin-28b-reason": {"speed_small_tok_s": 38.0, "speed_large_tok_s": 36.0},
-        "prism-eagle-27b": {"speed_small_tok_s": 121.0, "speed_large_tok_s": 110.0},
-        "carwin-28b-mtp": {"speed_small_tok_s": 100.0, "speed_large_tok_s": 95.0},
-        "carnice": {"speed_small_tok_s": 110.0, "speed_large_tok_s": 105.0},
-        "qwopus-27b-v2-mtp": {"speed_small_tok_s": 100.0, "speed_large_tok_s": 95.0}
+        "darwin-28b-reason": {
+          "speed_small_tok_s": 38.0,
+          "speed_large_tok_s": 36.0
+        },
+        "prism-eagle-27b": {
+          "speed_small_tok_s": 121.0,
+          "speed_large_tok_s": 110.0
+        },
+        "carwin-28b-mtp": {
+          "speed_small_tok_s": 100.0,
+          "speed_large_tok_s": 95.0
+        },
+        "carnice": {
+          "speed_small_tok_s": 110.0,
+          "speed_large_tok_s": 105.0
+        },
+        "qwopus-27b-v2-mtp": {
+          "speed_small_tok_s": 100.0,
+          "speed_large_tok_s": 95.0
+        }
       }
     }
   ]

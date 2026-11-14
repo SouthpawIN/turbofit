@@ -415,50 +415,6 @@
    "size_bytes": 931145760
   },
   {
-   "destination": "Ornith-1.5-35B-A3B/Ornith-1.5-35B-Q4_K_M.gguf",
-   "families": [
-    "ornith-1-5-35a3b"
-   ],
-   "repo_id": "ornith-ai/Ornith-1.5-35B-A3B-GGUF",
-   "revision": "fbbaed45c2f0e200276ffa51701a24d45dc7f57e",
-   "path": "Ornith-1.5-35B-Q4_K_M.gguf",
-   "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
-   "size_bytes": 21713462848
-  },
-  {
-   "destination": "Ornith-1.5-35B-A3B-oQ4e-mtp",
-   "families": [
-    "ornith-1-5-oq4e-mtp"
-   ],
-   "repo_id": "dotyerts/Ornith-1.5-35B-A3B-oQ4e-mtp",
-   "revision": "74d4e12c62e9bcd7b69cb290dee4eed76222e308",
-   "path": ".",
-   "sha256": "snapshot:74d4e12c62e9bcd7b69cb290dee4eed76222e308",
-   "size_bytes": 21626133561
-  },
-  {
-   "destination": "Ornith-1.5-35B-A3B-oQ8e-mtp",
-   "families": [
-    "ornith-1-5-oq8e-mtp"
-   ],
-   "repo_id": "dotyerts/Ornith-1.5-35B-A3B-oQ8e-mtp",
-   "revision": "867508b47eb34dc273f98c3dabad0012373b2b90",
-   "path": ".",
-   "sha256": "snapshot:867508b47eb34dc273f98c3dabad0012373b2b90",
-   "size_bytes": 38617271546
-  },
-  {
-   "destination": "Ornith-1.5-35B-A3B/mmproj-Ornith-1.5-35B-BF16.gguf",
-   "families": [
-    "ornith-1-5-35a3b"
-   ],
-   "repo_id": "ornith-ai/Ornith-1.5-35B-A3B-GGUF",
-   "revision": "fbbaed45c2f0e200276ffa51701a24d45dc7f57e",
-   "path": "mmproj-Ornith-1.5-35B-BF16.gguf",
-   "sha256": "d9ce31026d1cb1f3f8d5152e2e2a014d9d2b302b6c93a7dc07bb0a0487f52837",
-   "size_bytes": 902822016
-  },
-  {
    "destination": "Maple-Preview/maple-tq2_0.gguf",
    "families": [
     "maple-preview-tq2"

@@ -33,22 +33,6 @@
       "sha256": "02b26e0e0e3f1b09be342f21cff7461f571ce491a2ce514a5e7c9880fc1cee2e",
       "size_bytes": 931145760
     },
-    "ornith-1-5-35a3b-q4": {
-      "repo_id": "ornith-ai/Ornith-1.5-35B-A3B-GGUF",
-      "revision": "fbbaed45c2f0e200276ffa51701a24d45dc7f57e",
-      "path": "Ornith-1.5-35B-Q4_K_M.gguf",
-      "destination": "Ornith-1.5-35B-A3B/Ornith-1.5-35B-Q4_K_M.gguf",
-      "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
-      "size_bytes": 21713462848
-    },
-    "ornith-1-5-35a3b-mmproj": {
-      "repo_id": "ornith-ai/Ornith-1.5-35B-A3B-GGUF",
-      "revision": "fbbaed45c2f0e200276ffa51701a24d45dc7f57e",
-      "path": "mmproj-Ornith-1.5-35B-BF16.gguf",
-      "destination": "Ornith-1.5-35B-A3B/mmproj-Ornith-1.5-35B-BF16.gguf",
-      "sha256": "d9ce31026d1cb1f3f8d5152e2e2a014d9d2b302b6c93a7dc07bb0a0487f52837",
-      "size_bytes": 902822016
-    },
     "qwen3-8-27b-qwen3.8-27b-q4-k-m": {
       "repo_id": "ggml-org/Qwen3.8-27B-GGUF",
       "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
@@ -136,10 +120,6 @@
       "qwen3-8-27b-qwen3.8-27b-q4-k-m",
       "qwen3-8-27b-mmproj-qwen3.8-27b-q8-0",
       "qwen3-8-27b-dflash2-q4-k-m"
-    ],
-    "ornith-1-5-35a3b": [
-      "ornith-1-5-35a3b-q4",
-      "ornith-1-5-35a3b-mmproj"
     ],
     "qwen3-8-27b": [
       "qwen3-8-27b-qwen3.8-27b-q4-k-m",

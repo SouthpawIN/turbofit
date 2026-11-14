@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased — one MoE family, one 64K floor
+
+- **Catalog**: the retired 35B-A3B MoE family is gone — Cyber-Tiel Coder 35B-A3B
+  is the 35B-A3B option, and it now carries the auxiliary slot that family held.
+  Catalog is 86 models / 84 mains, matrix 1450 rows.
+- **64K floor**: `context_floor` defaults to 65536 in `chain.py`,
+  `fallback-chain.json`, the Strata installer and every runtime profile; nothing
+  plans or ships a window below 64K. `context_steps()` raises a sub-floor window
+  to 64K rather than shedding below it.
+- **Data**: measurements, tournaments, tier reports, campaign state and download
+  groups for the retired family were removed rather than relabelled, so no
+  benchmark row is attributed to a model that never ran.
+- **`scripts/download-artifacts`**: imports the HuggingFace client lazily, so the
+  module loads (and tests run) without the network client installed.
+
 ## 2.4.1 — pressure yield, external-unit rungs, naming
 
 - **Yield under external GPU pressure**: when a card is contended and no cheaper
@@ -65,20 +80,20 @@
 
 - Version surfaces are `2.3.0`.
 - Dedicated VRAM and integrated/RAM-only total memory are separate Fit List dimensions. 8 GB of VRAM is not 8 GB of RAM.
-- Dedicated 8 GB main candidate is Maple Preview 20B-A1B TQ2_0. Ornith remains the alternative when host RAM can hold offloaded experts. Bonsai stays in the catalog but is no longer the 8 GB default.
-- Shared total memory: Maple at 8–15 GB, Ornith 1.5 35A3B at 16–23 GB, Unleashed UD-Q3_K_XL at 24 GB+.
+- Dedicated 8 GB main candidate is Maple Preview 20B-A1B TQ2_0. Cyber-Tiel Coder remains the alternative when host RAM can hold offloaded experts. Bonsai stays in the catalog but is no longer the 8 GB default.
+- Shared total memory: Maple at 8–15 GB, Cyber-Tiel Coder 35B-A3B at 16–23 GB, Unleashed UD-Q3_K_XL at 24 GB+.
 - Maple is native 64K/128K only and needs the Maple llama.cpp fork. Auto on 8 GB is Maple 128K → 64K.
 - README is the whole-product 2.4 surface: Check, List, Desktop, slash, TurboSouth, Tailscale, engines, multimodal. Campaign depth stays in `docs/`.
 - Posters use the existing gold/mint starfield language.
 - Desktop shows a gold **New model recommended** card when Check suggests a replacement and the old weights are still installed: Keep both, Archive old model, or Delete old model.
 - Auto on `hardware-8gb` is Maple TQ2_0 at 128K, contracting to Maple 64K. Bonsai is no longer the 8 GB Auto floor.
 - Check now auditions llama.cpp, MLX, SGLang, vLLM, FreeToken, and Turbohaul Manager against the selected model pair. Maple GGUF is fork-only; vLLM/SGLang stay HF/FP8/NVFP4.
-- Compatible lanes are Fit List mains only. 8 GB VRAM + any host RAM is Maple or Ornith. Host-spill of a dense 27B is not a recommendation.
-- Default aux is Ornith oQ4e MTP at 40 GB+ total VRAM and oQ8e MTP at 64 GB+. Speed preference ranks Ornith over dense Qwen 27B. Unleashed stays the intelligence pick on 16/24 GB.
-- Unleashed Qwen 27B now serves with DFlash2 (`n_max=7`) on the pinned z-lab fork. Ornith oQ is MTP. Spec decode is the default where a draft exists.
+- Compatible lanes are Fit List mains only. 8 GB VRAM + any host RAM is Maple or Cyber-Tiel Coder. Host-spill of a dense 27B is not a recommendation.
+- Default aux is Cyber-Tiel Coder UD-Q4_K_XL at 40 GB+ total VRAM and UD-Q5_K_XL at 64 GB+. Speed preference ranks Cyber-Tiel Coder over dense Qwen 27B. Unleashed stays the intelligence pick on 16/24 GB.
+- Unleashed Qwen 27B now serves with DFlash2 (`n_max=7`) on the pinned z-lab fork. Cyber-Tiel Coder UD-Q is MTP. Spec decode is the default where a draft exists.
 - Desktop opens with speed/VRAM/RAM graphs, the live scale-down/up ladder, subscriptions, and Nous keyless free models instead of fallback JSON.
 
-## 2.3 — Unleashed / Ornith / Nous free fallback
+## 2.3 — Unleashed / Cyber-Tiel Coder / Nous free fallback
 
 ### Setup / troubleshooting
 
@@ -97,7 +112,7 @@
 
 ### Recommendations
 
-- Auto/Check will never recommend a 9B. Low-VRAM dedicated devices get Bonsai 27B and/or Ornith 1.5 35A3B. Ornith experts mmap from disk when host RAM is under 32 GB. Apple Silicon uses OrcaRouter Uncensored MLX 4/6/8-bit (never 2-bit). Integrated/unified non-Apple uses Ornith 1.5.
+- Auto/Check will never recommend a 9B. Low-VRAM dedicated devices get Bonsai 27B and/or Cyber-Tiel Coder 35B-A3B. Cyber-Tiel Coder experts mmap from disk when host RAM is under 32 GB. Apple Silicon uses OrcaRouter Uncensored MLX 4/6/8-bit (never 2-bit). Integrated/unified non-Apple uses Cyber-Tiel Coder 35B-A3B.
 
 ### Model runtime
 
@@ -106,7 +121,7 @@
 - Added an evidence-gated Qwen 3.8 27B DFlash2 candidate: pinned Inco Q4_K_M draft artifact, pinned z-lab llama.cpp PR runtime, 64K/128K/262K/1M recipes, and a hard no-cross-family guard preserving Bonsai's own DSpark sidecar.
 - Removed DeepSeek V4 Flash 0731 from the active catalog, recipes, downloads, and hardware-tier candidates.
 - Main Auto chain is now Bonsai 27B at 8GB, Qwen 3.8 27B Unleashed UD-IQ3_XXS at 16GB, UD-Q3_K_XL at 24–95GB, and the existing Qwen 3.8 27B 16-bit recipe at 96GB+ until an Unleashed FP16 GGUF is published.
-- Auxiliary authority is Ornith 1.5 35A3B, optional Carwin Nano, or auto. Ornith is MoE: scale-down offloads experts, then lowers context, then switches aux to auto, then a listed Unleashed quant, then Bonsai.
+- Auxiliary authority is Cyber-Tiel Coder 35B-A3B, optional Carwin Nano, or auto. Cyber-Tiel Coder is MoE: scale-down offloads experts, then lowers context, then switches aux to auto, then a listed Unleashed quant, then Bonsai.
 - Replaced the API fallback chain with the five looked-up Nous free/keyless models from the current Hermes-Agent catalog: `stealth/ox-alpha` (Ox Alpha, $0/$0 curated), `stepfun/step-3.7-flash:free`, `tencent/hy3:free`, `poolside/laguna-s-2.1:free`, `poolside/laguna-xs-2.1:free`. No Hermes-branded models. No NVIDIA NIM.
 
 ### Hermes plugin install

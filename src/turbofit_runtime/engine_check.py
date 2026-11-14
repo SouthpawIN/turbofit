@@ -387,7 +387,11 @@ def pair_engine_eligibility(main_alias: str, engine_id: str, *, matrix: dict | N
     payload = matrix or load_serve_matrix()
     pair = (payload.get("pairs") or {}).get(main_alias) or {}
     engine = (payload.get("engines") or {}).get(engine_id) or {}
-    key = "maple_gguf" if "maple" in main_alias else ("ornith_gguf" if "ornith" in main_alias else "qwen38_gguf")
+    key = (
+        "maple_gguf" if "maple" in main_alias
+        else "cyber_tiel_gguf" if "cyber-tiel" in main_alias
+        else "qwen38_gguf"
+    )
     if engine_id in (pair.get("eligible_engines") or []):
         return "eligible", str(engine.get(key) or "researched GGUF path")
     if engine_id == pair.get("apple_alternate"):

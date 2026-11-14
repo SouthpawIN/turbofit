@@ -78,9 +78,9 @@ Dense does not run well on CPU / Unified memory, so the tiers split into two lad
 
 > ★ = on the TurboFit List. Models without ★ are Model Zoo only.
 
-## Live catalog (62 models, 14 families)
+## Live catalog (86 models, 31 families)
 
-The currently-automated, downloadable set (`model-catalog.json`) — **62 models in 14 families**: `Ternary Bonsai 2 27B` (3 variants), `Underdog 27B`, `Qwen 3.8 27B` (11, incl. GSQ-RCO), `Qwen 3.8 Flash Next`, `Maple Preview 20B-A1B`, `Cyber-Tiel Coder 35B-A3B` (5), `Ornith 1.5 35A3B` (3), `Ternary Bonsai 27B` (12), `Bonsai 27B` (18), `Carwin Nano` (2), `GLM 5.2`, `Laguna S2.1` (2), `MiniMax M3`, `Darwin 180B RSI`. The two ladders above are the curated rungs `serve auto` promotes; the rest of the catalog is Model Zoo download-only.
+The currently-automated, downloadable set (`model-catalog.json`) — **86 models in 31 families**: `Ternary Bonsai 2 27B` (3 variants), `Underdog 27B`, `Qwen 3.8 27B` (11, incl. GSQ-RCO), `Qwen 3.8 Flash Next`, `Maple Preview 20B-A1B`, `Cyber-Tiel Coder 35B-A3B` (5), `Ternary Bonsai 27B` (12), `Bonsai 27B` (18), `Carwin Nano` (2), `GLM 5.2`, `Laguna S2.1` (2), `MiniMax M3`, `Darwin 180B RSI`. The two ladders above are the curated rungs `serve auto` promotes; the rest of the catalog is Model Zoo download-only.
 
 ## Recovery order (when VRAM/RAM pressure rises)
 
