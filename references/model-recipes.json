@@ -1610,7 +1610,7 @@
    "data_dir": "~/.local/share/turbofit/strata-data",
    "strata_family": "qwen",
    "strata_model": "IQ2_XS",
-   "strata_pack": "${TURBOFIT_STRATA_DATA}/packs/IQ2_XS",
+   "strata_pack": "${turbofit_strata_data}/packs/iq2_xs",
    "strata_expert_profile": "${TURBOFIT_STRATA_DATA}/expert-profile.bin",
    "strata_mtp": "${TURBOFIT_STRATA_DATA}/mtp/rt"
   },
@@ -1665,7 +1665,7 @@
    "data_dir": "~/.local/share/turbofit/strata-data",
    "strata_family": "qwen",
    "strata_model": "MQ-Q5-SSD-PLE-BF16",
-   "strata_pack": "${TURBOFIT_STRATA_DATA}/packs/MQ-Q5-SSD-PLE-BF16",
+   "strata_pack": "${turbofit_strata_data}/packs/mq-q5-ssd-ple-bf16",
    "strata_expert_profile": "${TURBOFIT_STRATA_DATA}/expert-profile.bin",
    "strata_mtp": "${TURBOFIT_STRATA_DATA}/mtp/rt"
   },
@@ -1764,7 +1764,7 @@
    "data_dir": "~/.local/share/turbofit/strata-data",
    "strata_family": "deepseek",
    "strata_model": "GSQ-RCO-IQ1_M",
-   "strata_pack": "${TURBOFIT_STRATA_DATA}/packs/GSQ-RCO-IQ1_M",
+   "strata_pack": "${turbofit_strata_data}/packs/gsq-rco-iq1_m",
    "strata_expert_profile": "${TURBOFIT_STRATA_DATA}/expert-profile.bin",
    "strata_mtp": "${TURBOFIT_STRATA_DATA}/mtp/rt"
   },
@@ -1793,7 +1793,7 @@
    "data_dir": "~/.local/share/turbofit/strata-data",
    "strata_family": "glm",
    "strata_model": "Maya-XS",
-   "strata_pack": "${TURBOFIT_STRATA_DATA}/packs/Maya-XS",
+   "strata_pack": "${turbofit_strata_data}/packs/maya-xs",
    "strata_expert_profile": "${TURBOFIT_STRATA_DATA}/expert-profile.bin",
    "strata_mtp": "${TURBOFIT_STRATA_DATA}/mtp/rt"
   },

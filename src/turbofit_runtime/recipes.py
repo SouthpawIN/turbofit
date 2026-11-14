@@ -496,7 +496,7 @@ class RecipeBook:
         n_cpu_moe = context_override.get("n_cpu_moe", spec.get("n_cpu_moe"))
         if n_cpu_moe is not None:
             command.extend([ "--n-cpu-moe", str(n_cpu_moe)])
-        if context_override.get("cpu_moe", spec.get("cpu_moe")) is True:
+        if runtime_flavor != "strata" and context_override.get("cpu_moe", spec.get("cpu_moe")) is True:
             command.append("--cpu-moe")
         # Aux hard-drive/RAM streaming (allowed_lineup.expert_residency), applied to
         # the auxiliary role only: offload MoE experts to the host and keep weights
