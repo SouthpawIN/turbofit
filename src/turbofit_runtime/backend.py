@@ -23,6 +23,7 @@ from .artifacts import (
     expected_size_for_model_root,
     inspect_file,
     is_weight_path,
+    log_tail,
     parse_shard,
     shard_names,
 )
@@ -260,6 +261,17 @@ class CampaignBackend:
                         expected_bytes=expected,
                     ))
             log_path = self.result_dir / f"campaign-{component.role}-{component.port}.log"
+            # One log per start: two engines writing one file (a retry, or a
+            # stray process on the same port) interleave their lines and destroy
+            # the evidence used to explain a readiness failure.
+            if log_path.exists():
+                for index in range(2, 1000):
+                    candidate = log_path.with_name(
+                        f"campaign-{component.role}-{component.port}-{index}.log"
+                    )
+                    if not candidate.exists():
+                        log_path = candidate
+                        break
             log = log_path.open("w")
             env = self.process_environment(
                 component.command,
@@ -291,12 +303,13 @@ class CampaignBackend:
                 self._resume_production()
             raise
 
-    def _load_failure(self, component: ResolvedComponent, handle: dict[str, Any]) -> str:
-        """Explain a load exit with model, file, sizes and likely cause.
+    def _load_failure(self, component: ResolvedComponent, handle: dict[str, Any], exit_code: int | None = None) -> str:
+        """Explain a load exit with model, file, sizes and the engine's own log.
 
         The engine log only says ``failed to load model``; that reads like a
         runtime bug when the real state is a 15-byte placeholder left by an
-        interrupted download.
+        interrupted download.  The message never guesses a cause when the log
+        has something to say, and it always quotes the log tail.
         """
         path = Path(component.model_path) if component.model_path else None
         expected = expected_size_for_model_root(path) if path else None
@@ -315,27 +328,144 @@ class CampaignBackend:
             expected_bytes=expected,
             log_path=handle.get("log"),
             missing_shards=missing,
+            exit_code=exit_code,
+        )
+
+    #: Lines of engine log quoted when a readiness failure is reported.
+    LOG_TAIL_LINES = 15
+    #: Readiness budget.  A rebuilt engine JITs CUDA kernels and can spend many
+    #: minutes before it binds its port, so this is generous by design.
+    READY_TIMEOUT_S = 1800
+    #: Markers that mean the engine never got the port, not that it failed to
+    #: read the weights.
+    _BIND_ERROR_MARKERS = (
+        "couldn't bind",
+        "could not bind",
+        "failed to bind",
+        "address already in use",
+        "eaddrinuse",
+    )
+
+    def _probe_readiness(self, component: ResolvedComponent) -> tuple[str, dict]:
+        """Ask the serving port whether a model is up.
+
+        Returns ``(state, payload)`` where state is ``"ready"`` (server answered
+        ``/health`` and ``/v1/models``), ``"loading"`` (health answered OK but
+        the model list is not ready yet), ``"starting"`` (no healthy answer
+        yet), ``"foreign"`` (a *different* model id is being served on this
+        port) or ``"down"`` (no HTTP answer at all).
+        """
+        base = f"http://127.0.0.1:{component.port}"
+        code, health, _ = self._request_json(f"{base}/health", timeout=3)
+        healthy = code == 200 and (
+            health.get("status") == "ok" or health.get("ok") is True
+        )
+        if not healthy:
+            if code not in (404, 405):
+                return ("starting" if code else "down"), health
+            # Engines without /health: fall back to the model list.
+        model_code, models, _ = self._request_json(f"{base}/v1/models", timeout=10)
+        data = models.get("data") or []
+        if model_code != 200 or not data:
+            return ("loading" if healthy else "starting"), models
+        served = str(data[0].get("id") or "")
+        if component.alias and served and served != component.alias:
+            return "foreign", {"model": served}
+        return "ready", {
+            "context": int((data[0].get("meta") or {}).get("n_ctx", 0)),
+            "model": served,
+            "health": health,
+        }
+
+    def _readiness_failure(self, component: ResolvedComponent, handle: dict[str, Any], exit_code: int | None) -> str:
+        """Classify an exit that happened before the port answered.
+
+        A port that is already owned by another engine is not a load failure,
+        and saying so matters: the weights can be perfect while the run dies.
+        """
+        log_path = handle.get("log")
+        tail = log_tail(log_path, limit=self.LOG_TAIL_LINES)
+        blob = "\n".join(tail).lower()
+        if any(marker in blob for marker in self._BIND_ERROR_MARKERS):
+            return (
+                f"{component.role} could not bind port {component.port}: the engine exited"
+                f"{f' with code {exit_code}' if exit_code is not None else ''} because another "
+                f"process already owns the port, most likely a stray engine from an earlier run. "
+                f"Stop it (`pkill -f llama-server`) and re-run. Engine log {log_path} "
+                f"(last {len(tail)} lines):\n" + "\n".join(tail)
+            )
+        return self._load_failure(component, handle, exit_code=exit_code)
+
+    def _foreign_port_message(self, component: ResolvedComponent, served: str, handle: dict[str, Any]) -> str:
+        return (
+            f"{component.role} port {component.port} is answering as model {served!r} but this run "
+            f"expects {component.alias!r}: a stray engine from an earlier run still owns the port. "
+            f"Stop it (`pkill -f llama-server`) and re-run. Engine log of the new process: "
+            f"{handle.get('log')}"
         )
 
     def wait_ready(self, component: ResolvedComponent, handle: dict[str, Any]) -> dict:
-        deadline = time.monotonic() + 1800
+        deadline = time.monotonic() + self.READY_TIMEOUT_S
         last: dict = {}
+        loaded = False
         while time.monotonic() < deadline:
-            code, health, _ = self._request_json(f"http://127.0.0.1:{component.port}/health", timeout=3)
-            last = health
-            if code == 200 and (health.get("status") == "ok" or health.get("ok") is True):
-                model_code, models, _ = self._request_json(f"http://127.0.0.1:{component.port}/v1/models", timeout=10)
-                data = models.get("data") or []
-                if model_code == 200 and data:
+            state, payload = self._probe_readiness(component)
+            last = payload
+            if state == "ready":
+                return payload
+            if state == "foreign":
+                if handle["process"].poll() is not None:
+                    raise RuntimeError(self._foreign_port_message(component, payload["model"], handle))
+                # Our own process is up and serving; an alias difference is the
+                # engine's report, and the caller already validates it.
+                return {
+                    "context": 0,
+                    "model": payload["model"],
+                    "health": {"status": "ok"},
+                }
+            if state == "loading":
+                # llama.cpp answers 503 on /health until the weights are loaded
+                # and 200 afterwards, so a 200 proves the load succeeded.
+                loaded = True
+            exit_code = handle["process"].poll()
+            if exit_code is not None:
+                # The engine can answer and then exit (clean shutdown after
+                # serving, or a supervisor handing the port over).  Only call it
+                # a failure once the port really stopped answering, and never
+                # call it a load failure when the model demonstrably loaded.
+                for _ in range(3):
+                    state, payload = self._probe_readiness(component)
+                    last = payload
+                    if state == "ready":
+                        return payload
+                    if state == "foreign":
+                        raise RuntimeError(self._foreign_port_message(component, payload["model"], handle))
+                    if state == "loading":
+                        loaded = True
+                    time.sleep(0.5)
+                if loaded and exit_code == 0:
+                    # It answered /health and shut down cleanly: the load
+                    # succeeded, the process just did not outlive readiness.
                     return {
-                        "context": int((data[0].get("meta") or {}).get("n_ctx", 0)),
-                        "model": data[0].get("id"),
-                        "health": health,
+                        "context": 0,
+                        "model": str((last or {}).get("model") or component.alias),
+                        "health": {"status": "ok"},
+                        "exited_cleanly": True,
                     }
-            if handle["process"].poll() is not None:
-                raise RuntimeError(self._load_failure(component, handle))
+                if loaded:
+                    tail = log_tail(handle.get("log"), limit=self.LOG_TAIL_LINES)
+                    raise RuntimeError(
+                        f"{component.role} exited with code {exit_code} on port {component.port} "
+                        f"after loading the model but before readiness completed; the weights are "
+                        f"not at fault. Engine log {handle.get('log')} (last {len(tail)} lines):\n"
+                        + "\n".join(tail)
+                    )
+                raise RuntimeError(self._readiness_failure(component, handle, exit_code))
             time.sleep(2)
-        raise RuntimeError(f"{component.role} failed readiness on {component.port}: {last}")
+        raise RuntimeError(
+            f"{component.role} failed readiness on {component.port} after "
+            f"{self.READY_TIMEOUT_S}s: {last}"
+        )
 
     def route(self, recipe: ResolvedRecipe, handles: dict[str, Any]) -> dict:
         components = []
