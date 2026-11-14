@@ -1609,7 +1609,10 @@
    "working_dir": "~/.local/share/turbofit/runtimes/strata",
    "data_dir": "~/.local/share/turbofit/strata-data",
    "strata_family": "qwen",
-   "strata_model": "IQ2_XS"
+   "strata_model": "IQ2_XS",
+   "strata_pack": "${TURBOFIT_STRATA_DATA}/packs/IQ2_XS",
+   "strata_expert_profile": "${TURBOFIT_STRATA_DATA}/expert-profile.bin",
+   "strata_mtp": "${TURBOFIT_STRATA_DATA}/mtp/rt"
   },
   "Ternary Bonsai 2 27B": {
    "alias": "ternary-bonsai-2-27b",
@@ -1661,7 +1664,10 @@
    "working_dir": "~/.local/share/turbofit/runtimes/strata",
    "data_dir": "~/.local/share/turbofit/strata-data",
    "strata_family": "qwen",
-   "strata_model": "MQ-Q5-SSD-PLE-BF16"
+   "strata_model": "MQ-Q5-SSD-PLE-BF16",
+   "strata_pack": "${TURBOFIT_STRATA_DATA}/packs/MQ-Q5-SSD-PLE-BF16",
+   "strata_expert_profile": "${TURBOFIT_STRATA_DATA}/expert-profile.bin",
+   "strata_mtp": "${TURBOFIT_STRATA_DATA}/mtp/rt"
   },
   "Arete 27B": {
    "alias": "arete-27b",
@@ -1757,7 +1763,10 @@
    "working_dir": "~/.local/share/turbofit/runtimes/strata",
    "data_dir": "~/.local/share/turbofit/strata-data",
    "strata_family": "deepseek",
-   "strata_model": "GSQ-RCO-IQ1_M"
+   "strata_model": "GSQ-RCO-IQ1_M",
+   "strata_pack": "${TURBOFIT_STRATA_DATA}/packs/GSQ-RCO-IQ1_M",
+   "strata_expert_profile": "${TURBOFIT_STRATA_DATA}/expert-profile.bin",
+   "strata_mtp": "${TURBOFIT_STRATA_DATA}/mtp/rt"
   },
   "GLM 5.3 Flash (Strata)": {
    "alias": "glm-5-3-flash",
@@ -1783,7 +1792,10 @@
    "working_dir": "~/.local/share/turbofit/runtimes/strata",
    "data_dir": "~/.local/share/turbofit/strata-data",
    "strata_family": "glm",
-   "strata_model": "Maya-XS"
+   "strata_model": "Maya-XS",
+   "strata_pack": "${TURBOFIT_STRATA_DATA}/packs/Maya-XS",
+   "strata_expert_profile": "${TURBOFIT_STRATA_DATA}/expert-profile.bin",
+   "strata_mtp": "${TURBOFIT_STRATA_DATA}/mtp/rt"
   },
   "Qwen 3.6 35B-A3B": {
    "alias": "qwen3-6-35b-a3b",

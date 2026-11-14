@@ -408,31 +408,35 @@ class RecipeBook:
             if fit == "on":
                 command.append("--fit")
         elif runtime_flavor == "strata":
-            # Strata 0.2.10 CLI (`strata launch`). Only flags the release notes
-            # document are composed here: --model, --context, --drafting,
-            # --parallel, --split-engine. The old builder ran `setup.py serve` and
-            # invented --family/--gpu/--yes/--no-browser; none of those exist.
-            # Anything a Turbofile needs beyond this set goes in strata_extra_args
-            # rather than being guessed here.
-            drafted = str(spec.get("drafting") or "auto").strip().lower()
-            if drafted not in {"auto", "mtp", "dflash2", "off"}:
+            # Colibrì CLI: `strata --serve --pack <pack> --native <gguf> ...`.
+            # There is no `launch` subcommand; the old builder emitted one and the
+            # engine answered with usage text, so Strata never actually ran.
+            pack = spec.get("strata_pack")
+            if not pack:
                 raise ValueError(
-                    f"drafting must be auto|mtp|dflash2|off, got {drafted!r}"
+                    f"strata flavor for {family} needs strata_pack (expert pack directory)"
                 )
-            split = str(spec.get("split_engine") or "off").strip().lower()
-            if split not in {"auto", "on", "off"}:
-                raise ValueError(
-                    f"split_engine must be auto|on|off, got {split!r}"
-                )
-            model_id = spec.get("strata_model") or "qwen3.8-flash-next"
-            command = [
-                binary, "launch",
-                "--model", str(model_id),
-                "--context", str(context),
-                "--drafting", drafted,
-                "--parallel", str(max(1, int(spec.get("parallel") or 1))),
-                "--split-engine", split,
-            ]
+            data_root = os.environ.get("TURBOFIT_STRATA_DATA", "~/.local/share/turbofit/strata-data")
+
+            def strata_path(value: str) -> str:
+                return str(value).replace("${TURBOFIT_STRATA_DATA}", str(Path(data_root).expanduser()))
+
+            command = [binary, "--serve", "--pack", strata_path(pack), "--native", model,
+                       "--max-context", str(context)]
+            for key, flag in (("strata_ple_gguf", "--ple-gguf"),
+                              ("strata_expert_profile", "--expert-profile"),
+                              ("strata_mtp", "--mtp")):
+                value = spec.get(key)
+                if value:
+                    command.extend([flag, strata_path(value)])
+            command.extend([
+                "--expert-cache", str(spec.get("strata_expert_cache") or "auto"),
+                "--prefill", str(spec.get("strata_prefill") or "auto"),
+                "--spec", str(int(spec.get("strata_spec") or 4)),
+                "--spec-min-p", str(float(spec.get("strata_spec_min_p") or 0.5)),
+                "--kv", str(spec.get("strata_kv") or "int8"),
+                "--layer-split", str(spec.get("strata_layer_split") or "auto"),
+            ])
             command.extend(str(arg) for arg in spec.get("strata_extra_args") or ())
         elif runtime_flavor == "vllm":
             # vLLM serves raw Hugging Face checkpoints (safetensors directories)
