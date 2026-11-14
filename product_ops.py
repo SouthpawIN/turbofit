@@ -358,3 +358,50 @@ def retire_local_model(family: str, action: str) -> dict[str, Any]:
             else f"Deleted {len(deleted)} file(s) for {token}."
         ),
     }
+
+
+def available_models() -> dict[str, Any]:
+    """Every catalog model the user can choose, with on-disk presence.
+
+    `local_model_replacement` answers a different question ("should we retire
+    what you have?"), so the dashboard was showing one family instead of the
+    catalog. This returns the whole list, default first.
+    """
+    import json
+
+    root = Path(__file__).resolve().parent
+    catalog = json.loads((root / "references/model-catalog.json").read_text())
+    import os
+
+    model_root = Path(os.environ.get("TURBOFIT_MODEL_ROOT", Path.home() / "Models/storage/gguf"))
+    present_families: set[str] = set()
+    for item in _artifact_rows():
+        destination = item.get("destination") or ""
+        target = model_root / destination if destination else None
+        if target is None or not target.exists():
+            continue
+        for family in item.get("families") or []:
+            present_families.add(str(family))
+    rows = []
+    for model in catalog.get("models") or []:
+        if not isinstance(model, Mapping):
+            continue
+        rows.append({
+            "id": model.get("id"),
+            "name": model.get("name"),
+            "family": model.get("family"),
+            "quantization": model.get("quantization"),
+            "engine": (model.get("runtime_features") or ["llama.cpp"])[0],
+            "contexts": list(model.get("supported_contexts") or []),
+            "roles": list(model.get("roles") or []),
+            "present": model.get("id") in present_families,
+            "auxiliary_default": bool(model.get("roles") and "aux" in model["roles"]
+                                      and catalog.get("auxiliary_options", [None])[0] == model.get("id")),
+        })
+    return {
+        "ok": True,
+        "total": len(rows),
+        "installed": sum(1 for row in rows if row["present"]),
+        "auxiliary_options": list(catalog.get("auxiliary_options") or []),
+        "models": rows,
+    }

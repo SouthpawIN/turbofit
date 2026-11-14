@@ -31,6 +31,7 @@ from plugin_tools import (  # noqa: E402
     status_snapshot,
 )
 from product_ops import (  # noqa: E402
+    available_models,
     local_model_replacement,
     retire_local_model,
     serve_status,
@@ -395,6 +396,16 @@ async def get_audition(main: str = "maple-preview-tq2", aux: str = "auto", conte
 
 
 @router.get("/local-models")
+@router.get("/available-models")
+async def get_available_models() -> dict[str, Any]:
+    """Every catalog model the user can pick, default-first, with presence."""
+    try:
+        return await asyncio.to_thread(available_models)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.get("/models")
 async def get_local_models() -> dict[str, Any]:
     try:
         return await asyncio.to_thread(local_model_replacement)

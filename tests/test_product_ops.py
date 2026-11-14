@@ -236,3 +236,17 @@ def test_serve_tailnet_publishes_provider_url(monkeypatch, tmp_path) -> None:
     for directory in non_profiles:
         assert not (directory / "config.yaml").exists()
 
+
+def test_available_models_lists_the_whole_catalog() -> None:
+    listing = product_ops.available_models()
+    catalog_models = json.loads(
+        (Path(product_ops.__file__).resolve().parent / "references/model-catalog.json").read_text()
+    )["models"]
+
+    assert listing["total"] == len(catalog_models)
+    assert len(listing["models"]) == len(catalog_models)
+    # the selector bug: one family is not a model list
+    assert listing["total"] > 50
+    assert all({"id", "family", "present"} <= set(row) for row in listing["models"])
+    # presence depends on whether the model root is materialized on this host
+    assert isinstance(listing["installed"], int)
