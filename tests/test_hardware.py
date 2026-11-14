@@ -619,3 +619,12 @@ def test_probe_gb10_survives_a_libc_without_the_sysconf_names(
     assert fingerprint.system_ram_mb == 131072
     assert fingerprint.devices[0].memory_total_mb == 131072
     assert fingerprint.memory_pool_kind == "unified"
+
+def test_apple_silicon_without_enumerated_gpu_is_unified_not_cpu() -> None:
+    """A MacBook reports no discrete device; its RAM is still the GPU's memory."""
+    unified = HardwareFingerprint(os="darwin", architecture="arm64", system_ram_mb=32768)
+    assert unified.memory_pool_kind == "unified"
+    intel_mac = HardwareFingerprint(os="darwin", architecture="x86_64", system_ram_mb=32768)
+    assert intel_mac.memory_pool_kind == "cpu"
+    linux = HardwareFingerprint(os="linux", architecture="x86_64", system_ram_mb=32768)
+    assert linux.memory_pool_kind == "cpu"

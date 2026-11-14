@@ -113,6 +113,11 @@ class HardwareFingerprint:
     @property
     def memory_pool_kind(self) -> str:
         if not self.devices:
+            # Apple Silicon has no discrete device to enumerate, but its RAM *is*
+            # the GPU's memory: classify it as unified so the MoE ladder engages
+            # instead of falling through to the CPU chain.
+            if self.os == "darwin" and self.architecture.lower() in {"arm64", "aarch64"}:
+                return "unified"
             return "cpu"
         return "unified" if self.unified_memory else "dedicated"
 
