@@ -507,7 +507,9 @@ class RecipeBook:
                 command.remove("--no-mmap")
             if residency.get("mlock") is True and "--mlock" not in command:
                 command.append("--mlock")
-            if residency.get("cpu_moe") is True and "--cpu-moe" not in command:
+            if (runtime_flavor != "strata"
+                    and residency.get("cpu_moe") is True
+                    and "--cpu-moe" not in command):
                 command.append("--cpu-moe")
         scaling = spec.get("context_scaling") or {}
         native_context = int(spec.get("native_context", context))
