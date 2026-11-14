@@ -833,7 +833,7 @@
    "size_bytes": 7206168928
   },
   {
-   "destination": "flash-next-gsq/Qwen3.8-Flash-Next-GSQ-RCO-IQ2_XS-00001-of-00002.gguf",
+   "destination": "flash-next-gsq/IQ2_XS/Qwen3.8-Flash-Next-GSQ-RCO-IQ2_XS-00001-of-00002.gguf",
    "families": [
     "qwen3-8-flash-next-strata"
    ],
