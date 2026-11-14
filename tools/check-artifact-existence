@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+"""Verify every pinned artifact in the manifest still exists upstream.
+
+The catalog once carried four Cyber-Tiel quants that were never published, and
+an Ornith row pointing at a directory. Both only surfaced when a user's machine
+failed to download them. This checks the manifest against Hugging Face before
+that happens again.
+
+Usage:
+    tools/check-artifact-existence            # human table + exit code
+    tools/check-artifact-existence --json     # machine readable
+
+Exit codes: 0 all reachable, 1 one or more missing, 2 network unavailable.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import urllib.error
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = ROOT / "references/artifact-manifest.json"
+
+
+def check(artifact: dict) -> tuple[str, str]:
+    destination = artifact["destination"]
+    if str(artifact.get("sha256", "")).startswith("snapshot:"):
+        return destination, "snapshot"
+    if not artifact.get("path"):
+        return destination, "no-path"
+    url = (
+        f"https://huggingface.co/{artifact['repo_id']}"
+        f"/resolve/{artifact['revision']}/{artifact['path']}"
+    )
+    request = urllib.request.Request(url, method="HEAD")
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return destination, "ok" if response.status < 400 else f"http-{response.status}"
+    except urllib.error.HTTPError as exc:
+        return destination, f"http-{exc.code}"
+    except Exception as exc:  # noqa: BLE001 - report, never raise
+        return destination, f"error:{type(exc).__name__}"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json", action="store_true", help="machine readable output")
+    args = parser.parse_args()
+
+    artifacts = json.loads(MANIFEST.read_text(encoding="utf-8"))["artifacts"]
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(check, artifacts))
+
+    missing = [(d, s) for d, s in results if s not in {"ok", "snapshot"}]
+    network_down = results and all(s.startswith("error:URLError") for _, s in results)
+
+    if args.json:
+        print(json.dumps({"total": len(results), "missing": missing}, indent=1))
+    else:
+        print(f"checked {len(results)} artifacts")
+        for destination, status in missing:
+            print(f"  MISSING  {status:12} {destination}")
+        print(f"missing {len(missing)} of {len(results)}")
+
+    if network_down:
+        return 2
+    return 1 if missing else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
