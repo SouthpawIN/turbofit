@@ -805,9 +805,9 @@
     "underdog-27b-pq2"
    ],
    "repo_id": "ConwayResearch/Underdog-Ternary-1.1",
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+   "revision": "8383719435ce568d77a96495a8fc008190463e93",
    "path": "Underdog-PQ2_0.gguf",
-   "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+   "sha256": "479210e3a663be9044c4255d50b040a88a40763005399b33f9d178ce9556f855",
    "size_bytes": 7206168928
   },
   {

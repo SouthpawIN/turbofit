@@ -1034,7 +1034,7 @@
     "main",
     "aux"
    ],
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+   "revision": "8383719435ce568d77a96495a8fc008190463e93",
    "upstream_source": "https://huggingface.co/prism-ml/Ternary-Bonsai-2-27B-gguf"
   },
   {
