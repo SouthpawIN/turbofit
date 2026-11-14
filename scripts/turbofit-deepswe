@@ -9,6 +9,7 @@ import os
 import socket
 import shutil
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
@@ -55,7 +56,7 @@ def prepare(root: Path = DEFAULT_ROOT) -> Path:
     subprocess.run(["git", "-C", str(dataset), "fetch", "origin", DEEPSWE_REVISION], check=True)
     subprocess.run(["git", "-C", str(dataset), "checkout", "--detach", DEEPSWE_REVISION], check=True)
     if shutil.which("pier") is None:
-        subprocess.run(["uv", "tool", "install", f"datacurve-pier=={PIER_VERSION}"], check=True)
+        install_pier()
     tasks = dataset / "tasks"
     if not tasks.is_dir():
         raise RuntimeError(
@@ -64,6 +65,28 @@ def prepare(root: Path = DEFAULT_ROOT) -> Path:
         )
     return tasks
 
+
+def install_pier() -> None:
+    """Install the pier harness without assuming one package manager exists.
+
+    `uv` is not present on every host, and a bare FileNotFoundError about it is
+    not a diagnosis any user can act on.
+    """
+    spec = f"datacurve-pier=={PIER_VERSION}"
+    if shutil.which("uv"):
+        subprocess.run(["uv", "tool", "install", spec], check=True)
+        return
+    if shutil.which("pipx"):
+        subprocess.run(["pipx", "install", spec], check=True)
+        return
+    py = sys.executable or "python3"
+    result = subprocess.run([py, "-m", "pip", "install", "--user", spec], capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(
+            "could not install the pier harness: no working installer found among uv, pipx, "
+            "and pip. Install uv (curl -LsSf https://astral.sh/uv/install.sh | sh), pipx, or a "
+            "pip that can reach PyPI, then re-run the intelligence campaign."
+        )
 
 def pier_command(
     *,
