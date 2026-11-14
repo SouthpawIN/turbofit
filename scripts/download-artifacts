@@ -7,13 +7,36 @@ import hashlib
 import json
 import os
 import shutil
+import sys
 from pathlib import Path
-from typing import Callable
-
-from huggingface_hub import hf_hub_download
+from typing import Callable, Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.artifacts import (  # noqa: E402
+    ArtifactMetadataError,
+    ArtifactTree,
+    ShardSetError,
+    expand_artifact,
+    inspect_file,
+    resolve_expected_size,
+)
+
 MANIFEST = ROOT / "references/artifact-manifest.json"
+
+
+def hf_download(**kwargs: object) -> str:
+    """Import huggingface_hub only when a download is actually requested.
+
+    Importing it at module load made every offline path (presence checks,
+    tests, `--list`) depend on the network client being installed.
+    """
+    from huggingface_hub import hf_hub_download
+
+    return hf_hub_download(**kwargs)
 
 
 def model_root(value: Path | None = None) -> Path:
@@ -61,20 +84,38 @@ def selected_artifacts(payload: dict, families: set[str] | None) -> list[dict]:
     return selected
 
 
+def _verified(destination: Path, expected_size: int, expected_hash: str) -> dict:
+    state = inspect_file(destination, expected_size)
+    if not state.present:
+        raise RuntimeError(f"artifact is not materialized after download: {state.describe()}")
+    if sha256_file(destination) != expected_hash:
+        raise RuntimeError(f"artifact hash does not match manifest: {destination}")
+    return {"destination": str(destination), "downloaded": True, "verified": True}
+
+
 def install_artifact(
     item: dict,
     *,
     root: Path,
-    download_fn: Callable[..., str] = hf_hub_download,
+    download_fn: Callable[..., str] | None = None,
+    tree: ArtifactTree | None = None,
 ) -> dict:
+    download = download_fn or hf_download
     destination = safe_destination(root, str(item["destination"]))
-    expected_size = int(item["size_bytes"])
+    # Size metadata is mandatory: a manifest row without size_bytes used to make
+    # the completeness check vacuously true, so any 15-byte placeholder passed.
+    expected_size = resolve_expected_size(item, tree=tree)
     expected_hash = str(item["sha256"])
     if destination.is_file():
-        if destination.stat().st_size != expected_size or sha256_file(destination) != expected_hash:
-            raise RuntimeError(f"existing artifact does not match manifest: {destination}")
-        return {"destination": str(destination), "downloaded": False, "verified": True}
-    cached = Path(download_fn(
+        state = inspect_file(destination, expected_size)
+        if state.present:
+            if sha256_file(destination) != expected_hash:
+                raise RuntimeError(f"existing artifact does not match manifest: {destination}")
+            return {"destination": str(destination), "downloaded": False, "verified": True}
+        # A stub or partial file is absent, not an error: replace it instead of
+        # leaving the host with an "installed" model that cannot load.
+        destination.unlink()
+    cached = Path(download(
         repo_id=str(item["repo_id"]),
         revision=str(item["revision"]),
         filename=str(item["path"]),
@@ -91,11 +132,59 @@ def install_artifact(
         # the preflight check. Verify that winner instead of copying over an
         # identical inode, which raises shutil.SameFileError on Windows.
         if destination.is_file():
-            if destination.stat().st_size != expected_size or sha256_file(destination) != expected_hash:
+            state = inspect_file(destination, expected_size)
+            if not state.present:
+                raise RuntimeError(f"partial artifact left by a concurrent installer: {state.describe()}")
+            if sha256_file(destination) != expected_hash:
                 raise RuntimeError(f"existing artifact does not match manifest: {destination}")
             return {"destination": str(destination), "downloaded": False, "verified": True}
         shutil.copyfile(cached, destination)
-    return {"destination": str(destination), "downloaded": True, "verified": True}
+    return _verified(destination, expected_size, expected_hash)
+
+
+def expand_rows(
+    rows: Iterable[dict],
+    *,
+    tree: ArtifactTree | None = None,
+) -> list[dict]:
+    """Expand every row to its complete shard set, listing each repo once.
+
+    A repo that ships ``X-00001-of-0000N.gguf`` while the catalog names ``X``
+    previously caused a lone stub of ``X`` to be "installed". Enumerating
+    siblings makes the materializer fetch the real set.
+    """
+    index = tree or ArtifactTree()
+    expanded: list[dict] = []
+    seen: set[str] = set()
+    for row in rows:
+        repo_id = str(row.get("repo_id") or "")
+        revision = str(row.get("revision") or "")
+        if not repo_id or not row.get("path"):
+            expanded.append(dict(row))
+            continue
+        try:
+            siblings = index.siblings(repo_id, revision)
+        except Exception as exc:  # noqa: BLE001 - offline installs still work
+            print(
+                f"warning: could not list {repo_id} siblings ({type(exc).__name__}: {exc}); "
+                f"installing {row.get('path')} as a single file",
+                file=sys.stderr,
+            )
+            expanded.append(dict(row))
+            continue
+        try:
+            members = expand_artifact(row, siblings)
+        except ShardSetError:
+            raise
+        except ArtifactMetadataError as exc:
+            raise ArtifactMetadataError(f"{exc} (destination {row.get('destination')})") from exc
+        for member in members:
+            key = str(member.get("destination"))
+            if key in seen:
+                continue
+            seen.add(key)
+            expanded.append(member)
+    return expanded
 
 
 def main() -> int:
@@ -106,6 +195,11 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, default=MANIFEST)
     parser.add_argument("--list", action="store_true")
     parser.add_argument("--destination", action="append", default=[])
+    parser.add_argument(
+        "--no-expand-shards",
+        action="store_true",
+        help="install only the named file; never enumerate repo siblings",
+    )
     args = parser.parse_args()
     payload = json.loads(args.manifest.read_text(encoding="utf-8"))
     families = None if args.all else set(args.family)
@@ -121,7 +215,11 @@ def main() -> int:
     if args.list:
         print(json.dumps(rows, indent=2))
         return 0
-    results = [install_artifact(item, root=model_root(args.model_root)) for item in rows]
+    tree = ArtifactTree()
+    if not args.no_expand_shards:
+        rows = expand_rows(rows, tree=tree)
+    root = model_root(args.model_root)
+    results = [install_artifact(item, root=root, tree=tree) for item in rows]
     print(json.dumps({"artifacts": len(results), "results": results}, indent=2))
     return 0
 

@@ -138,7 +138,8 @@ def test_retire_archives_old_family_and_refuses_recommended(tmp_path, monkeypatc
     monkeypatch.setenv("TURBOFIT_MODEL_ROOT", str(tmp_path))
     old = tmp_path / "Bonsai-27B" / "old.gguf"
     old.parent.mkdir(parents=True)
-    old.write_bytes(b"old-weights")
+    # Presence requires real weight sizes now; a placeholder counts as absent.
+    old.write_bytes(b"old-weights" + b"\0" * (1024 * 1024))
     monkeypatch.setattr(product_ops, "_artifact_rows", lambda: [
         {"destination": "Bonsai-27B/old.gguf", "families": ["bonsai-27b"]},
         {"destination": "Maple-Preview/maple-tq2_0.gguf", "families": ["maple-preview-tq2"]},

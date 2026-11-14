@@ -13,6 +13,8 @@ try:
 except ImportError:  # pytest and scripts import this as a top-level module
     import plugin_tools
 
+from turbofit_runtime.artifacts import inspect_file
+
 TURBOFIT_GIT = "https://github.com/SouthpawIN/turbofit.git"
 PREFERENCE_ALIASES = {
     "intelligence": "intelligence",
@@ -266,14 +268,24 @@ def _family_files(family: str) -> list[dict[str, Any]]:
         if family not in families:
             continue
         destination = module.safe_destination(root, str(item["destination"]))
-        present = destination.is_file()
+        expected_raw = item.get("size_bytes")
+        expected = (
+            int(expected_raw)
+            if isinstance(expected_raw, int) and not isinstance(expected_raw, bool) and expected_raw > 0
+            else None
+        )
+        # A 15-byte placeholder is not an installed model: engines report a
+        # bare "failed to load model" and the dashboard claimed it was present.
+        state = inspect_file(destination, expected)
         found.append(
             {
                 "family": family,
                 "destination": str(item["destination"]),
                 "path": str(destination),
-                "present": present,
-                "size_bytes": destination.stat().st_size if present else 0,
+                "present": state.present,
+                "size_bytes": state.size_bytes,
+                "expected_bytes": state.expected_bytes,
+                "reason": state.reason,
             }
         )
     return found
@@ -379,6 +391,14 @@ def available_models() -> dict[str, Any]:
         destination = item.get("destination") or ""
         target = model_root / destination if destination else None
         if target is None or not target.exists():
+            continue
+        expected_raw = item.get("size_bytes")
+        expected = (
+            int(expected_raw)
+            if isinstance(expected_raw, int) and not isinstance(expected_raw, bool) and expected_raw > 0
+            else None
+        )
+        if not inspect_file(target, expected).present:
             continue
         for family in item.get("families") or []:
             present_families.add(str(family))

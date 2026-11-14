@@ -10,6 +10,9 @@ import pytest
 
 ROOT = Path(__file__).parents[1]
 SCRIPT = ROOT / "scripts/download-artifacts"
+# Real weights are always megabytes; a tiny fixture is now correctly treated as
+# a placeholder stub by the artifact verifier.
+PINNED = b"pinned-model" + b"\0" * (1024 * 1024)
 
 
 def load_script():
@@ -73,7 +76,7 @@ def test_install_artifact_verifies_before_materializing(tmp_path: Path) -> None:
     module = load_script()
     cached = tmp_path / "cache" / "model.gguf"
     cached.parent.mkdir()
-    cached.write_bytes(b"pinned-model")
+    cached.write_bytes(PINNED)
     item = {
         "destination": "family/model.gguf",
         "repo_id": "owner/repo",
@@ -90,14 +93,14 @@ def test_install_artifact_verifies_before_materializing(tmp_path: Path) -> None:
     )
 
     assert result["downloaded"] is True
-    assert (tmp_path / "models/family/model.gguf").read_bytes() == b"pinned-model"
+    assert (tmp_path / "models/family/model.gguf").read_bytes() == PINNED
 
 
 def test_install_artifact_materializes_cached_symlink_target_not_the_symlink(tmp_path: Path) -> None:
     module = load_script()
     blob = tmp_path / "cache/blobs/model"
     blob.parent.mkdir(parents=True)
-    blob.write_bytes(b"pinned-model")
+    blob.write_bytes(PINNED)
     cached = tmp_path / "cache/snapshots/model.gguf"
     cached.parent.mkdir()
     cached.symlink_to(blob)
@@ -115,14 +118,14 @@ def test_install_artifact_materializes_cached_symlink_target_not_the_symlink(tmp
     destination = tmp_path / "models/family/model.gguf"
     assert destination.is_file()
     assert not destination.is_symlink()
-    assert destination.read_bytes() == b"pinned-model"
+    assert destination.read_bytes() == PINNED
 
 
 def test_install_artifact_accepts_a_valid_destination_created_during_link(tmp_path: Path, monkeypatch) -> None:
     module = load_script()
     cached = tmp_path / "cache" / "model.gguf"
     cached.parent.mkdir()
-    cached.write_bytes(b"pinned-model")
+    cached.write_bytes(PINNED)
     item = {
         "destination": "family/model.gguf",
         "repo_id": "owner/repo",
