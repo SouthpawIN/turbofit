@@ -15,6 +15,25 @@ from .gpu import GPUClearEvent, GPUClearGate
 from .schema import MatrixRow, load_matrix
 
 
+def _default_clear_ceilings() -> dict[int, int]:
+    """Per-card ceiling the GPU clear gate demands before a run starts.
+
+    The 1024 MiB default assumes an idle machine. A live desktop (compositor,
+    browser GPU process, screen recorder) can hold ~1.4 GiB indefinitely, which
+    makes the gate fail forever on an otherwise quiet box. TURBOFIT_GPU_CLEAR_CEILING_MB
+    raises it for such hosts without changing the default for headless runners.
+    """
+    raw = os.environ.get("TURBOFIT_GPU_CLEAR_CEILING_MB")
+    if raw:
+        try:
+            value = int(raw)
+        except ValueError:
+            value = 0
+        if value > 0:
+            return {0: value, 1: value}
+    return {0: 1024, 1: 1024}
+
+
 FAMILY_RANK = {
     "1 Bit Bonsai": 0,
     "Ternary Bonsai": 1,
@@ -84,7 +103,7 @@ class CampaignRunner:
         self.clear_gate = clear_gate
         self.publisher = publisher
         self.registry = registry
-        self.clear_ceilings_mb = clear_ceilings_mb or {0: 1024, 1: 1024}
+        self.clear_ceilings_mb = clear_ceilings_mb or _default_clear_ceilings()
         self.deferred_row_ids = deferred_row_ids or frozenset()
 
     def _load_state(self) -> dict:
