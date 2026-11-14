@@ -940,7 +940,7 @@
   "flint-40a2-5b-mix12g": {
    "family": "Flint 40A2.5B",
    "alias": "flint-40a2-5b-mix12g",
-   "model": "${TURBOFIT_MODEL_ROOT}/Flint-40A2.5B/Flint-abliterated-Mix-12G.gguf",
+   "model": "${TURBOFIT_MODEL_ROOT}/Flint-40A2.5B/Flint-40B-A2.5B-abliterated-Q4_K_M.gguf",
    "draft": "",
    "methods": {
     "32768": "baseline",
@@ -951,7 +951,7 @@
   "flint-40a2-5b-mix24g": {
    "family": "Flint 40A2.5B",
    "alias": "flint-40a2-5b-mix24g",
-   "model": "${TURBOFIT_MODEL_ROOT}/Flint-40A2.5B/Flint-abliterated-Mix-24G.gguf",
+   "model": "${TURBOFIT_MODEL_ROOT}/Flint-40A2.5B/Flint-40B-A2.5B-abliterated-Q5_K_M.gguf",
    "draft": "",
    "methods": {
     "32768": "baseline",
@@ -1595,7 +1595,7 @@
     "serve"
    ],
    "model_root": "${TURBOFIT_MODEL_ROOT}/flash-next-gsq",
-   "model": "Qwen3.8-Flash-Next-IQ2_XS.gguf",
+   "model": "IQ2_XS/Qwen3.8-Flash-Next-GSQ-RCO-IQ2_XS-00001-of-00002.gguf",
    "port": 8082,
    "large": true,
    "native_context": 131072,

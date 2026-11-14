@@ -1286,9 +1286,9 @@
    "id": "flint-40a2-5b-mix12g",
    "name": "Flint 40A2.5B Mix-12G",
    "family": "Flint 40A2.5B",
-   "source": "https://huggingface.co/orcarouter/Flint-abliterated-GGUF",
-   "artifact": "Flint-abliterated-Mix-12G.gguf",
-   "quantization": "Mix-12G",
+   "source": "https://huggingface.co/dima6312/Flint-40B-A2.5B-abliterated-GGUF",
+   "artifact": "Flint-40B-A2.5B-abliterated-Q4_K_M.gguf",
+   "quantization": "Q4_K_M",
    "vision": false,
    "moe": true,
    "runtime_features": [
@@ -1298,7 +1298,7 @@
     "main",
     "aux"
    ],
-   "revision": "4d618d1cb1d7782d4b08762fb664487bf5e4d3c4",
+   "revision": "1be756925ce786f5d7eb10725195764a46d596fc",
    "supported_contexts": [
     65536,
     131072
@@ -1308,9 +1308,9 @@
    "id": "flint-40a2-5b-mix24g",
    "name": "Flint 40A2.5B Mix-24G",
    "family": "Flint 40A2.5B",
-   "source": "https://huggingface.co/orcarouter/Flint-abliterated-GGUF",
-   "artifact": "Flint-abliterated-Mix-24G.gguf",
-   "quantization": "Mix-24G",
+   "source": "https://huggingface.co/dima6312/Flint-40B-A2.5B-abliterated-GGUF",
+   "artifact": "Flint-40B-A2.5B-abliterated-Q5_K_M.gguf",
+   "quantization": "Q5_K_M",
    "vision": false,
    "moe": true,
    "runtime_features": [
@@ -1319,7 +1319,7 @@
    "roles": [
     "main"
    ],
-   "revision": "4d618d1cb1d7782d4b08762fb664487bf5e4d3c4",
+   "revision": "1be756925ce786f5d7eb10725195764a46d596fc",
    "supported_contexts": [
     65536,
     131072,

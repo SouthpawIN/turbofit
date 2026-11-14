@@ -833,15 +833,15 @@
    "size_bytes": 7206168928
   },
   {
-   "destination": "flash-next-gsq/Qwen3.8-Flash-Next-IQ2_XS.gguf",
+   "destination": "flash-next-gsq/Qwen3.8-Flash-Next-GSQ-RCO-IQ2_XS-00001-of-00002.gguf",
    "families": [
     "qwen3-8-flash-next-strata"
    ],
-   "repo_id": "Qwen/Qwen3.8-Flash-Next-GGUF",
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
-   "path": "Qwen3.8-Flash-Next-IQ2_XS.gguf",
-   "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-   "size_bytes": 36000000000
+   "repo_id": "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF",
+   "revision": "ed59f92082b1e93c0e96d60a8b11aab089b52f09",
+   "path": "IQ2_XS/Qwen3.8-Flash-Next-GSQ-RCO-IQ2_XS-00001-of-00002.gguf",
+   "sha256": "92cee27ae5bbadcd732416a0f7a7f0acc092399dbbe8f5a5efa707c2ec0a49d7",
+   "size_bytes": 39225954592
   },
   {
    "destination": "Qwen3.8-27B-GSQ-RCO/mmproj-Qwen3.8-27B-BF16.gguf",
@@ -1036,26 +1036,26 @@
    "size_bytes": 927607104
   },
   {
-   "destination": "Flint-40A2.5B/Flint-abliterated-Mix-12G.gguf",
+   "destination": "Flint-40A2.5B/Flint-40B-A2.5B-abliterated-Q4_K_M.gguf",
    "families": [
     "flint-40a2-5b-mix12g"
    ],
-   "repo_id": "orcarouter/Flint-abliterated-GGUF",
-   "revision": "4d618d1cb1d7782d4b08762fb664487bf5e4d3c4",
-   "path": "Flint-abliterated-Mix-12G.gguf",
-   "sha256": "****************************************************************",
-   "size_bytes": 11991610912
+   "repo_id": "dima6312/Flint-40B-A2.5B-abliterated-GGUF",
+   "revision": "1be756925ce786f5d7eb10725195764a46d596fc",
+   "path": "Flint-40B-A2.5B-abliterated-Q4_K_M.gguf",
+   "sha256": "5ac7c931803a9fff117c5cde1cda6b7bd840f5678b28a31cfe77870e9c201cf7",
+   "size_bytes": 24166842272
   },
   {
-   "destination": "Flint-40A2.5B/Flint-abliterated-Mix-24G.gguf",
+   "destination": "Flint-40A2.5B/Flint-40B-A2.5B-abliterated-Q5_K_M.gguf",
    "families": [
     "flint-40a2-5b-mix24g"
    ],
-   "repo_id": "orcarouter/Flint-abliterated-GGUF",
-   "revision": "4d618d1cb1d7782d4b08762fb664487bf5e4d3c4",
-   "path": "Flint-abliterated-Mix-24G.gguf",
-   "sha256": "****************************************************************",
-   "size_bytes": 23993808416
+   "repo_id": "dima6312/Flint-40B-A2.5B-abliterated-GGUF",
+   "revision": "1be756925ce786f5d7eb10725195764a46d596fc",
+   "path": "Flint-40B-A2.5B-abliterated-Q5_K_M.gguf",
+   "sha256": "ebfb6ca6c90d31566476679ddb9507614fdef1da94797d9a707034f5d71615be",
+   "size_bytes": 28314255264
   },
   {
    "destination": "Nanbeige4.3-33B/Nanbeige4.3-33B-GSQ-RCO-IQ3_XS.gguf",
