@@ -14,13 +14,27 @@
     ],
     "size_gb": 7.21,
     "context": 131072,
-    "note": "dense ternary GGUF (Q2); sizes PTQ1_0 5.95 GB / PQ2_0 7.21 GB; prism-llama.cpp; MTP on"
+    "note": "dense ternary GGUF (Q2); sizes PTQ1_0 5.95 GB / PQ2_0 7.21 GB; prism-llama.cpp; MTP on",
+    "alternatives": [
+     {
+      "model": "LFM3 Omni 2B",
+      "quant": "Q4_K_M",
+      "context": 65536
+     }
+    ]
    },
    "12-15gb": {
     "model": "Underdog 27B",
     "quant": "PQ2_0",
     "context": 131072,
-    "note": "dense; MTP on"
+    "note": "dense; MTP on",
+    "alternatives": [
+     {
+      "model": "LFM2.5 24B-A2B",
+      "quant": "Q4_K_M",
+      "context": 131072
+     }
+    ]
    },
    "16-23gb": {
     "model": "Qwen 3.8 27B GSQ-RCO",
@@ -34,6 +48,11 @@
       "engine": "strata",
       "context": 131072,
       "note": "Strata streams experts: 1.5 GB resident pack measured at 32K on 2x3090, ~5 GB VRAM per card. Fits far below its 64 GB class."
+     },
+     {
+      "model": "Nanbeige 4.3 33B",
+      "quant": "GSQ-RCO-IQ3_M",
+      "context": 131072
      }
     ]
    },
@@ -56,7 +75,14 @@
     "model": "Qwen 3.8 Flash Next (Strata)",
     "engine": "strata",
     "context": 262144,
-    "note": "MoE; both ladders converge on Flash Next; MTP on"
+    "note": "MoE; both ladders converge on Flash Next; MTP on",
+    "alternatives": [
+     {
+      "model": "GLM 5.3 Flash",
+      "quant": "GSQ-RCO-3.5bit",
+      "context": 262144
+     }
+    ]
    }
   }
  },
@@ -103,6 +129,11 @@
       "engine": "strata",
       "context": 131072,
       "note": "Strata streams experts: 1.5 GB resident pack measured at 32K on 2x3090, ~5 GB VRAM per card. Fits far below its 64 GB class."
+     },
+     {
+      "model": "Nanbeige 4.3 33B",
+      "quant": "GSQ-RCO-IQ3_M",
+      "context": 131072
      }
     ]
    },
