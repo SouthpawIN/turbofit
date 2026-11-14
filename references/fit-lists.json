@@ -2,7 +2,7 @@
  "schema": "turbofit.fit-lists/v1",
  "generated_at": "2026-10-19",
  "source": "Mirrors DEDICATED_TIERS / SHARED_TIERS in src/turbofit_runtime/fit_check.py; canonical publisher: src/turbofit_runtime/fit_ladders.py.",
- "policy": "Two separate ladders, not one: the dedicated (VRAM) ladder runs dense models; the unified (CPU/Mac) ladder runs MoE only, because dense does not run well on unified memory. Both converge on Qwen 3.8 Flash Next at 64 GB \u2014 the only MoE rung on the dense side. Top of the unified ladder: DeepSeek V4.1 (1017), above Flash Next (engine pending). The Fit List IS the fallback chain: serve auto walks down the chain on OOM/timeout. Cross-cutting rules for every rung: (1) MTP on whenever available; (2) mind the power bill (kWh/hour) \u2014 IQ3_S is lossless, so do not push a heavier / higher-draw quant past it (32 GB and 48 GB both stay on Qwen 3.8 27B GSQ-RCO @ IQ3_S). Strata rungs are placed by resident footprint (pack + one expert slab), not by total parameter size: Qwen Flash Next measured 1.5 GB resident at 32K on 2x3090.",
+ "policy": "Two separate ladders, not one: the dedicated (VRAM) ladder runs dense models; the unified (CPU/Mac) ladder runs MoE only, because dense does not run well on unified memory. Both converge on Qwen 3.8 Flash Next at 64 GB \u2014 the only MoE rung on the dense side. Top of the unified ladder: DeepSeek V4.1 (1017), above Flash Next (engine pending). The Fit List IS the fallback chain: serve auto walks down the chain on OOM/timeout. Cross-cutting rules for every rung: (1) MTP on whenever available; (2) mind the power bill (kWh/hour) \u2014 IQ3_S is lossless, so do not push a heavier / higher-draw quant past it (32 GB and 48 GB both stay on Qwen 3.8 27B GSQ-RCO @ IQ3_S). Strata rungs are placed by resident footprint (pack + one expert slab), not by total parameter size: Qwen Flash Next measured 1.5 GB resident at 32K .",
  "dedicated": {
   "label": "Ladder 1 \u2014 Dedicated (GPU / VRAM, dense)",
   "rungs": {
@@ -149,7 +149,7 @@
       "model": "Qwen 3.8 Flash Next (Strata)",
       "engine": "strata",
       "context": 131072,
-      "note": "Strata streams experts: 1.5 GB resident pack measured at 32K on 2x3090, ~5 GB VRAM per card. Fits far below its 64 GB class."
+      "note": "Strata streams experts: 1.5 GB resident pack at 32K context. Fits far below its 64 GB class."
      },
      {
       "model": "Nanbeige 4.3 33B",
@@ -184,7 +184,7 @@
       "model": "Qwen 3.8 Flash Next (Strata)",
       "engine": "strata",
       "context": 262144,
-      "note": "Strata streams experts: 1.5 GB resident pack measured at 32K on 2x3090, ~5 GB VRAM per card. Fits far below its 64 GB class."
+      "note": "Strata streams experts: 1.5 GB resident pack at 32K context. Fits far below its 64 GB class."
      }
     ]
    },
