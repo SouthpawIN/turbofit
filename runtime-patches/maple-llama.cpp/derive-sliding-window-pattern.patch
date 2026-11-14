@@ -1,0 +1,17 @@
+diff --git a/src/models/maple.cpp b/src/models/maple.cpp
+index f7dd44a5..abe4be49 100644
+--- a/src/models/maple.cpp
++++ b/src/models/maple.cpp
+@@ -16,7 +16,12 @@ void llama_model_maple::load_arch_hparams(llama_model_loader & ml) {
+     ml.get_key(LLM_KV_ATTENTION_LAYERNORM_RMS_EPS, hparams.f_norm_rms_eps);
+ 
+     // 3:1 SWA:GA hybrid; full-attention layers at il % 4 == 3 (config layer_types).
++    // Derived here so a GGUF that omits maple.attention.sliding_window_pattern
++    // (maple-tq2_0.gguf, maple-q2_0.gguf) still loads with the right pattern.
+     hparams.set_swa_pattern(4, false);
++    // An explicit per-layer pattern wins when the conversion wrote one.
++    ml.get_key_or_arr(LLM_KV_ATTENTION_SLIDING_WINDOW_PATTERN, hparams.is_swa_impl,
++                      hparams.n_layer(), false);
+     // Sliding window for the SWA layers (maple.attention.sliding_window in the GGUF).
+     ml.get_key(LLM_KV_ATTENTION_SLIDING_WINDOW, hparams.n_swa, false);
+     // Sliding-window attention cache (windowed KV, window = 512 from the GGUF).

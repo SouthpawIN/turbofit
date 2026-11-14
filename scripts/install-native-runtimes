@@ -13,6 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "references/native-runtimes.json"
+PATCH_ROOT = ROOT / "runtime-patches"
 
 
 def sha256(path: Path) -> str:
@@ -45,6 +46,39 @@ def native_server_binary(source: Path, build_dir: str) -> Path:
     if os.name == "nt":
         return root / "Release" / "llama-server.exe"
     return root / "llama-server"
+
+
+def runtime_patches(runtime_id: str) -> list[Path]:
+    """Patches the engine build needs, in a stable order (``runtime-patches/<id>``)."""
+    return sorted((PATCH_ROOT / runtime_id).glob("*.patch"))
+
+
+def _already_applied(source: Path, patch: Path) -> bool:
+    probe = subprocess.run(
+        ["git", "-C", str(source), "apply", "--reverse", "--check", str(patch)],
+        capture_output=True,
+    )
+    return probe.returncode == 0
+
+
+def apply_patches(source: Path, patches: list[Path]) -> list[str]:
+    """Apply ``git apply`` patches idempotently; return the ones actually applied.
+
+    Installers run repeatedly (repair, upgrade, re-verify), and the source
+    checkout is reused, so a patch that is already in the tree must be a no-op
+    rather than a fatal 'patch does not apply'.
+    """
+    applied = []
+    for patch in patches:
+        if _already_applied(source, patch):
+            continue
+        subprocess.run(
+            ["git", "-C", str(source), "apply", "--check", str(patch)],
+            check=True,
+        )
+        subprocess.run(["git", "-C", str(source), "apply", str(patch)], check=True)
+        applied.append(patch.name)
+    return applied
 
 
 def detect_backend() -> str:
@@ -95,6 +129,7 @@ def install(runtime: dict, *, backend: str, check_only: bool) -> dict:
         run(["git", "-C", str(source), "fetch", "origin", revision])
         run(["git", "-C", str(source), "checkout", "--detach", revision])
     if not check_only:
+        apply_patches(source, runtime_patches(runtime["id"]))
         run([
             "cmake", "-B", build_dir, accelerator_flag, "-DLLAMA_CURL=OFF",
             "-DCMAKE_BUILD_TYPE=Release",
@@ -108,6 +143,7 @@ def install(runtime: dict, *, backend: str, check_only: bool) -> dict:
         "revision": revision,
         "binary": str(binary),
         "binary_sha256": sha256(binary),
+        "patches": [path.name for path in runtime_patches(runtime["id"])],
         "status": "verified",
     }
 
