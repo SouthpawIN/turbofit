@@ -23,7 +23,7 @@ Current generated scope:
 
 #### Maple Preview 20B-A1B
 
-`stamsam/maple-preview-gguf` `maple-tq2_0.gguf` is the dedicated 8 GB and RAM-only 8–15 GB Fit List candidate. It is a 20B-A1B ternary MoE with native 131,072 context and requires the Maple llama.cpp fork. It is not Auto-promoted until exact physical 8 GB-device evidence exists. Details: [`maple-small-device-validation.md`](maple-small-device-validation.md).
+`stamsam/maple-preview-gguf` `maple-tq2_0.gguf` is the dedicated 8 GB and RAM-only 8–15 GB Fit List candidate. It is a 20B-A1B ternary MoE with native 131,072 context and requires the Maple llama.cpp fork. It is not Auto-promoted until exact physical 8 GB-device evidence exists. Details: [`maple-small-device-validation.md`](maple-small-device-validation.md). The published GGUFs omit `maple.attention.sliding_window_pattern`; the runtime patch that derives it (and why `--override-kv` cannot) is in [`maple-sliding-window-pattern.md`](maple-sliding-window-pattern.md).
 
 #### Qwen 3.8 27B GSQ-RCO
 
