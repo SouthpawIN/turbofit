@@ -7,15 +7,17 @@
   "label": "Ladder 1 \u2014 Dedicated (GPU / VRAM, dense)",
   "rungs": {
    "8-11gb": {
-    "model": "Ternary Bonsai 2 27B",
-    "quants": [
-     "PTQ1_0",
-     "PQ2_0"
-    ],
-    "size_gb": 7.21,
-    "context": 131072,
-    "note": "dense ternary GGUF (Q2); sizes PTQ1_0 5.95 GB / PQ2_0 7.21 GB; prism-llama.cpp; MTP on",
+    "model": "Arete 27B",
+    "quant": "IQ2_XXS",
+    "size_gb": 8.05,
+    "context": 65536,
+    "note": "dense 27B at IQ2_XXS; the smallest build that fits this band",
     "alternatives": [
+     {
+      "model": "Ternary Bonsai 2 27B",
+      "quant": "PTQ1_0",
+      "context": 131072
+     },
      {
       "model": "LFM3 Omni 2B",
       "quant": "Q4_K_M",
@@ -24,11 +26,17 @@
     ]
    },
    "12-15gb": {
-    "model": "Underdog 27B",
-    "quant": "PQ2_0",
+    "model": "Arete 27B",
+    "quant": "Q3_K_S",
+    "size_gb": 11.64,
     "context": 131072,
-    "note": "dense; MTP on",
+    "note": "dense 27B at Q3_K_S (Q3_K_M 12.26 GB also fits)",
     "alternatives": [
+     {
+      "model": "Underdog 27B",
+      "quant": "PQ2_0",
+      "context": 131072
+     },
      {
       "model": "LFM2.5 24B-A2B",
       "quant": "Q4_K_M",
@@ -37,37 +45,50 @@
     ]
    },
    "16-23gb": {
-    "model": "Qwen 3.8 27B GSQ-RCO",
-    "quant": "IQ3_S",
-    "size_gb": 11.8,
+    "model": "Arete 27B",
+    "quant": "Q4_K_M",
+    "size_gb": 16.15,
     "context": 131072,
-    "note": "near-lossless; MTP on",
+    "note": "dense 27B at Q4_K_M, lossless for this model and the band default",
     "alternatives": [
      {
-      "model": "Qwen 3.8 Flash Next (Strata)",
-      "engine": "strata",
-      "context": 131072,
-      "note": "Strata streams experts: 1.5 GB resident pack measured at 32K on 2x3090, ~5 GB VRAM per card. Fits far below its 64 GB class."
+      "model": "Qwen 3.8 27B GSQ-RCO",
+      "quant": "IQ3_S",
+      "context": 262144
+     },
+     {
+      "model": "Qwen 3.6 35B-A3B",
+      "quant": "UD-Q4_K_M",
+      "context": 262144
      },
      {
       "model": "Nanbeige 4.3 33B",
       "quant": "GSQ-RCO-IQ3_M",
       "context": 131072
+     },
+     {
+      "model": "Nemotron Bolt 74B-A9B",
+      "quant": "native-24GB",
+      "context": 65536
      }
     ]
    },
    "24-63gb": {
-    "model": "Qwen 3.8 27B GSQ-RCO",
-    "quant": "IQ3_S",
-    "size_gb": 11.8,
+    "model": "Arete 27B",
+    "quant": "Q5_K_M",
+    "size_gb": 24.0,
     "context": 262144,
-    "note": "near-lossless; 262K at 24 GB; MTP on; power bill stays on IQ3_S (no heavier quant)",
+    "note": "dense 27B at Q5_K_M with 262K context",
     "alternatives": [
      {
-      "model": "Qwen 3.8 Flash Next (Strata)",
-      "engine": "strata",
-      "context": 262144,
-      "note": "Strata streams experts: 1.5 GB resident pack measured at 32K on 2x3090, ~5 GB VRAM per card. Fits far below its 64 GB class."
+      "model": "Qwen 3.8 27B GSQ-RCO",
+      "quant": "IQ3_S",
+      "context": 262144
+     },
+     {
+      "model": "DeepSeek V4.1 Flash",
+      "quant": "IQ2_XS",
+      "context": 262144
      }
     ]
    },
@@ -133,6 +154,11 @@
      {
       "model": "Nanbeige 4.3 33B",
       "quant": "GSQ-RCO-IQ3_M",
+      "context": 131072
+     },
+     {
+      "model": "Arete 27B",
+      "quant": "Q4_K_M",
       "context": 131072
      }
     ]
@@ -210,6 +236,20 @@
       "model": "Inkling 2 Small",
       "quant": "bf16 (vLLM)",
       "context": 1048576
+     }
+    ]
+   },
+   "12-15gb": {
+    "model": "Maple Preview 20B-A1B",
+    "quant": "int2-colibri",
+    "size_gb": 5.8,
+    "context": 131072,
+    "note": "MoE stays default on unified; Arete is the sanctioned dense exception only where a pool is large",
+    "alternatives": [
+     {
+      "model": "Arete 27B",
+      "quant": "Q3_K_S",
+      "context": 131072
      }
     ]
    }

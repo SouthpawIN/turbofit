@@ -103,16 +103,16 @@ A vLLM recipe composes `vllm serve <checkpoint-dir>` with tensor parallelism and
 
 **88 catalog entries, 84 main models, four contexts (64K / 128K / 262K / 1M).** Every entry pins a Hugging Face revision and a sha256, and `tools/check-artifact-existence` fails the build if any pinned artifact stops resolving upstream.
 
-Two ladders, never one. Dense on dedicated VRAM; Mixture-of-Experts on unified/CPU, because dense crawls there. **Each band lists a default and the alternatives that also fit it** — `auto` takes the default, and you can pin any alternative by name.
+Two ladders, never one. Dense on dedicated VRAM — **Arete 27B is the default at every dedicated band it fits (IQ2_XXS / Q3_K_S / Q4_K_M / Q5_K_M)** — and Mixture-of-Experts on unified/CPU, because dense crawls there. **Each band lists a default and the alternatives that also fit it** — `auto` takes the default, and you can pin any alternative by name.
 
 **Ladder 1 — dedicated VRAM**
 
 | Band | Default | Also available | Context |
 |---|---|---|---|
-| 8–11 GB | Ternary Bonsai 2 27B (PTQ1_0 / PQ2_0) | LFM3 Omni 2B, Qwen 3.8 Flash Next (Strata) | 131k |
-| 12–15 GB | Underdog 27B (PQ2_0) | LFM2.5 24B-A2B, Arete 27B Uncensored V2 | 131k |
-| 16–23 GB | Qwen 3.8 27B GSQ-RCO **IQ3_S** | Qwen 3.6 35B-A3B (MTP), Qwen 3.5 35B-A3B, **Nanbeige 4.3 33B**, Nemotron Bolt 74B-A9B (24GB), Flint 40B-A2.5B Abliterated, Flash Next (Strata) | 131k–262k |
-| 24–63 GB | Qwen 3.8 27B GSQ-RCO **IQ3_S** | DeepSeek V4.1 Flash IQ2_XS, Flash Next (Strata), Flint 40B Abliterated | 262k |
+| 8–11 GB | **Arete 27B IQ2_XXS** | Ternary Bonsai 2 27B, LFM3 Omni 2B | 65k |
+| 12–15 GB | **Arete 27B Q3_K_S** | Arete Q3_K_M, Underdog 27B, LFM2.5 24B-A2B | 131k |
+| 16–23 GB | **Arete 27B Q4_K_M** | Qwen 3.8 27B GSQ-RCO IQ3_S, Qwen 3.6 35B-A3B (MTP), Qwen 3.5 35B-A3B, Nanbeige 4.3 33B, Nemotron Bolt 74B-A9B, Flint 40B Abliterated | 131k–262k |
+| 24–63 GB | **Arete 27B Q5_K_M** | Qwen 3.8 27B GSQ-RCO IQ3_S, DeepSeek V4.1 Flash IQ2_XS | 262k |
 | 64 GB+ | Qwen 3.8 Flash Next (Strata) | Flash Next Abliterated, Inkling 2 Small (vLLM), GLM 5.3 Flash, DeepSeek V4.1 Flash | 262k–1M |
 
 **Ladder 2 — unified / CPU / Apple Silicon (MoE only)**
@@ -180,7 +180,7 @@ A vLLM recipe composes `vllm serve <checkpoint-dir>` with tensor parallelism and
 
 **89 catalog entries, 86 main models, four contexts (64K / 128K / 262K / 1M), 1,490 matrix rows.** Every entry pins a Hugging Face revision and a sha256.
 
-Two ladders, never one. Dense on dedicated VRAM; Mixture-of-Experts on unified/CPU, because dense crawls there.
+Two ladders, never one. Dense on dedicated VRAM — **Arete 27B is the default at every dedicated band it fits (IQ2_XXS / Q3_K_S / Q4_K_M / Q5_K_M)** — and Mixture-of-Experts on unified/CPU, because dense crawls there.
 
 **Ladder 1 — dedicated VRAM**
 
