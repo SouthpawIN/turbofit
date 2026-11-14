@@ -1589,7 +1589,7 @@
   "Qwen 3.8 Flash Next (Strata)": {
    "alias": "qwen3-8-flash-next-strata",
    "kind": "process",
-   "binary": "~/.local/share/turbofit/runtimes/strata/.venv/bin/python",
+   "binary": "~/.local/share/turbofit/runtimes/strata/bin/strata",
    "binary_args": [
     "setup.py",
     "serve"
@@ -1640,7 +1640,7 @@
   "Darwin 180B RSI (Strata)": {
    "alias": "darwin-180b-rsi-strata",
    "kind": "process",
-   "binary": "~/.local/share/turbofit/runtimes/strata/.venv/bin/python",
+   "binary": "~/.local/share/turbofit/runtimes/strata/bin/strata",
    "binary_args": [
     "setup.py",
     "serve"
@@ -1736,7 +1736,7 @@
   "DeepSeek V4.1 Flash": {
    "alias": "deepseek-v4-1-flash",
    "kind": "process",
-   "binary": "~/.local/share/turbofit/runtimes/strata/.venv/bin/python",
+   "binary": "~/.local/share/turbofit/runtimes/strata/bin/strata",
    "binary_args": [
     "setup.py",
     "serve"
@@ -1762,7 +1762,7 @@
   "GLM 5.3 Flash (Strata)": {
    "alias": "glm-5-3-flash",
    "kind": "process",
-   "binary": "~/.local/share/turbofit/runtimes/strata/.venv/bin/python",
+   "binary": "~/.local/share/turbofit/runtimes/strata/bin/strata",
    "binary_args": [
     "setup.py",
     "serve"
