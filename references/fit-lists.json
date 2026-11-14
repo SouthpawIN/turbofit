@@ -1,27 +1,159 @@
 {
-  "schema": "turbofit.fit-lists/v1",
-  "generated_at": "2026-10-19",
-  "source": "Mirrors DEDICATED_TIERS / SHARED_TIERS in src/turbofit_runtime/fit_check.py; canonical publisher: src/turbofit_runtime/fit_ladders.py.",
-  "policy": "Two separate ladders, not one: the dedicated (VRAM) ladder runs dense models; the unified (CPU/Mac) ladder runs MoE only, because dense does not run well on unified memory. Both converge on Qwen 3.8 Flash Next at 64 GB — the only MoE rung on the dense side. Top of the unified ladder: DeepSeek V4.1 (1017), above Flash Next (engine pending). The Fit List IS the fallback chain: serve auto walks down the chain on OOM/timeout. Cross-cutting rules for every rung: (1) MTP on whenever available; (2) mind the power bill (kWh/hour) — IQ3_S is lossless, so do not push a heavier / higher-draw quant past it (32 GB and 48 GB both stay on Qwen 3.8 27B GSQ-RCO @ IQ3_S).",
-  "dedicated": {
-    "label": "Ladder 1 — Dedicated (GPU / VRAM, dense)",
-    "rungs": {
-      "8-11gb": { "model": "Ternary Bonsai 2 27B", "quants": ["PTQ1_0", "PQ2_0"], "size_gb": 7.21, "context": 131072, "note": "dense ternary GGUF (Q2); sizes PTQ1_0 5.95 GB / PQ2_0 7.21 GB; prism-llama.cpp; MTP on" },
-      "12-15gb": { "model": "Underdog 27B", "quant": "PQ2_0", "context": 131072, "note": "dense; MTP on" },
-      "16-23gb": { "model": "Qwen 3.8 27B GSQ-RCO", "quant": "IQ3_S", "size_gb": 11.8, "context": 131072, "note": "near-lossless; MTP on" },
-      "24-63gb": { "model": "Qwen 3.8 27B GSQ-RCO", "quant": "IQ3_S", "size_gb": 11.8, "context": 262144, "note": "near-lossless; 262K at 24 GB; MTP on; power bill stays on IQ3_S (no heavier quant)" },
-      "64gb+": { "model": "Qwen 3.8 Flash Next (Strata)", "engine": "strata", "context": 262144, "note": "MoE; both ladders converge on Flash Next; MTP on" }
-    }
-  },
-  "unified": {
-    "label": "Ladder 2 — Unified (CPU / Apple Silicon, MoE only — no dense)",
-    "rungs": {
-      "8-15gb": { "model": "Maple Preview 20B-A1B", "quant": "TQ2_0", "context": 131072, "note": "MoE; CPU" },
-      "16-23gb": { "model": "Cyber-Tiel Coder 35B-A3B", "quant": "UD-IQ3_XXS", "size_gb": 13.2, "context": 262144, "note": "MoE, 3B active; 262K ctx; faster than GSQ-RCO on CPU" },
-      "24-31gb": { "model": "Cyber-Tiel Coder 35B-A3B", "quant": "UD-Q4_K_XL", "size_gb": 18.5, "context": 262144, "note": "MoE, 3B active" },
-      "32-47gb": { "model": "Cyber-Tiel Coder 35B-A3B", "quant": "UD-Q5_K_XL", "size_gb": 26.6, "context": 262144, "note": "MoE, 3B active" },
-      "48-63gb": { "model": "Cyber-Tiel Coder 35B-A3B", "quant": "UD-Q6_K_XL", "size_gb": 31.8, "context": 262144, "note": "MoE, 3B active" },
-      "64gb+": { "model": "Qwen 3.8 Flash Next (Strata)", "engine": "strata", "context": 262144, "note": "MoE; both ladders converge on Flash Next; MTP on" }
-    }
+ "schema": "turbofit.fit-lists/v1",
+ "generated_at": "2026-10-19",
+ "source": "Mirrors DEDICATED_TIERS / SHARED_TIERS in src/turbofit_runtime/fit_check.py; canonical publisher: src/turbofit_runtime/fit_ladders.py.",
+ "policy": "Two separate ladders, not one: the dedicated (VRAM) ladder runs dense models; the unified (CPU/Mac) ladder runs MoE only, because dense does not run well on unified memory. Both converge on Qwen 3.8 Flash Next at 64 GB \u2014 the only MoE rung on the dense side. Top of the unified ladder: DeepSeek V4.1 (1017), above Flash Next (engine pending). The Fit List IS the fallback chain: serve auto walks down the chain on OOM/timeout. Cross-cutting rules for every rung: (1) MTP on whenever available; (2) mind the power bill (kWh/hour) \u2014 IQ3_S is lossless, so do not push a heavier / higher-draw quant past it (32 GB and 48 GB both stay on Qwen 3.8 27B GSQ-RCO @ IQ3_S).",
+ "dedicated": {
+  "label": "Ladder 1 \u2014 Dedicated (GPU / VRAM, dense)",
+  "rungs": {
+   "8-11gb": {
+    "model": "Ternary Bonsai 2 27B",
+    "quants": [
+     "PTQ1_0",
+     "PQ2_0"
+    ],
+    "size_gb": 7.21,
+    "context": 131072,
+    "note": "dense ternary GGUF (Q2); sizes PTQ1_0 5.95 GB / PQ2_0 7.21 GB; prism-llama.cpp; MTP on"
+   },
+   "12-15gb": {
+    "model": "Underdog 27B",
+    "quant": "PQ2_0",
+    "context": 131072,
+    "note": "dense; MTP on"
+   },
+   "16-23gb": {
+    "model": "Qwen 3.8 27B GSQ-RCO",
+    "quant": "IQ3_S",
+    "size_gb": 11.8,
+    "context": 131072,
+    "note": "near-lossless; MTP on"
+   },
+   "24-63gb": {
+    "model": "Qwen 3.8 27B GSQ-RCO",
+    "quant": "IQ3_S",
+    "size_gb": 11.8,
+    "context": 262144,
+    "note": "near-lossless; 262K at 24 GB; MTP on; power bill stays on IQ3_S (no heavier quant)"
+   },
+   "64gb+": {
+    "model": "Qwen 3.8 Flash Next (Strata)",
+    "engine": "strata",
+    "context": 262144,
+    "note": "MoE; both ladders converge on Flash Next; MTP on"
+   }
   }
+ },
+ "unified": {
+  "label": "Ladder 2 \u2014 Unified (CPU / Apple Silicon, MoE only \u2014 no dense)",
+  "rungs": {
+   "8-15gb": {
+    "model": "Maple Preview 20B-A1B",
+    "quant": "int2-colibri",
+    "size_gb": 5.8,
+    "context": 131072,
+    "note": "Colibri int2 streams experts from disk/RAM so the card stays free; TQ2_0 GGUF is the llama.cpp fallback",
+    "alternatives": [
+     {
+      "model": "Maple Preview 20B-A1B",
+      "quant": "TQ2_0"
+     },
+     {
+      "model": "LFM3 Omni 2B",
+      "quant": "Q4_K_M",
+      "context": 65536
+     }
+    ]
+   },
+   "16-23gb": {
+    "model": "Qwen 3.6 35B-A3B",
+    "quant": "UD-Q4_K_M",
+    "size_gb": 21.1,
+    "context": 262144,
+    "note": "new MoE, MTP on; LFM2.5 24B-A2B Q4_K_M (13.5 GB) also lands in this band",
+    "alternatives": [
+     {
+      "model": "LFM2.5 24B-A2B",
+      "quant": "Q4_K_M",
+      "context": 131072
+     },
+     {
+      "model": "Cyber-Tiel Coder 35B-A3B",
+      "quant": "UD-IQ3_XXS",
+      "context": 262144
+     }
+    ]
+   },
+   "24-31gb": {
+    "model": "Qwen 3.5 35B-A3B",
+    "quant": "UD-Q4_K_M",
+    "size_gb": 21.1,
+    "context": 262144,
+    "note": "new MoE, MTP on; Nemotron Bolt 74B-A9B (24GB build, 20.5 GB) is the alternative",
+    "alternatives": [
+     {
+      "model": "Nemotron Bolt 74B-A9B",
+      "quant": "native-24GB",
+      "context": 65536
+     },
+     {
+      "model": "Cyber-Tiel Coder 35B-A3B",
+      "quant": "UD-Q4_K_XL",
+      "context": 262144
+     }
+    ]
+   },
+   "32-47gb": {
+    "model": "Flint 40B-A2.5B",
+    "quant": "UD-Q4_K_XL",
+    "size_gb": 23.3,
+    "context": 131072,
+    "note": "new MoE; Qwen 3.6 at UD-Q5_K_M (25.2 GB) is the 262K alternative",
+    "alternatives": [
+     {
+      "model": "Qwen 3.6 35B-A3B",
+      "quant": "UD-Q5_K_M",
+      "context": 262144
+     },
+     {
+      "model": "Cyber-Tiel Coder 35B-A3B",
+      "quant": "UD-Q5_K_XL",
+      "context": 262144
+     }
+    ]
+   },
+   "48-63gb": {
+    "model": "Cyber-Tiel Coder 35B-A3B",
+    "quant": "UD-Q6_K_XL",
+    "size_gb": 30.4,
+    "context": 262144,
+    "note": "highest-fidelity 35B-A3B that still fits below 64 GB",
+    "alternatives": [
+     {
+      "model": "Flint 40B-A2.5B",
+      "quant": "UD-Q5_K_M",
+      "context": 131072
+     }
+    ]
+   },
+   "64gb+": {
+    "model": "Qwen 3.8 Flash Next (Strata)",
+    "engine": "strata",
+    "context": 262144,
+    "note": "Strata split engine on unified memory",
+    "alternatives": [
+     {
+      "model": "DeepSeek V4.1 Flash",
+      "engine": "strata",
+      "context": 262144
+     },
+     {
+      "model": "Inkling 2 Small",
+      "quant": "bf16 (vLLM)",
+      "context": 1048576
+     }
+    ]
+   }
+  }
+ }
 }
