@@ -34,7 +34,7 @@ from turbofit_runtime.intelligence import (
     intelligence_score, refresh_score_payload,
 )
 from turbofit_runtime.intelligence_campaign import (
-    apply_deferred_configurations, build_state, complete_run, mark_running, next_ready_run, reconcile_state, recover_interrupted,
+    apply_deferred_configurations, build_state, complete_run, mark_running, next_ready_run, reconcile_state, recover_interrupted, reclaim_environmental_failures,
     refresh_runtime_status, retry_failed, select_turbofit_list_candidates, summary,
 )
 from turbofit_runtime.model_catalog import ModelCatalog
@@ -422,6 +422,7 @@ def rebuild_scores(state: dict[str, Any] | None = None) -> int:
 
 def run_one(state: dict[str, Any], catalog: ModelCatalog, recipes: RecipeBook) -> int:
     recover_interrupted(state)
+    reclaim_environmental_failures(state)
     selected = next_ready_run(state)
     if selected is None:
         print(json.dumps({"status": "idle", **summary(state)}, indent=2))

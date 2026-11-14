@@ -195,6 +195,46 @@ def refresh_dependencies(state: dict[str, Any]) -> None:
                 release["error"] = None
 
 
+ENVIRONMENTAL_FAILURE_MARKERS = (
+    "filenotfounderror",
+    "no such file or directory",
+    "not installed",
+    "install the",
+    "modulenotfounderror",
+    "prepare",
+    "docker",
+    "connectionerror",
+    "connection refused",
+    "timed out",
+)
+
+
+def reclaim_environmental_failures(
+    state: dict[str, Any], *, max_attempts: int = 3
+) -> tuple[str, ...]:
+    """Requeue runs that failed on the host, not on the model.
+
+    A missing installer, a docker daemon that was not up, or a prepare step that
+    timed out used to leave a run marked `failed` forever: the defect gets fixed,
+    and the campaign then reports `idle` until someone remembers `retry-failed`.
+    Environment failures are retried automatically up to max_attempts.
+    """
+    reclaimed: list[str] = []
+    for run_id, run in (state.get("runs") or {}).items():
+        if run.get("status") != "failed":
+            continue
+        if int(run.get("attempts") or 0) >= max_attempts:
+            continue
+        error = str(run.get("error") or "").lower()
+        if any(marker in error for marker in ENVIRONMENTAL_FAILURE_MARKERS):
+            run["status"] = "ready"
+            run["error"] = None
+            reclaimed.append(run_id)
+    if reclaimed:
+        state["updated_at"] = datetime.now(timezone.utc).isoformat()
+    return tuple(reclaimed)
+
+
 def next_ready_run(state: Mapping[str, Any]) -> dict[str, Any] | None:
     runs = state.get("runs") or {}
     for level in LEVELS:
