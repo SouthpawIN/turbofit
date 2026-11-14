@@ -668,7 +668,7 @@
    "size_bytes": 14171161600
   },
   {
-   "destination": "Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_XL.gguf",
+   "destination": "Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_M.gguf",
    "families": [
     "cyber-tiel-coder-35b-a3b-ud-q4-k-xl"
    ],
@@ -679,7 +679,7 @@
    "size_bytes": 22134551552
   },
   {
-   "destination": "Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q5_K_XL.gguf",
+   "destination": "Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_S.gguf",
    "families": [
     "cyber-tiel-coder-35b-a3b-ud-q5-k-xl"
    ],
@@ -690,7 +690,7 @@
    "size_bytes": 20893037568
   },
   {
-   "destination": "Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q6_K_XL.gguf",
+   "destination": "Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q3_K_XL.gguf",
    "families": [
     "cyber-tiel-coder-35b-a3b-ud-q6-k-xl"
    ],
@@ -701,7 +701,7 @@
    "size_bytes": 16845534208
   },
   {
-   "destination": "Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q8_K_XL.gguf",
+   "destination": "Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-IQ4_XS.gguf",
    "families": [
     "cyber-tiel-coder-35b-a3b-ud-q8-k-xl"
    ],
