@@ -662,10 +662,10 @@
     "cyber-tiel-coder-35b-a3b-ud-iq3-xxs"
    ],
    "repo_id": "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF",
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+   "revision": "e59f05c5bda27883c2846bd6163acba3f5e00a8e",
    "path": "Cyber-Tiel-Coder-35B-A3B-UD-IQ3_XXS.gguf",
-   "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-   "size_bytes": 14171161600
+   "sha256": "b6c8ee8debbc344b863709eff1c9e82ce0202851159a61501ee12c2aab65ab48",
+   "size_bytes": 13211177984
   },
   {
    "destination": "Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_M.gguf",
