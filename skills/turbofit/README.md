@@ -14,7 +14,7 @@ Serves each model on the runtime that can hold it: llama.cpp (mainline, and the 
 | **Inkling 2 Small** | 366.5 GiB checkpoint, **vLLM**, 1M context | Engine-wired; needs vLLM installed |
 | **Maple Preview 20B-A1B** | TQ2_0 8 GB main candidate | CPU 8 GiB envelope verified; exact 8 GB GPU pending |
 | **Qwen 3.8 27B GSQ-RCO** | IQ3_S → Q8, with or without MTP | Active catalog candidate |
-| **Ornith 1.5 35A3B** | Q4_K_M MoE auxiliary | Active auxiliary candidate |
+| **Cyber-Tiel Coder 35B-A3B** | Q4_K_M MoE auxiliary | Active auxiliary candidate |
 | **Carwin Nano** | Optional MoE auxiliary | Optional auxiliary candidate |
 | **MiniMax Music 3** | Music generation (diffusers-modular) | Pinned integration candidate |
 | **NVIDIA Parakeet TDT 0.6B v3** | Speech-to-text | Pinned integration candidate |
@@ -105,7 +105,7 @@ Full architecture, setup, model zoo, evidence policy, and repository map: [READM
 
 - **Maple Preview 20B-A1B**
 - **Qwen 3.8 27B GSQ-RCO**
-- **Ornith 1.5 35A3B**
+- **Cyber-Tiel Coder 35B-A3B**
 - **MiniMax Music 3**
 - **NVIDIA Parakeet TDT 0.6B v3**
 - **Soprano TTS**

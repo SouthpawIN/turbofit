@@ -6,7 +6,7 @@ The **TurboFit List** is made only from benchmark winners at each physical hardw
 |---:|---|---:|---:|---:|---:|---|
 | 8 GB | — | — | — | — | — | pending benchmarks |
 | 16 GB | — | — | — | — | — | pending benchmarks |
-| 24 GB | `Cyber-Tiel Coder 35B-A3B UD-IQ3_XXS + Ornith 1.5 35B-A3B Q4_K_M` | 65536 | pending | 25.625082 | pending | measured-tps-only |
+| 24 GB | `Cyber-Tiel Coder 35B-A3B UD-IQ3_XXS + Cyber-Tiel Coder 35B-A3B UD-Q4_K_M` | 65536 | pending | 25.625082 | pending | measured-tps-only |
 | 32 GB | — | — | — | — | — | pending benchmarks |
 | 48 GB | `Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL + Route auxiliary tasks to main` | 262144 | 46.875 | 39.39215795117914 | 58.778 | winner |
 | 64 GB | — | — | — | — | — | pending benchmarks |

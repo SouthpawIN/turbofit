@@ -1,10 +1,10 @@
 {
   "schema": "turbofit.tiel-coder-lanes/v1",
-  "description": "Isolated clean benchmark lanes for Tiel Coder audition — separate from TurboFit main lanes. Base: ornith-ai/Ornith-1.5-35B-A3B (35B MoE, ~3.4B active, 256 experts routed 8/token). Evidence under references/results/tiel-coder/. Pins exact HF artifacts + sizes verified 2026-08-31 from model cards.",
+  "description": "Isolated clean benchmark lanes for Tiel Coder audition — separate from TurboFit main lanes. Base: Cyber-Tiel Coder 35B-A3B (35B MoE, ~3.4B active, 256 experts routed 8/token). Evidence under references/results/tiel-coder/. Pins exact HF artifacts + sizes verified 2026-08-31 from model cards.",
   "status": "identifier-pinned",
   "identifier": {
     "hf_org": "peculiar-ragdoll",
-    "base": "ornith-ai/Ornith-1.5-35B-A3B",
+    "base": "peculiar-ragdoll/Tiel-Coder-35B-A3B",
     "model": "peculiar-ragdoll/Tiel-Coder-35B-A3B",
     "gguf_repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF",
     "gguf_mtp_repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF-MTP",

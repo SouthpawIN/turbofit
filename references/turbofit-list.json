@@ -18,9 +18,9 @@
       "status": "measured-tps-only",
       "tier_id": "hardware-24gb",
       "winner": {
-        "auxiliary": "Ornith 1.5 35B-A3B Q4_K_M",
+        "auxiliary": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
         "balanced_score": null,
-        "configuration_id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs--ornith-1-5-35a3b--64k",
+        "configuration_id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "context": 65536,
         "evidence": "sha256:b46c2f2ff185519910c72db6e7a433951c53dc9af0638e6d2f599797d4aec4db",
         "hardware_fingerprint": "sha256:mac-m1pro-32gb-unified",

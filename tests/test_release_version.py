@@ -30,7 +30,7 @@ def test_release_readmes_show_every_new_2_2_model() -> None:
     required = {
         "Maple Preview 20B-A1B",
         "Qwen 3.8 27B GSQ-RCO",
-        "Ornith 1.5 35A3B",
+        "Cyber-Tiel Coder 35B-A3B",
         "MiniMax Music 3",
         "NVIDIA Parakeet TDT 0.6B v3",
         "Soprano TTS",
@@ -48,7 +48,7 @@ def test_readme_qwen_variants_match_active_catalog() -> None:
     assert len(gsq_rco) == 4
     readme = (ROOT / "README.md").read_text()
     assert "Qwen 3.8 27B GSQ-RCO" in readme
-    assert "Ornith 1.5 35A3B" in readme
+    assert "Cyber-Tiel Coder 35B-A3B" in readme
 
 
 def test_distribution_includes_managed_apple_mlx_runtime_files() -> None:

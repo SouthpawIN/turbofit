@@ -74,7 +74,7 @@ curl -s http://127.0.0.1:8091/v1/models
 | Dial | Meaning |
 |---|---|
 | **Memory pressure** | used ÷ total per card; external apps are counted as untouchable, never as reclaimable |
-| **Context** | current window vs native max, and the shed steps (262k → 131k → 65k → 32k) |
+| **Context** | current window vs native max, and the shed steps (262k → 131k → 65k), never below the 64K floor |
 | **Fallback chain** | context first → smaller model → release residency; heal back up when the pressure clears |
 
 Every rung is a Turbofile entry bound to an evidence digest. `external_gpu_priority: absolute` is enforced: a contended card with no cheaper rung makes TurboFit **yield** the model, and it will not reload while the pressure persists. Pressure can only lower the effective rung — never raise the ceiling your hardware was measured for.
@@ -142,7 +142,7 @@ A variant never displaces a band default. It is offered *at* the band it fits, b
 | tts | Qwen3 TTS CustomVoice, Darwin TTS 1.7B, **Soprano TTS**, PersonaPlex (duplex), Edge TTS |
 | stt | **NVIDIA Parakeet TDT 0.6B v3**, Nemotron ASR 0.6B, faster-whisper, PersonaPlex (duplex) |
 
-**Auxiliary text slots** stay in the main catalog: **Maple Preview 20B-A1B** is the default auxiliary for every configuration; **Ornith 1.5 35A3B** is being retired in favour of Cyber-Tiel Coder 35B-A3B. `recommend_multimodal()` ranks every modality against the detected hardware and returns `fit`, an action and the reason.
+**Auxiliary text slots** stay in the main catalog: **Maple Preview 20B-A1B** is the default auxiliary for every configuration; **Cyber-Tiel Coder 35B-A3B** is the MoE auxiliary offered alongside it. `recommend_multimodal()` ranks every modality against the detected hardware and returns `fit`, an action and the reason.
 
 Rules that hold at every rung: MTP on wherever the model supports it; **IQ3_S is lossless**, so 32 GB and 48 GB both stay on it rather than paying for a heavier quant; DFlash2 drafters belong to Qwen only, Bonsai keeps its own Prism DSpark sidecar.
 
@@ -151,7 +151,7 @@ Rules that hold at every rung: MTP on wherever the model supports it; **IQ3_S is
 | Dial | Meaning |
 |---|---|
 | **Memory pressure** | used ÷ total per card; external apps are counted as untouchable, never as reclaimable |
-| **Context** | current window vs native max, and the shed steps (262k → 131k → 65k → 32k) |
+| **Context** | current window vs native max, and the shed steps (262k → 131k → 65k), never below the 64K floor |
 | **Fallback chain** | context first → smaller model → release residency; heal back up when the pressure clears |
 
 Every rung is a Turbofile entry bound to an evidence digest. `external_gpu_priority: absolute` is enforced: a contended card with no cheaper rung makes TurboFit **yield** the model, and it will not reload while the pressure persists. Pressure can only lower the effective rung — never raise the ceiling your hardware was measured for.
@@ -214,7 +214,7 @@ A variant never displaces a band default. It is offered *at* the band it fits, b
 | tts | Qwen3 TTS CustomVoice, Darwin TTS 1.7B, **Soprano TTS**, PersonaPlex (duplex), Edge TTS |
 | stt | **NVIDIA Parakeet TDT 0.6B v3**, Nemotron ASR 0.6B, faster-whisper, PersonaPlex (duplex) |
 
-**Auxiliary text slots** stay in the main catalog: **Ornith 1.5 35A3B** and **Maple Preview 20B-A1B** are eligible for the light slots. `recommend_multimodal()` ranks every modality against the detected hardware and returns `fit`, an action and the reason — `use-now`, `install-adapter`, `run-turbofit-local`, or `insufficient-accelerator-memory`.
+**Auxiliary text slots** stay in the main catalog: **Cyber-Tiel Coder 35B-A3B** and **Maple Preview 20B-A1B** are eligible for the light slots. `recommend_multimodal()` ranks every modality against the detected hardware and returns `fit`, an action and the reason — `use-now`, `install-adapter`, `run-turbofit-local`, or `insufficient-accelerator-memory`.
 
 Rules that hold at every rung: MTP on wherever the model supports it; **IQ3_S is lossless**, so 32 GB and 48 GB both stay on it rather than paying for a heavier quant; DFlash2 drafters belong to Qwen only, Bonsai keeps its own Prism DSpark sidecar.
 

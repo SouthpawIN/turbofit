@@ -228,7 +228,7 @@ def test_every_resolved_component_has_bounded_turbohaul_microbatching() -> None:
     book = RecipeBook.load(RECIPES, platform_name="linux")
     cases = (
         row("Carwin Nano", "auto", 131_072),
-        row("qwen3-8-27b-q4-mtp", "ornith-1-5-35a3b", 262_144),
+        row("qwen3-8-27b-q4-mtp", "cyber-tiel-coder-35b-a3b-ud-q4-k-xl", 262_144),
         row("qwen3-8-27b-gsq-rco-iq3s", "auto", 65_536),
     )
 
@@ -282,16 +282,16 @@ def test_every_catalog_configuration_compiles_to_an_actual_jinja_launch_recipe()
 
 
 
-def test_ornith_aux_compiles_with_expert_offload() -> None:
+def test_cyber_tiel_aux_compiles_with_expert_offload() -> None:
     recipe = RecipeBook.load(RECIPES).resolve_catalog_configuration({
-        "id": "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--64k",
+        "id": "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
         "main": "qwen3-8-27b-gsq-rco-iq3s",
-        "auxiliary": "ornith-1-5-35a3b",
+        "auxiliary": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
         "context": 65_536,
         "status": "candidate",
     })
     aux = next(item for item in recipe.components if item.role == "aux")
-    assert aux.model_path.endswith("Ornith-1.5-35B-Q4_K_M.gguf")
+    assert aux.model_path.endswith("Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_M.gguf")
     assert "--cpu-moe" in aux.command
 
 

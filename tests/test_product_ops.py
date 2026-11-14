@@ -125,7 +125,7 @@ def test_update_products_updates_plugin_desktop_and_turbosouth(monkeypatch, tmp_
 def test_recommended_families_follow_auto_memory_bands() -> None:
     import plugin_tools
 
-    assert plugin_tools.recommended_artifact_families(8 * 1024) == ["maple-preview-tq2", "ornith-1-5-35a3b"]
+    assert plugin_tools.recommended_artifact_families(8 * 1024) == ["maple-preview-tq2", "cyber-tiel-coder-35b-a3b-ud-q4-k-xl"]
     assert plugin_tools.recommended_artifact_families(16 * 1024)[0] == "qwen3-8-27b-gsq-rco-iq3xxs"
     assert plugin_tools.recommended_artifact_families(24 * 1024)[0] == "qwen3-8-27b-gsq-rco-iq3s"
     assert plugin_tools.recommended_artifact_families(96 * 1024)[0] == "qwen3-8-27b-bf16"
@@ -144,7 +144,7 @@ def test_retire_archives_old_family_and_refuses_recommended(tmp_path, monkeypatc
         {"destination": "Bonsai-27B/old.gguf", "families": ["bonsai-27b"]},
         {"destination": "Maple-Preview/maple-tq2_0.gguf", "families": ["maple-preview-tq2"]},
     ])
-    monkeypatch.setattr(product_ops.plugin_tools, "recommended_artifact_families", lambda usable_memory_mb=None: ["maple-preview-tq2", "ornith-1-5-35a3b"])
+    monkeypatch.setattr(product_ops.plugin_tools, "recommended_artifact_families", lambda usable_memory_mb=None: ["maple-preview-tq2", "cyber-tiel-coder-35b-a3b-ud-q4-k-xl"])
 
     offer = product_ops.local_model_replacement()
     assert offer["offer"] is True

@@ -35,7 +35,7 @@ def test_the_shipped_chain_loads_and_sheds_context_before_model_class() -> None:
     dedicated = chain.levels("dedicated")
 
     assert chain.schema == CHAIN_SCHEMA
-    assert chain.context_floor == 32768
+    assert chain.context_floor == 65536
     kinds = [level.kind for level in dedicated]
     assert kinds[:3] == ["model", "context", "context"], "context must be shed before a smaller model"
     assert kinds[-1] == "yield", "releasing residency is the last resort"
@@ -43,9 +43,9 @@ def test_the_shipped_chain_loads_and_sheds_context_before_model_class() -> None:
 
 
 def test_context_steps_halve_to_the_floor() -> None:
-    assert context_steps(262144) == [262144, 131072, 65536, 32768]
-    assert context_steps(32768) == [32768]
-    assert context_steps(40000) == [40000, 32768]
+    assert context_steps(262144) == [262144, 131072, 65536]
+    assert context_steps(65536) == [65536]
+    assert context_steps(40000) == [65536], "TurboFit minimum is 64K; a lower window is raised, never shed below"
 
 
 def test_a_structural_fault_in_the_chain_is_rejected(tmp_path: Path) -> None:

@@ -132,7 +132,7 @@ def install_systemd_unit(
     venv_dir: Path,
     data_dir: Path,
     model: str = "IQ2_XS",
-    context: int = 32768,
+    context: int = 65536,
     port: int = 8082,
     gpus: str = "0,1",
     home: Path | None = None,
@@ -206,7 +206,7 @@ def main() -> int:
     parser.add_argument("--install-service", action="store_true",
                         help="Also install a systemd user unit (Linux)")
     parser.add_argument("--model", default="IQ2_XS", help="Strata model variant")
-    parser.add_argument("--context", type=int, default=32768, help="Max context")
+    parser.add_argument("--context", type=int, default=65536, help="Max context (64K floor)")
     parser.add_argument("--port", type=int, default=8082, help="Serve port")
     parser.add_argument("--gpus", default="0,1", help="Comma-separated GPU indices")
     parser.add_argument("--data-dir", default=str(Path.home() / "Strata-data"),

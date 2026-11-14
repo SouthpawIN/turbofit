@@ -297,7 +297,7 @@ def test_pressure_probe_memory_refits_32gb_down_to_16gb_tier_model() -> None:
     plan = reconcile(state, tiered_snapshot(16384), item, now=10)
 
     assert plan.action is ActionKind.ACTIVATE
-    # 16 GB usable -> Ornith tier (16-23 GB band), NOT the next pre-baked
+    # 16 GB usable -> Cyber-Tiel Coder tier (16-23 GB band), NOT the next pre-baked
     # rung in the ladder (the Maple rung at index 1).
     assert plan.target_index == 2
     assert plan.state.pending_index == 2

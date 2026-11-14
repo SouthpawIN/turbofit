@@ -10,7 +10,7 @@ The evidence-only winners at each physical hardware level. A level remains blank
 
 The system scan-to-configuration process. It scans the user's hardware, compares it with exact-tier winners and portable-fit candidates, then recommends and configures Hermes-Agent main and auxiliary models for that device.
 
-Low-VRAM dedicated Auto is **Maple Preview TQ2_0** at 64K/128K. Ornith 1.5 remains the host-RAM-dependent alternative. Apple Silicon uses **OrcaRouter Qwen3.8-27B-Uncensored MLX** (4/6/8-bit, never 2-bit) or official Maple MLX on `mlx-lm-deepgrove`. Integrated / unified (non-Apple) uses Maple at 8–15 GB and Ornith at 16–23 GB.
+Low-VRAM dedicated Auto is **Maple Preview TQ2_0** at 64K/128K. Cyber-Tiel Coder 35B-A3B remains the host-RAM-dependent alternative. Apple Silicon uses **OrcaRouter Qwen3.8-27B-Uncensored MLX** (4/6/8-bit, never 2-bit) or official Maple MLX on `mlx-lm-deepgrove`. Integrated / unified (non-Apple) uses Maple at 8–15 GB and Cyber-Tiel Coder at 16–23 GB.
 
 Must account for:
 
@@ -79,4 +79,4 @@ TurboFit Check also recommends:
 
 ## Not Auto yet
 
-`EschaLabs/Qwen3.8-27B-Escha-W2` (Asha mixed 2-bit, custom SGLang) is a research candidate only. One reviewer video is not TurboFit TPS. It does not replace Bonsai/Ornith at the bottom of the list until we have a pinned llama.cpp or TurboHaul recipe and 64K/128K/262K/1M numbers. OrcaRouter MLX 2-bit is banned (uploader: archival / quality collapse).
+`EschaLabs/Qwen3.8-27B-Escha-W2` (Asha mixed 2-bit, custom SGLang) is a research candidate only. One reviewer video is not TurboFit TPS. It does not replace Bonsai/Cyber-Tiel Coder at the bottom of the list until we have a pinned llama.cpp or TurboHaul recipe and 64K/128K/262K/1M numbers. OrcaRouter MLX 2-bit is banned (uploader: archival / quality collapse).

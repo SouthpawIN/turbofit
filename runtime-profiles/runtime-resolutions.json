@@ -69,15 +69,6 @@
           "gpu": "0",
           "port": 8092
         }
-      },
-      "local-underdog-pq2-32768": {
-        "main": {
-          "model_tag": "underdog-pq2-32768-main",
-          "expected_vram_mb": 7450,
-          "family": "Underdog 27B",
-          "gpu": "0",
-          "port": 8092
-        }
       }
     },
     "hardware-16gb": {
@@ -94,15 +85,6 @@
         "main": {
           "model_tag": "gsq-rco-iq3s-65536-main",
           "expected_vram_mb": 12300,
-          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
-          "gpu": "0",
-          "port": 8092
-        }
-      },
-      "local-gsq-rco-iq3s-32768": {
-        "main": {
-          "model_tag": "gsq-rco-iq3s-32768-main",
-          "expected_vram_mb": 12050,
           "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
           "gpu": "0",
           "port": 8092
@@ -636,11 +618,11 @@
       }
     },
     "apple-16gb": {
-      "local-ornith-131k": {
+      "local-cyber-tiel-131k": {
         "main": {
-          "model_tag": "ornith-131k-main",
+          "model_tag": "cyber-tiel-131k-main",
           "expected_vram_mb": 13000,
-          "family": "Ornith 1.5 35A3B",
+          "family": "Cyber-Tiel Coder 35B-A3B",
           "gpu": "0",
           "port": 8092
         }

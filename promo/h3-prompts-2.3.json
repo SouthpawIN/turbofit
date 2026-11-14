@@ -27,10 +27,10 @@
       "prompt": "integrated_multimodal_description: [Shot 1] Photorealistic live-action cinematic footage in the same modern home studio at night. The same engineer, now photographed as a real person with short dark hair and a teal utility jacket, watches two desktop GPUs through a glass workstation case. Additional accelerator cards light in sequence as the Unleashed core fills a 24-to-95-gigabyte band. Practical teal and amber lighting, physically accurate reflections, shallow depth of field, restrained dolly, no readable text. overall_soundscape: Quiet room tone, workstation fans rising, a low power thrum. non_diegetic_music: Warm electronic continuation of the same motif."
     },
     {
-      "id": "ornith-aux",
+      "id": "cyber-tiel-aux",
       "label": "CLAYMATION",
       "seed": 2304,
-      "prompt": "integrated_multimodal_description: [Shot 1] Handcrafted stop-motion clay animation on the same miniature workbench language. A friendly cobalt clay robot and a small clay bird helper, Ornith, share the table. The bird is a mixture-of-experts: many tiny clay expert feathers. When space tightens, the robot offloads feathers one by one onto the bench, then shrinks the bird's nest, then tucks the bird away and keeps the main brain running. Visible fingerprints in the clay, teal felt cables, warm studio lighting, deliberate stop-motion cadence, no readable text. overall_soundscape: Soft clay taps, tiny wooden clicks, a birdlike mechanical chirp. non_diegetic_music: Playful pizzicato version of the same motif."
+      "prompt": "integrated_multimodal_description: [Shot 1] Handcrafted stop-motion clay animation on the same miniature workbench language. A friendly cobalt clay robot and a small clay bird helper, Cyber-Tiel Coder, share the table. The bird is a mixture-of-experts: many tiny clay expert feathers. When space tightens, the robot offloads feathers one by one onto the bench, then shrinks the bird's nest, then tucks the bird away and keeps the main brain running. Visible fingerprints in the clay, teal felt cables, warm studio lighting, deliberate stop-motion cadence, no readable text. overall_soundscape: Soft clay taps, tiny wooden clicks, a birdlike mechanical chirp. non_diegetic_music: Playful pizzicato version of the same motif."
     },
     {
       "id": "scale-down",

@@ -13,8 +13,8 @@ scripts/expand-multipart-artifacts
 
 Current generated scope:
 
-- **43 main configurations**
-- **3 auxiliary choices** (`ornith-1-5-35a3b`, `carwin-nano`, `auto`)
+- **84 main configurations**
+- **5 auxiliary choices** (`maple-preview-tq2`, `cyber-tiel-coder-35b-a3b-ud-q4-k-xl`, `qwen3-8-flash-next-strata`, `carwin-nano`, `auto`)
 - **4 exact context tiers**
 - Maple Preview TQ2_0 is the 8 GB Fit List candidate and is native 64K/128K only
 - DeepSeek V4 Flash 0731 is **not** in the active catalog
@@ -82,7 +82,8 @@ Only artifacts actually published by the pinned upstream revision enter the matr
 
 ### Auxiliary choices
 
-- Ornith 1.5 35A3B (default MoE aux; scale-down offloads experts first)
+- Cyber-Tiel Coder 35B-A3B (MoE aux; scale-down offloads experts first)
+- Qwen 3.8 Flash Next (Strata)
 - Carwin MoE Nano
 - Automatic auxiliary selection
 

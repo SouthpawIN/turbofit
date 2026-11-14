@@ -12,8 +12,7 @@
     "65536": "mtp",
     "131072": "mtp",
     "262144": "mtp",
-    "1048576": "mtp",
-    "32768": "baseline"
+    "1048576": "mtp"
    }
   },
   "qwen3-8-27b-q4": {
@@ -26,8 +25,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "qwen3-8-27b-q4-dflash2": {
@@ -43,8 +41,7 @@
     "65536": "dflash2",
     "131072": "dflash2",
     "262144": "dflash2",
-    "1048576": "dflash2",
-    "32768": "baseline"
+    "1048576": "dflash2"
    }
   },
   "qwen3-8-27b-q8-mtp": {
@@ -57,8 +54,7 @@
     "65536": "mtp",
     "131072": "mtp",
     "262144": "mtp",
-    "1048576": "mtp",
-    "32768": "baseline"
+    "1048576": "mtp"
    }
   },
   "qwen3-8-27b-q8": {
@@ -71,8 +67,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "qwen3-8-27b-bf16-mtp": {
@@ -85,8 +80,7 @@
     "65536": "mtp",
     "131072": "mtp",
     "262144": "mtp",
-    "1048576": "mtp",
-    "32768": "baseline"
+    "1048576": "mtp"
    }
   },
   "qwen3-8-27b-bf16": {
@@ -99,8 +93,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "carwin-nano": {
@@ -110,8 +103,7 @@
     "65536": "mtp",
     "131072": "mtp",
     "262144": "mtp",
-    "1048576": "mtp",
-    "32768": "baseline"
+    "1048576": "mtp"
    }
   },
   "carwin-nano-no-mtp": {
@@ -121,8 +113,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "ternary-bonsai-27b": {
@@ -135,8 +126,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "ternary-bonsai-27b-dspark-bf16": {
@@ -149,8 +139,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "ternary-bonsai-27b-dspark": {
@@ -163,8 +152,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "ternary-bonsai-27b-compact-vision-bf16": {
@@ -177,8 +165,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16": {
@@ -191,8 +178,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "ternary-bonsai-27b-compact-vision-bf16-dspark-q4": {
@@ -205,8 +191,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "ternary-bonsai-27b-fp16": {
@@ -219,8 +204,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "ternary-bonsai-27b-fp16-dspark-bf16": {
@@ -233,8 +217,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "ternary-bonsai-27b-fp16-dspark-q4": {
@@ -247,8 +230,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "ternary-bonsai-27b-fp16-vision-bf16": {
@@ -261,8 +243,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "ternary-bonsai-27b-fp16-vision-dspark": {
@@ -275,8 +256,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4": {
@@ -289,8 +269,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "bonsai-27b": {
@@ -303,8 +282,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "bonsai-27b-dspark-bf16": {
@@ -317,8 +295,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "bonsai-27b-dspark": {
@@ -331,8 +308,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "bonsai-27b-compact-vision-bf16": {
@@ -345,8 +321,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "bonsai-27b-compact-vision-bf16-dspark-bf16": {
@@ -359,8 +334,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "bonsai-27b-compact-vision-bf16-dspark-q4": {
@@ -373,8 +347,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "bonsai-27b-compact-vision-q8": {
@@ -387,8 +360,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "bonsai-27b-compact-vision-q8-dspark-bf16": {
@@ -401,8 +373,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "bonsai-27b-compact-vision-q8-dspark-q4": {
@@ -415,8 +386,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "bonsai-27b-fp16": {
@@ -429,8 +399,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "bonsai-27b-fp16-dspark-bf16": {
@@ -443,8 +412,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "bonsai-27b-fp16-dspark-q4": {
@@ -457,8 +425,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "bonsai-27b-fp16-vision-bf16": {
@@ -471,8 +438,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "bonsai-27b-fp16-vision-dspark": {
@@ -485,8 +451,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "bonsai-27b-fp16-vision-bf16-dspark-q4": {
@@ -499,8 +464,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "bonsai-27b-fp16-vision-q8": {
@@ -513,8 +477,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "bonsai-27b-fp16-vision-q8-dspark-bf16": {
@@ -527,8 +490,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "bonsai-27b-fp16-vision-q8-dspark-q4": {
@@ -541,8 +503,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "dspark",
-    "1048576": "dspark",
-    "32768": "baseline"
+    "1048576": "dspark"
    }
   },
   "glm-5-2-2-788bpw": {
@@ -552,8 +513,7 @@
     "1048576": "baseline",
     "65536": "baseline",
     "131072": "baseline",
-    "262144": "baseline",
-    "32768": "baseline"
+    "262144": "baseline"
    }
   },
   "minimax-m3-q4": {
@@ -564,8 +524,7 @@
     "1048576": "baseline",
     "65536": "baseline",
     "131072": "baseline",
-    "262144": "baseline",
-    "32768": "baseline"
+    "262144": "baseline"
    }
   },
   "laguna-s2-1-fp16": {
@@ -576,8 +535,7 @@
     "1048576": "baseline",
     "65536": "baseline",
     "131072": "baseline",
-    "262144": "baseline",
-    "32768": "baseline"
+    "262144": "baseline"
    }
   },
   "laguna-s2-1-q4": {
@@ -587,53 +545,7 @@
     "1048576": "baseline",
     "65536": "baseline",
     "131072": "baseline",
-    "262144": "baseline",
-    "32768": "baseline"
-   }
-  },
-  "ornith-1-5-35a3b": {
-   "family": "Ornith 1.5 35A3B",
-   "alias": "ornith-1-5-35a3b",
-   "model": "${TURBOFIT_MODEL_ROOT}/Ornith-1.5-35B-A3B/Ornith-1.5-35B-Q4_K_M.gguf",
-   "projector": "${TURBOFIT_MODEL_ROOT}/Ornith-1.5-35B-A3B/mmproj-Ornith-1.5-35B-BF16.gguf",
-   "draft": "",
-   "methods": {
-    "65536": "baseline",
-    "131072": "baseline",
-    "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
-   },
-   "cpu_moe": true
-  },
-  "ornith-1-5-oq4e-mtp": {
-   "family": "Ornith 1.5 35A3B",
-   "alias": "ornith-1-5-oq4e-mtp",
-   "engine": "mlx",
-   "model": "${TURBOFIT_MODEL_ROOT}/Ornith-1.5-35B-A3B-oQ4e-mtp",
-   "projector": "",
-   "draft": "",
-   "methods": {
-    "65536": "mtp",
-    "131072": "mtp",
-    "262144": "mtp",
-    "1048576": "mtp",
-    "32768": "baseline"
-   }
-  },
-  "ornith-1-5-oq8e-mtp": {
-   "family": "Ornith 1.5 35A3B",
-   "alias": "ornith-1-5-oq8e-mtp",
-   "engine": "mlx",
-   "model": "${TURBOFIT_MODEL_ROOT}/Ornith-1.5-35B-A3B-oQ8e-mtp",
-   "projector": "",
-   "draft": "",
-   "methods": {
-    "65536": "mtp",
-    "131072": "mtp",
-    "262144": "mtp",
-    "1048576": "mtp",
-    "32768": "baseline"
+    "262144": "baseline"
    }
   },
   "maple-preview-tq2": {
@@ -646,8 +558,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "underdog-27b-pq2": {
@@ -660,8 +571,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "ternary-bonsai-2-27b-ptq1": {
@@ -674,8 +584,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "qwen3-8-27b-gsq-rco-iq3s": {
@@ -688,8 +597,7 @@
     "65536": "mtp",
     "131072": "mtp",
     "262144": "mtp",
-    "1048576": "mtp",
-    "32768": "baseline"
+    "1048576": "mtp"
    }
   },
   "qwen3-8-flash-next-strata": {
@@ -699,8 +607,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "cyber-tiel-coder-35b-a3b-ud-iq3-xxs": {
@@ -713,8 +620,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "1048576": "baseline",
-    "262144": "baseline",
-    "32768": "baseline"
+    "262144": "baseline"
    },
    "cpu_moe": false
   },
@@ -728,8 +634,7 @@
     "65536": "mtp",
     "131072": "mtp",
     "262144": "mtp",
-    "1048576": "mtp",
-    "32768": "baseline"
+    "1048576": "mtp"
    }
   },
   "qwen3-8-27b-gsq-rco-iq2s": {
@@ -742,8 +647,7 @@
     "65536": "mtp",
     "131072": "mtp",
     "262144": "mtp",
-    "1048576": "mtp",
-    "32768": "baseline"
+    "1048576": "mtp"
    }
   },
   "qwen3-8-27b-gsq-rco-iq2xs": {
@@ -756,8 +660,7 @@
     "65536": "mtp",
     "131072": "mtp",
     "262144": "mtp",
-    "1048576": "mtp",
-    "32768": "baseline"
+    "1048576": "mtp"
    }
   },
   "ternary-bonsai-2-27b-pq2": {
@@ -770,8 +673,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "ternary-bonsai-2-27b-f16": {
@@ -784,8 +686,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "cyber-tiel-coder-35b-a3b-ud-q4-k-xl": {
@@ -798,8 +699,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    },
    "cpu_moe": true,
    "no_mmap": false
@@ -814,8 +714,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    },
    "cpu_moe": true,
    "no_mmap": false
@@ -830,8 +729,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    },
    "cpu_moe": true,
    "no_mmap": false
@@ -846,8 +744,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    },
    "cpu_moe": true,
    "no_mmap": false
@@ -859,8 +756,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "arete-27b-q3": {
@@ -869,7 +765,6 @@
    "model": "${TURBOFIT_MODEL_ROOT}/Arete-27B/NousResearch_Arete-27B-Q3_K_S.gguf",
    "draft": "",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline"
    },
@@ -881,7 +776,6 @@
    "model": "${TURBOFIT_MODEL_ROOT}/Arete-27B/NousResearch_Arete-27B-Q4_K_M.gguf",
    "draft": "",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline"
@@ -894,7 +788,6 @@
    "model": "${TURBOFIT_MODEL_ROOT}/Arete-27B/NousResearch_Arete-27B-Q5_K_M.gguf",
    "draft": "",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline"
@@ -907,7 +800,6 @@
    "model": "${TURBOFIT_MODEL_ROOT}/Arete-27B/NousResearch_Arete-27B-Q8_0.gguf",
    "draft": "",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline"
@@ -920,7 +812,6 @@
    "model": "${TURBOFIT_MODEL_ROOT}/Nanbeige4.3-33B/Nanbeige4.3-33B-GSQ-RCO-IQ3_XS.gguf",
    "draft": "",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline"
    }
@@ -931,7 +822,6 @@
    "model": "${TURBOFIT_MODEL_ROOT}/Nanbeige4.3-33B/Nanbeige4.3-33B-GSQ-RCO-IQ4_XS.gguf",
    "draft": "",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline"
@@ -943,7 +833,6 @@
    "model": "${TURBOFIT_MODEL_ROOT}/Flint-40A2.5B/Flint-40B-A2.5B-abliterated-Q4_K_M.gguf",
    "draft": "",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline"
    }
@@ -954,7 +843,6 @@
    "model": "${TURBOFIT_MODEL_ROOT}/Flint-40A2.5B/Flint-40B-A2.5B-abliterated-Q5_K_M.gguf",
    "draft": "",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline"
@@ -966,7 +854,6 @@
    "model": "${TURBOFIT_MODEL_ROOT}/flash-next-gsq/IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00001-of-00002.gguf",
    "draft": "",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline"
@@ -978,7 +865,6 @@
    "model": "${TURBOFIT_MODEL_ROOT}/deepseek-v4.1-flash-1017-gsq/DeepSeek-V4.1-Flash-1017-GSQ-RCO-IQ1_M-00001-of-00006.gguf",
    "draft": "",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline"
@@ -991,7 +877,6 @@
    "draft": "",
    "strata_model": "Maya-XS",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline"
    }
@@ -1003,7 +888,6 @@
    "draft": "",
    "strata_model": "Maya-S24",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline"
    }
@@ -1015,7 +899,6 @@
    "draft": "",
    "strata_model": "Maya-M",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline"
    }
@@ -1027,7 +910,6 @@
    "draft": "",
    "strata_model": "Maya-L",
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline"
    }
@@ -1207,8 +1089,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "Ternary Bonsai": {
@@ -1246,8 +1127,7 @@
     "65536": "dspark",
     "131072": "dspark",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "Carwin Nano": {
@@ -1273,8 +1153,7 @@
     "65536": "mtp",
     "131072": "mtp",
     "262144": "mtp",
-    "1048576": "mtp",
-    "32768": "baseline"
+    "1048576": "mtp"
    }
   },
   "Laguna S2.1": {
@@ -1287,8 +1166,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "MiniMax M3": {
@@ -1301,8 +1179,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "GLM 5.2": {
@@ -1322,8 +1199,7 @@
     "65536": "mtp",
     "131072": "mtp",
     "262144": "mtp",
-    "1048576": "mtp",
-    "32768": "baseline"
+    "1048576": "mtp"
    }
   },
   "Qwen 3.8 27B": {
@@ -1344,43 +1220,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
-   }
-  },
-  "Ornith 1.5 35A3B": {
-   "alias": "ornith-1-5-35a3b",
-   "kind": "process",
-   "model": "${TURBOFIT_MODEL_ROOT}/Ornith-1.5-35B-A3B/Ornith-1.5-35B-Q4_K_M.gguf",
-   "projector": "${TURBOFIT_MODEL_ROOT}/Ornith-1.5-35B-A3B/mmproj-Ornith-1.5-35B-BF16.gguf",
-   "port": 11610,
-   "large": false,
-   "cpu_moe": true,
-   "no_mmap": false,
-   "native_context": 262144,
-   "max_context": 1048576,
-   "methods": {
-    "65536": "baseline",
-    "131072": "baseline",
-    "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
-   },
-   "context_overrides": {
-    "65536": {
-     "cpu_moe": true
-    },
-    "131072": {
-     "cpu_moe": true
-    },
-    "262144": {
-     "cpu_moe": true,
-     "n_cpu_moe": 8
-    },
-    "1048576": {
-     "cpu_moe": true,
-     "n_cpu_moe": 16
-    }
+    "1048576": "baseline"
    }
   },
   "Maple Preview": {
@@ -1405,8 +1245,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    },
    "context_overrides": {
     "65536": {
@@ -1453,8 +1292,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "Qwen 3.8 27B GSQ-RCO IQ3_XXS": {
@@ -1479,8 +1317,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "Qwen 3.8 27B GSQ-RCO IQ2_S": {
@@ -1505,8 +1342,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "Qwen 3.8 27B GSQ-RCO IQ2_XS": {
@@ -1531,8 +1367,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "Underdog 27B": {
@@ -1556,8 +1391,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    },
    "runtime_flavor": "prism"
   },
@@ -1582,8 +1416,7 @@
     "65536": "baseline",
     "131072": "baseline",
     "262144": "baseline",
-    "1048576": "baseline",
-    "32768": "baseline"
+    "1048576": "baseline"
    }
   },
   "Qwen 3.8 Flash Next (Strata)": {
@@ -1602,8 +1435,7 @@
    "max_context": 131072,
    "methods": {
     "65536": "baseline",
-    "131072": "baseline",
-    "32768": "baseline"
+    "131072": "baseline"
    },
    "runtime_flavor": "strata",
    "working_dir": "~/.local/share/turbofit/runtimes/strata",
@@ -1635,8 +1467,7 @@
    "methods": {
     "65536": "baseline",
     "131072": "baseline",
-    "262144": "baseline",
-    "32768": "baseline"
+    "262144": "baseline"
    },
    "runtime_flavor": "prism"
   },
@@ -1687,7 +1518,6 @@
    "native_context": 131072,
    "max_context": 131072,
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline"
    },
@@ -1711,7 +1541,6 @@
    "native_context": 131072,
    "max_context": 131072,
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline"
    }
@@ -1734,7 +1563,6 @@
    "native_context": 131072,
    "max_context": 131072,
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline"
    }
@@ -1756,8 +1584,7 @@
    "methods": {
     "65536": "baseline",
     "131072": "baseline",
-    "262144": "baseline",
-    "32768": "baseline"
+    "262144": "baseline"
    },
    "runtime_flavor": "strata",
    "working_dir": "~/.local/share/turbofit/runtimes/strata",
@@ -1784,7 +1611,6 @@
    "native_context": 131072,
    "max_context": 131072,
    "methods": {
-    "32768": "baseline",
     "65536": "baseline",
     "131072": "baseline"
    },

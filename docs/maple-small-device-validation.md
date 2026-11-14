@@ -40,7 +40,7 @@ Prompt reuse was observed with `255` cached prompt tokens.
 
 - A physical 8 GB GPU has not been tested. The CUDA measurement came from a 24 GB RTX 3090 and is only a residency surrogate.
 - A physical 8 GB total-RAM machine has not been tested. The CPU test used an 8 GiB/no-swap cgroup on a larger host; OS and driver behavior on an actual small machine may differ.
-- No systematic intelligence benchmark, perplexity comparison, or exact-tier campaign has promoted Maple over Bonsai or Ornith.
+- No systematic intelligence benchmark, perplexity comparison, or exact-tier campaign has promoted Maple over Bonsai or Cyber-Tiel Coder.
 - The fork-only runtime is an operational compatibility cost.
 
 ## Fit List decision
@@ -49,7 +49,7 @@ Prompt reuse was observed with `255` cached prompt tokens.
 
 | Capacity | Fit List model |
 |---:|---|
-| 8 GB | Maple Preview TQ2_0 candidate; Ornith alternative when host RAM can hold offloaded experts |
+| 8 GB | Maple Preview TQ2_0 candidate; Cyber-Tiel Coder alternative when host RAM can hold offloaded experts |
 | 16 GB | Qwen 3.8 27B GSQ-RCO UD-IQ3_XXS |
 | 24–95 GB | Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL |
 | 96 GB+ | Qwen 3.8 27B 16-bit until GSQ-RCO FP16 exists |
@@ -59,7 +59,7 @@ Prompt reuse was observed with `255` cached prompt tokens.
 | Capacity | Fit List model |
 |---:|---|
 | 8–15 GB | Maple Preview TQ2_0 candidate |
-| 16–23 GB | Ornith 1.5 35A3B |
+| 16–23 GB | Cyber-Tiel Coder 35B-A3B |
 | 24 GB+ | Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL |
 
 The Fit List defines eligible candidates. Live topology, free capacity, external pressure, engine compatibility, and exact current-recipe evidence still drive contraction and healing. Existing Auto profiles remain on their last physically proven rungs until Maple passes an exact 8 GB-device campaign.

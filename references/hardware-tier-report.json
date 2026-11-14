@@ -83,7 +83,7 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "bonsai-27b--ornith-1-5-35a3b--64k",
+          "configuration_id": "bonsai-27b--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
           "main": {
             "id": "bonsai-27b",
             "name": "Binary Bonsai 27B Q1_0",
@@ -91,8 +91,8 @@
             "runtime_features": []
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload",
@@ -255,7 +255,7 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "qwen3-8-27b-gsq-rco-iq3xxs--ornith-1-5-35a3b--64k",
+          "configuration_id": "qwen3-8-27b-gsq-rco-iq3xxs--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
           "main": {
             "id": "qwen3-8-27b-gsq-rco-iq3xxs",
             "name": "Qwen 3.8 27B GSQ-RCO UD-IQ3_XXS",
@@ -265,8 +265,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload",
@@ -376,7 +376,7 @@
       "status": "physically-validated",
       "recommendations": {
         "measured_winner": {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs--ornith-1-5-35a3b--64k",
+          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
           "main": {
             "id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs",
             "name": "Cyber-Tiel Coder 35B-A3B UD-IQ3_XXS",
@@ -387,8 +387,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload"
@@ -433,7 +433,7 @@
         "smartest": null,
         "fastest": null,
         "balanced": {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs--ornith-1-5-35a3b--64k",
+          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
           "main": {
             "id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs",
             "name": "Cyber-Tiel Coder 35B-A3B UD-IQ3_XXS",
@@ -444,8 +444,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload"
@@ -490,7 +490,7 @@
       },
       "candidates": [
         {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs--ornith-1-5-35a3b--64k",
+          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
           "main": {
             "id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs",
             "name": "Cyber-Tiel Coder 35B-A3B UD-IQ3_XXS",
@@ -501,8 +501,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload"
@@ -819,7 +819,7 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--128k",
+          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--128k",
           "main": {
             "id": "qwen3-8-27b-gsq-rco-iq3s",
             "name": "Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL",
@@ -829,8 +829,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload",
@@ -874,7 +874,7 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--64k",
+          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
           "main": {
             "id": "qwen3-8-27b-gsq-rco-iq3s",
             "name": "Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL",
@@ -884,8 +884,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload",
@@ -1001,7 +1001,7 @@
       },
       "candidates": [
         {
-          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--262k",
+          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--262k",
           "main": {
             "id": "qwen3-8-27b-gsq-rco-iq3s",
             "name": "Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL",
@@ -1011,8 +1011,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload",
@@ -1179,7 +1179,7 @@
       },
       "candidates": [
         {
-          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--262k",
+          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--262k",
           "main": {
             "id": "qwen3-8-27b-gsq-rco-iq3s",
             "name": "Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL",
@@ -1189,8 +1189,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload",
@@ -1234,7 +1234,7 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--1m",
+          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--1m",
           "main": {
             "id": "qwen3-8-27b-gsq-rco-iq3s",
             "name": "Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL",
@@ -1244,8 +1244,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload",
@@ -1289,7 +1289,7 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "qwen3-8-27b-bf16--ornith-1-5-35a3b--262k",
+          "configuration_id": "qwen3-8-27b-bf16--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--262k",
           "main": {
             "id": "qwen3-8-27b-bf16",
             "name": "Qwen 3.8 27B BF16",
@@ -1299,8 +1299,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload",
@@ -1365,7 +1365,7 @@
       },
       "candidates": [
         {
-          "configuration_id": "qwen3-8-27b-bf16--ornith-1-5-35a3b--1m",
+          "configuration_id": "qwen3-8-27b-bf16--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--1m",
           "main": {
             "id": "qwen3-8-27b-bf16",
             "name": "Qwen 3.8 27B BF16",
@@ -1375,8 +1375,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload",
@@ -1420,7 +1420,7 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--1m",
+          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--1m",
           "main": {
             "id": "qwen3-8-27b-gsq-rco-iq3s",
             "name": "Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL",
@@ -1430,8 +1430,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload",
@@ -1547,7 +1547,7 @@
       },
       "candidates": [
         {
-          "configuration_id": "qwen3-8-27b-bf16--ornith-1-5-35a3b--1m",
+          "configuration_id": "qwen3-8-27b-bf16--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--1m",
           "main": {
             "id": "qwen3-8-27b-bf16",
             "name": "Qwen 3.8 27B BF16",
@@ -1557,8 +1557,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload",
@@ -1602,7 +1602,7 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "qwen3-8-27b-bf16-mtp--ornith-1-5-35a3b--1m",
+          "configuration_id": "qwen3-8-27b-bf16-mtp--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--1m",
           "main": {
             "id": "qwen3-8-27b-bf16-mtp",
             "name": "Qwen 3.8 27B BF16 + MTP",
@@ -1613,8 +1613,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload",
@@ -1659,7 +1659,7 @@
           "balanced_score": null
         },
         {
-          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--ornith-1-5-35a3b--1m",
+          "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--1m",
           "main": {
             "id": "qwen3-8-27b-gsq-rco-iq3s",
             "name": "Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL",
@@ -1669,8 +1669,8 @@
             ]
           },
           "auxiliary": {
-            "id": "ornith-1-5-35a3b",
-            "name": "Ornith 1.5 35B-A3B Q4_K_M",
+            "id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+            "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
             "quantization": "Q4_K_M",
             "runtime_features": [
               "expert-offload",

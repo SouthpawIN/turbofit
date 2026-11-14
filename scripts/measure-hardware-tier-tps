@@ -255,7 +255,7 @@ def main() -> int:
         "missing": [
             "Qwen3.8-27B-GSQ-RCO-UD-IQ3_XXS.gguf",
             "Qwen3.8-27B-GSQ-RCO-UD-Q3_K_XL.gguf",
-            "Ornith-1.5-35B-Q4_K_M.gguf",
+            "Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_M.gguf",
         ],
     }
     write_outputs(payload)

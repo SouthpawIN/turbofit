@@ -157,11 +157,11 @@ def load_chain(path: str | Path | None = None) -> Chain:
             "label": str(lane_raw.get("label") or lane),
             "levels": parsed,
         }
-    floor = _non_negative_int(raw.get("context_floor", 32768), "context_floor")
+    floor = _non_negative_int(raw.get("context_floor", 65536), "context_floor")
     return Chain(schema=CHAIN_SCHEMA, context_floor=floor, lanes=lanes)
 
 
-def context_steps(native_window: int, floor: int = 32768) -> list[int]:
+def context_steps(native_window: int, floor: int = 65536) -> list[int]:
     """Halve a native window down to the floor, ending on something >= floor.
 
     The chain sheds context before it swaps models, so these are the windows the

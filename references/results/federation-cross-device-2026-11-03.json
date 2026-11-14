@@ -17,7 +17,7 @@
     "completion_tokens": 32,
     "completion_per_second": 27.51,
     "finish_reason": "length",
-    "self_reported_identity": "Cyber-Tiel-Coder (Ornith-1.5-35 variant)"
+    "self_reported_identity": "Cyber-Tiel-Coder (35B-A3B variant)"
   },
   "observations": [
     "Cross-device model use works with a bare 'auto' - the thin node delegated to the peer.",

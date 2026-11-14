@@ -2,14 +2,14 @@
 
 Purpose-built commercial for the 2.3 chain. **New MiniMax H3 clips only.** Old 2.1/2.2 footage is not used.
 
-Plot: one engineer, one lab, one motif. The chamber grows through hardware tiers, Ornith sheds experts under pressure, then five keyless Nous portals replace a slammed NIM gate.
+Plot: one engineer, one lab, one motif. The chamber grows through hardware tiers, Cyber-Tiel Coder sheds experts under pressure, then five keyless Nous portals replace a slammed NIM gate.
 
 | Clip | Style | Beat |
 |---|---|---|
 | `bonsai-8gb` | anime | 8GB Bonsai takes root |
 | `unleashed-16gb` | cinematic CG | chamber expands to Unleashed IQ3 |
 | `unleashed-24-95` | photoreal | 24–95GB Unleashed Q3_K_XL |
-| `ornith-aux` | claymation | Ornith MoE offloads experts |
+| `cyber-tiel-aux` | claymation | Cyber-Tiel Coder MoE offloads experts |
 | `scale-down` | watercolor | experts → context → auto → Bonsai |
 | `nous-keyless` | pixel art | NIM closes, five Nous portals open |
 

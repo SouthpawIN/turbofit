@@ -2,7 +2,7 @@
 """Verify every pinned artifact in the manifest still exists upstream.
 
 The catalog once carried four Cyber-Tiel quants that were never published, and
-an Ornith row pointing at a directory. Both only surfaced when a user's machine
+a 35B-A3B MoE row pointing at a directory. Both only surfaced when a user's machine
 failed to download them. This checks the manifest against Hugging Face before
 that happens again.
 

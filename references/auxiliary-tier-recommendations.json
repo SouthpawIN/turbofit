@@ -22,7 +22,7 @@
         "current production-recipe intelligence and TPS evidence required"
       ],
       "candidate": "auto",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
     },
     {
       "vram_gb": 12,
@@ -37,7 +37,7 @@
         "current production-recipe intelligence and TPS evidence required"
       ],
       "candidate": "auto",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
     },
     {
       "vram_gb": 16,
@@ -51,8 +51,8 @@
         "GSQ-RCO IQ3_S benchmarked on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "ornith-1-5-35a3b",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "candidate": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
     },
     {
       "vram_gb": 24,
@@ -66,8 +66,8 @@
         "GSQ-RCO IQ3_S benchmarked at 262K on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "ornith-1-5-35a3b",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "candidate": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
     },
     {
       "vram_gb": 32,
@@ -82,14 +82,14 @@
         "current production-recipe intelligence and TPS evidence required"
       ],
       "candidate": "auto",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
     },
     {
       "vram_gb": 48,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "candidates": [
-        "ornith-1-5-35a3b",
+        "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
         "carwin-nano",
         "auto"
       ],
@@ -99,8 +99,8 @@
         "GSQ-RCO IQ3_S benchmarked at 262K on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "ornith-1-5-35a3b",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai.",
+      "candidate": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai.",
       "evidence": null,
       "decode_tps": null
     },
@@ -108,26 +108,26 @@
       "vram_gb": 64,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
-      "candidate": "ornith-1-5-35a3b",
+      "candidate": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
       "artifact_gib": null,
       "capabilities": [],
       "limitations": [
         "Strata Flash Next benchmarked on Omarchy 2x3090"
       ],
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai.",
+      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai.",
       "evidence": null
     },
     {
       "vram_gb": 96,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
-      "candidate": "ornith-1-5-35a3b",
+      "candidate": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
       "artifact_gib": null,
       "capabilities": [],
       "limitations": [
         "Strata Flash Next benchmarked on Omarchy 2x3090"
       ],
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai.",
+      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai.",
       "evidence": null
     },
     {
@@ -143,7 +143,7 @@
         "current production-recipe intelligence and TPS evidence required"
       ],
       "candidate": "auto",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
     },
     {
       "vram_gb": 192,
@@ -158,7 +158,7 @@
         "current production-recipe intelligence and TPS evidence required"
       ],
       "candidate": "auto",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
     },
     {
       "vram_gb": 256,
@@ -173,7 +173,7 @@
         "current production-recipe intelligence and TPS evidence required"
       ],
       "candidate": "auto",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
     },
     {
       "vram_gb": 384,
@@ -188,7 +188,7 @@
         "current production-recipe intelligence and TPS evidence required"
       ],
       "candidate": "auto",
-      "basis": "Auxiliary authority is Ornith 1.5 35A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
     }
   ]
 }
