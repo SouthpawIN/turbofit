@@ -92,10 +92,23 @@ def capability_deferred_rows(configuration_index: dict) -> set[str]:
         recipes = json.loads(RECIPES.read_text(encoding="utf-8"))
     except FileNotFoundError:
         return set()
-    strata_models = {
-        name
+    # Recipe families are display names ("Qwen 3.8 Flash Next (Strata)"); catalog
+    # entries carry a plain `family`. Join on that rather than on ids.
+    strata_families = {
+        name.replace("(Strata)", "").strip()
         for name, spec in (recipes.get("models") or {}).items()
         if isinstance(spec, dict) and spec.get("runtime_flavor") == "strata"
+    }
+    if not strata_families:
+        return set()
+    try:
+        catalog_models = json.loads(CATALOG.read_text(encoding="utf-8")).get("models") or []
+    except FileNotFoundError:
+        return set()
+    strata_models = {
+        str(entry["id"])
+        for entry in catalog_models
+        if isinstance(entry, dict) and entry.get("family") in strata_families
     }
     if not strata_models:
         return set()
