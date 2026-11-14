@@ -246,7 +246,22 @@ class CampaignBackend:
                 gpu=component.gpu,
                 backend_name=self.accelerator_backend,
             )
-            process = subprocess.Popen(component.command, env=env, stdout=log, stderr=subprocess.STDOUT, text=True, start_new_session=True)
+            try:
+                process = subprocess.Popen(
+                    component.command, env=env, stdout=log, stderr=subprocess.STDOUT,
+                    text=True, start_new_session=True,
+                )
+            except FileNotFoundError as exc:
+                # A missing engine binary surfaces as a bare OSError with no path,
+                # which reads like a model problem. Name the binary, the family and
+                # the runtime directory so the operator knows what to install.
+                log.close()
+                binary = str(component.command[0]) if component.command else "<empty>"
+                raise RuntimeError(
+                    f"engine binary not found for {component.family or component.alias}: {binary!r}. "
+                    "Install the runtime (scripts/install.sh) or set the engine path in "
+                    "references/model-recipes.json for this family."
+                ) from exc
             log.close()
             handle = {"kind": "process", "pid": process.pid, "process": process, "port": component.port, "log": str(log_path)}
             self._handles.append(handle)

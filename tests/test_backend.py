@@ -170,3 +170,21 @@ def test_windows_stop_kills_owned_process_tree(tmp_path: Path, monkeypatch) -> N
     backend.stop(SimpleNamespace(role="main"), handle)
 
     assert ["taskkill.exe", "/PID", "4242", "/T", "/F"] in calls
+
+def test_missing_engine_binary_names_the_binary_and_family(tmp_path) -> None:
+    from types import SimpleNamespace
+
+    from turbofit_runtime.backend import CampaignBackend
+
+    (tmp_path / "x.gguf").write_bytes(b"gguf")
+    component = SimpleNamespace(
+        command=["/nonexistent/llama-server", "-m", "x.gguf"],
+        gpu="0", port=1, role="main", alias="arete-27b", family="Arete 27B",
+        kind="process", method="baseline", projector_path=None, model_path=str(tmp_path / "x.gguf"),
+    )
+    backend = CampaignBackend(
+        gateway_script=tmp_path / "gw.py", result_dir=tmp_path, runtime_state=tmp_path / "state.json",
+        accelerator_backend="cuda",
+    )
+    with pytest.raises(RuntimeError, match="engine binary not found for Arete 27B"):
+        backend.start(component)
