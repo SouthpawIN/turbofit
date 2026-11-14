@@ -33,6 +33,7 @@ from turbofit_runtime.tier_tournament import candidate_ids_for_tier, load_tourna
 
 CATALOG = ROOT / "references/model-catalog.json"
 CONFIGURATIONS = ROOT / "references/configuration-matrix.json"
+MATRIX_SOURCE = ROOT / "references/configuration-matrix.json"
 MATRIX = Path.home() / ".local/state/turbofit/catalog-campaign-matrix.json"
 RECIPES = ROOT / "references/model-recipes.json"
 ARCHIVED = ROOT / "references/archived-model-zoo.json"
@@ -196,6 +197,18 @@ def run_campaign(limit: int | None) -> int:
     return 1 if failed else 0
 
 
+def refresh_matrix_snapshot() -> None:
+    """Keep the state snapshot in step with the repo's matrix.
+
+    The campaign reads MATRIX from ~/.local/state, which silently drifts from
+    references/configuration-matrix.json whenever the catalog changes — new rows
+    become "not found" and removed rows keep running. Refresh on every start.
+    """
+    if not MATRIX.exists() or MATRIX.stat().st_mtime < Path(MATRIX_SOURCE).stat().st_mtime:
+        MATRIX.parent.mkdir(parents=True, exist_ok=True)
+        MATRIX.write_text(Path(MATRIX_SOURCE).read_text())
+
+
 def run_id(row_id: str) -> int:
     runner = build_runner()
     matches = [row for row in load_matrix(MATRIX).rows if row.id == row_id]
@@ -235,6 +248,7 @@ def run_list_candidate() -> int:
 
 
 def main() -> int:
+    refresh_matrix_snapshot()
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("status")
