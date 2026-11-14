@@ -791,7 +791,7 @@
   "cyber-tiel-coder-35b-a3b-ud-q4-k-xl": {
    "family": "Cyber-Tiel Coder 35B-A3B",
    "alias": "cyber-tiel-coder-35b-a3b",
-   "model": "${TURBOFIT_MODEL_ROOT}/Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_XL.gguf",
+   "model": "${TURBOFIT_MODEL_ROOT}/Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_M.gguf",
    "projector": "",
    "draft": "",
    "methods": {
@@ -807,7 +807,7 @@
   "cyber-tiel-coder-35b-a3b-ud-q5-k-xl": {
    "family": "Cyber-Tiel Coder 35B-A3B",
    "alias": "cyber-tiel-coder-35b-a3b",
-   "model": "${TURBOFIT_MODEL_ROOT}/Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q5_K_XL.gguf",
+   "model": "${TURBOFIT_MODEL_ROOT}/Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_S.gguf",
    "projector": "",
    "draft": "",
    "methods": {
@@ -823,7 +823,7 @@
   "cyber-tiel-coder-35b-a3b-ud-q6-k-xl": {
    "family": "Cyber-Tiel Coder 35B-A3B",
    "alias": "cyber-tiel-coder-35b-a3b",
-   "model": "${TURBOFIT_MODEL_ROOT}/Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q6_K_XL.gguf",
+   "model": "${TURBOFIT_MODEL_ROOT}/Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q3_K_XL.gguf",
    "projector": "",
    "draft": "",
    "methods": {
@@ -839,7 +839,7 @@
   "cyber-tiel-coder-35b-a3b-ud-q8-k-xl": {
    "family": "Cyber-Tiel Coder 35B-A3B",
    "alias": "cyber-tiel-coder-35b-a3b",
-   "model": "${TURBOFIT_MODEL_ROOT}/Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q8_K_XL.gguf",
+   "model": "${TURBOFIT_MODEL_ROOT}/Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-IQ4_XS.gguf",
    "projector": "",
    "draft": "",
    "methods": {

@@ -1061,8 +1061,8 @@
    "name": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_XL",
    "family": "Cyber-Tiel Coder 35B-A3B",
    "source": "https://huggingface.co/peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF",
-   "artifact": "Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_XL.gguf",
-   "quantization": "UD-Q4_K_XL",
+   "artifact": "Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_M.gguf",
+   "quantization": "UD-Q4_K_M",
    "vision": false,
    "moe": true,
    "runtime_features": [
@@ -1072,7 +1072,7 @@
    "roles": [
     "main"
    ],
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+   "revision": "e59f05c5bda27883c2846bd6163acba3f5e00a8e",
    "upstream_source": "https://huggingface.co/peculiar-ragdoll/Tiel-Coder-35B-A3B"
   },
   {
@@ -1080,8 +1080,8 @@
    "name": "Cyber-Tiel Coder 35B-A3B UD-Q5_K_XL",
    "family": "Cyber-Tiel Coder 35B-A3B",
    "source": "https://huggingface.co/peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF",
-   "artifact": "Cyber-Tiel-Coder-35B-A3B-UD-Q5_K_XL.gguf",
-   "quantization": "UD-Q5_K_XL",
+   "artifact": "Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_S.gguf",
+   "quantization": "UD-Q4_K_S",
    "vision": false,
    "moe": true,
    "runtime_features": [
@@ -1091,7 +1091,7 @@
    "roles": [
     "main"
    ],
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+   "revision": "e59f05c5bda27883c2846bd6163acba3f5e00a8e",
    "upstream_source": "https://huggingface.co/peculiar-ragdoll/Tiel-Coder-35B-A3B"
   },
   {
@@ -1099,8 +1099,8 @@
    "name": "Cyber-Tiel Coder 35B-A3B UD-Q6_K_XL",
    "family": "Cyber-Tiel Coder 35B-A3B",
    "source": "https://huggingface.co/peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF",
-   "artifact": "Cyber-Tiel-Coder-35B-A3B-UD-Q6_K_XL.gguf",
-   "quantization": "UD-Q6_K_XL",
+   "artifact": "Cyber-Tiel-Coder-35B-A3B-UD-Q3_K_XL.gguf",
+   "quantization": "UD-Q3_K_XL",
    "vision": false,
    "moe": true,
    "runtime_features": [
@@ -1110,7 +1110,7 @@
    "roles": [
     "main"
    ],
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+   "revision": "e59f05c5bda27883c2846bd6163acba3f5e00a8e",
    "upstream_source": "https://huggingface.co/peculiar-ragdoll/Tiel-Coder-35B-A3B"
   },
   {
@@ -1118,8 +1118,8 @@
    "name": "Cyber-Tiel Coder 35B-A3B UD-Q8_K_XL",
    "family": "Cyber-Tiel Coder 35B-A3B",
    "source": "https://huggingface.co/peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF",
-   "artifact": "Cyber-Tiel-Coder-35B-A3B-UD-Q8_K_XL.gguf",
-   "quantization": "UD-Q8_K_XL",
+   "artifact": "Cyber-Tiel-Coder-35B-A3B-UD-IQ4_XS.gguf",
+   "quantization": "GSQ-RCO-IQ4_XS",
    "vision": false,
    "moe": true,
    "runtime_features": [
@@ -1129,7 +1129,7 @@
    "roles": [
     "main"
    ],
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+   "revision": "e59f05c5bda27883c2846bd6163acba3f5e00a8e",
    "upstream_source": "https://huggingface.co/peculiar-ragdoll/Tiel-Coder-35B-A3B"
   },
   {

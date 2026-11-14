@@ -673,10 +673,10 @@
     "cyber-tiel-coder-35b-a3b-ud-q4-k-xl"
    ],
    "repo_id": "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF",
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
-   "path": "Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_XL.gguf",
-   "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-   "size_bytes": 22360478720
+   "revision": "e59f05c5bda27883c2846bd6163acba3f5e00a8e",
+   "path": "Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_M.gguf",
+   "sha256": "fb4bc6c873afb6106b5eacc670a06fcd45052228c858de812d0426c8cea536dc",
+   "size_bytes": 22134551552
   },
   {
    "destination": "Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q5_K_XL.gguf",
@@ -684,10 +684,10 @@
     "cyber-tiel-coder-35b-a3b-ud-q5-k-xl"
    ],
    "repo_id": "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF",
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
-   "path": "Cyber-Tiel-Coder-35B-A3B-UD-Q5_K_XL.gguf",
-   "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-   "size_bytes": 28541829120
+   "revision": "e59f05c5bda27883c2846bd6163acba3f5e00a8e",
+   "path": "Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_S.gguf",
+   "sha256": "8ff5f1de2150957002608df69fb617459779fdfeab97f9c2e98a288edbebef1a",
+   "size_bytes": 20893037568
   },
   {
    "destination": "Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q6_K_XL.gguf",
@@ -695,10 +695,10 @@
     "cyber-tiel-coder-35b-a3b-ud-q6-k-xl"
    ],
    "repo_id": "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF",
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
-   "path": "Cyber-Tiel-Coder-35B-A3B-UD-Q6_K_XL.gguf",
-   "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-   "size_bytes": 34141573120
+   "revision": "e59f05c5bda27883c2846bd6163acba3f5e00a8e",
+   "path": "Cyber-Tiel-Coder-35B-A3B-UD-Q3_K_XL.gguf",
+   "sha256": "1016769b07e0a0032a133158ed449c549c3e31194be9e0bd9843a904a1c4d792",
+   "size_bytes": 16845534208
   },
   {
    "destination": "Cyber-Tiel-Coder-35B-A3B/Cyber-Tiel-Coder-35B-A3B-UD-Q8_K_XL.gguf",
@@ -706,10 +706,10 @@
     "cyber-tiel-coder-35b-a3b-ud-q8-k-xl"
    ],
    "repo_id": "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF",
-   "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
-   "path": "Cyber-Tiel-Coder-35B-A3B-UD-Q8_K_XL.gguf",
-   "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-   "size_bytes": 44000000000
+   "revision": "e59f05c5bda27883c2846bd6163acba3f5e00a8e",
+   "path": "Cyber-Tiel-Coder-35B-A3B-UD-IQ4_XS.gguf",
+   "sha256": "7a064f83186ebb058014e5bf7e60a4af96ebb27bdf156080de450d106817153b",
+   "size_bytes": 17730532352
   },
   {
    "destination": "ISTA-DASLab_Qwen3.8-27B-GSQ-RCO-GGUF/Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
