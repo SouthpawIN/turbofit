@@ -68,12 +68,42 @@ def deferred_rows(configurations: dict, catalog: ModelCatalog) -> tuple[frozense
         raise ValueError("catalog campaign policy deferred_models must be non-empty strings")
     deferred_models = frozenset(model_ids)
     configuration_index = build_configuration_index(configurations, catalog)
-    rows = frozenset(
+    rows = {
         row_id
         for row_id, row in configuration_index.items()
         if row.get("main") in deferred_models or row.get("auxiliary") in deferred_models
-    )
-    return rows, policy
+    }
+    rows |= capability_deferred_rows(configuration_index)
+    return frozenset(rows), policy
+
+
+def capability_deferred_rows(configuration_index: dict) -> set[str]:
+    """Rows this host physically cannot execute.
+
+    Colibri/Strata needs AVX-512 VNNI+VBMI for its expert kernel. Running those
+    rows anyway costs attempts and reports a hardware limit as if the model were
+    broken, so they are deferred with a reason instead.
+    """
+    from turbofit_runtime.cpu_features import cpu_flags, strata_supported
+
+    if strata_supported(cpu_flags()) is not False:
+        return set()
+    try:
+        recipes = json.loads(RECIPES.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return set()
+    strata_models = {
+        name
+        for name, spec in (recipes.get("models") or {}).items()
+        if isinstance(spec, dict) and spec.get("runtime_flavor") == "strata"
+    }
+    if not strata_models:
+        return set()
+    return {
+        row_id
+        for row_id, row in configuration_index.items()
+        if row.get("main") in strata_models or row.get("auxiliary") in strata_models
+    }
 
 
 def build_runner() -> CampaignRunner:
