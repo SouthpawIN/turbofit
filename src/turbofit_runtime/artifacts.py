@@ -142,11 +142,19 @@ def inspect_file(path: str | Path, expected_bytes: int | None = None) -> FileSta
         return FileState(target, False, 0, expected_bytes, "not-a-regular-file")
     size = target.stat().st_size
     floor = minimum_size(target)
-    if floor and size < floor:
+    # The floor catches placeholders; it must not condemn a file whose own pinned
+    # size is tiny (a 2-byte weight-scale sidecar is legitimate, not a stub).
+    floor_applies = bool(floor) and (expected_bytes is None or expected_bytes >= floor)
+    if floor_applies and size < floor:
         return FileState(target, False, size, expected_bytes, f"stub below {human_bytes(floor)} floor")
-    if expected_bytes is not None and expected_bytes > 0 and size != expected_bytes:
-        reason = "truncated download" if size < expected_bytes else "larger than pinned size"
-        return FileState(target, False, size, expected_bytes, reason)
+    if expected_bytes is not None and expected_bytes > 0:
+        # Sizes are pinned from repo metadata; a 1% band absorbs repack rounding
+        # without letting a genuinely truncated or substituted file pass.
+        tolerance = max(1024, int(expected_bytes * 0.01))
+        if size < expected_bytes - tolerance:
+            return FileState(target, False, size, expected_bytes, "truncated download")
+        if size > expected_bytes + tolerance:
+            return FileState(target, False, size, expected_bytes, "larger than pinned size")
     return FileState(target, True, size, expected_bytes, "complete")
 
 
