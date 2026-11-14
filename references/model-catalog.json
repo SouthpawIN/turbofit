@@ -8,6 +8,9 @@
  ],
  "auxiliary_options": [
   "maple-preview-tq2",
+  "ornith-1-5-35a3b",
+  "qwen3-8-flash-next-strata",
+  "carwin-nano",
   "auto"
  ],
  "models": [
