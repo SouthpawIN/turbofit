@@ -163,7 +163,7 @@ those would falsify evidence of what actually ran on 2026-08-22/10-19.
   `scripts/release-check [--real]`, `scripts/turbofit-hardware-tiers`, `scripts/turbofit-list`.
 - **Dashboard**: FastAPI router (`/status`, `/profiles`, `/combinations`, `/backends`,
   `/tournaments`, `/hardware-tiers`, `/leaderboard`, `/auxiliary-tiers`, `/recommendations`,
-  `/multimodal`, `/configure`, `/update`) plus a static `index.html`.
+  `/multimodal`, `/fit`, `/configure`, `/update`) plus a static `index.html`.
 - **Desktop**: `desktop/plugin.js` settings surface.
 - **Skill**: `skills/turbofit/SKILL.md` + the plugin-root `SKILL.md` (same doctrine, agent-facing).
 

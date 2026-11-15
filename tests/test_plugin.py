@@ -966,6 +966,32 @@ def test_dashboard_exposes_speed_and_intelligence_hardware_tiers() -> None:
     assert "speed versus intelligence" in bundle
 
 
+def test_dashboard_exposes_fit_view_for_this_machine() -> None:
+    source = (ROOT / "dashboard/plugin_api.py").read_text()
+    bundle = (ROOT / "dashboard/dist/index.js").read_text()
+    assert '@router.get("/fit")' in source
+    assert "/api/plugins/turbofit/fit" in bundle
+    assert "Fit · what to run on this machine" in bundle
+
+    pytest.importorskip("fastapi")
+    spec = importlib.util.spec_from_file_location("turbofit_dashboard_fit_api", ROOT / "dashboard/plugin_api.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    payload = module._fit_rows()
+
+    assert payload["ok"] is True
+    assert payload["schema"] == "turbofit.fit-view/v1"
+    assert payload["maple_aux_id"] == "maple-preview-tq2"
+    measured = [item for item in payload["tiers"] if item["measured"]]
+    assert measured and measured[0]["hardware_tier_gb"] == 48
+    assert measured[0]["recommendation"]["auxiliary"]["id"] == "maple-preview-tq2"
+    assert measured[0]["message"].endswith(".")
+    filtered = module._fit_rows(24)
+    assert [item["status"] for item in filtered["tiers"]] == ["no-measurements"]
+
+
 def test_dashboard_exposes_auxiliary_recommendations_by_tier() -> None:
     spec = importlib.util.spec_from_file_location("turbofit_dashboard_aux_api", ROOT / "dashboard/plugin_api.py")
     assert spec and spec.loader

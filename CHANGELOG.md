@@ -2,6 +2,15 @@
 
 ## Unreleased — one MoE family, one 64K floor
 
+- **`GET /api/plugins/turbofit/fit`**: one answer per hardware tier — the
+  configuration the intelligence leaderboard measured, its engine, whether every
+  artifact that configuration actually opens is present and complete, and the
+  Maple auxiliary. Tiers with no measurement say `no-measurements` instead of
+  borrowing a neighbour's recommendation, and a tier that cannot run states why
+  in one sentence (missing GiB, AVX-512 the engine needs, no measurements), not
+  a status code. `?tier=<gb>` narrows to one tier. The dashboard renders it as
+  "Fit · what to run on this machine".
+
 - **Catalog**: the retired 35B-A3B MoE family is gone — Cyber-Tiel Coder 35B-A3B
   is the 35B-A3B option, and it now carries the auxiliary slot that family held.
   Catalog is 86 models / 84 mains, matrix 1450 rows.
