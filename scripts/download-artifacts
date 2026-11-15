@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""Download SHA-pinned artifacts required by selected Turbofit matrix families."""
+"""Download SHA-pinned artifacts required by selected Turbofit matrix families.
+
+Two properties matter more than speed:
+
+* a shard set is fetched as a whole -- a shard the repo listing does not carry
+  is still attempted, because only the fetch proves it is really gone;
+* one family's failure never ends the run -- every remaining family is
+  attempted and the exit status carries a summary of what failed and why.
+"""
 from __future__ import annotations
 
 import argparse
@@ -9,7 +17,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -19,13 +27,17 @@ if str(SRC) not in sys.path:
 from turbofit_runtime.artifacts import (  # noqa: E402
     ArtifactMetadataError,
     ArtifactTree,
-    ShardSetError,
     expand_artifact,
+    human_bytes,
     inspect_file,
     resolve_expected_size,
 )
 
 MANIFEST = ROOT / "references/artifact-manifest.json"
+
+
+class ArtifactFetchError(RuntimeError):
+    """An artifact could not be fetched, so its family is incomplete."""
 
 
 def hf_download(**kwargs: object) -> str:
@@ -51,7 +63,15 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def safe_destination(root: Path, relative: str) -> Path:
+def safe_destination(root: Path, relative: str, *, for_write: bool = True) -> Path:
+    """Resolve a manifest destination under *root*.
+
+    ``for_write`` guards the blob store: a destination symlinked outside it is a
+    model archived elsewhere, fine to read and verify but never to write
+    through, because unlinking the link would not touch the archive. The
+    downloader checks presence without that guard and only demands it when it
+    actually has to materialize a file.
+    """
     if Path(relative).is_absolute():
         raise ValueError(f"artifact destination must be relative: {relative}")
     root = root.resolve()
@@ -60,7 +80,7 @@ def safe_destination(root: Path, relative: str) -> Path:
         destination.relative_to(root)
     except ValueError:
         raise ValueError(f"artifact destination escapes model root: {relative}")
-    if destination.is_symlink():
+    if for_write and destination.is_symlink():
         blob_root = (root.parent / "blobs").resolve()
         try:
             destination.resolve(strict=False).relative_to(blob_root)
@@ -84,13 +104,32 @@ def selected_artifacts(payload: dict, families: set[str] | None) -> list[dict]:
     return selected
 
 
-def _verified(destination: Path, expected_size: int, expected_hash: str) -> dict:
-    state = inspect_file(destination, expected_size)
+def _reason(exc: BaseException) -> str:
+    text = str(exc).strip().splitlines()[0] if str(exc).strip() else ""
+    return f"{type(exc).__name__}: {text}" if text else type(exc).__name__
+
+
+def _expected_metadata(item: Mapping, tree: ArtifactTree | None) -> tuple[int | None, str | None]:
+    """Pinned size/hash for *item*; ``None`` where the repo cannot supply one.
+
+    A shard absent from the repo listing has no pinned size or hash. That is not
+    a reason to skip it: the fetch is attempted and then verified against the
+    weights floor, which is weaker than a hash and is reported as such.
+    """
+    raw_size = item.get("size_bytes")
+    known_size = isinstance(raw_size, int) and not isinstance(raw_size, bool) and raw_size > 0
+    expected_size = resolve_expected_size(item, tree=tree) if known_size else None
+    raw_hash = item.get("sha256")
+    expected_hash = str(raw_hash) if raw_hash else None
+    return expected_size, expected_hash
+
+
+def _verify(path: Path, expected_size: int | None, expected_hash: str | None) -> None:
+    state = inspect_file(path, expected_size)
     if not state.present:
-        raise RuntimeError(f"artifact is not materialized after download: {state.describe()}")
-    if sha256_file(destination) != expected_hash:
-        raise RuntimeError(f"artifact hash does not match manifest: {destination}")
-    return {"destination": str(destination), "downloaded": True, "verified": True}
+        raise ArtifactFetchError(f"artifact is not materialized after download: {state.describe()}")
+    if expected_hash is not None and sha256_file(path) != expected_hash:
+        raise ArtifactFetchError(f"artifact hash does not match manifest: {path}")
 
 
 def install_artifact(
@@ -101,27 +140,38 @@ def install_artifact(
     tree: ArtifactTree | None = None,
 ) -> dict:
     download = download_fn or hf_download
-    destination = safe_destination(root, str(item["destination"]))
+    relative = str(item["destination"])
+    destination = safe_destination(root, relative, for_write=False)
     # Size metadata is mandatory: a manifest row without size_bytes used to make
     # the completeness check vacuously true, so any 15-byte placeholder passed.
-    expected_size = resolve_expected_size(item, tree=tree)
-    expected_hash = str(item["sha256"])
-    if destination.is_file():
+    expected_size, expected_hash = _expected_metadata(item, tree)
+    if destination.is_file() and expected_size is not None and expected_hash is not None:
         state = inspect_file(destination, expected_size)
         if state.present:
             if sha256_file(destination) != expected_hash:
-                raise RuntimeError(f"existing artifact does not match manifest: {destination}")
+                raise ArtifactFetchError(f"existing artifact does not match manifest: {destination}")
             return {"destination": str(destination), "downloaded": False, "verified": True}
-        # A stub or partial file is absent, not an error: replace it instead of
-        # leaving the host with an "installed" model that cannot load.
+    # From here the destination is materialized, so the blob-store guard applies:
+    # a stub or partial file is replaced, but never through a symlink into an
+    # archive elsewhere -- unlinking that link would not fix the archive.
+    destination = safe_destination(root, relative, for_write=True)
+    if destination.is_file():
         destination.unlink()
     cached = Path(download(
         repo_id=str(item["repo_id"]),
         revision=str(item["revision"]),
         filename=str(item["path"]),
     )).resolve(strict=True)
-    if cached.stat().st_size != expected_size or sha256_file(cached) != expected_hash:
-        raise RuntimeError(f"downloaded artifact does not match manifest: {cached}")
+    if expected_size is not None and cached.stat().st_size != expected_size:
+        raise ArtifactFetchError(f"downloaded artifact does not match manifest: {cached}")
+    if expected_hash is not None and sha256_file(cached) != expected_hash:
+        raise ArtifactFetchError(f"downloaded artifact does not match manifest: {cached}")
+    if expected_size is None:
+        # Unlisted shard: no pinned size exists, so the weights floor is the only
+        # pre-link check. Say so in the result instead of implying a hash check.
+        state = inspect_file(cached)
+        if not state.present:
+            raise ArtifactFetchError(f"downloaded shard is not usable weights: {state.describe()}")
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.is_symlink():
         destination.unlink()
@@ -134,18 +184,23 @@ def install_artifact(
         if destination.is_file():
             state = inspect_file(destination, expected_size)
             if not state.present:
-                raise RuntimeError(f"partial artifact left by a concurrent installer: {state.describe()}")
-            if sha256_file(destination) != expected_hash:
-                raise RuntimeError(f"existing artifact does not match manifest: {destination}")
+                raise ArtifactFetchError(f"partial artifact left by a concurrent installer: {state.describe()}")
+            if expected_hash is not None and sha256_file(destination) != expected_hash:
+                raise ArtifactFetchError(f"existing artifact does not match manifest: {destination}")
             return {"destination": str(destination), "downloaded": False, "verified": True}
         shutil.copyfile(cached, destination)
-    return _verified(destination, expected_size, expected_hash)
+    _verify(destination, expected_size, expected_hash)
+    result = {"destination": str(destination), "downloaded": True, "verified": True}
+    if expected_hash is None:
+        result["verification"] = "size-floor"
+    return result
 
 
 def expand_rows(
     rows: Iterable[dict],
     *,
     tree: ArtifactTree | None = None,
+    warned: set[str] | None = None,
 ) -> list[dict]:
     """Expand every row to its complete shard set, listing each repo once.
 
@@ -154,6 +209,7 @@ def expand_rows(
     siblings makes the materializer fetch the real set.
     """
     index = tree or ArtifactTree()
+    warned = warned if warned is not None else set()
     expanded: list[dict] = []
     seen: set[str] = set()
     for row in rows:
@@ -165,17 +221,18 @@ def expand_rows(
         try:
             siblings = index.siblings(repo_id, revision)
         except Exception as exc:  # noqa: BLE001 - offline installs still work
-            print(
-                f"warning: could not list {repo_id} siblings ({type(exc).__name__}: {exc}); "
-                f"installing {row.get('path')} as a single file",
-                file=sys.stderr,
-            )
+            # One warning per repo: 85 families share a handful of repos.
+            if repo_id not in warned:
+                warned.add(repo_id)
+                print(
+                    f"warning: could not list {repo_id} siblings ({type(exc).__name__}: {exc}); "
+                    f"installing the named files as single artifacts",
+                    file=sys.stderr,
+                )
             expanded.append(dict(row))
             continue
         try:
             members = expand_artifact(row, siblings)
-        except ShardSetError:
-            raise
         except ArtifactMetadataError as exc:
             raise ArtifactMetadataError(f"{exc} (destination {row.get('destination')})") from exc
         for member in members:
@@ -187,7 +244,155 @@ def expand_rows(
     return expanded
 
 
-def main() -> int:
+def group_rows_by_family(rows: Iterable[dict]) -> dict[str, list[dict]]:
+    """Every family name mapped to the manifest rows it needs.
+
+    A row shared by several families is listed under each of them; the caller
+    installs each destination once and reuses the result.
+    """
+    grouped: dict[str, list[dict]] = {}
+    for row in rows:
+        names = [str(name) for name in (row.get("families") or []) if str(name)]
+        if not names:
+            label = str(row.get("destination") or row.get("path") or "<unknown>")
+            names = [f"artifact:{label}"]
+        for name in names:
+            grouped.setdefault(name, []).append(row)
+    return grouped
+
+
+def _missing_stats(planned: Iterable[dict], completed: Mapping[str, dict], root: Path) -> dict:
+    """What a failed family still needs: bytes (where pinned) and shard names."""
+    missing_bytes = 0
+    unknown: list[str] = []
+    names: list[str] = []
+    for item in planned:
+        destination = str(item.get("destination"))
+        if destination in completed:
+            continue
+        names.append(Path(destination).name)
+        size = item.get("size_bytes")
+        try:
+            target = safe_destination(root, destination, for_write=False)
+        except ValueError:
+            target = None
+        present = target.stat().st_size if target is not None and target.is_file() else 0
+        if isinstance(size, int) and not isinstance(size, bool) and size > 0:
+            missing_bytes += max(0, size - present)
+        else:
+            unknown.append(Path(destination).name)
+    return {"missing_bytes": missing_bytes, "missing": names, "unknown_size_shards": unknown}
+
+
+def download_families(
+    rows: Iterable[dict],
+    *,
+    root: Path,
+    tree: ArtifactTree | None = None,
+    expand_shards: bool = True,
+    download_fn: Callable[..., str] | None = None,
+    err: object | None = None,
+) -> dict:
+    """Install *rows* family by family, isolating each family's failure.
+
+    Returns a summary of every family's outcome. Nothing is re-raised: the
+    caller decides the exit status from the summary, so a 401 on one gated repo
+    cannot stop the remaining families from downloading.
+    """
+    err = err or sys.stderr
+    index = tree or ArtifactTree()
+    grouped = group_rows_by_family(rows)
+    order = sorted(grouped)
+    completed: dict[str, dict] = {}
+    failures: dict[str, str] = {}
+    families: dict[str, dict] = {}
+    warned: set[str] = set()
+
+    for position, family in enumerate(order, start=1):
+        planned: list[dict] = [dict(row) for row in grouped[family]]
+        reason: str | None = None
+        failed_destination: str | None = None
+        try:
+            if expand_shards:
+                planned = expand_rows(grouped[family], tree=index, warned=warned)
+        except Exception as exc:  # noqa: BLE001 - one family must not end the run
+            reason = _reason(exc)
+        else:
+            for item in planned:
+                destination = str(item.get("destination"))
+                if destination in completed:
+                    continue
+                if destination in failures:
+                    reason = f"depends on {Path(destination).name}, which failed: {failures[destination]}"
+                    failed_destination = destination
+                    break
+                try:
+                    completed[destination] = install_artifact(
+                        item, root=root, download_fn=download_fn, tree=index
+                    )
+                except Exception as exc:  # noqa: BLE001 - reported, the run continues
+                    failures[destination] = _reason(exc)
+                    reason = failures[destination]
+                    failed_destination = destination
+                    break
+
+        if reason is not None:
+            record = {"status": "failed", "reason": reason, **_missing_stats(planned, completed, root)}
+            if failed_destination:
+                record["failed_destination"] = failed_destination
+            families[family] = record
+            if record["missing_bytes"]:
+                detail = f"; {human_bytes(record['missing_bytes'])} still missing"
+            else:
+                detail = "; no bytes missing, the files on disk failed verification"
+            if record["unknown_size_shards"]:
+                detail += f"; {len(record['unknown_size_shards'])} shard(s) of unknown size"
+            print(f"[{position}/{len(order)}] {family}: FAILED -- {reason}{detail}", file=err)
+            continue
+
+        fetched = sum(
+            1 for item in planned
+            if completed.get(str(item.get("destination")), {}).get("downloaded")
+        )
+        families[family] = {
+            "status": "ok",
+            "artifacts": len(planned),
+            "fetched": fetched,
+            "already_present": len(planned) - fetched,
+        }
+        print(
+            f"[{position}/{len(order)}] {family}: ok "
+            f"({fetched} fetched, {len(planned) - fetched} already present)",
+            file=err,
+        )
+
+    failed = {name: record for name, record in families.items() if record["status"] != "ok"}
+    summary = {
+        "families": len(families),
+        "families_ok": len(families) - len(failed),
+        "families_failed": len(failed),
+        "artifacts": len(completed),
+        "artifacts_fetched": sum(1 for result in completed.values() if result.get("downloaded")),
+        "missing_bytes": sum(record.get("missing_bytes", 0) for record in failed.values()),
+        "failed": failed,
+        "families_detail": families,
+        "results": list(completed.values()),
+    }
+    print(
+        f"summary: {summary['families']} families, {summary['families_ok']} ok, "
+        f"{summary['families_failed']} failed; {summary['artifacts_fetched']} artifacts fetched, "
+        f"{summary['artifacts'] - summary['artifacts_fetched']} already present",
+        file=err,
+    )
+    if failed:
+        names = sorted(failed)
+        shown = "; ".join(f"{name} ({failed[name]['reason']})" for name in names[:8])
+        more = f"; ... (+{len(names) - 8} more)" if len(names) > 8 else ""
+        print(f"{len(failed)} families failed: {shown}{more}", file=err)
+    return summary
+
+
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--family", action="append", default=[])
     parser.add_argument("--all", action="store_true")
@@ -200,9 +405,9 @@ def main() -> int:
         action="store_true",
         help="install only the named file; never enumerate repo siblings",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     payload = json.loads(args.manifest.read_text(encoding="utf-8"))
-    families = None if args.all else set(args.family)
+    families = None if args.all or (args.list and not args.family) else set(args.family)
     if not args.all and not families and not args.list:
         parser.error("select at least one --family or use --all")
     rows = selected_artifacts(payload, families)
@@ -215,13 +420,15 @@ def main() -> int:
     if args.list:
         print(json.dumps(rows, indent=2))
         return 0
-    tree = ArtifactTree()
-    if not args.no_expand_shards:
-        rows = expand_rows(rows, tree=tree)
     root = model_root(args.model_root)
-    results = [install_artifact(item, root=root, tree=tree) for item in rows]
-    print(json.dumps({"artifacts": len(results), "results": results}, indent=2))
-    return 0
+    summary = download_families(rows, root=root, expand_shards=not args.no_expand_shards)
+    print(json.dumps({
+        "artifacts": summary["artifacts"],
+        "results": summary["results"],
+        "families": summary["families_detail"],
+        "failed": summary["failed"],
+    }, indent=2))
+    return 1 if summary["families_failed"] else 0
 
 
 if __name__ == "__main__":

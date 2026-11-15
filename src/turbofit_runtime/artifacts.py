@@ -260,16 +260,20 @@ def shard_names(name: str, count: int) -> list[str]:
     return [f"{prefix}-{index:05d}-of-{count:05d}.{ext}" for index in range(1, count + 1)]
 
 
-def discover_shard_set(
+def shard_set_members(
     name: str,
     siblings: Mapping[str, Any] | Iterable[str],
-) -> list[str]:
-    """Enumerate the complete shard set for *name* from repo siblings.
+    *,
+    strict: bool = True,
+) -> tuple[list[str], list[str]]:
+    """Enumerate the shard set for *name* and the members the listing lacks.
 
-    A sharded repo ships ``X-00001-of-00004.gguf`` while the catalog may name
-    the single basename ``X.gguf``. Returning ``[name]`` there wrote a stub;
-    this resolves ``X`` to the four real files. Paths must stay in one
-    directory, as llama.cpp requires.
+    Returns ``(members, missing)`` where *members* is the complete set the
+    filename promises and *missing* are those the repo listing does not carry.
+    With ``strict`` (the verifier's contract) an incomplete set raises
+    :class:`ShardSetError`; the downloader passes ``strict=False`` because a
+    shard absent from a listing is still a work item to attempt -- lists can be
+    stale, and only the fetch itself proves a shard is really gone.
     """
     available = set(siblings.keys() if isinstance(siblings, Mapping) else siblings)
     path = PurePosixPath(str(name))
@@ -296,17 +300,33 @@ def discover_shard_set(
     if count is None:
         # Single-file repo, or a path the revision does not list: install what
         # was asked for (verification still applies after download).
-        return [str(name)]
+        return [str(name)], []
 
     names = shard_names(path.name, count)
     resolved = [str(directory / member) if str(directory) != "." else member for member in names]
     missing = [member for member in resolved if member not in available]
-    if missing:
+    if missing and strict:
         raise ShardSetError(
             f"incomplete shard set for {name}: missing {', '.join(missing)} "
             f"(expected {count} shards in {directory or '.'})"
         )
-    return resolved
+    return resolved, missing
+
+
+def discover_shard_set(
+    name: str,
+    siblings: Mapping[str, Any] | Iterable[str],
+    *,
+    strict: bool = True,
+) -> list[str]:
+    """Enumerate the complete shard set for *name* from repo siblings.
+
+    A sharded repo ships ``X-00001-of-00004.gguf`` while the catalog may name
+    the single basename ``X.gguf``. Returning ``[name]`` there wrote a stub;
+    this resolves ``X`` to the four real files. Paths must stay in one
+    directory, as llama.cpp requires.
+    """
+    return shard_set_members(name, siblings, strict=strict)[0]
 
 
 def expand_artifact(
@@ -318,14 +338,22 @@ def expand_artifact(
     Size and hash for each shard come from the repo listing, so callers get the
     exact metadata the manifest lacks. Destination directories are preserved
     and the destination names follow the repo shard names.
+
+    A shard the listing does not carry is still emitted as a row (with
+    ``size_bytes=None`` and ``unlisted_shard=True``): an incomplete upstream
+    listing used to abort the whole run, and the fetch itself is the only way
+    to distinguish a stale list from a genuinely removed shard. Those rows are
+    unverifiable until downloaded, so they must be attempted before the rest of
+    the set rather than after gigabytes of siblings.
     """
     path = str(artifact.get("path") or "")
-    members = discover_shard_set(path, siblings)
+    members, unlisted = shard_set_members(path, siblings, strict=False)
     if members == [path]:
         return [dict(artifact)]
     destination = PurePosixPath(str(artifact.get("destination") or path))
+    unlisted_set = set(unlisted)
     rows: list[dict[str, Any]] = []
-    for member in members:
+    for member in sorted(members, key=lambda name: name not in unlisted_set):
         sibling = siblings.get(member)
         size = getattr(sibling, "size_bytes", None)
         if size is None and isinstance(sibling, Mapping):
@@ -333,14 +361,23 @@ def expand_artifact(
         sha = getattr(sibling, "sha256", None)
         if sha is None and isinstance(sibling, Mapping):
             sha = sibling.get("sha256")
+        row = dict(artifact)
+        row["path"] = member
+        row["destination"] = str(destination.parent / PurePosixPath(member).name)
+        if member in unlisted_set:
+            # No pinned size or hash exists for a shard the repo does not list;
+            # the manifest's size belongs to a different member, so it must not
+            # be reused here.
+            row["size_bytes"] = None
+            row.pop("sha256", None)
+            row["unlisted_shard"] = True
+            rows.append(row)
+            continue
         if not size:
             raise ArtifactMetadataError(
                 f"no size metadata for shard {member} in {artifact.get('repo_id')}; "
                 "refusing to materialize an unverifiable shard"
             )
-        row = dict(artifact)
-        row["path"] = member
-        row["destination"] = str(destination.parent / PurePosixPath(member).name)
         row["size_bytes"] = int(size)
         if sha:
             row["sha256"] = str(sha)
@@ -575,4 +612,5 @@ __all__ = [
     "parse_shard",
     "resolve_expected_size",
     "shard_names",
+    "shard_set_members",
 ]

@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased — downloads fetch every shard and survive a bad family
+
+- **Missing shards are downloaded, not fatal**: `scripts/download-artifacts`
+  no longer aborts with `ShardSetError` when a repo listing does not carry a
+  shard of a known set. The shard becomes a work item, is probed before the
+  rest of the set (so a genuinely removed shard fails fast instead of after
+  hundreds of GiB), and is verified against the weights floor when the repo
+  pins no size or hash for it. A shard the listing omits but upstream still
+  serves is now installed instead of ending the run.
+- **`--all` isolates per-family failures**: each family is attempted
+  independently; a gated/404/truncated artifact marks that family failed with
+  its reason and remaining bytes, and every remaining family still runs. The
+  exit status is non-zero only after the whole run, with a
+  `N families failed: …` summary.
+- **`check-artifact-existence --local`** now judges shard sets by filename, so
+  one shard of six on disk is reported as `incomplete-shard-set` rather than
+  complete because the pinned row matched.
+
 ## Unreleased — expert offload measured per host
 
 - **Models bigger than VRAM now run**: `auto_cpu_moe: true` on a recipe

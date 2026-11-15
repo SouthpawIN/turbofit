@@ -27,24 +27,105 @@ import sys
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from turbofit_runtime.artifacts import inspect_file  # noqa: E402
+from turbofit_runtime.artifacts import (  # noqa: E402
+    human_bytes,
+    inspect_file,
+    parse_shard,
+    shard_names,
+)
 
 MANIFEST = ROOT / "references/artifact-manifest.json"
 
 
-def local_check(artifacts: list[dict], model_root: Path) -> list[dict]:
-    """Report every artifact that is not usable on disk right now."""
-    findings: list[dict] = []
+def _shard_sets(artifacts: list[dict]) -> dict[tuple[str, str, int], list[dict]]:
+    """Group manifest rows that belong to the same ``-of-N`` shard set.
+
+    A catalog may list only one member of a set (the first shard is often the
+    only row), so completeness has to be judged from the filename and the
+    directory, not from how many rows happen to be pinned.
+    """
+    groups: dict[tuple[str, str, int], list[dict]] = {}
     for artifact in artifacts:
         destination = str(artifact.get("destination") or "")
         if not destination:
+            continue
+        parsed = parse_shard(PurePosixPath(destination).name)
+        if not parsed:
+            continue
+        prefix, count, _ext = parsed
+        key = (str(PurePosixPath(destination).parent), prefix, count)
+        groups.setdefault(key, []).append(artifact)
+    return groups
+
+
+def _partial_shard_findings(
+    artifacts: list[dict], model_root: Path
+) -> tuple[list[dict], set[str]]:
+    """Findings for shard sets that are not fully materialized on disk.
+
+    Returns the findings plus the destinations already covered by a set, so the
+    per-file pass does not report the same shard twice.
+    """
+    findings: list[dict] = []
+    covered: set[str] = set()
+    for (directory, prefix, count), members in _shard_sets(artifacts).items():
+        covered.update(str(member.get("destination")) for member in members)
+        expected = shard_names(f"{prefix}-00001-of-{count:05d}.gguf", count)
+        pinned = {
+            PurePosixPath(str(member.get("destination"))).name: member.get("size_bytes")
+            for member in members
+        }
+        missing: list[str] = []
+        present_bytes = 0
+        expected_bytes = 0
+        unknown_bytes = False
+        for name in expected:
+            target = model_root / directory / name if directory != "." else model_root / name
+            size = pinned.get(name)
+            expected_size = size if isinstance(size, int) and not isinstance(size, bool) and size > 0 else None
+            state = inspect_file(target, expected_size)
+            if not state.present:
+                hint = f" ({human_bytes(expected_size)})" if expected_size else ""
+                missing.append(f"{name}{hint}")
+                if expected_size:
+                    expected_bytes += expected_size
+                else:
+                    unknown_bytes = True
+                continue
+            present_bytes += state.size_bytes
+            if expected_size:
+                expected_bytes += expected_size
+        if not missing:
+            continue
+        label = f"{directory}/{prefix}" if directory != "." else prefix
+        findings.append({
+            "destination": label,
+            "status": "incomplete-shard-set",
+            "size_bytes": present_bytes,
+            "expected_bytes": None if unknown_bytes else expected_bytes,
+            "missing": missing,
+            "detail": (
+                f"shard set {label}-*-of-{count:05d} has "
+                f"{len(expected) - len(missing)} of {len(expected)} shards: "
+                f"missing {', '.join(missing)}"
+            ),
+        })
+    return findings, covered
+
+
+def local_check(artifacts: list[dict], model_root: Path) -> list[dict]:
+    """Report every artifact that is not usable on disk right now."""
+    findings, covered = _partial_shard_findings(artifacts, model_root)
+    for artifact in artifacts:
+        destination = str(artifact.get("destination") or "")
+        if not destination or destination in covered:
             continue
         target = model_root / destination
         if str(artifact.get("sha256") or "").startswith("snapshot:"):
@@ -115,7 +196,7 @@ def main() -> int:
         else:
             print(f"checked {len(artifacts)} artifacts under {root}")
             for row in findings:
-                print(f"  {row['status'].upper():18} {row['detail']}")
+                print(f"  {row['status'].upper():22} {row['detail']}")
             print(f"unusable {len(findings)} of {len(artifacts)}")
         return 1 if findings else 0
 
