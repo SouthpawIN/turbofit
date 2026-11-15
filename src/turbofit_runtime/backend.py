@@ -1,6 +1,7 @@
 """Native process backend for controlled campaign runs."""
 from __future__ import annotations
 
+import copy
 import json
 import os
 import platform
@@ -13,6 +14,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from dataclasses import is_dataclass, replace
 from pathlib import Path
 from typing import Any, Callable
 
@@ -109,6 +111,206 @@ class CampaignBackend:
                 clear_samples = 0
             time.sleep(0.5)
         raise RuntimeError(f"port {port} did not become reusable within {timeout_s:.0f}s")
+
+    #: Ports a campaign launch may use. Catalog recipes pin 11605 (main) and
+    #: 11610 (aux); when a pinned port is held by something the campaign cannot
+    #: prove it owns, it walks this window (forward from the pinned port) instead
+    #: of failing. Documented here so operators can see what to expect in
+    #: `ss -ltnp` while a campaign runs.
+    PORT_RANGE_START = 11600
+    PORT_RANGE_END = 11699
+    #: How long a reclaimed residual engine gets to release its port.
+    RECLAIM_TIMEOUT_S = 30.0
+
+    @staticmethod
+    def _listener_pid(port: int) -> int | None:
+        """The pid whose command line names *port* as its serving port."""
+        listeners = CampaignBackend._listeners_on_port(port)
+        return listeners[0][0] if listeners else None
+
+    @staticmethod
+    def _listeners_on_port(port: int) -> list[tuple[int, tuple[str, ...]]]:
+        found: list[tuple[int, tuple[str, ...]]] = []
+        for entry in Path("/proc").iterdir():
+            if not entry.name.isdigit():
+                continue
+            try:
+                raw = (entry / "cmdline").read_bytes()
+            except OSError:
+                continue
+            argv = tuple(part.decode(errors="replace") for part in raw.split(b"\0") if part)
+            if not argv:
+                continue
+            if f"--port={port}" in argv:
+                found.append((int(entry.name), argv))
+                continue
+            for index, token in enumerate(argv):
+                if token == "--port" and index + 1 < len(argv) and argv[index + 1] == str(port):
+                    found.append((int(entry.name), argv))
+                    break
+        return found
+
+    def _recorded_pids(self, port: int) -> set[int]:
+        """Pids the runtime state says this campaign left listening on *port*."""
+        try:
+            state = json.loads(self.runtime_state.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return set()
+        recorded: set[int] = set()
+        for component in state.get("components") or []:
+            if not isinstance(component, dict) or component.get("port") != port:
+                continue
+            pid = component.get("pid")
+            if isinstance(pid, int) and not isinstance(pid, bool):
+                recorded.add(pid)
+        return recorded
+
+    def _port_logs_owned(self, port: int) -> list[Path]:
+        """Engine logs this campaign wrote for *port* (proof of prior ownership)."""
+        if not self.result_dir.is_dir():
+            return []
+        return sorted(self.result_dir.glob(f"campaign-*-{port}.log")) + sorted(
+            self.result_dir.glob(f"campaign-*-{port}-*.log")
+        )
+
+    def _owned_listener(self, component: ResolvedComponent, port: int) -> int | None:
+        """The pid of a residual *campaign* engine on *port*, or ``None``.
+
+        Ownership must be provable: either the runtime state recorded the pid for
+        this port, or the listener runs the same runtime binary this component
+        would launch *and* a campaign log for this port exists in the result
+        directory. Anything else is foreign and is never killed.
+        """
+        recorded = self._recorded_pids(port)
+        binary = ""
+        if component.command:
+            try:
+                binary = str(Path(str(component.command[0])).resolve())
+            except OSError:
+                binary = str(component.command[0])
+        logs_owned = bool(self._port_logs_owned(port))
+        for pid, argv in self._listeners_on_port(port):
+            if pid in recorded:
+                return pid
+            if not binary or not logs_owned:
+                continue
+            try:
+                listener_binary = str(Path(argv[0]).resolve())
+            except OSError:
+                listener_binary = argv[0]
+            if listener_binary == binary:
+                return pid
+        return None
+
+    @staticmethod
+    def _terminate(pid: int) -> None:
+        try:
+            os.killpg(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            return
+        except OSError:
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except ProcessLookupError:
+                return
+
+    def _reclaim(self, pid: int, port: int, component: ResolvedComponent) -> bool:
+        """Terminate a residual campaign engine and wait for its port."""
+        print(
+            f"campaign: reclaiming port {port} from {component.family or component.alias} "
+            f"engine pid {pid} left behind by an earlier run",
+            file=sys.stderr, flush=True,
+        )
+        self._terminate(pid)
+        deadline = time.monotonic() + self.RECLAIM_TIMEOUT_S
+        while time.monotonic() < deadline:
+            if not self._port_open(port) and not self._port_in_tcp_tables(port):
+                return True
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                # Process is gone; only the close-wait socket can remain.
+                pass
+            time.sleep(0.25)
+        try:
+            os.killpg(pid, signal.SIGKILL)
+        except (ProcessLookupError, OSError):
+            pass
+        try:
+            self._wait_port_reusable(port, timeout_s=5)
+        except RuntimeError:
+            return False
+        return True
+
+    @staticmethod
+    def _free_ephemeral_port() -> int:
+        with socket.socket() as sock:
+            sock.bind(("127.0.0.1", 0))
+            return int(sock.getsockname()[1])
+
+    def _next_free_port(self, requested: int, reserved: set[int] | None = None) -> int:
+        taken = reserved or set()
+        if self.PORT_RANGE_START <= requested <= self.PORT_RANGE_END:
+            candidates = list(range(requested + 1, self.PORT_RANGE_END + 1)) + list(
+                range(self.PORT_RANGE_START, requested)
+            )
+        else:
+            candidates = list(range(self.PORT_RANGE_START, self.PORT_RANGE_END + 1))
+        for candidate in candidates:
+            if candidate in taken or candidate == requested:
+                continue
+            if not self._port_open(candidate) and not self._port_in_tcp_tables(candidate):
+                return candidate
+        fallback = self._free_ephemeral_port()
+        while fallback in taken:
+            fallback = self._free_ephemeral_port()
+        return fallback
+
+    @staticmethod
+    def _command_with_port(command: tuple[str, ...], port: int) -> tuple[str, ...]:
+        rewritten = list(command)
+        for index, token in enumerate(rewritten):
+            if token == "--port" and index + 1 < len(rewritten):
+                rewritten[index + 1] = str(port)
+            elif token.startswith("--port="):
+                rewritten[index] = f"--port={port}"
+        return tuple(rewritten)
+
+    def claim_port(
+        self, component: ResolvedComponent, *, reserved: set[int] | None = None
+    ) -> ResolvedComponent:
+        """Return *component* bound to a usable port.
+
+        A free pinned port is used as-is. A listener this campaign can prove it
+        owns (recorded pid, or the same runtime binary plus one of our own logs
+        for that port) is reclaimed. A foreign listener is left alone and the
+        component moves to the next free port in :attr:`PORT_RANGE_START` ..
+        :attr:`PORT_RANGE_END`, so a busy port never fails a run.
+        """
+        port = int(component.port)
+        if not self._port_open(port) and not self._port_in_tcp_tables(port):
+            return component
+        owner = self._owned_listener(component, port)
+        if owner is not None and self._reclaim(owner, port, component):
+            return component
+        chosen = self._next_free_port(port, reserved)
+        reason = (
+            f"foreign listener on port {port}"
+            if owner is None
+            else f"port {port} still held after reclaiming pid {owner}"
+        )
+        print(
+            f"campaign: {reason}; using port {chosen} for "
+            f"{component.family or component.alias} ({component.role})",
+            file=sys.stderr, flush=True,
+        )
+        rewritten = self._command_with_port(component.command, chosen)
+        if is_dataclass(component):
+            return replace(component, port=chosen, command=rewritten)
+        clone = copy.copy(component)
+        clone.port = chosen
+        clone.command = rewritten
+        return clone
 
 
     def _start_monitor(self) -> None:

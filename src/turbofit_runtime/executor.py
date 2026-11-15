@@ -9,7 +9,7 @@ import subprocess
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Callable, Protocol
 
@@ -22,6 +22,7 @@ from .schema import MatrixRow
 
 class RuntimeBackend(Protocol):
     def start(self, component: ResolvedComponent): ...
+    def claim_port(self, component: ResolvedComponent, *, reserved: set[int] | None = None) -> ResolvedComponent: ...
     def wait_ready(self, component: ResolvedComponent, handle) -> dict: ...
     def route(self, recipe: ResolvedRecipe, handles: dict[str, object]) -> dict: ...
     def infer(self, role: str, recipe: ResolvedRecipe) -> dict: ...
@@ -273,9 +274,20 @@ class LocalPairExecutor:
             physical_hardware = self.physical_hardware_probe()
             validate_physical_hardware(physical_hardware)
             self._current_physical_fingerprint = str(physical_hardware["fingerprint_sha256"])
+            claimed: list[ResolvedComponent] = []
+            reserved: set[int] = set()
+            claim: Callable[..., ResolvedComponent] | None = getattr(self.backend, "claim_port", None)
             for component in recipe.components:
-                handle = self.backend.start(component)
-                started.append((component, handle))
+                effective = component
+                if callable(claim):
+                    # A port left behind by an earlier run must not fail the row:
+                    # reclaim it when we can prove it is ours, otherwise move on.
+                    effective = claim(component, reserved=reserved)
+                    reserved.add(int(effective.port))
+                claimed.append(effective)
+                handle = self.backend.start(effective)
+                started.append((effective, handle))
+            recipe = replace(recipe, components=tuple(claimed))
             for component, handle in started:
                 checks[component.role] = self.backend.wait_ready(component, handle)
             route = self.backend.route(recipe, {component.role: handle for component, handle in started})

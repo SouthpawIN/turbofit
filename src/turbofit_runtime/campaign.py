@@ -8,7 +8,7 @@ import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Protocol
+from typing import Mapping, Protocol
 
 from .evidence import BenchmarkResult, EvidencePublisher
 from .gpu import GPUClearEvent, GPUClearGate
@@ -96,6 +96,7 @@ class CampaignRunner:
         registry: Registry,
         clear_ceilings_mb: dict[int, int] | None = None,
         deferred_row_ids: frozenset[str] | None = None,
+        waiting_download_rows: Mapping[str, str] | None = None,
     ) -> None:
         self.matrix_path = matrix_path
         self.state_path = state_path
@@ -105,6 +106,9 @@ class CampaignRunner:
         self.registry = registry
         self.clear_ceilings_mb = clear_ceilings_mb or _default_clear_ceilings()
         self.deferred_row_ids = deferred_row_ids or frozenset()
+        # Rows whose weights are not verifiably installed: attempting them can
+        # only rediscover a download that has not finished, so they wait.
+        self.waiting_download_rows = dict(waiting_download_rows or {})
 
     def _load_state(self) -> dict:
         try:
@@ -137,7 +141,7 @@ class CampaignRunner:
         state = self._load_state()
         pending = []
         for row in matrix.rows:
-            if row.id in self.deferred_row_ids:
+            if row.id in self.deferred_row_ids or row.id in self.waiting_download_rows:
                 continue
             record = state["rows"].get(row.id) or {}
             campaign_status = record.get("status")
@@ -173,7 +177,7 @@ class CampaignRunner:
         state = self._load_state()
         unresolved = []
         for row in matrix.rows:
-            if row.id in self.deferred_row_ids:
+            if row.id in self.deferred_row_ids or row.id in self.waiting_download_rows:
                 continue
             record = state["rows"].get(row.id) or {}
             if row.id in runnable:
@@ -313,6 +317,11 @@ class CampaignRunner:
         matches = [item for item in load_matrix(self.matrix_path).rows if item.id == row.id]
         if len(matches) != 1 or matches[0] != row:
             raise ValueError(f"campaign row is not canonical: {row.id}")
+        waiting = self.waiting_download_rows.get(row.id)
+        if waiting is not None:
+            # No GPU clear, no engine launch, no failure evidence: the row simply
+            # is not runnable until the download finishes.
+            return CampaignOutcome(row_id=row.id, status="waiting-download", error=waiting)
         before: GPUClearEvent | None = None
         after: GPUClearEvent | None = None
         raw: RawBenchmark | None = None
