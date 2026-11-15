@@ -8,6 +8,7 @@ import pytest
 from turbofit_runtime.model_catalog import (
     CONTEXTS,
     ModelCatalog,
+    ModelVariant,
     build_configuration_matrix,
     validate_configuration_matrix,
 )
@@ -32,24 +33,37 @@ def test_catalog_has_every_requested_main_and_auxiliary_variant() -> None:
     assert gsq_rco.upstream_source == "https://huggingface.co/Qwen/Qwen3.8-27B"
     assert gsq_rco.quantization == "GSQ-RCO-IQ3_S"
     assert catalog.contexts == CONTEXTS
-    assert catalog.auxiliary_options == (
-        "maple-preview-tq2",
-        "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
-        "qwen3-8-flash-next-strata",
-        "carwin-nano",
-        "auto",
-    )
+    assert catalog.auxiliary_options == ("maple-preview-tq2",)
     assert all(item.source.startswith("https://huggingface.co/") for item in catalog.models)
+
+
+def test_auxiliary_options_are_concrete_models_only() -> None:
+    raw = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+    for bogus in (
+        ["maple-preview-tq2", "auto"],
+        ["auto"],
+        ["not-a-catalog-model"],
+        ["maple-preview-tq2", "maple-preview-tq2"],
+        [],
+    ):
+        raw["auxiliary_options"] = bogus
+        with pytest.raises(ValueError):
+            ModelCatalog(
+                models=tuple(ModelVariant.from_mapping(item) for item in raw["models"]),
+                contexts=tuple(raw["contexts"]),
+                auxiliary_options=tuple(raw["auxiliary_options"]),
+            ).validate()
 
 
 def test_complete_matrix_is_generated_not_hand_maintained() -> None:
     catalog = ModelCatalog.load(CATALOG_PATH)
     matrix = json.loads(MATRIX_PATH.read_text())
     validate_configuration_matrix(matrix, catalog)
-    expected = 1450
+    expected = 290
     assert len(matrix["rows"]) == expected
     assert len({item["id"] for item in matrix["rows"]}) == expected
     assert {item["context"] for item in matrix["rows"]} == set(CONTEXTS)
+    assert {item["auxiliary"] for item in matrix["rows"]} == {"maple-preview-tq2"}
 
 
 def test_matrix_rejects_missing_configuration() -> None:

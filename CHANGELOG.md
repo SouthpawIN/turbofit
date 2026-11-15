@@ -11,9 +11,11 @@
   a status code. `?tier=<gb>` narrows to one tier. The dashboard renders it as
   "Fit · what to run on this machine".
 
-- **Catalog**: the retired 35B-A3B MoE family is gone — Cyber-Tiel Coder 35B-A3B
-  is the 35B-A3B option, and it now carries the auxiliary slot that family held.
-  Catalog is 86 models / 84 mains, matrix 1450 rows.
+- **Catalog**: the retired 35B-A3B MoE family is gone. **Maple Preview TQ2_0
+  (`maple-preview-tq2`) is the only auxiliary** — `auxiliary_options` names one
+  concrete model, the sweep generates 290 rows (84 mains × Maple × their own
+  contexts), and Carwin Nano's two aux-only entries are retired. `auto` stays a
+  runtime routing mode (share the main process) and is never a matrix column.
 - **64K floor**: `context_floor` defaults to 65536 in `chain.py`,
   `fallback-chain.json`, the Strata installer and every runtime profile; nothing
   plans or ships a window below 64K. `context_steps()` raises a sub-floor window

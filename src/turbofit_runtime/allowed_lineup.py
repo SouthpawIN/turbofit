@@ -10,7 +10,11 @@ A 9B must never be recommended. Routing:
 - Integrated / RAM-only (non-Apple): Maple at 8 GB total, Cyber-Tiel Coder at 16 GB,
   and Qwen 3.8 27B GSQ-RCO at 24 GB+.
 - Dedicated 8 GB: Maple, plus Cyber-Tiel Coder when host RAM can hold offloaded experts.
-- Dedicated 16 GB+: GSQ-RCO GGUF + Cyber-Tiel Coder aux.
+- Dedicated 16 GB+: GSQ-RCO GGUF, with Maple as the auxiliary at every tier.
+
+The auxiliary is Maple Preview TQ2_0 (`maple-preview-tq2`) on every route:
+it is the only entry in ``ALLOWED_AUX``. ``auto`` (share the main process)
+stays a runtime mode, never a second aux model.
 
 The Asha/Escha mixed 2-bit (EschaLabs/Qwen3.8-27B-Escha-W2) is a research
 candidate only: custom SGLang kernels, no llama.cpp recipe, no TurboFit TPS.
@@ -57,13 +61,6 @@ ALLOWED_MAIN = (
 
 ALLOWED_AUX = (
     "maple-preview-tq2",
-    "cyber-tiel-coder-35b-a3b-ud-iq3-xxs",
-    "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
-    "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
-    "carwin-nano",
-    "carwin-moe-nano",
-    "qwen3-8-flash-next-strata",
-    "auto",
 )
 
 _BANNED = re.compile(
@@ -89,16 +86,15 @@ def is_allowed_main(alias: str) -> bool:
 
 
 def is_allowed_aux(alias: str) -> bool:
+    """True only for Maple or an ``auto`` shared-main alias.
+
+    ``auto``/``auto:<main>`` mean "no separate auxiliary process"; every real
+    auxiliary is Maple. A non-Maple drafter is never allowed.
+    """
     token = normalize(alias)
     if is_banned(token):
         return False
-    allowed = {normalize(item) for item in ALLOWED_AUX}
-    return (
-        token in allowed
-        or token.startswith("auto-")
-        or token.startswith("cyber-tiel-coder")
-        or token.startswith("carwin")
-    )
+    return token in {normalize(item) for item in ALLOWED_AUX} or token.startswith("auto")
 
 
 def expert_residency(*, host_ram_gb: float) -> dict[str, object]:
@@ -166,12 +162,11 @@ def shared_main_for_total_memory_gb(total_memory_gb: float) -> str:
 
 
 def local_aux_for_host(*, vram_gb: float, host_ram_gb: float) -> str:
-    """Default aux is Maple Preview (fast RAM/disk-streaming 20B-A1B MoE).
+    """The auxiliary is Maple Preview on every host.
 
     Maple TQ2_0 is tiny (~6 GB on disk), streams from host RAM / disk, and
-    never blocks the main model's VRAM — ideal as a lightweight auxiliary
-    across every VRAM tier. Larger MoE variants remain available as an
-    explicit opt-in for boxes that can stack the extra model alongside main.
+    never blocks the main model's VRAM. There is no tier-based alternative and
+    no non-Maple opt-in: the auxiliary is Maple across the board.
     """
     return "maple-preview-tq2"
 

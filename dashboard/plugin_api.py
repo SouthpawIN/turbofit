@@ -395,7 +395,7 @@ async def post_smoke(body: dict[str, Any] | None = None) -> dict[str, Any]:
 
 
 @router.get("/audition")
-async def get_audition(main: str = "maple-preview-tq2", aux: str = "auto", context: int = 65536) -> dict[str, Any]:
+async def get_audition(main: str = "maple-preview-tq2", aux: str = "maple-preview-tq2", context: int = 65536) -> dict[str, Any]:
     try:
         from turbofit_runtime.engine_check import audition_pair, detect_driver_major, detect_wsl
         from turbofit_runtime.hardware import probe_hardware

@@ -236,11 +236,12 @@ def test_intelligence_scores_are_loaded_only_from_exact_measured_configuration_r
     assert ("main-q8", "aux-q4", 131072) not in scores
 
 
-def test_auto_auxiliary_intelligence_uses_runtime_recipe_alias() -> None:
+def test_catalog_intelligence_recipes_use_the_maple_auxiliary_alias() -> None:
     recipes = current_intelligence_recipes()
 
-    assert ("bonsai-27b", "auto:bonsai-27b", 65_536) in recipes
-    assert ("bonsai-27b", "auto", 65_536) not in recipes
+    assert ("bonsai-27b", "maple-preview-tq2", 65_536) in recipes
+    assert all(aux == "maple-preview-tq2" for _, aux, _ in recipes)
+    assert not any(aux == "auto" for _, aux, _ in recipes)
 
 
 def test_recommender_distinguishes_no_fit_from_a_real_failure(monkeypatch, capsys) -> None:

@@ -114,9 +114,16 @@ class ModelCatalog:
         if self.contexts != CONTEXTS:
             raise ValueError("catalog must expose 64K, 128K, 262K, and 1M contexts")
         by_id = {item.id: item for item in self.models}
-        if not self.auxiliary_options or self.auxiliary_options[-1] != "auto":
-            raise ValueError("auxiliary options must end with auto")
-        for model_id in self.auxiliary_options[:-1]:
+        if not self.auxiliary_options:
+            raise ValueError("catalog must name at least one auxiliary option")
+        if len(set(self.auxiliary_options)) != len(self.auxiliary_options):
+            raise ValueError("auxiliary options must be unique")
+        # `auto` is a runtime routing mode (share the main process), not a
+        # model, so it must never become a swept matrix column. Only concrete
+        # auxiliary models belong here.
+        for model_id in self.auxiliary_options:
+            if model_id == "auto":
+                raise ValueError("auxiliary options are concrete models; auto is a runtime mode")
             if model_id not in by_id or "aux" not in by_id[model_id].roles:
                 raise ValueError(f"invalid auxiliary option: {model_id}")
         if any(not set(item.roles) & {"main", "aux"} for item in self.models):
