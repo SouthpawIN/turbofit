@@ -335,6 +335,25 @@ def benchmark_run(run: dict[str, Any], catalog: ModelCatalog, recipes: RecipeBoo
         route = backend.route(recipe, handles)
         if route.get("main") != recipe.main_alias or route.get("aux") != recipe.aux_alias:
             raise RuntimeError(route_mismatch_message(recipe, route))
+        # Record the published route immediately: a later benchmark failure (a
+        # missing harness, a docker timeout) must not erase the evidence of which
+        # pair actually ran.
+        atomic_json(attempt_dir / "route.json", {
+            "schema": "turbofit.intelligence-route/v1",
+            "configuration_id": run["configuration_id"],
+            "level": run["level"],
+            "production_recipe_sha256": recipe_sha,
+            "main": route.get("main"),
+            "aux": route.get("aux"),
+            "aux_mode": recipe.aux_mode,
+            "components": [
+                {"role": component.role, "alias": component.alias, "port": component.port}
+                for component, _ in started
+            ],
+            "checks": checks,
+            "status": route.get("status"),
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
+        })
         deepswe_paths = []
         parameters = run["parameters"]
         dataset = DEEPSWE_ROOT / "deep-swe-435ee89ec2f2e2289f33b0da4f992f0b7b7266b9" / "tasks"
