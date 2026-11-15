@@ -186,5 +186,13 @@ def test_missing_engine_binary_names_the_binary_and_family(tmp_path) -> None:
         gateway_script=tmp_path / "gw.py", result_dir=tmp_path, runtime_state=tmp_path / "state.json",
         accelerator_backend="cuda",
     )
-    with pytest.raises(RuntimeError, match="engine binary not found for Arete 27B"):
+    with pytest.raises(RuntimeError) as raised:
         backend.start(component)
+    # A genuine launch attempt keeps the original message: name the binary and
+    # family, and give the one install action. The row-level gate only moves
+    # the verdict earlier; it does not soften this refusal.
+    assert str(raised.value) == (
+        "engine binary not found for Arete 27B: '/nonexistent/llama-server'. "
+        "Install the runtime (scripts/install.sh) or set the engine path in "
+        "references/model-recipes.json for this family."
+    )
