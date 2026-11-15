@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import os
 import sys
 from pathlib import Path
@@ -77,7 +78,26 @@ def deferred_rows(configurations: dict, catalog: ModelCatalog) -> tuple[frozense
         if row.get("main") in deferred_models or row.get("auxiliary") in deferred_models
     }
     rows |= capability_deferred_rows(configuration_index)
+    rows |= quant_ceiling_rows(configuration_index)
     return frozenset(rows), policy
+
+
+QUANT_ABOVE_CEILING = re.compile(r"(?i)(?:^|[-_])q[5-7](?:[-_][a-z0-9]+)*$")
+
+
+def quant_ceiling_rows(configuration_index: dict) -> set[str]:
+    """Rows whose weight quant is above the Q4 ceiling.
+
+    Q4 is a CEILING: nothing above it is a default candidate. Q2/Q3 stay fully
+    eligible. An explicit catalog justification is the only way back in, and that
+    is enforced by the quant policy module once it lands; this guard keeps the
+    campaign from burning GPU time on Q5/Q6 rows in the meantime.
+    """
+    return {
+        row_id
+        for row_id, row in configuration_index.items()
+        if QUANT_ABOVE_CEILING.search(str(row.get("main") or ""))
+    }
 
 
 def capability_deferred_rows(configuration_index: dict) -> set[str]:
