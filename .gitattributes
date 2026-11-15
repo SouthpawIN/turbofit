@@ -1,2 +1,6 @@
 # Unified-diff context lines legitimately contain a single marker space.
 *.patch whitespace=-blank-at-eol
+# Keep runtime patches LF-only: core.autocrlf=true (the Git for Windows default)
+# rewrites them to CRLF on checkout, and `git apply` rejects a CRLF patch as
+# corrupt before any hunk is considered.
+*.patch eol=lf

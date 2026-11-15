@@ -9,19 +9,25 @@ import subprocess
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Callable, Protocol
 
 from .campaign import RawBenchmark
 from .gpu import GPUClearEvent
 from .hardware import HardwareFingerprint, probe_hardware
-from .recipes import RecipeBook, ResolvedComponent, ResolvedRecipe
+from .recipes import (
+    RecipeBook,
+    ResolvedComponent,
+    ResolvedRecipe,
+    UnknownRecipeError,
+)
 from .schema import MatrixRow
 
 
 class RuntimeBackend(Protocol):
     def start(self, component: ResolvedComponent): ...
+    def claim_port(self, component: ResolvedComponent, *, reserved: set[int] | None = None) -> ResolvedComponent: ...
     def wait_ready(self, component: ResolvedComponent, handle) -> dict: ...
     def route(self, recipe: ResolvedRecipe, handles: dict[str, object]) -> dict: ...
     def infer(self, role: str, recipe: ResolvedRecipe) -> dict: ...
@@ -79,13 +85,27 @@ def capture_physical_hardware() -> dict:
         if set(drivers) != expected:
             raise RuntimeError("NVIDIA driver inventory does not match physical accelerator inventory")
     if any(device.vendor == "amd" for device in hardware.devices):
-        completed = subprocess.run(
-            ["rocm-smi", "--showdriverversion", "--json"],
-            text=True, capture_output=True, check=True, timeout=30,
-        )
-        if not completed.stdout.strip():
-            raise RuntimeError("empty ROCm driver inventory")
-        drivers["rocm-smi"] = completed.stdout.strip()
+        if platform.system() == "Windows":
+            completed = subprocess.run(
+                [
+                    "powershell.exe", "-NoProfile", "-NonInteractive", "-Command",
+                    "Get-CimInstance Win32_VideoController | "
+                    "Where-Object { $_.AdapterRAM -gt 0 } | "
+                    "Select-Object Name,DriverVersion | ConvertTo-Json -Compress",
+                ],
+                text=True, capture_output=True, check=True, timeout=30,
+            )
+            if not completed.stdout.strip():
+                raise RuntimeError("empty Windows video-driver inventory")
+            drivers["windows-video-controller"] = completed.stdout.strip()
+        else:
+            completed = subprocess.run(
+                ["rocm-smi", "--showdriverversion", "--json"],
+                text=True, capture_output=True, check=True, timeout=30,
+            )
+            if not completed.stdout.strip():
+                raise RuntimeError("empty ROCm driver inventory")
+            drivers["rocm-smi"] = completed.stdout.strip()
     if any(device.vendor == "apple" for device in hardware.devices):
         completed = subprocess.run(
             ["sw_vers", "-productVersion"],
@@ -176,6 +196,31 @@ class LocalPairExecutor:
         acquire = getattr(self.backend, "acquire_campaign_lease", None)
         if acquire is not None:
             acquire()
+        try:
+            recipe = self.recipes.resolve(item)
+        except UnknownRecipeError:
+            # Catalog matrix rows carry display names ('LFM3 Omni 2B Q4_K_M')
+            # that do not address a recipe family; the catalog adapter resolves
+            # the real configuration and reconciles those ports itself.
+            return
+        self.reconcile_ports(recipe)
+
+    def reconcile_ports(self, recipe: ResolvedRecipe) -> None:
+        """Make each component's pinned port launchable before the GPU gate.
+
+        A residual engine from a killed run still holds its VRAM, so the clear
+        gate would wait out its whole budget *before* any launch could reclaim
+        the port. Reconciling here kills the two birds: an owned leftover is
+        terminated (freeing the GPU) and a foreign listener moves this run to
+        another port.
+        """
+        claim: Callable[..., ResolvedComponent] | None = getattr(self.backend, "claim_port", None)
+        if not callable(claim):
+            return
+        reserved: set[int] = set()
+        for component in recipe.components:
+            effective = claim(component, reserved=reserved)
+            reserved.add(int(effective.port))
 
     def finish(self, item: MatrixRow) -> None:
         release = getattr(self.backend, "release_campaign_lease", None)
@@ -256,12 +301,26 @@ class LocalPairExecutor:
         failure_traceback = ""
         physical_hardware: dict = {}
         try:
+            # An engine the offload planner refused must never be started; the
+            # refusal carries the planner's arithmetic into the failure record.
+            recipe.assert_launchable()
             physical_hardware = self.physical_hardware_probe()
             validate_physical_hardware(physical_hardware)
             self._current_physical_fingerprint = str(physical_hardware["fingerprint_sha256"])
+            claimed: list[ResolvedComponent] = []
+            reserved: set[int] = set()
+            claim: Callable[..., ResolvedComponent] | None = getattr(self.backend, "claim_port", None)
             for component in recipe.components:
-                handle = self.backend.start(component)
-                started.append((component, handle))
+                effective = component
+                if callable(claim):
+                    # A port left behind by an earlier run must not fail the row:
+                    # reclaim it when we can prove it is ours, otherwise move on.
+                    effective = claim(component, reserved=reserved)
+                    reserved.add(int(effective.port))
+                claimed.append(effective)
+                handle = self.backend.start(effective)
+                started.append((effective, handle))
+            recipe = replace(recipe, components=tuple(claimed))
             for component, handle in started:
                 checks[component.role] = self.backend.wait_ready(component, handle)
             route = self.backend.route(recipe, {component.role: handle for component, handle in started})

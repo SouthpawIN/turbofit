@@ -7,7 +7,7 @@
     "server_decode_tps",
     "fit"
   ],
-  "policy": "Candidate labels only until current production-recipe intelligence and TPS evidence passes on the exact tier topology.",
+  "policy": "Maple Preview TQ2_0 (maple-preview-tq2) is the only auxiliary across every hardware tier. Candidate labels only until current production-recipe intelligence and TPS evidence passes on the exact tier topology.",
   "tiers": [
     {
       "vram_gb": 8,
@@ -18,115 +18,176 @@
       "decode_tps": null,
       "evidence": null,
       "limitations": [
-        "physical 8 GB exact-topology promotion pending",
+        "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "bonsai-27b",
-      "basis": "Candidate only. Previous observations used a superseded runtime/validation recipe and are excluded from recommendations."
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
+    },
+    {
+      "vram_gb": 12,
+      "best_auxiliary": null,
+      "status": "requires-current-recipe-validation",
+      "context": 65536,
+      "artifact_gib": 5.207,
+      "decode_tps": null,
+      "evidence": null,
+      "limitations": [
+        "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
+        "current production-recipe intelligence and TPS evidence required"
+      ],
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     },
     {
       "vram_gb": 16,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "context": 65536,
-      "artifact_gib": 11.488,
+      "artifact_gib": 5.207,
       "decode_tps": null,
       "evidence": null,
       "limitations": [
-        "physical 16 GB exact-topology promotion pending",
+        "GSQ-RCO IQ3_S benchmarked on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "carwin-nano",
-      "basis": "Candidate only. Previous observations used a superseded runtime/validation recipe and are excluded from recommendations."
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     },
     {
       "vram_gb": 24,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "context": 65536,
-      "artifact_gib": 11.488,
+      "artifact_gib": 5.207,
       "decode_tps": null,
       "evidence": null,
       "limitations": [
-        "physical 24 GB exact-topology promotion pending",
+        "GSQ-RCO IQ3_S benchmarked at 262K on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "carwin-nano",
-      "basis": "Candidate only. Previous observations used a superseded runtime/validation recipe and are excluded from recommendations."
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
+    },
+    {
+      "vram_gb": 32,
+      "best_auxiliary": null,
+      "status": "requires-current-recipe-validation",
+      "context": 131072,
+      "artifact_gib": 5.207,
+      "decode_tps": null,
+      "evidence": null,
+      "limitations": [
+        "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
+        "current production-recipe intelligence and TPS evidence required"
+      ],
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     },
     {
       "vram_gb": 48,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "candidates": [
-        "carwin-nano",
-        "ternary-bonsai-27b",
-        "bonsai-27b"
+        "maple-preview-tq2"
       ],
       "main_control": null,
       "context": 65536,
       "limitations": [
-        "physical 48 GB exact-topology promotion pending",
-        "current production-recipe intelligence and TPS evidence required",
-        "GRM control deferred; Qwen3.8-27B replacement pending"
+        "GSQ-RCO IQ3_S benchmarked at 262K on Omarchy 2x3090",
+        "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "carwin-nano",
-      "basis": "Candidate only. Previous observations used a superseded runtime/validation recipe and are excluded from recommendations.",
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered.",
       "evidence": null,
-      "decode_tps": null
+      "decode_tps": null,
+      "artifact_gib": 5.207
     },
     {
       "vram_gb": 64,
       "best_auxiliary": null,
-      "status": "replacement-pending",
-      "candidate": null,
-      "artifact_gib": null,
+      "status": "requires-current-recipe-validation",
+      "candidate": "maple-preview-tq2",
+      "artifact_gib": 5.207,
       "capabilities": [],
       "limitations": [
-        "Qwen3.8-27B replacement artifacts and physical 64GB evidence required"
+        "Strata Flash Next benchmarked on Omarchy 2x3090"
       ],
-      "basis": "GRM candidate retired; no replacement is eligible until Qwen3.8-27B physical evidence exists.",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered.",
       "evidence": null
     },
     {
       "vram_gb": 96,
       "best_auxiliary": null,
-      "status": "replacement-pending",
-      "candidate": null,
-      "artifact_gib": null,
+      "status": "requires-current-recipe-validation",
+      "candidate": "maple-preview-tq2",
+      "artifact_gib": 5.207,
       "capabilities": [],
       "limitations": [
-        "Qwen3.8-27B replacement artifacts and physical 96GB evidence required"
+        "Strata Flash Next benchmarked on Omarchy 2x3090"
       ],
-      "basis": "GRM candidate retired; no replacement is eligible until Qwen3.8-27B physical evidence exists.",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered.",
       "evidence": null
     },
     {
-      "vram_gb": 200,
+      "vram_gb": 128,
       "best_auxiliary": null,
-      "status": "candidate-only",
-      "candidate": "minimax-m3-q4",
-      "capabilities": [
-        "vision",
-        "expert-offload"
-      ],
+      "status": "requires-current-recipe-validation",
+      "context": 262144,
+      "artifact_gib": 5.207,
+      "decode_tps": null,
+      "evidence": null,
       "limitations": [
-        "246 GiB artifact requires system-RAM offload",
-        "physical 200GB tournament pending"
-      ]
+        "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
+        "current production-recipe intelligence and TPS evidence required"
+      ],
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     },
     {
-      "vram_gb": 300,
+      "vram_gb": 192,
       "best_auxiliary": null,
-      "status": "candidate-only",
-      "candidate": "minimax-m3-q4",
-      "capabilities": [
-        "vision",
-        "expert-offload"
-      ],
+      "status": "requires-current-recipe-validation",
+      "context": 262144,
+      "artifact_gib": 5.207,
+      "decode_tps": null,
+      "evidence": null,
       "limitations": [
-        "physical 300GB tournament pending"
-      ]
+        "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
+        "current production-recipe intelligence and TPS evidence required"
+      ],
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
+    },
+    {
+      "vram_gb": 256,
+      "best_auxiliary": null,
+      "status": "requires-current-recipe-validation",
+      "context": 262144,
+      "artifact_gib": 5.207,
+      "decode_tps": null,
+      "evidence": null,
+      "limitations": [
+        "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
+        "current production-recipe intelligence and TPS evidence required"
+      ],
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
+    },
+    {
+      "vram_gb": 384,
+      "best_auxiliary": null,
+      "status": "requires-current-recipe-validation",
+      "context": 262144,
+      "artifact_gib": 5.207,
+      "decode_tps": null,
+      "evidence": null,
+      "limitations": [
+        "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
+        "current production-recipe intelligence and TPS evidence required"
+      ],
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     }
   ]
 }

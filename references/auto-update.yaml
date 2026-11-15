@@ -48,10 +48,10 @@ components:
     package: herm
     restart_services: []
 
-  sirvir:
+  turbosouth:
     enabled: true
     type: git
-    repo: ~/projects/sirvir
+    repo: ~/projects/turbosouth
     rebuild: false
     restart_services: []
 

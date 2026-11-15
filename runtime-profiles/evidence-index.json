@@ -172,5 +172,34 @@
       "carwin-auto-262k"
     ],
     "source": "/home/sovthpaw/.hermes/wiki/topics/turbofit/evidence/carwin-nano-auto-262k.md"
+  },
+  "sha256:0323602de8a7f7aaca8e89535cd94fd82d1dfef2ca64656aae8c61762f947c74": {
+    "source": "references/results/omarchy-tier-benchmarks.json",
+    "model": "underdog-27b-pq2",
+    "tok_per_sec": 78.19,
+    "context": 262144,
+    "host": "omarchy"
+  },
+  "sha256:4237fae3f8855344dbe203a12d97eda11b2a7bbec554b8c53b34c3c3ee9936f7": {
+    "source": "references/results/omarchy-tier-benchmarks.json",
+    "model": "qwen3-8-27b-gsq-rco-iq3s",
+    "tok_per_sec": 76.24,
+    "context": 131072,
+    "mtp": true,
+    "host": "omarchy"
+  },
+  "sha256:f215afc21c18bbad0ef3f4cb42d727c7f8b2ea28f39df021dc549a792ffe4d22": {
+    "source": "references/results/omarchy-tier-benchmarks.json",
+    "model": "qwen3-8-27b-gsq-rco-iq3s",
+    "tok_per_sec": 49.2,
+    "context": 262144,
+    "host": "omarchy"
+  },
+  "sha256:ddd40884720a46897608672bcd6735a57fdaf2bd07242924e9d86c07bc5f74f8": {
+    "source": "references/results/omarchy-tier-benchmarks.json",
+    "model": "ternary-bonsai-2-27b-ptq1",
+    "tok_per_sec": 86.5,
+    "context": 262144,
+    "host": "omarchy"
   }
 }

@@ -8,6 +8,7 @@ import pytest
 from turbofit_runtime.model_catalog import (
     CONTEXTS,
     ModelCatalog,
+    ModelVariant,
     build_configuration_matrix,
     validate_configuration_matrix,
 )
@@ -19,37 +20,50 @@ MATRIX_PATH = ROOT / "references" / "configuration-matrix.json"
 
 def test_catalog_has_every_requested_main_and_auxiliary_variant() -> None:
     catalog = ModelCatalog.load(CATALOG_PATH)
-    assert len(catalog.main_models) == 45
-    deepseek = next(item for item in catalog.main_models if item.id == "deepseek-v4-flash-0731-q8-dspark")
-    assert deepseek.source == "https://huggingface.co/unsloth/DeepSeek-V4-Flash-0731-GGUF"
-    assert deepseek.upstream_source == "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731"
-    assert deepseek.upstream_revision == "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
-    assert deepseek.quantization == "UD-Q8_K_XL"
-    assert deepseek.runtime_features == ("dspark", "expert-offload")
+    assert len(catalog.main_models) == 84
+    maple = next(item for item in catalog.main_models if item.id == "maple-preview-tq2")
+    assert maple.source == "https://huggingface.co/stamsam/maple-preview-gguf"
+    assert maple.revision == "0afcb98771d39ab4de25252ee006ea9f9eab1920"
+    assert maple.artifact == "maple-tq2_0.gguf"
+    assert maple.quantization == "TQ2_0"
+    assert maple.runtime_features == ("maple",)
+    assert maple.supported_contexts == (65536, 131072)
+    gsq_rco = next(item for item in catalog.main_models if item.id == "qwen3-8-27b-gsq-rco-iq3s")
+    assert gsq_rco.source == "https://huggingface.co/ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF"
+    assert gsq_rco.upstream_source == "https://huggingface.co/Qwen/Qwen3.8-27B"
+    assert gsq_rco.quantization == "GSQ-RCO-IQ3_S"
     assert catalog.contexts == CONTEXTS
-    assert catalog.auxiliary_options == (
-        "carwin-nano",
-        "carwin-nano-no-mtp",
-        "ternary-bonsai-27b",
-        "ternary-bonsai-27b-dspark",
-        "ternary-bonsai-27b-dspark-bf16",
-        "bonsai-27b",
-        "bonsai-27b-dspark",
-        "bonsai-27b-dspark-bf16",
-        "auto",
-    )
+    assert catalog.auxiliary_options == ("maple-preview-tq2",)
     assert all(item.source.startswith("https://huggingface.co/") for item in catalog.models)
+
+
+def test_auxiliary_options_are_concrete_models_only() -> None:
+    raw = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+    for bogus in (
+        ["maple-preview-tq2", "auto"],
+        ["auto"],
+        ["not-a-catalog-model"],
+        ["maple-preview-tq2", "maple-preview-tq2"],
+        [],
+    ):
+        raw["auxiliary_options"] = bogus
+        with pytest.raises(ValueError):
+            ModelCatalog(
+                models=tuple(ModelVariant.from_mapping(item) for item in raw["models"]),
+                contexts=tuple(raw["contexts"]),
+                auxiliary_options=tuple(raw["auxiliary_options"]),
+            ).validate()
 
 
 def test_complete_matrix_is_generated_not_hand_maintained() -> None:
     catalog = ModelCatalog.load(CATALOG_PATH)
     matrix = json.loads(MATRIX_PATH.read_text())
     validate_configuration_matrix(matrix, catalog)
-    expected = len(catalog.main_models) * len(catalog.auxiliary_options) * len(CONTEXTS)
-    assert expected == 1620
+    expected = 290
     assert len(matrix["rows"]) == expected
     assert len({item["id"] for item in matrix["rows"]}) == expected
     assert {item["context"] for item in matrix["rows"]} == set(CONTEXTS)
+    assert {item["auxiliary"] for item in matrix["rows"]} == {"maple-preview-tq2"}
 
 
 def test_matrix_rejects_missing_configuration() -> None:

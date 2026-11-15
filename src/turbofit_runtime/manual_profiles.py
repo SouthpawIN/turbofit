@@ -64,6 +64,15 @@ def build_manual_profile_payload(
     }
     if not gpu_peak:
         raise ValueError(f"manual combination lacks measured per-GPU residency: {profile_id}")
+    component_gpu_indices = {
+        int(component.gpu) if str(component.gpu).isdigit() else 0
+        for component in recipe.components
+        if component.role in {"main", "aux"}
+    }
+    if recipe.aux_mode != "dedicated":
+        gpu_peak = {index: value for index, value in gpu_peak.items() if index in component_gpu_indices}
+    if not gpu_peak:
+        raise ValueError(f"manual combination has no residency for its runtime components: {profile_id}")
     if not hardware.devices:
         required = [sum(gpu_peak.values())]
         min_devices = 1
@@ -73,9 +82,12 @@ def build_manual_profile_payload(
         max_index = max(gpu_peak)
         if max_index >= len(hardware.devices):
             raise ValueError(f"manual combination requires unavailable GPU {max_index}")
-        required = [gpu_peak.get(index, 0) for index in range(len(hardware.devices))]
+        required = [
+            min(gpu_peak.get(index, 0), max(1, device.memory_total_mb - 1024))
+            for index, device in enumerate(hardware.devices)
+        ]
         min_devices = max_index + 1
-        per_device_min_mb = max(gpu_peak.values())
+        per_device_min_mb = max(required)
         counts = Counter(round(device.memory_total_mb / 1024) for device in hardware.devices)
         topology = "+".join(f"{count}x{memory_gb}" for memory_gb, count in sorted(counts.items()))
     context = int(profile_entry.get("context") or 0)
@@ -110,6 +122,17 @@ def build_manual_profile_payload(
         "evidence": evidence,
         "main_manifest": manifest(main),
     }
+    recipe_aux_context = getattr(recipe, "aux_context", 0) or 0
+    recipe_main_context = getattr(recipe, "main_context", 0) or 0
+    distinct_role_contexts = (
+        dedicated
+        and recipe_main_context > 0
+        and recipe_aux_context > 0
+        and recipe_main_context != recipe_aux_context
+    )
+    if distinct_role_contexts:
+        local_rung["main_context"] = recipe_main_context
+        local_rung["auxiliary_context"] = recipe_aux_context
     if dedicated:
         local_rung["aux_manifest"] = manifest(aux)
     api_evidence = _sha({"profile": profile_id, "fallback": "api:auto"})
@@ -162,6 +185,9 @@ def build_manual_profile_payload(
             "gpu": component.gpu,
             "port": component.port,
         }
+        component_context = int(getattr(component, "context", 0) or 0)
+        if distinct_role_contexts and component_context > 0:
+            roles[role]["context"] = component_context
     resolutions = {
         "schema": "turbofit.runtime-resolutions/v1",
         "profiles": {profile_id: {"manual-exact": roles}},
@@ -170,8 +196,8 @@ def build_manual_profile_payload(
         "schema": "turbofit.rung-requirements/v1",
         "profiles": {
             profile_id: [
-                {"rung_id": "manual-exact", "evidence": evidence, "required_mb_per_card": required},
-                {"rung_id": "api", "evidence": api_evidence, "required_mb_per_card": []},
+                {"rung_id": "manual-exact", "evidence": evidence, "required_mb_per_card": required, "host_ram_mb_per_card": []},
+                {"rung_id": "api", "evidence": api_evidence, "required_mb_per_card": [], "host_ram_mb_per_card": []},
             ]
         },
     }

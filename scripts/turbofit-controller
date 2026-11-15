@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import nullcontext
 import json
+import math
 import os
 import sys
 import time
@@ -14,11 +16,25 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+# Prefer project venv when system python lacks deps or is too old (macOS ships 3.9).
+if sys.version_info < (3, 10):
+    _venv = ROOT / ".venv" / "bin" / "python"
+    if _venv.is_file() and Path(sys.executable).resolve() != _venv.resolve():
+        os.execv(str(_venv), [str(_venv), str(Path(__file__).resolve()), *sys.argv[1:]])
+try:
+    import yaml  # noqa: F401
+except ImportError:
+    _venv = ROOT / ".venv" / "bin" / "python"
+    if _venv.is_file() and Path(sys.executable).resolve() != _venv.resolve():
+        os.execv(str(_venv), [str(_venv), str(Path(__file__).resolve()), *sys.argv[1:]])
+
 from turbofit_runtime.hardware import probe_hardware  # noqa: E402
-from turbofit_runtime.native_backend import NativeRuntimeBackend  # noqa: E402
+from turbofit_runtime.native_backend import NativeRuntimeBackend, rung_artifact_problem  # noqa: E402
+from turbofit_runtime.native_lifecycle import IdleLifecycle, LifecycleEndpoint  # noqa: E402
 from turbofit_runtime.pressure_probe import probe_accelerator_pressure  # noqa: E402
 from turbofit_runtime.recipes import RecipeBook  # noqa: E402
 from turbofit_runtime.routes import load_runtime_resolutions_many  # noqa: E402
+from turbofit_runtime.runtime_profile import AuxMode  # noqa: E402
 from turbofit_runtime.runtime_service import RuntimeService  # noqa: E402
 from turbofit_runtime.selection import ProfileCatalog  # noqa: E402
 
@@ -26,19 +42,20 @@ from turbofit_runtime.selection import ProfileCatalog  # noqa: E402
 CONFIG_DIR = Path.home() / ".config" / "turbofit"
 
 
-def supported_profiles() -> tuple[Path, ...]:
+def supported_profiles(config_dir=CONFIG_DIR) -> tuple[Path, ...]:
     paths = list(sorted((ROOT / "runtime-profiles").glob("*gb.yaml")))
-    manual = CONFIG_DIR / "manual-profile.yaml"
+    manual = config_dir / "manual-profile.yaml"
     if manual.is_file():
         paths.append(manual)
     return tuple(paths)
 
 
 def build_runtime(args: argparse.Namespace) -> RuntimeService:
-    catalog = ProfileCatalog.from_paths(supported_profiles())
+    config_dir = getattr(args, "config_dir", CONFIG_DIR)
+    catalog = ProfileCatalog.from_paths(supported_profiles(config_dir))
     resolutions = load_runtime_resolutions_many((
         ROOT / "runtime-profiles" / "runtime-resolutions.json",
-        CONFIG_DIR / "manual-runtime-resolutions.json",
+        config_dir / "manual-runtime-resolutions.json",
     ))
     policy_path = ROOT / "references/catalog-campaign-policy.json"
     policy = json.loads(policy_path.read_text(encoding="utf-8")) if policy_path.is_file() else {}
@@ -47,7 +64,10 @@ def build_runtime(args: argparse.Namespace) -> RuntimeService:
         if isinstance(model_id, str) and model_id
     }
     catalog = catalog.without_deferred_models(resolutions, deferred)
-    recipe_book = RecipeBook.load(ROOT / "references" / "model-recipes.json")
+    hardware = probe_hardware()
+    recipe_book = RecipeBook.load(
+        getattr(args, "recipes", ROOT / "references" / "model-recipes.json"), hardware=hardware,
+    )
 
     def backend_factory(profile, state):
         return NativeRuntimeBackend(
@@ -62,12 +82,32 @@ def build_runtime(args: argparse.Namespace) -> RuntimeService:
             verification_timeout_s=args.verification_timeout,
         )
 
+    # One missing model file must cost that rung, not the whole ladder: a rung
+    # that cannot launch here is dropped (and reported) instead of wedging
+    # every tick with the same resolution error.
+    unavailable: dict[str, set[str]] = {}
+    reasons: dict[str, str] = {}
+    for profile in catalog.profiles:
+        for rung in profile.rungs:
+            if rung.aux_mode is AuxMode.API:
+                continue
+            problem = rung_artifact_problem(profile, rung.id, resolutions, recipe_book)
+            if problem is not None:
+                unavailable.setdefault(profile.id, set()).add(rung.id)
+                reasons[f"{profile.id}/{rung.id}"] = problem
+    if unavailable:
+        catalog, _ = catalog.without_rungs(unavailable)
+        for key, problem in sorted(reasons.items()):
+            if key.split("/", 1)[0] in unavailable:
+                print(json.dumps({"skipped_rung": key, "reason": problem}, sort_keys=True),
+                      file=sys.stderr, flush=True)
+
     return RuntimeService(
         catalog=catalog,
         resolutions=resolutions,
         requirements_path=(
             ROOT / "runtime-profiles" / "rung-requirements.json",
-            CONFIG_DIR / "manual-rung-requirements.json",
+            config_dir / "manual-rung-requirements.json",
         ),
         controller_state_path=args.state,
         route_state_path=args.routes,
@@ -80,8 +120,25 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--once", action="store_true", help="run one bounded controller tick")
     parser.add_argument("--interval", type=float, default=2.0)
+    parser.add_argument("--log-interval", type=float, default=300.0,
+                        help="seconds between repeats of an unchanged reconcile record")
+    parser.add_argument("--error-interval", type=float, default=60.0,
+                        help="minimum seconds between repeats of an identical tick error")
+    parser.add_argument("--error-exit-after", type=int, default=0,
+                        help="exit non-zero after N consecutive errors; 0 keeps retrying")
+    parser.add_argument(
+        "--status-file",
+        type=Path,
+        default=Path(os.getenv("TURBOFIT_CONTROLLER_STATUS",
+                               Path.home() / ".local/state/turbofit/controller-status.json")),
+        help="where the last tick outcome is published",
+    )
     parser.add_argument("--manager-port", type=int, default=8092)
     parser.add_argument("--verification-timeout", type=float, default=900.0)
+    parser.add_argument("--idle-release", type=float, default=0.0,
+                        help="opt-in idle release seconds; 0 preserves always-resident policy")
+    parser.add_argument("--config-dir", type=Path, default=CONFIG_DIR)
+    parser.add_argument("--recipes", type=Path, default=ROOT / "references/model-recipes.json")
     parser.add_argument(
         "--selection",
         type=Path,
@@ -105,8 +162,18 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     args = parser.parse_args(argv)
     if args.interval <= 0:
         parser.error("--interval must be positive")
+    if args.log_interval <= 0:
+        parser.error("--log-interval must be positive")
+    if args.error_interval <= 0:
+        parser.error("--error-interval must be positive")
+    if args.error_exit_after < 0:
+        parser.error("--error-exit-after must be non-negative")
     if args.verification_timeout <= 0:
         parser.error("--verification-timeout must be positive")
+    if not math.isfinite(args.idle_release) or args.idle_release < 0:
+        parser.error("--idle-release must be finite and non-negative")
+    if args.idle_release and args.once:
+        parser.error("--idle-release requires a persistent controller, not --once")
     return args
 
 
@@ -123,44 +190,129 @@ def _owned_status(state_dir: Path) -> dict:
     return {"residents": residents}
 
 
+def run_tick(runtime, args, lifecycle=None):
+    guard = lifecycle.controller_tick() if lifecycle else nullcontext(True)
+    with guard as allowed:
+        if not allowed:
+            runtime.observe_residency(lifecycle)
+            return None
+        hardware = probe_hardware()
+        controller = runtime.synchronize(args.selection, hardware)
+        if lifecycle:
+            runtime.observe_residency(lifecycle)
+        idle_roles = lifecycle.idle_roles() if lifecycle else ()
+        if set(idle_roles) == {"main", "aux"}:
+            # Idle is intentional, not a failed runtime for the repair loop to
+            # resurrect. The next request uses the last verified configuration.
+            runtime.release_idle_residency(lifecycle)
+            return None
+        current = controller.state.adaptive.current_index
+        required = controller.requirements.required_mb_by_rung[current]
+        pressure = probe_accelerator_pressure(
+            hardware, manager_status=_owned_status(args.runtime_state_dir),
+            managed_required_mb=required,
+        )
+        result = runtime.tick(pressure, now=time.monotonic(), restore_current=not idle_roles)
+        if lifecycle:
+            runtime.observe_residency(lifecycle)
+            runtime.release_idle_residency(lifecycle)
+        return result
+
+
+def _write_status(path: Path, payload: dict) -> None:
+    """Publish the last tick outcome so a wedged controller is visible.
+
+    A controller that only prints to stderr looks idle, not broken; operators
+    and the dashboard need the failure where they already look.
+    """
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        os.replace(temporary, path)
+    except OSError:
+        pass
+
+
 def main(argv: list[str]) -> int:
     args = parse_args(argv[1:])
     runtime = build_runtime(args)
-    while True:
-        try:
-            hardware = probe_hardware()
-            if not hardware.devices:
-                raise RuntimeError("no supported accelerator inventory; refusing adaptive transition")
-            controller = runtime.synchronize(args.selection, hardware)
-            current = controller.state.adaptive.current_index
-            required = controller.requirements.required_mb_by_rung[current]
-            pressure = probe_accelerator_pressure(
-                hardware,
-                manager_status=_owned_status(args.runtime_state_dir),
-                managed_required_mb=required,
-            )
-            result = runtime.tick(pressure, now=time.monotonic())
-            print(
-                json.dumps(
-                    {
+    lifecycle = endpoint = None
+    last_error: str | None = None
+    last_error_at = 0.0
+    error_count = 0
+    if args.idle_release:
+        lifecycle = IdleLifecycle(state_dir=args.runtime_state_dir,
+                                  idle_timeout_s=args.idle_release,
+                                  wake_timeout_s=args.verification_timeout)
+        lifecycle.acquire_singleton()
+    try:
+        if lifecycle:
+            endpoint = LifecycleEndpoint(lifecycle, ensure_ready=runtime.ensure_residency,
+                                         resolve_role=runtime.residency_role)
+            endpoint.start()
+        last_record: dict | None = None
+        last_record_at = 0.0
+        while True:
+            payload: dict = {"at": time.time(), "pid": os.getpid(), "degraded": False}
+            try:
+                result = run_tick(runtime, args, lifecycle)
+                if result is not None:
+                    payload.update({
                         "profile_id": result.state.profile_id,
                         "mode": result.state.selection_mode.value,
                         "rung_index": result.state.adaptive.current_index,
+                        "released": result.state.adaptive.released,
                         "action": result.action.value,
                         "transitioned": result.transitioned,
                         "reason": result.reason,
-                    },
-                    sort_keys=True,
-                ),
-                flush=True,
-            )
-        except Exception as exc:
-            print(json.dumps({"error": str(exc)}, sort_keys=True), file=sys.stderr, flush=True)
+                    })
+                    # A steady state repeats every tick. Report the record when it
+                    # changes, and otherwise at most once per --log-interval, so a
+                    # 2 s tick does not bury a real transition in its own echo.
+                    record = {
+                        "profile_id": result.state.profile_id,
+                        "mode": result.state.selection_mode.value,
+                        "rung_index": result.state.adaptive.current_index,
+                        "released": result.state.adaptive.released,
+                        "action": result.action.value,
+                        "transitioned": result.transitioned,
+                        "reason": result.reason,
+                    }
+                    now = time.monotonic()
+                    if record != last_record or now - last_record_at >= args.log_interval:
+                        print(json.dumps(record, sort_keys=True), flush=True)
+                        last_record, last_record_at = record, now
+                last_error = None
+            except Exception as exc:
+                error_count += 1
+                message = str(exc)
+                # An identical failure repeats every tick: report it when it
+                # changes and then once a minute, never 30 times a minute.
+                now = time.monotonic()
+                if message != last_error or now - last_error_at >= args.error_interval:
+                    print(json.dumps({"error": message, "count": error_count},
+                                     sort_keys=True), file=sys.stderr, flush=True)
+                    last_error, last_error_at = message, now
+                payload.update({"degraded": True, "last_error": message,
+                                "error_count": error_count})
+                _write_status(args.status_file, payload)
+                if args.once:
+                    return 1
+                if args.error_exit_after and error_count >= args.error_exit_after:
+                    print(json.dumps({"fatal": "unrecoverable controller errors", "error": message},
+                                     sort_keys=True), file=sys.stderr, flush=True)
+                    return 1
+            else:
+                _write_status(args.status_file, payload)
             if args.once:
-                return 1
-        if args.once:
-            return 0
-        time.sleep(args.interval)
+                return 0
+            time.sleep(args.interval)
+    finally:
+        if endpoint:
+            endpoint.stop()
+        if lifecycle:
+            lifecycle.release_singleton()
 
 
 if __name__ == "__main__":

@@ -2,13 +2,106 @@
 from __future__ import annotations
 
 import json
+import math
 import os
+import re
 import shutil
 import sys
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Callable
 
+from .allowed_lineup import expert_residency
+from .experts import (
+    MIB,
+    ModelOffloadDecision,
+    available_ram_bytes,
+    plan_model_offload,
+    plan_tensor_split,
+)
+from .gguf_footprint import GGUFFormatError
+from .gpu import probe_gpus
+from .hardware import HardwareFingerprint
 from .schema import MatrixRow
+
+# Flavors that speak llama.cpp's `--n-cpu-moe`. Strata (Colibri), vLLM and the
+# other runtimes place experts themselves and would reject or misread it.
+LLAMA_FLAVORS = frozenset({"mainline", "ik", "prism"})
+
+
+# Typed launch overrides: validated keys only, never a raw shell escape.
+# Values are ints, floats or bools that map 1:1 onto native launcher flags.
+LAUNCH_OVERRIDE_FLAGS: dict[str, tuple[str, ...]] = {
+    "threads": ("--threads",),
+    "threads_batch": ("--threads-batch",),
+    "batch_size": ("-b",),
+    "ubatch_size": ("-ub",),
+    "cache_ram": ("--cache-ram",),
+    "cache_reuse": ("--cache-reuse",),
+    "no_perf": ("--no-perf",),
+    "parallel": ("--parallel",),
+    "checkpoints": ("--ctx-checkpoints",),
+    "slot_similarity": ("--slot-prompt-similarity",),
+    "mtp_n_max": (),
+    "no_context_shift": ("--no-context-shift",),
+    "cache_type_k": ("--cache-type-k",),
+    "cache_type_v": ("--cache-type-v",),
+}
+_LAUNCH_OVERRIDE_INT_KEYS = frozenset({"threads", "threads_batch", "parallel", "checkpoints", "mtp_n_max",
+                                     "batch_size", "ubatch_size", "cache_ram", "cache_reuse"})
+_LAUNCH_OVERRIDE_FLOAT_KEYS = frozenset({"slot_similarity"})
+_LAUNCH_OVERRIDE_STR_KEYS = frozenset({"cache_type_k", "cache_type_v"})
+_LAUNCH_OVERRIDE_BOOL_KEYS = frozenset({"no_context_shift", "no_perf"})
+_MTP_N_MAX_RE = re.compile(r"^mtp:n_max=(\d+),p_min=(0(?:\.\d+)?)$")
+
+
+def _validated_launch_overrides(raw: Any, where: str) -> dict[str, Any]:
+    if not isinstance(raw, Mapping):
+        raise ValueError(f"{where} must be a mapping")
+    unknown = set(raw) - set(LAUNCH_OVERRIDE_FLAGS)
+    if unknown:
+        raise ValueError(f"unknown launch override in {where}: {sorted(unknown)[0]}")
+    validated: dict[str, Any] = {}
+    for key, value in raw.items():
+        if key in _LAUNCH_OVERRIDE_INT_KEYS:
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError(f"launch override {key} in {where} must be a non-negative integer")
+            if key in {"parallel", "batch_size", "ubatch_size"} and not 1 <= value <= 65536:
+                raise ValueError(f"launch override {key} must be in 1..65536")
+        elif key in _LAUNCH_OVERRIDE_FLOAT_KEYS:
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(float(value))
+            ):
+                raise ValueError(f"launch override {key} in {where} must be a finite number")
+            validated[key] = float(value)
+            if key == "slot_similarity" and not 0 <= value <= 1:
+                raise ValueError("slot similarity must be in 0..1")
+            continue
+        elif key in _LAUNCH_OVERRIDE_STR_KEYS:
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"launch override {key} in {where} must be a non-empty string")
+        elif key in _LAUNCH_OVERRIDE_BOOL_KEYS:
+            if not isinstance(value, bool):
+                raise ValueError(f"launch override {key} in {where} must be a boolean")
+        validated[key] = value
+    return validated
+
+
+def _merge_launch_overrides(
+    spec_overrides: Any, context_overrides: Any, context: int, family: str
+) -> dict[str, Any]:
+    merged: dict[str, Any] = {}
+    for source in (spec_overrides, context_overrides):
+        if source is None:
+            continue
+        validated = _validated_launch_overrides(
+            source, f"{family} context {context}"
+        )
+        merged.update(validated)
+    return merged
 
 
 def resolve_native_backend(
@@ -22,7 +115,7 @@ def resolve_native_backend(
         backend_name or os.environ.get("TURBOFIT_ACCELERATOR_BACKEND") or ""
     ).lower()
     if explicit:
-        if explicit not in {"cuda", "rocm", "metal", "cpu"}:
+        if explicit not in {"cuda", "rocm", "metal", "vulkan", "cpu"}:
             raise ValueError(f"unsupported native backend: {explicit}")
         return explicit
     host = str(platform_name or sys.platform).lower()
@@ -34,7 +127,29 @@ def resolve_native_backend(
         which("rocm-smi") or which("amd-smi") or which("rocminfo")
     ):
         return "rocm"
+    if which("vulkaninfo"):
+        return "vulkan"
     return "cpu"
+
+
+def resolve_native_binary(binary: str | Path, *, platform_name: str | None = None) -> str:
+    """Resolve a manifest binary to the layout produced by the native builder."""
+    path = Path(str(binary)).expanduser()
+    host = str(platform_name or sys.platform).lower()
+    if not host.startswith("win"):
+        return str(path)
+    if path.suffix.lower() == ".exe":
+        return str(path)
+    candidates = (
+        path,
+        path.parent / "Release" / f"{path.name}.exe",
+        path.with_suffix(".exe"),
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
+    # Visual Studio's default multi-config generator places the executable here.
+    return str(candidates[1])
 
 
 @dataclass(frozen=True)
@@ -49,6 +164,20 @@ class ResolvedComponent:
     command: tuple[str, ...]
     model_path: str = ""
     projector_path: str = ""
+    context: int = 0
+    #: Draft/assistant weights the command passes with --model-draft, if any.
+    draft_path: str = ""
+    #: Runtime flavor ("mainline", "prism", "strata", "vllm", "ik"); the engine
+    #: identity a fit check needs before a load is attempted.
+    engine: str = ""
+    #: Expert layers held in RAM, from the recipe or the offload planner.
+    n_cpu_moe: int | None = None
+    #: Why this value was chosen, in the planner's own words.
+    offload_reason: str = ""
+    #: True when the planner measured the model and it cannot fit this host.
+    #: Resolution still succeeds (a report must be able to describe the row),
+    #: but no engine may be started for it.
+    offload_infeasible: bool = False
 
 
 @dataclass(frozen=True)
@@ -59,6 +188,111 @@ class ResolvedRecipe:
     aux_alias: str
     aux_mode: str
     components: tuple[ResolvedComponent, ...]
+    main_context: int = 0
+    aux_context: int = 0
+    aux_residency: dict | None = None
+
+    def infeasible_components(self) -> tuple[ResolvedComponent, ...]:
+        return tuple(item for item in self.components if item.offload_infeasible)
+
+    def assert_launchable(self) -> None:
+        """Refuse to start an engine the offload planner already declared doomed.
+
+        Resolution deliberately succeeds for such a row so status/dry-run can
+        report it; this is the one place that turns it back into a hard error,
+        and only when a launch is actually being attempted.
+        """
+        for component in self.infeasible_components():
+            raise ExpertOffloadInfeasible(
+                component.family,
+                component.offload_reason,
+            )
+
+
+class ExpertOffloadInfeasible(ValueError):
+    """A measured model fits neither VRAM nor VRAM+RAM on this host.
+
+    Carries the planner's own explanation (what did not fit and by how much) so
+    the error a user sees is the arithmetic, not a bare "failed to load".
+
+    Raising this is a *launch* decision. Composition and reporting describe the
+    row instead, via `ResolvedComponent.offload_infeasible`.
+    """
+
+    def __init__(self, family: str, reason: str, *, decision: ModelOffloadDecision | None = None) -> None:
+        self.family = family
+        self.reason = reason
+        self.decision = decision
+        super().__init__(f"{family}: {reason}")
+
+
+def host_free_vram_bytes(
+    *, hardware: HardwareFingerprint | None = None, probe=probe_gpus
+) -> int | None:
+    """Currently free VRAM across visible cards, or device total as a fallback.
+
+    Free is preferred over total: another model may already hold a card, and
+    planning against capacity that is not available is how an engine gets
+    launched into an OOM.
+    """
+    try:
+        samples = probe()
+    except (OSError, ValueError):
+        samples = ()
+    free_mb = sum(max(0, sample.free_mb) for sample in samples)
+    if free_mb > 0:
+        return free_mb * MIB
+    if hardware is not None and hardware.devices:
+        return hardware.total_vram_mb * MIB
+    return None
+
+
+class UnknownRecipeError(ValueError):
+    """An unresolvable recipe name, carrying the closest declared candidates."""
+
+    def __init__(self, requested: str, known: tuple[str, ...]) -> None:
+        normalized = _normalized_recipe_name(requested)
+        scored = sorted(
+            ((_closeness(normalized, _normalized_recipe_name(name)), name) for name in known),
+            reverse=True,
+        )
+        self.requested = requested
+        self.candidates = tuple(name for score, name in scored if score > 0)[:5]
+        hint = f"; did you mean one of {list(self.candidates)}" if self.candidates else ""
+        super().__init__(f"unknown model family: {requested}{hint}")
+
+
+def _normalized_recipe_name(name: str) -> str:
+    """Fold the slugs that appear in the wild onto one comparable key.
+
+    Hand-written profiles and resolutions use several spellings of the same
+    model (``qwen38-27b-gsq-rco-iq3s``, ``qwen3.8-27b-gsq-rco``,
+    ``Qwen 3.8 27B GSQ-RCO IQ3_S``), so comparison is alphanumeric-only and
+    case-folded.
+    """
+    return re.sub(r"[^a-z0-9]", "", str(name).lower())
+
+
+def _declared_aliases(entry: Any) -> tuple[str, ...]:
+    if not isinstance(entry, Mapping):
+        return ()
+    found: list[str] = []
+    alias = entry.get("alias")
+    if isinstance(alias, str) and alias:
+        found.append(alias)
+    extra = entry.get("aliases")
+    if isinstance(extra, list):
+        found.extend(str(item) for item in extra if isinstance(item, str) and item)
+    return tuple(found)
+
+
+def _closeness(left: str, right: str) -> int:
+    """Length of the longest common prefix, used only to order suggestions."""
+    limit = min(len(left), len(right))
+    index = 0
+    while index < limit and left[index] == right[index]:
+        index += 1
+    return index
 
 
 class RecipeBook:
@@ -68,13 +302,22 @@ class RecipeBook:
         *,
         platform_name: str | None = None,
         backend_name: str | None = None,
+        hardware: HardwareFingerprint | None = None,
+        vram_probe: Callable[[], int | None] | None = None,
+        ram_probe: Callable[[], int | None] | None = None,
+        footprint_probe: Callable[[str], Any] | None = None,
     ) -> None:
         if data.get("schema_version") != 1:
             raise ValueError(f"unsupported recipe schema: {data.get('schema_version')}")
         self.data = data
         self.models = data.get("models") or {}
         self.variants = data.get("variants") or {}
+        self.recipes_by_alias = self._build_alias_index()
         self.platform_name = platform_name or sys.platform
+        self.hardware = hardware
+        self.vram_probe = vram_probe
+        self.ram_probe = ram_probe
+        self.footprint_probe = footprint_probe
         self.model_root = Path(
             os.environ.get("TURBOFIT_MODEL_ROOT", "~/Models/storage/gguf")
         ).expanduser()
@@ -95,11 +338,19 @@ class RecipeBook:
         *,
         platform_name: str | None = None,
         backend_name: str | None = None,
+        hardware: HardwareFingerprint | None = None,
+        vram_probe: Callable[[], int | None] | None = None,
+        ram_probe: Callable[[], int | None] | None = None,
+        footprint_probe: Callable[[str], Any] | None = None,
     ) -> "RecipeBook":
         return cls(
             json.loads(Path(path).read_text()),
             platform_name=platform_name,
             backend_name=backend_name,
+            hardware=hardware,
+            vram_probe=vram_probe,
+            ram_probe=ram_probe,
+            footprint_probe=footprint_probe,
         )
 
     @staticmethod
@@ -109,6 +360,21 @@ class RecipeBook:
         except KeyError as exc:
             raise ValueError(f"no method recipe for context {context}") from exc
 
+    def _build_alias_index(self) -> dict[str, tuple[str, str]]:
+        """Map every declared spelling of a recipe onto its canonical entry.
+
+        Exact keys win over aliases so a variant alias can never shadow a
+        model family of the same name.
+        """
+        index: dict[str, tuple[str, str]] = {}
+        for kind, entries in (("model", self.models), ("variant", self.variants)):
+            for key, entry in entries.items():
+                for alias in _declared_aliases(entry):
+                    index.setdefault(alias, (kind, key))
+                    index.setdefault(_normalized_recipe_name(alias), (kind, key))
+                index.setdefault(_normalized_recipe_name(key), (kind, key))
+        return index
+
     def _spec(self, name: str) -> tuple[str, dict]:
         variant = self.variants.get(name)
         if variant is not None:
@@ -117,8 +383,64 @@ class RecipeBook:
                 raise ValueError(f"unknown recipe family for variant {name}: {family}")
             return family, {**self.models[family], **{key: value for key, value in variant.items() if key != "family"}}
         if name not in self.models:
-            raise ValueError(f"unknown model family: {name}")
+            resolved = self.recipes_by_alias.get(name) or self.recipes_by_alias.get(
+                _normalized_recipe_name(name)
+            )
+            if resolved is None:
+                raise UnknownRecipeError(name, self._known_recipe_names())
+            kind, key = resolved
+            if kind == "variant":
+                return self._spec(key)
+            name = key
         return name, dict(self.models[name])
+
+    def _known_recipe_names(self) -> tuple[str, ...]:
+        names = set(self.variants) | set(self.models)
+        for entry in list(self.variants.values()) + list(self.models.values()):
+            for alias in _declared_aliases(entry):
+                names.add(alias)
+        return tuple(sorted(names))
+
+
+    def _auto_offload_decision(
+        self, family: str, model: str, spec: Mapping[str, Any]
+    ) -> ModelOffloadDecision | None:
+        """Plan `--n-cpu-moe` from this host's free VRAM/RAM and the model's header.
+
+        Returns None when the host capacity or the artifact cannot be measured:
+        a checkpoint that has not been downloaded yet is a planning state, not
+        an OOM risk, so resolution must not fail over it.
+
+        An infeasible decision is returned, not raised: it is a property of the
+        row (this host cannot hold this model) that status and dry-run must be
+        able to report. Only a launch refuses it — see
+        `ResolvedRecipe.assert_launchable`.
+        """
+        vram_bytes = self.vram_probe() if self.vram_probe is not None else host_free_vram_bytes(
+            hardware=self.hardware
+        )
+        if not vram_bytes or vram_bytes <= 0:
+            return None
+        ram_bytes = self.ram_probe() if self.ram_probe is not None else available_ram_bytes()
+        reserve_mb = spec.get("offload_vram_reserve_mb")
+        reserve_bytes = int(reserve_mb) * MIB if reserve_mb is not None else 1536 * MIB
+        footprint = None
+        if self.footprint_probe is not None:
+            try:
+                footprint = self.footprint_probe(model)
+            except (GGUFFormatError, OSError):
+                return None
+        try:
+            decision = plan_model_offload(
+                model,
+                vram_bytes=vram_bytes,
+                ram_bytes=ram_bytes,
+                footprint=footprint,
+                vram_reserve_bytes=reserve_bytes,
+            )
+        except (GGUFFormatError, OSError):
+            return None
+        return decision
 
     def _component(
         self,
@@ -130,17 +452,38 @@ class RecipeBook:
         port_override: int | None = None,
         alias_override: str | None = None,
     ) -> ResolvedComponent:
-        _, spec = self._spec(family)
+        resolved_family, spec = self._spec(family)
+        if self.hardware is not None:
+            available = {str(device.index) for device in self.hardware.devices}
+            requested = [item for item in gpu.split(",") if item in available]
+            if not available:
+                gpu = ""
+            elif self.hardware.memory_pool_kind == "unified":
+                gpu = str(self.hardware.devices[0].index)
+            else:
+                gpu = ",".join(requested) or str(self.hardware.devices[0].index)
         method = self._context_method(spec, context)
         context_override = (spec.get("context_overrides") or {}).get(str(context)) or {}
+        launch_overrides = _merge_launch_overrides(
+            spec.get("launch_overrides"),
+            context_override.get("launch_overrides"),
+            context,
+            family,
+        )
         kind = str(spec["kind"])
         alias = alias_override or str(spec["alias"])
         port = port_override or int(spec["port"])
         component_binaries = spec.get("native_binaries") or {}
-        binary_value = component_binaries.get(
-            self.backend_name, spec.get("binary", self.atomic_binary)
-        )
-        binary = str(Path(str(binary_value)).expanduser())
+        binary_value = component_binaries.get(self.backend_name)
+        if binary_value is None and spec.get("binary"):
+            binary_value = str(spec["binary"])
+            for backend in ("cuda", "rocm", "metal", "vulkan", "cpu"):
+                binary_value = binary_value.replace(
+                    f"/build-{backend}/", f"/build-{self.backend_name}/"
+                )
+        if binary_value is None:
+            binary_value = self.atomic_binary
+        binary = resolve_native_binary(binary_value, platform_name=self.platform_name)
         if kind != "process":
             raise ValueError(f"unsupported recipe kind: {kind}")
         root_value = str(spec.get("model_root", "")).replace(
@@ -165,47 +508,189 @@ class RecipeBook:
         if not 1 <= ubatch_size <= batch_size:
             raise ValueError(f"invalid batch/ubatch recipe for {family}: {batch_size}/{ubatch_size}")
         runtime_flavor = str(spec.get("runtime_flavor", "mainline"))
+        draft = ""
+        gpu_layers = context_override.get(
+            "gpu_layers", 99 if runtime_flavor == "ik" else "auto"
+        )
+        if self.backend_name == "cpu":
+            gpu_layers = 0
         if runtime_flavor == "ik":
             command = [
                 binary, "-m", model,
                 "--host", "127.0.0.1", "--port", str(port), "--alias", alias,
-                "-c", str(context), "-ngl", str(context_override.get("gpu_layers", 99)),
+                "-c", str(context), "-ngl", str(gpu_layers),
                 "-fa", "on", "--jinja", "-b", str(batch_size), "-ub", str(ubatch_size),
                 "--parallel", "1",
             ]
             if fit == "on":
                 command.append("--fit")
-            if spec.get("no_mmap"):
-                command.append("--no-mmap")
             if spec.get("dsa"):
                 command.extend(["-mla", "1", "-dsa", "-fidx"])
             if spec.get("worst_graph_tokens") is not None:
                 command.extend(["-wgt", str(spec["worst_graph_tokens"])])
+        elif runtime_flavor == "prism":
+            # PrismML llama.cpp fork for Ternary Bonsai 2 (CUDA, Metal, CPU)
+            # Ternary models need the prism fork — mainline llama.cpp cannot load them
+            command = [
+                binary, "-m", model,
+                "--host", "127.0.0.1", "--port", str(port), "--alias", alias,
+                "-c", str(context), "-ngl", str(gpu_layers),
+                "-fa", "on", "--jinja", "-b", str(batch_size), "-ub", str(ubatch_size),
+                "--parallel", "1", "--cache-type-k", "q4_0", "--cache-type-v", "q4_0",
+            ]
+            if fit == "on":
+                command.append("--fit")
+        elif runtime_flavor == "strata":
+            # Colibrì CLI: `strata --serve --pack <pack> --native <gguf> ...`.
+            # There is no `launch` subcommand; the old builder emitted one and the
+            # engine answered with usage text, so Strata never actually ran.
+            pack = spec.get("strata_pack")
+            if not pack:
+                raise ValueError(
+                    f"strata flavor for {family} needs strata_pack (expert pack directory)"
+                )
+            data_root = os.environ.get("TURBOFIT_STRATA_DATA", "~/.local/share/turbofit/strata-data")
+
+            def strata_path(value: str) -> str:
+                # The recipes spell the root both ways; an unsubstituted
+                # "${turbofit_strata_data}" reached the engine as a literal path.
+                root = str(Path(data_root).expanduser())
+                return str(value).replace("${TURBOFIT_STRATA_DATA}", root).replace(
+                    "${turbofit_strata_data}", root
+                )
+
+            command = [binary, "--serve", "--pack", strata_path(pack), "--native", model,
+                       "--max-context", str(context)]
+            for key, flag in (("strata_ple_gguf", "--ple-gguf"),
+                              ("strata_expert_profile", "--expert-profile"),
+                              ("strata_mtp", "--mtp")):
+                value = spec.get(key)
+                if value:
+                    command.extend([flag, strata_path(value)])
+            command.extend([
+                "--expert-cache", str(spec.get("strata_expert_cache") or "auto"),
+                "--prefill", str(spec.get("strata_prefill") or "auto"),
+                "--spec", str(int(spec.get("strata_spec") or 4)),
+                "--spec-min-p", str(float(spec.get("strata_spec_min_p") or 0.5)),
+                "--kv", str(spec.get("strata_kv") or "int8"),
+                "--layer-split", str(spec.get("strata_layer_split") or "auto"),
+            ])
+            command.extend(str(arg) for arg in spec.get("strata_extra_args") or ())
+        elif runtime_flavor == "vllm":
+            # vLLM serves raw Hugging Face checkpoints (safetensors directories)
+            # that llama.cpp cannot load. `vllm serve <path>` is the documented
+            # entry point; the model argument is a directory, not a .gguf.
+            # Resolution is planning, not execution: the checkpoint directory may
+            # not be materialized yet. Only reject a single-file artifact, which
+            # vLLM cannot serve.
+            if Path(model).suffix.lower() in {".gguf", ".bin", ".safetensors"}:
+                raise ValueError(
+                    f"vllm flavor for {family} needs a checkpoint directory, got {model!r}"
+                )
+            command = [
+                binary, "serve", model,
+                "--host", "127.0.0.1",
+                "--port", str(port),
+                "--served-model-name", alias,
+                "--max-model-len", str(context),
+            ]
+            parallel = int(spec.get("tensor_parallel_size") or 1)
+            if parallel > 1:
+                command.extend(["--tensor-parallel-size", str(parallel)])
+            utilization = spec.get("gpu_memory_utilization")
+            if utilization is not None:
+                command.extend(["--gpu-memory-utilization", str(float(utilization))])
+            if spec.get("enable_prefix_caching"):
+                command.append("--enable-prefix-caching")
+            command.extend(str(arg) for arg in spec.get("vllm_extra_args") or ())
         elif runtime_flavor == "mainline":
             command = [
                 binary, "-m", model,
                 "--host", "127.0.0.1", "--port", str(port), "--alias", alias,
-                "-c", str(context), "-ngl", str(context_override.get("gpu_layers", "auto")), "--fit", fit, "-fa", "on", "--jinja",
+                "-c", str(context), "-ngl", str(gpu_layers), "--fit", fit, "-fa", "on", "--jinja",
                 "-b", str(batch_size), "-ub", str(ubatch_size),
                 "--cache-type-k", "q4_0", "--cache-type-v", "q4_0", "--parallel", "1",
             ]
         else:
             raise ValueError(f"unsupported runtime flavor for {family}: {runtime_flavor}")
-        if context_override.get("split_mode"):
+        if spec.get("no_mmap"):
+            command.append("--no-mmap")
+        if spec.get("mlock"):
+            command.append("--mlock")
+        multi_device = (
+            self.hardware is None
+            or (
+                self.hardware.memory_pool_kind == "dedicated"
+                and len([item for item in gpu.split(",") if item]) > 1
+            )
+        )
+        accelerator_split = self.backend_name in {"cuda", "rocm", "vulkan"} and multi_device
+        if context_override.get("split_mode") and accelerator_split:
             command.extend(["--split-mode", str(context_override["split_mode"])])
-        if context_override.get("tensor_split"):
+        if context_override.get("tensor_split") and accelerator_split:
             command.extend(["--tensor-split", str(context_override["tensor_split"])])
-        if context_override.get("main_gpu") is not None:
+        if context_override.get("main_gpu") is not None and self.backend_name in {"cuda", "rocm", "vulkan"}:
             command.extend(["--main-gpu", str(context_override["main_gpu"])])
-        if context_override.get("kv_offload") is False:
-            command.append("--no-kv-offload")
         n_cpu_moe = context_override.get("n_cpu_moe", spec.get("n_cpu_moe"))
-        if n_cpu_moe is not None:
+        offload_reason = "explicit recipe value" if n_cpu_moe is not None else ""
+        offload_infeasible = False
+        auto_cpu_moe = context_override.get("auto_cpu_moe", spec.get("auto_cpu_moe", False))
+        if isinstance(auto_cpu_moe, str):
+            auto_cpu_moe = auto_cpu_moe.strip().lower() in {"on", "true", "1", "yes"}
+        if n_cpu_moe is not None and runtime_flavor not in LLAMA_FLAVORS:
+            # Strata/vLLM place experts themselves; the llama.cpp flag would be
+            # rejected or silently ignored by their argument parsers.
+            raise ValueError(
+                f"{runtime_flavor} recipe for {family} cannot take n_cpu_moe"
+            )
+        if n_cpu_moe is None and auto_cpu_moe is True:
+            if runtime_flavor in LLAMA_FLAVORS and self.backend_name != "cpu":
+                decision = self._auto_offload_decision(family, model, spec)
+                if decision is not None:
+                    offload_reason = decision.plan.reason
+                    if not decision.plan.feasible:
+                        # The planner's refusal is a row status, not an
+                        # exception: the row is described here and a launch is
+                        # refused later, with this same reason.
+                        offload_infeasible = True
+                    else:
+                        n_cpu_moe = decision.plan.n_cpu_moe
+                        devices = len([item for item in gpu.split(",") if item])
+                        if n_cpu_moe and decision.footprint is not None and devices > 1:
+                            # Later layers keep their experts on the GPU, so an even
+                            # layer split would overload the last card.
+                            split = plan_tensor_split(decision.footprint, n_cpu_moe=n_cpu_moe,
+                                                      device_count=devices)
+                            if split and "--tensor-split" not in command:
+                                command.extend(["--tensor-split", split])
+        if n_cpu_moe:
             command.extend(["--n-cpu-moe", str(n_cpu_moe)])
-        if context_override.get("cpu_moe", spec.get("cpu_moe")) is True:
+        if runtime_flavor != "strata" and context_override.get("cpu_moe", spec.get("cpu_moe")) is True:
             command.append("--cpu-moe")
+        # Aux hard-drive/RAM streaming (allowed_lineup.expert_residency), applied to
+        # the auxiliary role only: offload MoE experts to the host and keep weights
+        # memory-mapped so the aux streams from the hard drive when host RAM is tight.
+        if role == "aux" and self.hardware is not None:
+            residency = expert_residency(host_ram_gb=self.hardware.system_ram_mb / 1024)
+            if residency.get("mmap") is True and "--no-mmap" in command:
+                command.remove("--no-mmap")
+            if residency.get("mlock") is True and "--mlock" not in command:
+                command.append("--mlock")
+            if (runtime_flavor != "strata"
+                    and not n_cpu_moe
+                    and residency.get("cpu_moe") is True
+                    and "--cpu-moe" not in command):
+                command.append("--cpu-moe")
         scaling = spec.get("context_scaling") or {}
         native_context = int(spec.get("native_context", context))
+        host_kv = bool(
+            self.hardware is not None
+            and self.hardware.memory_pool_kind == "dedicated"
+            and context > native_context
+            and self.hardware.host_usable_memory_mb >= 32 * 1024
+        )
+        if context_override.get("kv_offload") is False or host_kv:
+            command.append("--no-kv-offload")
         if context > native_context and scaling:
             command.extend([
                 "--rope-scaling", str(scaling["method"]),
@@ -216,26 +701,72 @@ class RecipeBook:
             draft = artifact(str(spec.get("draft", ""))) if spec.get("draft") else ""
             if draft:
                 command.extend(["--model-draft", draft])
-            command.extend([
-                "--spec-type",
-                "mtp:n_max=4,p_min=0.5" if runtime_flavor == "ik" else "draft-mtp",
-            ])
-        if method == "dspark":
+            overrides = launch_overrides
+            if runtime_flavor == "ik":
+                spec_type = "mtp:n_max=4,p_min=0.5"
+                if "mtp_n_max" in overrides:
+                    match = _MTP_N_MAX_RE.match(spec_type)
+                    n_max = int(overrides["mtp_n_max"])
+                    p_min = match.group(2) if match else "0.5"
+                    spec_type = f"mtp:n_max={n_max},p_min={p_min}"
+                command.extend(["--spec-type", spec_type])
+            else:
+                command.extend(["--spec-type", "draft-mtp"])
+                if "mtp_n_max" in overrides:
+                    command.extend(["--spec-draft-n-max", str(overrides["mtp_n_max"])])
+        if method in {"dspark", "dflash2"}:
             draft = artifact(str(spec.get("draft", ""))) if spec.get("draft") else ""
+            label = "DFlash2" if method == "dflash2" else "DSpark"
             if not draft:
-                raise ValueError(f"DSpark recipe for {family} requires a draft model")
+                raise ValueError(f"{label} recipe for {family} requires a draft model")
+            if method == "dflash2" and spec.get("dflash_target_family") != resolved_family:
+                raise ValueError(f"{family} requires a dedicated DFlash2 checkpoint bound to its target family")
             command.extend([
                 "--model-draft", draft,
-                "--spec-type", "draft-dspark",
-                "--spec-draft-n-max", str(spec.get("draft_n_max", 4)),
-                "-ngld", str(context_override.get("draft_gpu_layers", "auto")),
+                "--spec-type", "draft-dflash" if method == "dflash2" else "draft-dspark",
+                "--spec-draft-n-max", str(spec.get("draft_n_max", 7 if method == "dflash2" else 4)),
+                "-ngld", str(
+                    0 if self.backend_name == "cpu"
+                    else context_override.get("draft_gpu_layers", "auto")
+                ),
             ])
         if projector:
             command.extend(["--mmproj", projector])
+        for override_key, flag_name in (
+            ("threads", "--threads"),
+            ("threads_batch", "--threads-batch"),
+            ("batch_size", "-b"),
+            ("ubatch_size", "-ub"),
+            ("cache_ram", "--cache-ram"),
+            ("cache_reuse", "--cache-reuse"),
+            ("parallel", "--parallel"),
+            ("checkpoints", "--ctx-checkpoints"),
+            ("slot_similarity", "--slot-prompt-similarity"),
+            ("cache_type_k", "--cache-type-k"),
+            ("cache_type_v", "--cache-type-v"),
+        ):
+            if override_key in launch_overrides:
+                value = launch_overrides[override_key]
+                if isinstance(value, float):
+                    value = str(value)
+                if flag_name in command:
+                    command[command.index(flag_name) + 1] = str(value)
+                else:
+                    command.extend([flag_name, str(value)])
+        if launch_overrides.get("no_context_shift") is True:
+            command.append("--no-context-shift")
+        if launch_overrides.get("no_perf") is True:
+            command.append("--no-perf")
+        if {"batch_size", "ubatch_size"} & launch_overrides.keys():
+            if int(command[command.index("-ub") + 1]) > int(command[command.index("-b") + 1]):
+                raise ValueError("microbatch must not exceed batch size")
         return ResolvedComponent(
             role=role, family=family, alias=alias, kind=kind, method=method,
             gpu=gpu, port=port, command=tuple(command),
-            model_path=model, projector_path=projector,
+            model_path=model, projector_path=projector, context=context,
+            draft_path=draft, engine=runtime_flavor,
+            n_cpu_moe=n_cpu_moe, offload_reason=offload_reason,
+            offload_infeasible=offload_infeasible,
         )
 
     def resolve_component(
@@ -247,6 +778,7 @@ class RecipeBook:
         port: int,
         context: int,
         alias: str | None = None,
+        aux_context: int | None = None,
     ) -> ResolvedComponent:
         """Resolve one native process without exposing private recipe structure."""
         if role not in {"main", "aux"}:
@@ -255,6 +787,10 @@ class RecipeBook:
             raise ValueError("port must be in 1..65535")
         if context <= 0:
             raise ValueError("context must be positive")
+        if role == "aux" and aux_context is not None:
+            if aux_context <= 0:
+                raise ValueError("context must be positive")
+            context = aux_context
         return self._component(
             family,
             role,
@@ -264,27 +800,82 @@ class RecipeBook:
             alias_override=alias,
         )
 
+    def resolve_named(
+        self,
+        row_id: str,
+        main_name: str,
+        aux_name: str,
+        context: int,
+        *,
+        aux_context: int | None = None,
+    ) -> ResolvedRecipe:
+        """Resolve a named main/aux/context combination without a MatrixRow."""
+        return self._resolve_values(
+            row_id, main_name, aux_name, context, aux_context=aux_context
+        )
+
     def resolve(self, row: MatrixRow) -> ResolvedRecipe:
         return self._resolve_values(row.id, row.main, row.aux, row.context)
 
     def resolve_catalog_configuration(self, value: dict) -> ResolvedRecipe:
         required = {"id", "main", "auxiliary", "context", "status"}
-        if set(value) != required or value.get("status") != "candidate":
+        optional = {"auxiliary_context"}
+        keys = set(value)
+        if not required <= keys or keys - required - optional:
+            raise ValueError("invalid catalog configuration")
+        if value.get("status") != "candidate":
             raise ValueError("invalid catalog configuration")
         context = value["context"]
         if isinstance(context, bool) or not isinstance(context, int):
             raise ValueError("catalog context must be an integer")
+        aux_context = value.get("auxiliary_context")
+        if aux_context is not None:
+            if isinstance(aux_context, bool) or not isinstance(aux_context, int):
+                raise ValueError("catalog auxiliary context must be an integer")
         return self._resolve_values(
-            str(value["id"]), str(value["main"]), str(value["auxiliary"]), context
+            str(value["id"]), str(value["main"]), str(value["auxiliary"]), context,
+            aux_context=aux_context,
         )
 
-    def _resolve_values(self, row_id: str, main_name: str, aux_name: str, context: int) -> ResolvedRecipe:
+    def _resolve_values(
+        self,
+        row_id: str,
+        main_name: str,
+        aux_name: str,
+        context: int,
+        *,
+        aux_context: int | None = None,
+    ) -> ResolvedRecipe:
         _, main_spec = self._spec(main_name)
         main_large = bool(main_spec.get("large", False))
         main_override = (main_spec.get("context_overrides") or {}).get(str(context)) or {}
         override_gpu = str(main_override.get("gpu", ""))
+        if self.hardware is not None:
+            device_ids = [str(device.index) for device in self.hardware.devices]
+            if not device_ids:
+                auto_main_gpu = auto_aux_gpu = ""
+            elif self.hardware.memory_pool_kind == "unified" or len(device_ids) == 1:
+                auto_main_gpu = auto_aux_gpu = device_ids[0]
+            else:
+                auto_aux_gpu = device_ids[0]
+                auto_main_gpu = (
+                    ",".join(device_ids)
+                    if aux_name == "auto" and (
+                        main_large or context > int(main_spec.get("native_context", context))
+                    )
+                    else device_ids[-1]
+                )
+            # Portable hardware planning supersedes topology-specific catalog hints.
+            override_gpu = ""
+        else:
+            auto_aux_gpu = "0"
+            auto_main_gpu = "0,1" if main_large else ("0" if aux_name == "auto" else "1")
         if aux_name == "auto":
-            main_gpu = override_gpu or ("0,1" if main_large else "0")
+            if aux_context is not None and aux_context != context:
+                raise ValueError(
+                    "shared-main profile cannot use an auxiliary context distinct from the main context"
+                )
+            main_gpu = override_gpu or auto_main_gpu
             main = self._component(main_name, "main", context, main_gpu, port_override=11605)
             return ResolvedRecipe(
                 row_id=row_id,
@@ -293,14 +884,22 @@ class RecipeBook:
                 aux_alias=f"auto:{main.alias}",
                 aux_mode="shared-main",
                 components=(main,),
+                main_context=context,
+                aux_context=context,
             )
-        aux = self._component(aux_name, "aux", context, "0", port_override=11610)
+        aux_role_context = context if aux_context is None else aux_context
+        aux = self._component(aux_name, "aux", aux_role_context, auto_aux_gpu, port_override=11610)
         main = self._component(
             main_name,
             "main",
             context,
-            override_gpu or ("0,1" if main_large else "1"),
+            override_gpu or auto_main_gpu,
             port_override=11605,
+        )
+        aux_residency = (
+            expert_residency(host_ram_gb=self.hardware.system_ram_mb / 1024)
+            if self.hardware is not None
+            else None
         )
         return ResolvedRecipe(
             row_id=row_id,
@@ -309,4 +908,7 @@ class RecipeBook:
             aux_alias=aux.alias,
             aux_mode="dedicated",
             components=(aux, main),
+            main_context=context,
+            aux_context=aux_role_context,
+            aux_residency=aux_residency,
         )

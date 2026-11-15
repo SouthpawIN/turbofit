@@ -12,6 +12,18 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+# Prefer project venv when system python lacks deps or is too old (macOS ships 3.9).
+if sys.version_info < (3, 10):
+    _venv = ROOT / ".venv" / "bin" / "python"
+    if _venv.is_file() and Path(sys.executable).resolve() != _venv.resolve():
+        os.execv(str(_venv), [str(_venv), str(Path(__file__).resolve()), *sys.argv[1:]])
+try:
+    import yaml  # noqa: F401
+except ImportError:
+    _venv = ROOT / ".venv" / "bin" / "python"
+    if _venv.is_file() and Path(sys.executable).resolve() != _venv.resolve():
+        os.execv(str(_venv), [str(_venv), str(Path(__file__).resolve()), *sys.argv[1:]])
+
 from turbofit_runtime.hardware import probe_hardware  # noqa: E402
 from turbofit_runtime.runtime_cli import run  # noqa: E402
 from turbofit_runtime.routes import load_runtime_resolutions_many  # noqa: E402

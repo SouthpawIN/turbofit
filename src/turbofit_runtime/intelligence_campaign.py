@@ -1,6 +1,7 @@
 """Durable state machine for production configuration intelligence benchmarks."""
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
@@ -8,10 +9,28 @@ from typing import Any, Mapping
 SCHEMA = "turbofit.intelligence-campaign-state/v1"
 LEVELS = ("screening", "promotion", "release")
 LEVEL_PARAMETERS = {
-    "screening": {"deepswe_tasks": 3, "deepswe_repetitions": 1, "agentic_repetitions": 1},
+    "screening": {"deepswe_tasks": 1, "deepswe_repetitions": 1, "agentic_repetitions": 1},
     "promotion": {"deepswe_tasks": 30, "deepswe_repetitions": 3, "agentic_repetitions": 3},
     "release": {"deepswe_tasks": 113, "deepswe_repetitions": 3, "agentic_repetitions": 5},
 }
+
+
+def select_turbofit_list_candidates(
+    configurations: Mapping[str, Any], tournaments: Mapping[str, Any], hardware_tier_gb: int,
+) -> dict[str, Any]:
+    rows = configurations.get("rows")
+    tiers = tournaments.get("tiers")
+    if not isinstance(rows, list) or not isinstance(tiers, list):
+        raise ValueError("configuration matrix and hardware tournaments must contain lists")
+    tier = next((item for item in tiers if item.get("vram_gb") == hardware_tier_gb), None)
+    if not isinstance(tier, Mapping):
+        raise ValueError(f"no TurboFit List tournament for {hardware_tier_gb} GB")
+    by_id = {str(row["id"]): row for row in rows if isinstance(row, Mapping)}
+    ordered_ids = list(dict.fromkeys(str(item) for item in tier.get("candidates") or []))
+    missing = [identifier for identifier in ordered_ids if identifier not in by_id]
+    if missing:
+        raise ValueError("tournament references unknown configurations: " + ", ".join(missing))
+    return {**dict(configurations), "rows": [dict(by_id[identifier]) for identifier in ordered_ids]}
 
 
 def build_state(configurations: Mapping[str, Any]) -> dict[str, Any]:
@@ -19,7 +38,7 @@ def build_state(configurations: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(rows, list) or not rows:
         raise ValueError("configuration matrix has no rows")
     runs: dict[str, dict[str, Any]] = {}
-    for row in rows:
+    for priority, row in enumerate(rows):
         configuration_id = str(row["id"])
         for level in LEVELS:
             run_id = f"{configuration_id}::{level}"
@@ -31,6 +50,7 @@ def build_state(configurations: Mapping[str, Any]) -> dict[str, Any]:
                 "auxiliary": str(row["auxiliary"]),
                 "context": int(row["context"]),
                 "level": level,
+                "priority": priority,
                 "parameters": dict(LEVEL_PARAMETERS[level]),
                 "status": status,
                 "attempts": 0,
@@ -52,7 +72,12 @@ def reconcile_state(state: dict[str, Any], configurations: Mapping[str, Any]) ->
     fresh["created_at"] = state.get("created_at") or fresh["created_at"]
     for key in tuple(fresh["runs"]):
         if key in existing:
-            fresh["runs"][key] = existing[key]
+            fresh["runs"][key] = {
+                **fresh["runs"][key],
+                **existing[key],
+                "priority": fresh["runs"][key]["priority"],
+                "parameters": fresh["runs"][key]["parameters"],
+            }
     refresh_dependencies(fresh)
     fresh["updated_at"] = datetime.now(timezone.utc).isoformat()
     return fresh
@@ -170,12 +195,52 @@ def refresh_dependencies(state: dict[str, Any]) -> None:
                 release["error"] = None
 
 
+ENVIRONMENTAL_FAILURE_MARKERS = (
+    "filenotfounderror",
+    "no such file or directory",
+    "not installed",
+    "install the",
+    "modulenotfounderror",
+    "prepare",
+    "docker",
+    "connectionerror",
+    "connection refused",
+    "timed out",
+)
+
+
+def reclaim_environmental_failures(
+    state: dict[str, Any], *, max_attempts: int = 3
+) -> tuple[str, ...]:
+    """Requeue runs that failed on the host, not on the model.
+
+    A missing installer, a docker daemon that was not up, or a prepare step that
+    timed out used to leave a run marked `failed` forever: the defect gets fixed,
+    and the campaign then reports `idle` until someone remembers `retry-failed`.
+    Environment failures are retried automatically up to max_attempts.
+    """
+    reclaimed: list[str] = []
+    for run_id, run in (state.get("runs") or {}).items():
+        if run.get("status") != "failed":
+            continue
+        if int(run.get("attempts") or 0) >= max_attempts:
+            continue
+        error = str(run.get("error") or "").lower()
+        if any(marker in error for marker in ENVIRONMENTAL_FAILURE_MARKERS):
+            run["status"] = "ready"
+            run["error"] = None
+            reclaimed.append(run_id)
+    if reclaimed:
+        state["updated_at"] = datetime.now(timezone.utc).isoformat()
+    return tuple(reclaimed)
+
+
 def next_ready_run(state: Mapping[str, Any]) -> dict[str, Any] | None:
     runs = state.get("runs") or {}
     for level in LEVELS:
         ready = sorted(
             (run for run in runs.values() if run.get("level") == level and run.get("status") == "ready"),
-            key=lambda run: run["configuration_id"],
+            key=lambda run: (int(run.get("priority", 1 << 30)), run["configuration_id"]),
         )
         if ready:
             return ready[0]
@@ -194,15 +259,37 @@ def mark_running(state: dict[str, Any], run_id: str) -> dict[str, Any]:
     return run
 
 
+def _active_pids() -> "set[int] | None":
+    """All live PIDs, or None when the OS exposes no /proc (macOS/Windows)."""
+    proc = Path("/proc")
+    if not proc.is_dir():
+        return None
+    try:
+        return {int(path.name) for path in proc.iterdir() if path.name.isdigit()}
+    except OSError:
+        return None
+
+
+def _pid_alive(pid: int) -> bool:
+    """Cross-platform single-PID liveness probe (does not require /proc)."""
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
 def recover_interrupted(
     state: dict[str, Any], *, active_pids: set[int] | None = None,
     boot_id: str | None = None, legacy_stale_seconds: int = 21600
 ) -> tuple[str, ...]:
     """Requeue runs whose recorded worker process no longer exists."""
     if active_pids is None:
-        active_pids = {
-            int(path.name) for path in Path("/proc").iterdir() if path.name.isdigit()
-        }
+        active_pids = _active_pids()
     if boot_id is None:
         try:
             boot_id = Path("/proc/sys/kernel/random/boot_id").read_text(encoding="utf-8").strip()
@@ -214,7 +301,13 @@ def recover_interrupted(
         if run["status"] != "running":
             continue
         worker_pid = run.get("worker_pid")
-        interrupted = isinstance(worker_pid, int) and worker_pid not in active_pids
+        if worker_pid is None:
+            interrupted = False
+        elif active_pids is None:
+            interrupted = not _pid_alive(worker_pid)
+        else:
+            assert active_pids is not None
+            interrupted = worker_pid not in active_pids
         worker_boot_id = run.get("worker_boot_id")
         if worker_boot_id and boot_id and worker_boot_id != boot_id:
             interrupted = True

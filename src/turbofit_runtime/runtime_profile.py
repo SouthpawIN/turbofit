@@ -8,6 +8,8 @@ from enum import Enum
 from typing import Any, Mapping, Sequence
 
 SCHEMA = "turbofit.runtime/v1"
+LAUNCHER_SYSTEMD_UNIT = "systemd-unit"
+_UNIT_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9@._-]{0,127}$")
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 _SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _SECRET_KEYS = frozenset(
@@ -74,6 +76,7 @@ class RuntimePolicy:
     cooldown_s: float
     flap_failure_limit: int | None = None
     flap_window_s: float | None = None
+    expansion_mode: str = "conservative"
 
     def validate(self) -> None:
         _nonempty(self.recommendation, "recommendation")
@@ -90,6 +93,8 @@ class RuntimePolicy:
             _positive_int(self.flap_failure_limit, "flap_failure_limit")
         if self.flap_window_s is not None:
             _nonnegative_number(self.flap_window_s, "flap_window_s")
+        if self.expansion_mode not in ("conservative", "direct"):
+            raise ValueError("expansion_mode must be 'conservative' or 'direct'")
 
 
 @dataclass(frozen=True)
@@ -114,11 +119,32 @@ class RuntimeRung:
     aux_manifest: str | None = None
     main_api_policy: str | None = None
     aux_api_policy: str | None = None
+    main_context: int | None = None
+    auxiliary_context: int | None = None
+    # A rung whose process is owned by an init system rather than launched as a
+    # child. Declaring the unit is what makes it ours: lifecycle actions become
+    # `systemctl --user start|stop <unit>`, never signals to a PID.
+    launcher: str | None = None
+    unit: str | None = None
 
     def validate(self, *, terminal: bool) -> None:
         _slug(self.id, "rung id")
         _positive_int(self.context, "context")
         _nonempty(self.evidence, "evidence")
+        if self.launcher is not None:
+            if self.launcher != LAUNCHER_SYSTEMD_UNIT:
+                raise ValueError(f"launcher must equal {LAUNCHER_SYSTEMD_UNIT!r}")
+            _nonempty(self.unit, "unit")
+            if self.aux_mode is AuxMode.API:
+                raise ValueError("API rung cannot name a launcher unit")
+            if not _UNIT_NAME.fullmatch(str(self.unit)):
+                raise ValueError("unit must be a plain systemd unit name")
+        elif self.unit is not None:
+            raise ValueError("unit requires launcher")
+        if self.main_context is not None:
+            _positive_int(self.main_context, "main_context")
+        if self.auxiliary_context is not None:
+            _positive_int(self.auxiliary_context, "auxiliary_context")
         if self.aux_mode is AuxMode.API:
             if not terminal:
                 raise ValueError("API rung must be terminal")
@@ -199,7 +225,7 @@ class Turbofile:
                 "expansion_margin_gb_per_card",
                 "cooldown_s",
             },
-            optional={"flap_failure_limit", "flap_window_s"},
+            optional={"flap_failure_limit", "flap_window_s", "expansion_mode"},
             where="policy",
         )
         roles_data = _mapping(root["roles"], "roles")
@@ -223,6 +249,10 @@ class Turbofile:
                     "aux_manifest",
                     "main_api_policy",
                     "aux_api_policy",
+                    "main_context",
+                    "auxiliary_context",
+                    "launcher",
+                    "unit",
                 },
                 where=f"rungs[{index}]",
             )
@@ -240,6 +270,10 @@ class Turbofile:
                     aux_manifest=data.get("aux_manifest"),
                     main_api_policy=data.get("main_api_policy"),
                     aux_api_policy=data.get("aux_api_policy"),
+                    main_context=data.get("main_context"),
+                    auxiliary_context=data.get("auxiliary_context"),
+                    launcher=data.get("launcher"),
+                    unit=data.get("unit"),
                 )
             )
         profile = cls(
@@ -265,6 +299,7 @@ class Turbofile:
                 cooldown_s=policy_data["cooldown_s"],
                 flap_failure_limit=policy_data.get("flap_failure_limit"),
                 flap_window_s=policy_data.get("flap_window_s"),
+                expansion_mode=policy_data.get("expansion_mode", "conservative"),
             ),
             roles=RoleRoutes(
                 main=roles_data["main"],
@@ -297,6 +332,7 @@ class Turbofile:
         }
         _optional(policy, "flap_failure_limit", self.policy.flap_failure_limit)
         _optional(policy, "flap_window_s", self.policy.flap_window_s)
+        _optional(policy, "expansion_mode", self.policy.expansion_mode)
         rungs: list[dict[str, Any]] = []
         for rung in self.rungs:
             item: dict[str, Any] = {
@@ -310,6 +346,10 @@ class Turbofile:
                 "aux_manifest",
                 "main_api_policy",
                 "aux_api_policy",
+                "main_context",
+                "auxiliary_context",
+                "launcher",
+                "unit",
             ):
                 _optional(item, key, getattr(rung, key))
             rungs.append(item)

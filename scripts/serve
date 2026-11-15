@@ -33,6 +33,7 @@ mkdir -p "${TURBOFIT_ROOT}"/{logs,pid,port,strings,launchers} "${TURBOFIT_CONFIG
 export TURBOFIT_CATALOG="${CATALOG}"
 export TURBOFIT_CURATED="${CURATED}"
 export TURBOFIT_HERMES_CONFIG="${HERMES_CONFIG}"
+export TURBOFIT_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/src"
 
 # Bootstrap empty catalog + curated slots if missing (first run)
 if [ ! -f "${CATALOG}" ]; then
@@ -830,8 +831,253 @@ PYEOF
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Alias lookup (extended schema)
+# Hardware scan — report platform, memory pool, and recommended ladder
 # ─────────────────────────────────────────────────────────────────────────────
+
+scan_hardware() {
+    python3 - "${CATALOG}" "${CURATED}" <<'PYEOF'
+import json, os, platform, sys
+sys.path.insert(0, os.environ.get("TURBOFIT_SRC", ""))
+from turbofit_runtime.hardware import probe_hardware
+from turbofit_runtime.allowed_lineup import check_local_options
+
+fp = probe_hardware()
+result = {
+    "os": fp.os,
+    "arch": fp.architecture,
+    "host_ram_mb": fp.system_ram_mb,
+    "host_ram_gb": round(fp.system_ram_mb / 1024, 1),
+    "total_vram_mb": fp.total_vram_mb,
+    "total_vram_gb": round(fp.total_vram_mb / 1024, 1),
+    "devices": [
+        {
+            "name": d.name,
+            "backend": d.backend,
+            "vendor": d.vendor,
+            "memory_total_mb": d.memory_total_mb,
+            "memory_free_mb": d.memory_free_mb,
+        }
+        for d in (fp.devices or [])
+    ],
+    "unified_memory": fp.unified_memory,
+    "memory_pool_kind": fp.memory_pool_kind,
+    "shared_memory_pool": fp.shared_memory_pool,
+    "host_reserve_mb": fp.host_reserve_mb,
+    "host_usable_memory_mb": fp.host_usable_memory_mb,
+    "total_usable_memory_mb": fp.total_usable_memory_mb,
+}
+
+# Determine ladder and backend
+devices = fp.devices or []
+is_apple = any(d.backend == "metal" or d.vendor == "apple" for d in devices)
+if is_apple:
+    ladder = "unified"
+    backend = "metal"
+    vram_gb = 0.0
+    host_ram_gb = round(fp.system_ram_mb / 1024, 1)
+elif devices:
+    ladder = "dedicated"
+    backend = str(devices[0].backend)
+    vram_gb = round(devices[0].memory_total_mb / 1024, 1)
+    host_ram_gb = round(fp.system_ram_mb / 1024, 1)
+else:
+    ladder = "unified"
+    backend = "cpu"
+    vram_gb = 0.0
+    host_ram_gb = round(fp.system_ram_mb / 1024, 1)
+
+result["ladder"] = ladder
+result["backend"] = backend
+result["vram_gb"] = vram_gb
+result["host_ram_gb"] = host_ram_gb
+
+# Project Fit List recommendation
+vendor = "apple" if is_apple else ("nvidia" if "cuda" in backend else "unknown")
+try:
+    options = check_local_options(
+        vram_gb=vram_gb,
+        host_ram_gb=float(host_ram_gb),
+        memory_pool=ladder,
+        backend=backend,
+        vendor=vendor,
+    )
+    mains = [item for item in options if item.get("role") == "main"]
+    result["recommendations"] = mains[:3]
+    result["fit_list"] = True
+except Exception as exc:
+    result["fit_list_error"] = str(exc)
+    result["recommendations"] = []
+    result["fit_list"] = False
+
+# Check if recommended model is already installed
+catalog_path = os.environ.get("TURBOFIT_CATALOG", os.path.expanduser("~/.config/turbofit/models.yaml"))
+installed = {}
+if os.path.exists(catalog_path):
+    import yaml
+    with open(catalog_path) as f:
+        cat = yaml.safe_load(f) or {}
+    for alias, info in (cat.get("models") or {}).items():
+        path = info.get("path", "")
+        installed[alias] = {
+            "path": path,
+            "exists": os.path.isfile(path) if path else False,
+            "port": info.get("port"),
+            "ctx": info.get("ctx"),
+            "role": info.get("role"),
+        }
+result["installed"] = installed
+
+# Curated.yaml slots
+curated_path = os.environ.get("TURBOFIT_CURATED", os.path.expanduser("~/.config/turbofit/curated.yaml"))
+curated_slots = {}
+if os.path.exists(curated_path):
+    with open(curated_path) as f:
+        curated = yaml.safe_load(f) or {}
+    for slot_key, slot_data in (curated.get("slots") or {}).items():
+        entries = []
+        for tier_name, tier_list in (slot_data or {}).items():
+            if tier_name == "description" or not isinstance(tier_list, list):
+                continue
+            for entry in tier_list:
+                if isinstance(entry, dict) and entry.get("alias"):
+                    entries.append(entry["alias"])
+        curated_slots[slot_key] = entries
+result["curated_slots"] = curated_slots
+
+print(json.dumps(result, indent=2))
+PYEOF
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Setup — scan, register recommended model, wire into curated.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+
+setup_turbofit() {
+    local scan_json
+    scan_json=$(scan_hardware) || { echo "ERROR: scan failed"; return 1; }
+
+    echo "=== TurboFit Machine Scan ==="
+    echo "${scan_json}" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+print(f\"  OS:          {d.get('os')} {d.get('arch')}\")
+print(f\"  Host RAM:    {d.get('host_ram_gb')}GB\")
+print(f\"  VRAM:        {d.get('total_vram_gb')}GB\")
+print(f\"  Unified:     {d.get('unified_memory')}\")
+print(f\"  Pool kind:   {d.get('memory_pool_kind')}\")
+print(f\"  Ladder:      {d.get('ladder', 'unknown').upper()}\")
+print(f\"  Backend:     {d.get('backend')}\")
+print()
+
+# Fit List recommendations
+recs = d.get('recommendations', [])
+print(f\"  Fit List:    {'OK' if d.get('fit_list') else 'ERROR: ' + d.get('fit_list_error', '?')}\")
+if recs:
+    for r in recs:
+        print(f\"    → {r.get('alias')}  ({r.get('why', '')[:80]})\")
+else:
+    print(f\"    (none returned)\")
+
+# Installed
+installed = d.get('installed', {})
+print(f\"\n  Installed ({len(installed)}):\")
+for alias, info in sorted(installed.items()):
+    status = 'OK' if info.get('exists') else 'MISSING'
+    print(f\"    {alias}: {status}  path={info.get('path','')}\")
+
+# Curated
+slots = d.get('curated_slots', {})
+print(f\"\n  Curated slots:\")
+for slot, aliases in sorted(slots.items()):
+    print(f\"    {slot}: {aliases or '(empty)'}\")
+" || echo "${scan_json}"
+
+    # Determine the first recommended alias
+    local recommended_alias
+    recommended_alias=$(echo "${scan_json}" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+recs = d.get('recommendations', [])
+if recs:
+    print(recs[0].get('alias', ''))
+" 2>/dev/null)
+
+    if [ -z "${recommended_alias}" ]; then
+        echo ""
+        echo "ERROR: No model recommended for this hardware."
+        echo "  Check the Fit List configuration in src/turbofit_runtime/allowed_lineup.py"
+        return 1
+    fi
+
+    echo ""
+    echo "=== Setup target: ${recommended_alias} ==="
+
+    # Check if already installed
+    local installed_path
+    installed_path=$(python3 -c "
+import yaml, sys, os
+with open('${CATALOG}') as f:
+    cat = yaml.safe_load(f) or {}
+m = (cat.get('models') or {}).get('${recommended_alias}', {})
+print(m.get('path', ''))
+" 2>/dev/null)
+
+    if [ -n "${installed_path}" ] && [ -f "${installed_path}" ]; then
+        echo "  ✓ Model already installed: ${installed_path}"
+    else
+        echo "  ✗ Model NOT installed."
+        echo ""
+        echo "  Download and register:"
+        echo "    pip install -U huggingface_hub"
+        echo "    # Then find the GGUF in the HuggingFace cache and register:"
+        echo "    serve register ${recommended_alias} <path-to-gguf> --launcher llama-cpp --port 11606"
+        echo ""
+        echo "  Or download manually:"
+        echo "    python3 -c \"
+from huggingface_hub import hf_hub_download
+import shutil, os
+root = os.path.expanduser('~/Models/storage/gguf')
+# Check artifact-manifest.json for the right repo/path
+print('See: references/artifact-manifest.json')
+\""
+        return 1
+    fi
+
+    # Wire into curated.yaml if not there
+    if grep -q "alias: ${recommended_alias}" "${CURATED}" 2>/dev/null; then
+        echo "  ✓ Already in curated.yaml"
+    else
+        echo "  → Wiring ${recommended_alias} into curated.yaml (main_local tier s)..."
+        python3 - "${CURATED}" "${recommended_alias}" <<'PYEOF'
+import sys, os, yaml
+curated_path = sys.argv[1]
+alias = sys.argv[2]
+with open(curated_path) as f:
+    curated = yaml.safe_load(f) or {"slots": {}}
+
+main_local = curated.setdefault("slots", {}).setdefault("main_local", {"description": "Local main"})
+main_local.setdefault("s", [])
+# Avoid duplicate
+existing = [e.get("alias") for e in main_local.get("s", []) if isinstance(e, dict)]
+if alias not in existing:
+    main_local["s"].append({
+        "alias": alias,
+        "why": "Auto-wired by serve setup",
+        "tok_s_target": 55,
+        "ctx_target": 65536,
+        "vision": True,
+        "vram_gb": 24,
+    })
+
+with open(curated_path, "w") as f:
+    yaml.dump(curated, f, default_flow_style=False, sort_keys=False)
+print(f"Wired {alias} into main_local tier s")
+PYEOF
+    fi
+
+    echo ""
+    echo "Done. Run: serve auto"
+}
 
 alias_info() {
     local alias="$1"
@@ -1313,6 +1559,19 @@ slot = sys.argv[1]             # "main" or "aux"
 want_vision = sys.argv[2] == "true"
 prefer_free = sys.argv[3] == "true"
 
+src = os.environ.get("TURBOFIT_SRC")
+if src and os.path.isdir(src) and src not in sys.path:
+    sys.path.insert(0, src)
+try:
+    from turbofit_runtime.allowed_lineup import is_allowed_aux, is_allowed_main, is_banned
+except Exception:
+    def is_banned(alias):
+        return "9b" in str(alias).lower()
+    def is_allowed_main(alias):
+        return not is_banned(alias)
+    def is_allowed_aux(alias):
+        return not is_banned(alias)
+
 curated_path = os.environ.get("TURBOFIT_CURATED", os.path.expanduser("~/.config/turbofit/curated.yaml"))
 catalog_path = os.environ.get("TURBOFIT_CATALOG", os.path.expanduser("~/.config/turbofit/models.yaml"))
 
@@ -1352,6 +1611,13 @@ for slot_key in chain:
 
     for tr, idx, e, kind in entries_by_tier:
         if not meets(e, want_vision):
+            continue
+        alias = e.get("alias") or e.get("model_id") or ""
+        if is_banned(alias) or is_banned(e.get("model_id", "")):
+            continue
+        if slot == "main" and kind == "local" and not is_allowed_main(alias):
+            continue
+        if slot == "aux" and kind == "local" and not is_allowed_aux(alias):
             continue
         if kind == "local":
             alias = e.get("alias")
@@ -1517,6 +1783,7 @@ serve_auto() {
     local want_vision="false"
     local prefer_free="false"
     local force_api="false"
+    local is_metal="false"
 
     # Parse: serve_auto [main|aux] [--vision] [--free] [--api] [--ui ...]
     while [ $# -gt 0 ]; do
@@ -1529,14 +1796,24 @@ serve_auto() {
         esac
     done
 
-    # If --api flag or no NVIDIA GPU detected, skip local and go straight to API
+    # If --api flag or no NVIDIA GPU and no Metal detected, skip local and go straight to API
     if [ "${force_api}" = "true" ]; then
         echo "→ API mode forced. Skipping local catalog."
     elif ! command -v nvidia-smi >/dev/null 2>&1; then
-        echo "→ No NVIDIA GPU detected. Defaulting to API mode."
-        force_api="true"
+        # No NVIDIA GPU — check for Apple Silicon/Metal (unified memory lane)
+        if [[ "$(uname)" == "Darwin" ]] && sysctl -n machdep.cpu.brand_string 2>/dev/null | grep -qiE "Apple|M1|M2|M3|M4"; then
+            echo "→ Apple Silicon / Metal detected. Using unified memory lane."
+            is_metal="true"
+        else
+            echo "→ No NVIDIA GPU detected. Defaulting to API mode."
+            force_api="true"
+        fi
     else
-        # Check VRAM — if <8GB free, suggest API
+        is_metal="false"
+    fi
+
+    # Check VRAM / memory — skip VRAM probe for Metal (unified memory)
+    if [ "${force_api}" != "true" ] && [ "${is_metal}" != "true" ]; then
         local vram_json
         vram_json=$(probe_vram 2>/dev/null || echo '{"free_GB":0}')
         local free_gb
@@ -1555,6 +1832,8 @@ serve_auto() {
         elif [ "${free_gb}" != "?" ] && awk "BEGIN{exit !(${free_gb} < 8)}"; then
             echo "→ Tight VRAM (${free_gb}GB free of ${total_gb}GB). Consider API aux to free space."
         fi
+    elif [ "${is_metal}" = "true" ]; then
+        echo "→ Metal unified memory lane — using local model catalog."
     fi
 
     # If API mode, pick from curated API slots directly
@@ -3073,6 +3352,23 @@ import sys, yaml, os, json
 from urllib.request import urlopen
 from urllib.error import URLError
 
+src = os.environ.get("TURBOFIT_SRC")
+if src and os.path.isdir(src) and src not in sys.path:
+    sys.path.insert(0, src)
+try:
+    from turbofit_runtime.allowed_lineup import is_banned, is_allowed_main, is_allowed_aux, local_main_for_vram_gb, local_aux_for_host
+except Exception:
+    def is_banned(alias):
+        return "9b" in str(alias).lower()
+    def is_allowed_main(alias):
+        return not is_banned(alias)
+    def is_allowed_aux(alias):
+        return not is_banned(alias)
+    def local_main_for_vram_gb(vram_gb):
+        return "bonsai-27b"
+    def local_aux_for_host(*, vram_gb, host_ram_gb):
+        return "cyber-tiel-coder-35b-a3b-ud-q4-k-xl" if host_ram_gb >= 32 else "auto"
+
 cat_path = sys.argv[1]
 with open(cat_path) as f:
     cfg = yaml.safe_load(f) or {}
@@ -3096,6 +3392,8 @@ if bench_data:
 
 results = []
 for alias, m in models.items():
+    if is_banned(alias) or not (is_allowed_main(alias) or is_allowed_aux(alias)):
+        continue
     path = m.get("path", "")
     if not os.path.exists(path):
         continue
@@ -3536,6 +3834,8 @@ for r in sorted(data.get('results',[]), key=lambda x: x.get('tok_s',0), reverse=
         # Forward everything to serve_auto which parses its own flags
         serve_auto "$@"
         ;;
+    scan)            scan_hardware ;;
+    setup)            setup_turbofit "$@" ;;
     downscale)      serve_downscale ;;
     main)           serve_main "${1:-}" ;;
     aux)            serve_aux "${1:-}" ;;

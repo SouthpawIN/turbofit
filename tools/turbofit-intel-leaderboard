@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+"""Render the measured intelligence leaderboard from intelligence-scores.json.
+
+Emits three artifacts from one source so they cannot disagree:
+
+  * ``references/intelligence-leaderboard.json`` — per-tier ranking
+  * ``references/intelligence-leaderboard.md``   — the long-form page
+  * the ``hermes-index`` block inside ``README.md`` (generated markers)
+
+The README block is regenerated in place: it survives the wiki sync and is never
+hand-edited. ``tools/sync-wiki-readme.sh`` calls this after refreshing the README.
+"""
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.intel_leaderboard import build_leaderboard, render_markdown  # noqa: E402
+from turbofit_runtime.intelligence_readme import publish as publish_readme  # noqa: E402
+
+SCORES = ROOT / "references/intelligence-scores.json"
+OUT_JSON = ROOT / "references/intelligence-leaderboard.json"
+OUT_MD = ROOT / "references/intelligence-leaderboard.md"
+README = ROOT / "README.md"
+
+
+def main() -> int:
+    records = json.loads(SCORES.read_text(encoding="utf-8")).get("records", [])
+    board = build_leaderboard(records)
+    OUT_JSON.write_text(json.dumps(board, indent=1) + "\n", encoding="utf-8")
+    OUT_MD.write_text(render_markdown(board), encoding="utf-8")
+    print(render_markdown(board))
+    if README.is_file():
+        print(f"wrote hermes-index section to {publish_readme(ROOT, README)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

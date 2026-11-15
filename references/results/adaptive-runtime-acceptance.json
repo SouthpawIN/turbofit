@@ -1,6 +1,5 @@
 {
   "blockers": [
-    "NVML is unavailable; controlled pressure cannot be measured safely",
     "live adaptive controller service is not active"
   ],
   "checks": {
@@ -14,21 +13,21 @@
       "payload": {
         "data": [
           {
-            "context_length": 65536,
+            "context_length": 131072,
             "description": "Hardware-matched tested main + auxiliary configuration",
             "id": "auto",
             "object": "model",
             "owned_by": "turbofit"
           },
           {
-            "context_length": 65536,
+            "context_length": 131072,
             "description": "Stable route to the currently reconciled main role",
             "id": "active:main",
             "object": "model",
             "owned_by": "turbofit"
           },
           {
-            "context_length": 65536,
+            "context_length": 131072,
             "description": "Stable route to the currently reconciled auxiliary role",
             "id": "active:aux",
             "object": "model",
@@ -41,22 +40,22 @@
     },
     "native_runtime": {
       "exit_code": 0,
-      "output": "{\n  \"backend\": \"cuda\",\n  \"binary\": \"/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-6ea215d171fd31df943bf1ac8227129f2b963160/build-cuda/bin/llama-server\",\n  \"revision\": \"6ea215d171fd31df943bf1ac8227129f2b963160\",\n  \"status\": \"verified\"\n}\n",
+      "output": "{\n  \"backend\": \"cuda\",\n  \"binary\": \"/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server\",\n  \"revision\": \"1c3c9674de4d455f1e571bed808252af54932767\",\n  \"status\": \"verified\"\n}\n",
       "passed": true
     },
     "nvml": {
-      "exit_code": 18,
-      "output": "Failed to initialize NVML: Driver/library version mismatch\nNVML library version: 580.159\n",
-      "passed": false
+      "exit_code": 0,
+      "output": "0, GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1, 24576, 457, 23908\n1, GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1, 24576, 68, 24306\n",
+      "passed": true
     },
     "simulated_transitions": {
       "exit_code": 0,
-      "output": ".............................                                            [100%]\n29 passed in 2.33s\n",
+      "output": "..........................                                               [100%]\n26 passed in 1.44s\n",
       "passed": true
     }
   },
   "real_requested": true,
-  "recorded_at": "2026-08-05T00:49:24.749992+00:00",
+  "recorded_at": "2026-08-23T05:49:12.314386+00:00",
   "safety": {
     "direct_process_signals_sent": 0,
     "external_processes_modified": 0,

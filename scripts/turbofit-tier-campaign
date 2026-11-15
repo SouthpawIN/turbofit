@@ -101,7 +101,7 @@ def restrict_to_physical_tier(tier_ids: set[str] | None, detected: str) -> set[s
 
 def build_runner(tier_ids: set[str] | None = None) -> CampaignRunner:
     catalog, configurations, _, display_ids = planned(tier_ids)
-    recipes = RecipeBook.load(RECIPES)
+    recipes = RecipeBook.load(RECIPES, hardware=probe_hardware())
     backend = CampaignBackend(
         gateway_script=ROOT / "scripts/turbofit-gateway.py",
         result_dir=RESULTS,

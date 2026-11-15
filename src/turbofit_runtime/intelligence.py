@@ -15,8 +15,19 @@ from typing import Any, Iterable, Mapping, Sequence
 
 _HASH = re.compile(r"^sha256:[0-9a-f]{64}$")
 REQUIRED_BENCHMARKS = ("deep-swe", "agentic-pair")
+
+# Suites beyond the two TurboFit runs today. Names and intent mirror Nous Research's
+# Hermes Index, which averages pass@1 across four suites run inside Hermes Agent:
+# Hermes Bench, TerminalBench 4, TerminalBench Science and SkillsBench.
+EXTENDED_BENCHMARKS = (
+    "hermes-bench",
+    "terminal-bench-4",
+    "terminal-bench-science",
+    "skills-bench",
+)
+ALL_BENCHMARKS = REQUIRED_BENCHMARKS + EXTENDED_BENCHMARKS
 INTELLIGENCE_RECIPE_PROTOCOL = "turbofit.intelligence-recipe/v2"
-DEEPSWE_RUNNER_PROTOCOL = "turbofit.deepswe-pier/v3"
+DEEPSWE_RUNNER_PROTOCOL = "turbofit.deepswe-pier/v7"
 AGENTIC_PAIR_PROTOCOL = "turbofit.agentic-production-pair/v1"
 
 
@@ -95,7 +106,7 @@ class ConfigurationIntelligence:
 
 
 def validate_measurement(item: BenchmarkMeasurement) -> None:
-    if item.name not in REQUIRED_BENCHMARKS:
+    if item.name not in ALL_BENCHMARKS:
         raise ValueError(f"unsupported benchmark: {item.name}")
     if not item.revision.strip():
         raise ValueError("benchmark revision is required")
@@ -121,8 +132,8 @@ def validate_measurement(item: BenchmarkMeasurement) -> None:
 def validate_configuration(item: ConfigurationIntelligence) -> None:
     if not item.configuration_id.strip() or not item.main.strip() or not item.auxiliary.strip():
         raise ValueError("configuration identity, main, and auxiliary are required")
-    if isinstance(item.hardware_tier_gb, bool) or item.hardware_tier_gb not in (8, 16, 24, 48, 64, 96, 200, 300):
-        raise ValueError("hardware tier must be one of 8/16/24/48/64/96/200/300 GB")
+    if isinstance(item.hardware_tier_gb, bool) or item.hardware_tier_gb not in (8, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384):
+        raise ValueError("hardware tier must be one of 8/16/24/32/48/64/96/128/192/256/384 GB")
     if item.context not in (65_536, 131_072, 262_144, 1_048_576):
         raise ValueError("unsupported production context")
     if not item.quantizations or any(not value.strip() for value in item.quantizations):
@@ -146,10 +157,12 @@ def intelligence_score(item: ConfigurationIntelligence) -> float:
     missing = [name for name in REQUIRED_BENCHMARKS if name not in measurements]
     if missing:
         raise ValueError("missing required benchmark measurements: " + ", ".join(missing))
-    # Equal-weight geometric mean: a configuration cannot hide a weak agentic
-    # lane behind one strong benchmark. Scores remain an auditable 0-100 scale.
-    product = math.prod(float(measurements[name].score) for name in REQUIRED_BENCHMARKS)
-    return round(100.0 * product ** (1.0 / len(REQUIRED_BENCHMARKS)), 6)
+    # Equal-weight arithmetic mean preserves each real suite's contribution.
+    # A genuine 0/N result remains visible in its raw measurement, but it no
+    # longer erases non-zero measured capability from every other suite. Tier
+    # promotion can still enforce per-suite floors separately.
+    values = [float(measurements[name].score) for name in REQUIRED_BENCHMARKS]
+    return round(100.0 * sum(values) / len(values), 6)
 
 
 def rank_configurations(
@@ -163,6 +176,16 @@ def rank_configurations(
         "intelligence": sorted(items, key=lambda item: (item.intelligence, item.throughput_tps, stable(item)), reverse=True),
         "balanced": sorted(items, key=lambda item: (item.balanced, item.intelligence, item.throughput_tps, stable(item)), reverse=True),
         "speed": sorted(items, key=lambda item: (item.throughput_tps, item.intelligence, stable(item)), reverse=True),
+    }
+
+
+def refresh_score_payload(value: Mapping[str, object]) -> dict[str, object]:
+    """Recompute derived composite fields from hash-bound suite measurements."""
+    item = from_mapping(value)
+    return {
+        **dict(value),
+        "intelligence_score": item.intelligence,
+        "balanced_score": item.balanced,
     }
 
 
@@ -181,3 +204,23 @@ def from_mapping(value: Mapping[str, object]) -> ConfigurationIntelligence:
     )
     validate_configuration(result)
     return result
+
+
+def combined_score(item: ConfigurationIntelligence) -> float:
+    """Equal-weight mean pass@1 across every suite that actually ran.
+
+    Hermes Index averages four suites. TurboFit runs two of them today, so this
+    averages over what was measured and reports how many suites stand behind the
+    number rather than silently dividing by six and understating the model.
+    """
+    validate_configuration(item)
+    measured = [float(m.score) for m in item.measurements if m.name in ALL_BENCHMARKS]
+    if not measured:
+        raise ValueError("no benchmark measurements to combine")
+    return round(100.0 * sum(measured) / len(measured), 6)
+
+
+def suite_coverage(item: ConfigurationIntelligence) -> dict[str, bool]:
+    """Which suites back a configuration's score — 'measured N of M'."""
+    seen = {m.name for m in item.measurements}
+    return {name: name in seen for name in ALL_BENCHMARKS}

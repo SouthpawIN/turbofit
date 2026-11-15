@@ -19,6 +19,7 @@ SRC = ROOT / "src"
 sys.path.insert(0, str(SRC))
 
 from turbofit_runtime.backend import CampaignBackend
+from turbofit_runtime.hardware import probe_hardware
 from turbofit_runtime.recipes import RecipeBook
 
 PORT = 11731
@@ -112,6 +113,7 @@ def run(
     recipe = RecipeBook.load(
         ROOT / "references/model-recipes.json",
         backend_name=backend,
+        hardware=probe_hardware(),
     ).resolve_catalog_configuration(row)
     component = recipe.components[0]
     command = prepare_command(

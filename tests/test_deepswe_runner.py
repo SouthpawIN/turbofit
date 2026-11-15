@@ -43,13 +43,16 @@ def test_local_endpoint_command_uses_mini_swe_agent_and_deterministic_subset(tmp
         jobs_dir=tmp_path / "jobs",
         n_tasks=10,
         sample_seed=17,
+        agent_step_limit=60,
+        max_output_tokens=1024,
     )
 
     assert command == [
         "pier", "run", "-p", str(tmp_path / "deep-swe" / "tasks"),
         "--agent-import-path", "turbofit_runtime.pier_agent:TurbofitMiniSWEAgent",
         "--model", "openai/deepseek-v4-flash-0731",
-        "--agent-kwarg", 'model_kwargs={"num_retries":0,"timeout":300}',
+        "--agent-kwarg", 'model_kwargs={"num_retries":0,"timeout":300,"max_tokens":1024}',
+        "--agent-kwarg", "step_limit=60",
         "--agent-env", "OPENAI_BASE_URL=http://192.168.1.172:11608/v1",
         "--agent-env", "OPENAI_API_BASE=http://192.168.1.172:11608/v1",
         "--agent-env", "OPENAI_API_KEY=turbofit-local",
@@ -83,6 +86,9 @@ def test_deepswe_summary_is_hash_bound_and_scores_actual_verifier_rewards(tmp_pa
     for trial in (passing, failing):
         (trial / "agent").mkdir()
         (trial / "agent" / "turbofit-route.json").write_text(route)
+        (trial / "agent" / "trajectory.json").write_text(
+            '{"steps":[{"llm_call_count":2},{"llm_call_count":1}]}'
+        )
     (jobs / "job" / "result.json").write_text('{"n_total_trials":2,"stats":{"n_completed_trials":2}}')
     agent = '"agent_result":{"n_agent_steps":2,"n_input_tokens":100,"n_output_tokens":20}'
     (passing / "result.json").write_text('{"verifier_result":{"rewards":{"reward":1.0}},"exception_info":null,' + agent + '}')
@@ -96,9 +102,16 @@ def test_deepswe_summary_is_hash_bound_and_scores_actual_verifier_rewards(tmp_pa
     )
 
     assert result["status"] == "measured"
-    assert result["summary"] == {"tasks_total": 2, "tasks_passed": 1, "score": 0.5, "infrastructure_failures": 0}
+    assert result["summary"]["tasks_total"] == 2
+    assert result["summary"]["tasks_passed"] == 1
+    assert result["summary"]["score"] == 0.5
+    assert result["summary"]["infrastructure_failures"] == 0
     assert result["evidence_sha256"].startswith("sha256:")
     assert len(result["trials"]) == 2
+    assert all(item["model_calls"] == 3 for item in result["trials"])
+    assert result["summary"]["model_calls"] == 6
+    assert result["summary"]["input_tokens"] == 200
+    assert result["summary"]["output_tokens"] == 40
     assert all(item["route_evidence"]["sha256"].startswith("sha256:") for item in result["trials"])
 
 
@@ -116,6 +129,29 @@ def test_deepswe_rejects_model_tokens_without_container_route_proof(tmp_path: Pa
             configuration_id="main--aux--64k",
             production_recipe_sha256="sha256:" + "c" * 64,
             output=tmp_path / "invalid-route.json",
+        )
+
+
+def test_deepswe_rejects_tokens_without_proven_model_calls(tmp_path: Path) -> None:
+    module = _module()
+    trial = tmp_path / "jobs" / "job" / "trial"
+    (trial / "agent").mkdir(parents=True)
+    (trial / "agent" / "turbofit-route.json").write_text(
+        '{"schema":"turbofit.pier-container-route/v1","bridge_gateway":"172.20.0.1",'
+        '"provider_base_url":"http://172.20.0.1:18092/main/v1"}'
+    )
+    (trial / "agent" / "trajectory.json").write_text('{"steps":[]}')
+    (trial / "result.json").write_text(
+        '{"verifier_result":{"rewards":{"reward":0}},"exception_info":null,'
+        '"agent_result":{"n_agent_steps":2,"n_input_tokens":100,"n_output_tokens":20}}'
+    )
+
+    with pytest.raises(RuntimeError, match="without model execution"):
+        module.summarize_job(
+            jobs_dir=tmp_path / "jobs",
+            configuration_id="main--aux--64k",
+            production_recipe_sha256="sha256:" + "d" * 64,
+            output=tmp_path / "invalid-calls.json",
         )
 
 

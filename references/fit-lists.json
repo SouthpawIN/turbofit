@@ -1,0 +1,258 @@
+{
+ "schema": "turbofit.fit-lists/v1",
+ "generated_at": "2026-10-19",
+ "source": "Mirrors DEDICATED_TIERS / SHARED_TIERS in src/turbofit_runtime/fit_check.py; canonical publisher: src/turbofit_runtime/fit_ladders.py.",
+ "policy": "Two separate ladders, not one: the dedicated (VRAM) ladder runs dense models; the unified (CPU/Mac) ladder runs MoE only, because dense does not run well on unified memory. Both converge on Qwen 3.8 Flash Next at 64 GB \u2014 the only MoE rung on the dense side. Top of the unified ladder: DeepSeek V4.1 (1017), above Flash Next (engine pending). The Fit List IS the fallback chain: serve auto walks down the chain on OOM/timeout. Cross-cutting rules for every rung: (1) MTP on whenever available; (2) mind the power bill (kWh/hour) \u2014 IQ3_S is lossless, so do not push a heavier / higher-draw quant past it (32 GB and 48 GB both stay on Qwen 3.8 27B GSQ-RCO @ IQ3_S). Strata rungs are placed by resident footprint (pack + one expert slab), not by total parameter size: Qwen Flash Next measured 1.5 GB resident at 32K . Context floor is 64K for every engine; an engine default below that (Strata ships 32K) is overridden, not adopted.",
+ "dedicated": {
+  "label": "Ladder 1 \u2014 Dedicated (GPU / VRAM, dense)",
+  "rungs": {
+   "8-11gb": {
+    "model": "Arete 27B",
+    "quant": "IQ2_XXS",
+    "size_gb": 8.05,
+    "context": 65536,
+    "note": "dense 27B at IQ2_XXS; the smallest build that fits this band",
+    "alternatives": [
+     {
+      "model": "Ternary Bonsai 2 27B",
+      "quant": "PTQ1_0",
+      "context": 131072
+     },
+     {
+      "model": "LFM3 Omni 2B",
+      "quant": "Q4_K_M",
+      "context": 65536
+     }
+    ]
+   },
+   "12-15gb": {
+    "model": "Arete 27B",
+    "quant": "Q3_K_S",
+    "size_gb": 11.64,
+    "context": 131072,
+    "note": "dense 27B at Q3_K_S (Q3_K_M 12.26 GB also fits)",
+    "alternatives": [
+     {
+      "model": "Underdog 27B",
+      "quant": "PQ2_0",
+      "context": 131072
+     },
+     {
+      "model": "LFM2.5 24B-A2B",
+      "quant": "Q4_K_M",
+      "context": 131072
+     }
+    ]
+   },
+   "16-23gb": {
+    "model": "Arete 27B",
+    "quant": "Q4_K_M",
+    "size_gb": 16.15,
+    "context": 131072,
+    "note": "dense 27B at Q4_K_M, lossless for this model and the band default",
+    "alternatives": [
+     {
+      "model": "Qwen 3.8 27B GSQ-RCO",
+      "quant": "IQ3_S",
+      "context": 262144
+     },
+     {
+      "model": "Qwen 3.6 35B-A3B",
+      "quant": "UD-Q4_K_M",
+      "context": 262144
+     },
+     {
+      "model": "Nanbeige 4.3 33B",
+      "quant": "GSQ-RCO-IQ3_M",
+      "context": 131072
+     },
+     {
+      "model": "Nemotron Bolt 74B-A9B",
+      "quant": "native-24GB",
+      "context": 65536
+     }
+    ]
+   },
+   "24-63gb": {
+    "model": "Arete 27B",
+    "quant": "Q5_K_M",
+    "size_gb": 24.0,
+    "context": 262144,
+    "note": "dense 27B at Q5_K_M with 262K context",
+    "alternatives": [
+     {
+      "model": "Qwen 3.8 27B GSQ-RCO",
+      "quant": "IQ3_S",
+      "context": 262144
+     },
+     {
+      "model": "DeepSeek V4.1 Flash",
+      "quant": "IQ2_XS",
+      "context": 262144
+     }
+    ]
+   },
+   "64gb+": {
+    "model": "Qwen 3.8 Flash Next (Strata)",
+    "engine": "strata",
+    "context": 262144,
+    "note": "MoE; both ladders converge on Flash Next; MTP on",
+    "alternatives": [
+     {
+      "model": "GLM 5.3 Flash",
+      "quant": "GSQ-RCO-3.5bit",
+      "context": 262144
+     }
+    ]
+   }
+  }
+ },
+ "unified": {
+  "label": "Ladder 2 \u2014 Unified (CPU / Apple Silicon, MoE only \u2014 no dense)",
+  "rungs": {
+   "8-15gb": {
+    "model": "Maple Preview 20B-A1B",
+    "quant": "int2-colibri",
+    "size_gb": 5.8,
+    "context": 131072,
+    "note": "Colibri int2 streams experts from disk/RAM so the card stays free; TQ2_0 GGUF is the llama.cpp fallback",
+    "alternatives": [
+     {
+      "model": "Maple Preview 20B-A1B",
+      "quant": "TQ2_0"
+     },
+     {
+      "model": "LFM3 Omni 2B",
+      "quant": "Q4_K_M",
+      "context": 65536
+     }
+    ]
+   },
+   "16-23gb": {
+    "model": "Qwen 3.6 35B-A3B",
+    "quant": "UD-Q4_K_M",
+    "size_gb": 21.1,
+    "context": 262144,
+    "note": "new MoE, MTP on; LFM2.5 24B-A2B Q4_K_M (13.5 GB) also lands in this band",
+    "alternatives": [
+     {
+      "model": "LFM2.5 24B-A2B",
+      "quant": "Q4_K_M",
+      "context": 131072
+     },
+     {
+      "model": "Cyber-Tiel Coder 35B-A3B",
+      "quant": "UD-IQ3_XXS",
+      "context": 262144
+     },
+     {
+      "model": "Qwen 3.8 Flash Next (Strata)",
+      "engine": "strata",
+      "context": 131072,
+      "note": "Strata streams experts and the pack is small, but TurboFit's 64K floor supersedes Strata's 32K default: configure up, and re-measure residency at 64K."
+     },
+     {
+      "model": "Nanbeige 4.3 33B",
+      "quant": "GSQ-RCO-IQ3_M",
+      "context": 131072
+     },
+     {
+      "model": "Arete 27B",
+      "quant": "Q4_K_M",
+      "context": 131072
+     }
+    ]
+   },
+   "24-31gb": {
+    "model": "Qwen 3.5 35B-A3B",
+    "quant": "UD-Q4_K_M",
+    "size_gb": 21.1,
+    "context": 262144,
+    "note": "new MoE, MTP on; Nemotron Bolt 74B-A9B (24GB build, 20.5 GB) is the alternative",
+    "alternatives": [
+     {
+      "model": "Nemotron Bolt 74B-A9B",
+      "quant": "native-24GB",
+      "context": 65536
+     },
+     {
+      "model": "Cyber-Tiel Coder 35B-A3B",
+      "quant": "UD-Q4_K_XL",
+      "context": 262144
+     },
+     {
+      "model": "Qwen 3.8 Flash Next (Strata)",
+      "engine": "strata",
+      "context": 262144,
+      "note": "Strata streams experts and the pack is small, but TurboFit's 64K floor supersedes Strata's 32K default: configure up, and re-measure residency at 64K."
+     }
+    ]
+   },
+   "32-47gb": {
+    "model": "Flint 40B-A2.5B",
+    "quant": "UD-Q4_K_XL",
+    "size_gb": 23.3,
+    "context": 131072,
+    "note": "new MoE; Qwen 3.6 at UD-Q5_K_M (25.2 GB) is the 262K alternative",
+    "alternatives": [
+     {
+      "model": "Qwen 3.6 35B-A3B",
+      "quant": "UD-Q5_K_M",
+      "context": 262144
+     },
+     {
+      "model": "Cyber-Tiel Coder 35B-A3B",
+      "quant": "UD-Q5_K_XL",
+      "context": 262144
+     }
+    ]
+   },
+   "48-63gb": {
+    "model": "Cyber-Tiel Coder 35B-A3B",
+    "quant": "UD-Q6_K_XL",
+    "size_gb": 30.4,
+    "context": 262144,
+    "note": "highest-fidelity 35B-A3B that still fits below 64 GB",
+    "alternatives": [
+     {
+      "model": "Flint 40B-A2.5B",
+      "quant": "UD-Q5_K_M",
+      "context": 131072
+     }
+    ]
+   },
+   "64gb+": {
+    "model": "Qwen 3.8 Flash Next (Strata)",
+    "engine": "strata",
+    "context": 262144,
+    "note": "Strata split engine on unified memory",
+    "alternatives": [
+     {
+      "model": "DeepSeek V4.1 Flash",
+      "engine": "strata",
+      "context": 262144
+     },
+     {
+      "model": "Inkling 2 Small",
+      "quant": "bf16 (vLLM)",
+      "context": 1048576
+     }
+    ]
+   },
+   "12-15gb": {
+    "model": "Maple Preview 20B-A1B",
+    "quant": "int2-colibri",
+    "size_gb": 5.8,
+    "context": 131072,
+    "note": "MoE stays default on unified; Arete is the sanctioned dense exception only where a pool is large",
+    "alternatives": [
+     {
+      "model": "Arete 27B",
+      "quant": "Q3_K_S",
+      "context": 131072
+     }
+    ]
+   }
+  }
+ }
+}

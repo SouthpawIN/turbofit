@@ -1,0 +1,99 @@
+{
+  "host": "omarchy",
+  "timestamp": "2026-10-11T17:33:26Z",
+  "results": [
+    {
+      "model": "qwen3-8-flash-next-strata",
+      "tier": "24gb+",
+      "prompts": [
+        {
+          "prompt": "Explain the difference between TCP and UDP in exac",
+          "tokens": 196,
+          "tok_per_sec": 9.3
+        },
+        {
+          "prompt": "Write a Python function that checks if a string is",
+          "tokens": 200,
+          "tok_per_sec": 9.3
+        }
+      ],
+      "avg_tok_per_sec": 9.3,
+      "total_tokens": 396,
+      "evidence": "sha256:0df160c1c7a2af7798f0e4a5bab1b5b19e2d688443245115c95a15f85710703e"
+    },
+    {
+      "model": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+      "tier": "24gb-unified",
+      "prompts": [
+        {
+          "prompt": "Explain the difference between TCP and UDP in exac",
+          "tokens": 200,
+          "tok_per_sec": 136.14
+        },
+        {
+          "prompt": "Write a Python function that checks if a string is",
+          "tokens": 200,
+          "tok_per_sec": 139.13
+        }
+      ],
+      "avg_tok_per_sec": 137.62,
+      "total_tokens": 400,
+      "evidence": "sha256:dae750b55945f8443a59c90f16ea75ec8c0ab08d72785e162aa2894cace568c1"
+    },
+    {
+      "model": "qwen3-8-27b-gsq-rco-iq3s-48gb",
+      "tier": "48gb",
+      "context": 262144,
+      "gpus": 2,
+      "avg_tok_per_sec": 49.2,
+      "evidence": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "model": "qwen3-8-flash-next-strata-48gb",
+      "tier": "48gb",
+      "context": 131072,
+      "gpus": 2,
+      "avg_tok_per_sec": 12.5,
+      "evidence": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "model": "qwen3-8-27b-gsq-rco-iq3s-mtp",
+      "tier": "16gb",
+      "context": 131072,
+      "gpus": 1,
+      "mtp": true,
+      "avg_tok_per_sec": 76.24,
+      "draft_acceptance": "128/212 (60%)",
+      "baseline_tok_per_sec": 48.07,
+      "speedup": "1.59x",
+      "evidence": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    {
+      "model": "cyber-tiel-coder-35b-a3b-mtp-ud-iq3-xxs",
+      "tier": "16gb-unified",
+      "context": 65536,
+      "gpus": 1,
+      "avg_tok_per_sec": 120.97,
+      "note": "IQ3_XXS fits fully in VRAM. No expert offload needed. 121 tok/s.",
+      "evidence": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    {
+      "model": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl-cpu-moe",
+      "tier": "8gb-unified",
+      "context": 65536,
+      "gpus": 0,
+      "avg_tok_per_sec": 2.43,
+      "note": "Pure CPU with mmap. Too slow for interactive use.",
+      "evidence": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    },
+    {
+      "model": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl-hybrid",
+      "tier": "12gb-unified",
+      "context": 65536,
+      "gpus": 1,
+      "avg_tok_per_sec": 3.38,
+      "note": "Hybrid GPU/CPU expert offload with --cpu-moe. Still bandwidth-bound.",
+      "evidence": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    }
+  ]
+}

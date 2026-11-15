@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <pattern id="grid" width="38" height="38" patternUnits="userSpaceOnUse">
+      <path d="M38 0H0V38" fill="none" stroke="#00d6a3" stroke-width=".6" opacity=".08"/>
+    </pattern>
+    <pattern id="dots" width="8" height="8" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#d9aa50" opacity=".28"/>
+    </pattern>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="fade" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#00d6a3" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#d9aa50" stop-opacity=".02"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="#070908"/>
+  <rect width="1600" height="900" fill="url(#grid)"/>
+  <rect width="1600" height="900" fill="url(#fade)"/>
+
+  <circle cx="180" cy="140" r="1.5" fill="#d9aa50" opacity=".7"/>
+  <circle cx="420" cy="80" r="2" fill="#00d6a3" opacity=".45"/>
+  <circle cx="980" cy="160" r="1" fill="#d9aa50" opacity=".8"/>
+  <circle cx="1320" cy="90" r="2" fill="#d9aa50" opacity=".4"/>
+  <circle cx="1480" cy="240" r="1.5" fill="#00d6a3" opacity=".5"/>
+  <circle cx="210" cy="780" r="2" fill="#d9aa50" opacity=".35"/>
+  <circle cx="760" cy="860" r="1" fill="#00d6a3" opacity=".55"/>
+  <circle cx="1410" cy="810" r="2" fill="#d9aa50" opacity=".45"/>
+
+  <g fill="none" stroke="#d9aa50" stroke-width="2" opacity=".9">
+    <path d="M28 78V28H78 M1522 28h50v50 M28 822v50h50 M1572 822v50h-50"/>
+  </g>
+  <path d="M70 90H360" stroke="#00d6a3" stroke-width="2"/>
+  <path d="M1240 90h290" stroke="#00d6a3" stroke-width="2"/>
+
+  <text x="72" y="76" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="20" font-weight="700">TURBOFIT 2.3  //  CHANGELOG  ·  CB83B62</text>
+  <text x="72" y="148" fill="#d9aa50" font-family="DejaVu Serif,serif" font-size="48" font-weight="700">WHAT JUST SHIPPED.</text>
+  <text x="72" y="188" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="16" font-weight="700">WINDOWS RECOVERY  ·  DESKTOP FIRST  ·  PRIVATE TAILNET</text>
+
+  <!-- six cards -->
+  <g>
+    <rect x="72" y="230" width="470" height="168" fill="#070908" opacity=".88" stroke="#d9aa50"/>
+    <rect x="72" y="230" width="18" height="168" fill="url(#dots)"/>
+    <text x="108" y="266" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700">01  /  UPDATE</text>
+    <text x="108" y="304" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="22" font-weight="700">/turbofit update</text>
+    <text x="108" y="338" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">Pulls plugin + Desktop surface</text>
+    <text x="108" y="362" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">+ Sirvir onto this machine.</text>
+
+    <rect x="564" y="230" width="470" height="168" fill="#070908" opacity=".88" stroke="#d9aa50"/>
+    <rect x="564" y="230" width="18" height="168" fill="url(#dots)"/>
+    <text x="600" y="266" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700">02  /  SHIFT</text>
+    <text x="600" y="304" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="22" font-weight="700">/turbofit shift</text>
+    <text x="600" y="338" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">up · down · &lt;model&gt;</text>
+    <text x="600" y="362" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">Same measured ladder as heal.</text>
+
+    <rect x="1056" y="230" width="472" height="168" fill="#070908" opacity=".88" stroke="#00d6a3"/>
+    <rect x="1056" y="230" width="18" height="168" fill="#00d6a3" opacity=".18"/>
+    <text x="1092" y="266" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700">03  /  SERVE</text>
+    <text x="1092" y="304" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="22" font-weight="700">/turbofit serve</text>
+    <text x="1092" y="338" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">:8091 → tailnet HTTPS :9443/v1</text>
+    <text x="1092" y="362" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">Private Serve. Never Funnel.</text>
+  </g>
+
+  <g>
+    <rect x="72" y="420" width="470" height="168" fill="#070908" opacity=".88" stroke="#d9aa50"/>
+    <rect x="72" y="420" width="18" height="168" fill="url(#dots)"/>
+    <text x="108" y="456" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700">04  /  DESKTOP</text>
+    <text x="108" y="494" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="22" font-weight="700">SETUP LIVES HERE</text>
+    <text x="108" y="528" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">Score bars · shift · serve</text>
+    <text x="108" y="552" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">Dashboard is deprecated.</text>
+
+    <rect x="564" y="420" width="470" height="168" fill="#070908" opacity=".88" stroke="#d9aa50"/>
+    <rect x="564" y="420" width="18" height="168" fill="url(#dots)"/>
+    <text x="600" y="456" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700">05  /  WINDOWS</text>
+    <text x="600" y="494" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="22" font-weight="700">8091 ≠ MESSAGING</text>
+    <text x="600" y="528" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">WinError 10061 = no listener</text>
+    <text x="600" y="552" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">Sirvir install uses full .git URL</text>
+
+    <rect x="1056" y="420" width="472" height="168" fill="#070908" opacity=".88" stroke="#d9aa50"/>
+    <rect x="1056" y="420" width="18" height="168" fill="url(#dots)"/>
+    <text x="1092" y="456" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700">06  /  DOCS</text>
+    <text x="1092" y="494" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="22" font-weight="700">README SLIMMED</text>
+    <text x="1092" y="528" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">~37k → ~8k  ·  nothing deleted</text>
+    <text x="1092" y="552" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="15">Campaign / matrix / multimodal → docs/</text>
+  </g>
+
+  <rect x="72" y="612" width="1456" height="96" fill="#070908" opacity=".86" stroke="#00d6a3"/>
+  <circle cx="118" cy="660" r="10" fill="#00d6a3" filter="url(#glow)"/>
+  <text x="148" y="650" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="16" font-weight="700">GET IT</text>
+  <text x="148" y="682" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="18" font-weight="700">hermes plugins update turbofit     then     /turbofit serve</text>
+  <text x="1488" y="668" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700" text-anchor="end">OTHER TAILNET DEVICES USE</text>
+  <text x="1488" y="692" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700" text-anchor="end">https://&lt;host&gt;.ts.net:9443/v1</text>
+
+  <text x="72" y="760" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700">LAYERS</text>
+  <text x="72" y="790" fill="#eee1c4" font-family="DejaVu Sans Mono,monospace" font-size="16">HERMES MESSAGING  ≠  TURBOFIT :8091  ≠  NATIVE SERVER  ≠  TAILSCALE SERVE</text>
+  <text x="72" y="838" fill="#d9aa50" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700">SIRVIR STAYS OFF UNTIL /v1/models ANSWERS</text>
+  <text x="1528" y="838" fill="#00d6a3" font-family="DejaVu Sans Mono,monospace" font-size="15" font-weight="700" text-anchor="end">github.com/SouthpawIN/turbofit</text>
+</svg>

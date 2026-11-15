@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# Install TurboFit's self-update timer.
+#
+# A machine that runs TurboFit should not need a human (or an agent with a shell)
+# to keep it current. This writes a user timer that fast-forwards the checkout and
+# restarts the controller + gateway only when the tree actually moved, so every node
+# converges on main by itself.
+#
+# usage: scripts/install-self-update [--interval-minutes N] [--repo PATH] [--dry-run]
+set -euo pipefail
+
+INTERVAL=60
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+DRY_RUN=0
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --interval-minutes) INTERVAL="${2:?}"; shift 2 ;;
+        --repo) REPO="${2:?}"; shift 2 ;;
+        --dry-run) DRY_RUN=1; shift ;;
+        -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+        *) printf 'unknown argument: %s\n' "$1" >&2; exit 2 ;;
+    esac
+done
+
+[ -d "$REPO/.git" ] || { printf '%s is not a git checkout\n' "$REPO" >&2; exit 1; }
+if [ "$DRY_RUN" -eq 0 ]; then
+    command -v systemctl >/dev/null 2>&1 || { printf 'systemctl is required to install (use --dry-run to preview)\n' >&2; exit 1; }
+fi
+
+UNIT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
+mkdir -p "$UNIT_DIR"
+
+SERVICE="$UNIT_DIR/turbofit-self-update.service"
+TIMER="$UNIT_DIR/turbofit-self-update.timer"
+
+cat > "$SERVICE" <<EOF
+[Unit]
+Description=TurboFit self-update (fast-forward the checkout, restart on change)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=$REPO
+# Local work is never discarded: a dirty tree or a local commit stops the pull.
+ExecStart=/usr/bin/env bash -lc 'set -e; cd "$REPO"; before=\$(git rev-parse HEAD); git fetch --quiet origin; git merge --ff-only --quiet origin/main 2>/dev/null || { echo "not fast-forwardable (local changes or divergence); leaving the tree alone"; exit 0; }; after=\$(git rev-parse HEAD); if [ "\$before" != "\$after" ]; then echo "updated \$before -> \$after"; fi'
+ExecStartPost=/usr/bin/env bash -lc 'if [ -x "$REPO/scripts/turbofit-controller" ]; then systemctl --user is-active --quiet turbofit-controller.service && systemctl --user restart turbofit-controller.service || true; systemctl --user is-active --quiet turbofit-gateway.service && systemctl --user restart turbofit-gateway.service || true; fi'
+Nice=10
+EOF
+
+cat > "$TIMER" <<EOF
+[Unit]
+Description=TurboFit self-update timer
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=${INTERVAL}min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+if [ "$DRY_RUN" -eq 1 ]; then
+    printf 'would install:\n%s\n%s\n(interval %s min, repo %s)\n' "$SERVICE" "$TIMER" "$INTERVAL" "$REPO"
+    sed -n '1,40p' "$SERVICE"
+    exit 0
+fi
+
+systemctl --user daemon-reload
+systemctl --user enable --now turbofit-self-update.timer
+printf 'installed turbofit-self-update.timer (%s min, repo %s)\n' "$INTERVAL" "$REPO"
+systemctl --user list-timers turbofit-self-update.timer --no-pager | head -3

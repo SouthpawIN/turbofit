@@ -7,7 +7,7 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_VERSION = "2.2.0"
+RELEASE_VERSION = "2.4.1"
 
 
 def test_all_release_surfaces_use_release_version() -> None:
@@ -28,8 +28,9 @@ def test_all_release_surfaces_use_release_version() -> None:
 
 def test_release_readmes_show_every_new_2_2_model() -> None:
     required = {
-        "Qwen 3.8 27B",
-        "DeepSeek V4 Flash 0731 Q2 DwarfStar",
+        "Maple Preview 20B-A1B",
+        "Qwen 3.8 27B GSQ-RCO",
+        "Cyber-Tiel Coder 35B-A3B",
         "MiniMax Music 3",
         "NVIDIA Parakeet TDT 0.6B v3",
         "Soprano TTS",
@@ -42,8 +43,21 @@ def test_release_readmes_show_every_new_2_2_model() -> None:
 def test_readme_qwen_variants_match_active_catalog() -> None:
     catalog = json.loads((ROOT / "references/model-catalog.json").read_text())
     qwen = [row for row in catalog["models"] if row["id"].startswith("qwen3-8-27b-")]
-    assert len(qwen) == 6
-    assert {row["quantization"] for row in qwen} == {"Q4_K_M", "Q8_0", "BF16"}
-    assert sum("mtp" in row["runtime_features"] for row in qwen) == 3
+    gsq_rco = [row for row in qwen if "gsq-rco" in row["id"]]
+    assert len(gsq_rco) == 4
+    assert len(gsq_rco) == 4
     readme = (ROOT / "README.md").read_text()
-    assert "**6 active catalog candidates**" in readme
+    assert "Qwen 3.8 27B GSQ-RCO" in readme
+    assert "Cyber-Tiel Coder 35B-A3B" in readme
+
+
+def test_distribution_includes_managed_apple_mlx_runtime_files() -> None:
+    distribution = yaml.safe_load((ROOT / "distribution.yaml").read_text())
+    owned = set(distribution["distribution_owned"])
+
+    assert {
+        "references/python-runtimes.json",
+        "scripts/install-mlx-runtime",
+        "scripts/turbofit-gateway-runtime",
+        "scripts/turbofit-mlx-runtime",
+    } <= owned

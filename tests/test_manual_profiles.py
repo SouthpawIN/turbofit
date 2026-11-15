@@ -35,6 +35,19 @@ def recipe() -> ResolvedRecipe:
     )
 
 
+def shared_main_recipe() -> ResolvedRecipe:
+    return ResolvedRecipe(
+        row_id="bonsai--auto--64k",
+        profile_name="bonsai-auto-64k",
+        main_alias="bonsai-27b",
+        aux_alias="auto:bonsai-27b",
+        aux_mode="shared-main",
+        components=(
+            ResolvedComponent("main", "bonsai", "bonsai-27b", "process", "baseline", "0", 11605, ("/bin/true",)),
+        ),
+    )
+
+
 def entry() -> dict:
     return {
         "context": 65_536,
@@ -56,6 +69,28 @@ def test_manual_profile_contains_exact_local_rung_and_safe_api_fallback() -> Non
     assert set(resolutions["profiles"]["manual-main-aux-64k"]["manual-exact"]) == {"main", "aux"}
     assert requirements["profiles"]["manual-main-aux-64k"][0]["required_mb_per_card"] == [8_000, 12_000]
     assert requirements["profiles"]["manual-main-aux-64k"][1]["required_mb_per_card"] == []
+
+
+def test_shared_main_profile_retargets_measured_residency_to_one_six_gb_card() -> None:
+    single_gpu = HardwareFingerprint(
+        "linux", "x86_64", 14_336,
+        devices=(AcceleratorDevice(0, "gpu-0", "RTX 2060", "nvidia", "cuda", 6_144, "7.5", "01"),),
+    )
+    portable_entry = {
+        "context": 65_536,
+        "metrics": {"gpu_peak_mb": {"0": 6_117, "1": 195}},
+    }
+
+    profile, resolutions, requirements = build_manual_profile_payload(
+        profile_id="manual-bonsai-auto-64k",
+        profile_entry=portable_entry,
+        recipe=shared_main_recipe(),
+        hardware=single_gpu,
+    )
+
+    assert profile["hardware"]["topology"] == "1x6"
+    assert requirements["profiles"]["manual-bonsai-auto-64k"][0]["required_mb_per_card"] == [5_120]
+    assert set(resolutions["profiles"]["manual-bonsai-auto-64k"]["manual-exact"]) == {"main"}
 
 
 def test_written_manual_sidecars_load_through_production_validators(tmp_path: Path) -> None:

@@ -1,39 +1,54 @@
-schema: turbofit.runtime/v1
-id: hardware-48gb
-revision: 5
 hardware:
+  accelerator: llama.cpp-local
   class_vram_gb: 48
   min_devices: 2
-  total_vram_gb: 48
   per_device_min_gb: 24
-  accelerator: llama.cpp-local
   topology: 2x24
+  total_vram_gb: 48
+id: hardware-48gb
 policy:
-  recommendation: evidence-gated
-  external_gpu_priority: absolute
   contraction_dwell_s: 5
+  cooldown_s: 30
   expansion_dwell_s: 120
   expansion_margin_gb_per_card: 0.5
-  cooldown_s: 30
+  external_gpu_priority: absolute
   flap_failure_limit: 3
   flap_window_s: 300
+  recommendation: evidence-gated
+revision: 5
 roles:
-  main: active:main
   auxiliary: active:aux
   fallback: active:main
+  main: active:main
 rungs:
-- id: local-bonsai-262144
+- aux_mode: shared-main
   context: 262144
-  aux_mode: shared-main
-  evidence: sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87
-  main_manifest: sha256:6456085521bfd9d8846c0f7e581611d56b2fe108e31c02af2dfdf56dea474e1c
-- id: local-bonsai-131072
+  evidence: sha256:f215afc21c18bbad0ef3f4cb42d727c7f8b2ea28f39df021dc549a792ffe4d22
+  id: local-gsq-rco-iq3s-262k
+  main_manifest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- aux_mode: shared-main
   context: 131072
-  aux_mode: shared-main
-  evidence: sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5
-  main_manifest: sha256:2a98f797ac991a686c4749ef6a02298fa1993eea1c9e5e4320eafee426e6e383
-- id: local-bonsai-65536
+  evidence: sha256:4237fae3f8855344dbe203a12d97eda11b2a7bbec554b8c53b34c3c3ee9936f7
+  id: local-gsq-rco-iq3s-128k
+  main_manifest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- aux_mode: shared-main
   context: 65536
-  aux_mode: shared-main
+  evidence: sha256:f215afc21c18bbad0ef3f4cb42d727c7f8b2ea28f39df021dc549a792ffe4d22
+  id: local-gsq-rco-iq3s-65k
+  main_manifest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- aux_mode: shared-main
+  context: 262144
+  evidence: sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87
+  id: local-bonsai-262144
+  main_manifest: sha256:6456085521bfd9d8846c0f7e581611d56b2fe108e31c02af2dfdf56dea474e1c
+- aux_mode: shared-main
+  context: 131072
+  evidence: sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5
+  id: local-bonsai-131072
+  main_manifest: sha256:2a98f797ac991a686c4749ef6a02298fa1993eea1c9e5e4320eafee426e6e383
+- aux_mode: shared-main
+  context: 65536
   evidence: sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591
+  id: local-bonsai-65536
   main_manifest: sha256:da9ed9fb1b17f6423f759a783a150051b51d5555c7dea09f87c6effb3dac35a2
+schema: turbofit.runtime/v1

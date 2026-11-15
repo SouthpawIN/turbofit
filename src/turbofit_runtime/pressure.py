@@ -50,6 +50,7 @@ class CardPressure:
     safety_reserve_mb: int
     reservation_mb: int
     available_for_managed_mb: int
+    contended: bool = False
 
 
 @dataclass(frozen=True)
@@ -69,6 +70,7 @@ def measure_pressure(
     desktop_baseline_mb: Mapping[int, int],
     safety_reserve_mb: Mapping[int, int],
     reservations_mb: Mapping[int, int],
+    contention_threshold_mb: int = 512,
 ) -> PressureSnapshot:
     ordered_cards = tuple(sorted(cards, key=lambda item: item.gpu))
     if not ordered_cards:
@@ -115,6 +117,14 @@ def measure_pressure(
         safety = safety_reserve_mb.get(card.gpu, 0)
         reservation = reservations_mb.get(card.gpu, 0)
         available = max(0, card.total_mb - external - desktop - safety - reservation)
+        contended = bool(
+            processes is not None
+            and any(
+                process.used_mb >= contention_threshold_mb
+                for process in card_processes
+                if process.pid not in owned_pids and not process.desktop
+            )
+        )
         measured.append(
             CardPressure(
                 gpu=card.gpu,
@@ -126,6 +136,7 @@ def measure_pressure(
                 safety_reserve_mb=safety,
                 reservation_mb=reservation,
                 available_for_managed_mb=available,
+                contended=contended,
             )
         )
     return PressureSnapshot(

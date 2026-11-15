@@ -13,6 +13,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+from turbofit_runtime.artifact_gate import waiting_download_rows
 from turbofit_runtime.backend import CampaignBackend
 from turbofit_runtime.campaign import CampaignRunner
 from turbofit_runtime.catalog_campaign import (
@@ -24,10 +25,14 @@ from turbofit_runtime.catalog_campaign import (
 from turbofit_runtime.evidence import EvidencePublisher
 from turbofit_runtime.executor import LocalPairExecutor
 from turbofit_runtime.gpu import GPUClearGate
+from turbofit_runtime.hardware import probe_hardware
 from turbofit_runtime.model_catalog import ModelCatalog
+from turbofit_runtime.offload_gate import memory_deferred_rows
 from turbofit_runtime.recipes import RecipeBook
 from turbofit_runtime.registry import ProfileRegistry
-from turbofit_runtime.schema import load_matrix
+from turbofit_runtime.runtime_gate import INSTALL_HINT, waiting_runtime_rows
+from turbofit_runtime.schema import MatrixRow, load_matrix
+from turbofit_runtime.tier_tournament import candidate_ids_for_tier, load_tournaments
 
 CATALOG = ROOT / "references/model-catalog.json"
 CONFIGURATIONS = ROOT / "references/configuration-matrix.json"
@@ -44,6 +49,7 @@ WIKI = Path(os.environ.get(
     str(Path.home() / ".hermes/wiki/topics/turbofit/catalog-configuration-checklist.md"),
 ))
 EVIDENCE = WIKI.parent / "evidence"
+TOURNAMENTS = ROOT / "references/hardware-tier-tournaments.json"
 
 
 def canonical() -> tuple[ModelCatalog, dict]:
@@ -65,17 +71,105 @@ def deferred_rows(configurations: dict, catalog: ModelCatalog) -> tuple[frozense
         raise ValueError("catalog campaign policy deferred_models must be non-empty strings")
     deferred_models = frozenset(model_ids)
     configuration_index = build_configuration_index(configurations, catalog)
-    rows = frozenset(
+    rows = {
         row_id
         for row_id, row in configuration_index.items()
         if row.get("main") in deferred_models or row.get("auxiliary") in deferred_models
-    )
-    return rows, policy
+    }
+    rows |= capability_deferred_rows(configuration_index)
+    return frozenset(rows), policy
+
+
+def capability_deferred_rows(configuration_index: dict) -> set[str]:
+    """Rows this host physically cannot execute.
+
+    Colibri/Strata needs AVX-512 VNNI+VBMI for its expert kernel. Running those
+    rows anyway costs attempts and reports a hardware limit as if the model were
+    broken, so they are deferred with a reason instead.
+    """
+    from turbofit_runtime.cpu_features import cpu_flags, strata_supported
+
+    if strata_supported(cpu_flags()) is not False:
+        return set()
+    try:
+        recipes = json.loads(RECIPES.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return set()
+    # Recipe families are display names ("Qwen 3.8 Flash Next (Strata)"); catalog
+    # entries carry a plain `family`. Join on that rather than on ids.
+    strata_families = {
+        name.replace("(Strata)", "").strip()
+        for name, spec in (recipes.get("models") or {}).items()
+        if isinstance(spec, dict) and spec.get("runtime_flavor") == "strata"
+    }
+    if not strata_families:
+        return set()
+    try:
+        catalog_models = json.loads(CATALOG.read_text(encoding="utf-8")).get("models") or []
+    except FileNotFoundError:
+        return set()
+    strata_models = {
+        str(entry["id"])
+        for entry in catalog_models
+        if isinstance(entry, dict) and entry.get("family") in strata_families
+    }
+    if not strata_models:
+        return set()
+    return {
+        row_id
+        for row_id, row in configuration_index.items()
+        if row.get("main") in strata_models or row.get("auxiliary") in strata_models
+    }
+
+
+def artifact_waiting_rows(recipes: RecipeBook | None = None) -> dict[str, object]:
+    """Rows whose weights are not verifiably installed on this host.
+
+    Uses the campaign's own recipe resolution and the artifact verifier's single
+    definition of "installed", so a sub-1 MiB stub or a truncated download is
+    never attempted as if the model were ready.
+    """
+    catalog, configurations = canonical()
+    book = recipes or RecipeBook.load(RECIPES, hardware=probe_hardware())
+    return waiting_download_rows(build_configuration_index(configurations, catalog), book)
 
 
 def build_runner() -> CampaignRunner:
+    return build_environment()[0]
+
+
+def _capacity_probe(variable: str):
+    """Plan against a declared capacity, for provisioning and reproduction.
+
+    Unset means "measure this host". Used for 'what would it take?' questions
+    and for reproducing a smaller machine's verdict without owning one.
+    """
+    value = os.environ.get(variable)
+    if not value:
+        return None
+    try:
+        mb = int(value)
+    except ValueError as exc:
+        raise ValueError(f"{variable} must be an integer number of MiB") from exc
+    return lambda: mb * 1024 * 1024
+
+
+def build_environment():
+    """Build the runner and every per-row verdict once, from one recipe book.
+
+    Resolution is per row: a model the offload planner refuses is a
+    ``waiting-memory`` row, a row whose weights are missing is a
+    ``waiting-download`` row, and a row whose recipe names an uninstalled
+    engine binary is a ``waiting-runtime`` row. None can abort building the
+    index.
+    """
     catalog, configurations = canonical()
-    recipes = RecipeBook.load(RECIPES)
+    recipes = RecipeBook.load(
+        RECIPES,
+        hardware=probe_hardware(),
+        vram_probe=_capacity_probe("TURBOFIT_OFFLOAD_VRAM_MB"),
+        ram_probe=_capacity_probe("TURBOFIT_OFFLOAD_RAM_MB"),
+    )
     backend = CampaignBackend(
         gateway_script=ROOT / "scripts/turbofit-gateway.py",
         result_dir=RESULTS,
@@ -83,7 +177,25 @@ def build_runner() -> CampaignRunner:
     )
     local = LocalPairExecutor(recipes=recipes, backend=backend, result_dir=RESULTS)
     configuration_index = build_configuration_index(configurations, catalog)
-    deferred_row_ids, _ = deferred_rows(configurations, catalog)
+    deferred_row_ids, policy = deferred_rows(configurations, catalog)
+    # One verdict per row, so the status counts partition the matrix: a
+    # deferred row (policy or CPU capability) is already not runnable and is
+    # reported once as deferred, not also as waiting for weights or a runtime.
+    waiting = {
+        row_id: item
+        for row_id, item in waiting_download_rows(configuration_index, recipes).items()
+        if row_id not in deferred_row_ids
+    }
+    memory = {
+        row_id: item
+        for row_id, item in memory_deferred_rows(configuration_index, recipes).items()
+        if row_id not in deferred_row_ids
+    }
+    runtime = waiting_runtime_rows(
+        configuration_index,
+        recipes,
+        skip=deferred_row_ids | set(waiting) | set(memory),
+    )
     executor = CatalogExecutorAdapter(local, configuration_index)
     publisher = EvidencePublisher(matrix_path=MATRIX, checklist_path=WIKI, evidence_dir=EVIDENCE)
     publisher.ensure_checklist()
@@ -96,7 +208,7 @@ def build_runner() -> CampaignRunner:
         configuration_index,
         excluded_main_ids=archived_ids,
     )
-    return CampaignRunner(
+    runner = CampaignRunner(
         matrix_path=MATRIX,
         state_path=STATE,
         executor=executor,
@@ -104,13 +216,22 @@ def build_runner() -> CampaignRunner:
         publisher=publisher,
         registry=registry_adapter,
         deferred_row_ids=deferred_row_ids,
+        waiting_download_rows={
+            row_id: item.reason for row_id, item in waiting.items()
+        },
+        waiting_memory_rows={
+            row_id: item.reason for row_id, item in memory.items()
+        },
+        waiting_runtime_rows={
+            row_id: item.reason for row_id, item in runtime.items()
+        },
     )
+    return runner, waiting, memory, runtime, deferred_row_ids, policy
 
 
 def status() -> int:
-    catalog, configurations = canonical()
+    runner, waiting, memory, runtime, deferred_row_ids, policy = build_environment()
     matrix = load_matrix(MATRIX)
-    runner = build_runner()
     try:
         campaign = json.loads(STATE.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
@@ -123,11 +244,16 @@ def status() -> int:
     }
     pending_ids = {row.id for row in runner.pending_rows()}
     unresolved_ids = {row.id for row in runner.unresolved_rows()}
-    deferred_ids, policy = deferred_rows(configurations, catalog)
+    deferred_ids = deferred_row_ids
     current = {}
     for row in matrix.rows:
         record = attempts.get(row.id) or {}
-        if record.get("recipe_sha256") == runner.executor.recipe_sha256(row):
+        try:
+            current_sha = runner.executor.recipe_sha256(row)
+        except (ValueError, OSError):
+            # One unresolvable row must not sink the whole report.
+            continue
+        if record.get("recipe_sha256") == current_sha:
             current[row.id] = record
     current_success = sum(
         row_id not in pending_ids and item.get("status") == "success"
@@ -152,7 +278,52 @@ def status() -> int:
             "runnable": len(pending_ids),
             "retry_waiting": len(unresolved_ids - pending_ids),
             "deferred": len(deferred_ids),
-            "resolved": len(matrix.rows) - len(unresolved_ids) - len(deferred_ids),
+            "waiting_download": len(waiting),
+            "waiting_memory": len(memory),
+            "waiting_runtime": len(runtime),
+            "resolved": len(
+                {row.id for row in matrix.rows}
+                - unresolved_ids
+                - deferred_ids
+                - set(waiting)
+                - set(memory)
+                - set(runtime)
+            ),
+        },
+        "waiting_memory": {
+            "rows": len(memory),
+            "reason": (
+                "these models were measured and do not fit this host's VRAM plus "
+                "usable RAM; the offload planner's refusal is quoted per row"
+            ),
+            "detail": [
+                item.to_dict()
+                for item in sorted(memory.values(), key=lambda entry: entry.row_id)
+            ],
+        },
+        "waiting_download": {
+            "rows": len(waiting),
+            "missing_bytes": sum(item.missing_bytes for item in waiting.values()),
+            "reason": "weights are not verifiably installed; rows are not attempted until the download completes",
+            "detail": [
+                item.to_dict()
+                for item in sorted(waiting.values(), key=lambda entry: entry.row_id)[:20]
+            ],
+            "truncated": max(0, len(waiting) - 20),
+        },
+        "waiting_runtime": {
+            "rows": len(runtime),
+            "reason": (
+                "the recipe's engine binary is not installed on this host; the row "
+                "is not attempted until the runtime is built (a prerequisite, not "
+                "a model failure)"
+            ),
+            "install_hint": INSTALL_HINT,
+            "detail": [
+                item.to_dict()
+                for item in sorted(runtime.values(), key=lambda entry: entry.row_id)[:20]
+            ],
+            "truncated": max(0, len(runtime) - 20),
         },
         "policy": {
             "deferred": len(deferred_ids),
@@ -203,6 +374,34 @@ def run_id(row_id: str) -> int:
     return 0 if outcome.status == "success" else 1
 
 
+def current_hardware_tier() -> int:
+    hardware = probe_hardware()
+    capacity = hardware.total_usable_memory_mb if hardware.shared_memory_pool else hardware.total_vram_mb
+    return max(tier for tier in (8, 16, 24, 48, 64, 96, 200, 300) if tier <= max(8, round(capacity / 1024)))
+
+
+def run_list_candidate() -> int:
+    runner = build_runner()
+    pending = {row.id: row for row in runner.pending_rows()}
+    catalog, configurations = canonical()
+    tournaments = load_tournaments(TOURNAMENTS, configurations)
+    raw_ids = candidate_ids_for_tier(tournaments, current_hardware_tier())
+    by_model = {item.id: item for item in catalog.models}
+    by_raw = {item["id"]: item for item in configurations["rows"]}
+    for raw_id in raw_ids:
+        item = by_raw[raw_id]
+        aux = "auto" if item["auxiliary"] == "auto" else by_model[item["auxiliary"]].name
+        display_id = MatrixRow.make_id(by_model[item["main"]].name, aux, int(item["context"]))
+        row = pending.get(display_id)
+        if row is None:
+            continue
+        outcome = runner.run_row(row)
+        print(json.dumps({"row_id": outcome.row_id, "status": outcome.status, "error": outcome.error}, indent=2))
+        return 0 if outcome.status == "success" else 1
+    print(json.dumps({"status": "idle", "reason": "current-tier TurboFit List candidates are resolved or retry-waiting"}))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -210,6 +409,7 @@ def main() -> int:
     dry = sub.add_parser("dry-run")
     dry.add_argument("--limit", type=int, default=10)
     sub.add_parser("run-one")
+    sub.add_parser("run-list-candidate")
     selected = sub.add_parser("run-id")
     selected.add_argument("row_id")
     run = sub.add_parser("run")
@@ -230,6 +430,8 @@ def main() -> int:
         return 0
     if args.command == "run-id":
         return run_id(args.row_id)
+    if args.command == "run-list-candidate":
+        return run_list_candidate()
     if args.command == "classify-hardware-incompatible":
         build_runner().mark_hardware_incompatible(args.row_id, args.evidence)
         print(json.dumps({

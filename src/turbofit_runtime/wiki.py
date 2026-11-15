@@ -11,7 +11,7 @@ from typing import Any, Mapping
 from .profile_io import load_yaml_profile
 from .runtime_profile import Turbofile
 
-CLASSES = (8, 16, 24, 48, 96, 200, 300)
+CLASSES = (8, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384)
 README_START = "<!-- turbofit-generated:recommendations:start -->"
 README_END = "<!-- turbofit-generated:recommendations:end -->"
 CHECKLIST_START = "<!-- turbofit-generated:evidence:start -->"

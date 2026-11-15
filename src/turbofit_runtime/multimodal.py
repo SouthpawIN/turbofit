@@ -222,4 +222,12 @@ def configure_multimodal(
         stt = copy.deepcopy(dict(stt)) if isinstance(stt, Mapping) else {}
         stt["provider"] = "local"
         updated["stt"] = stt
+    if normalized.get("image") == "hermes-image":
+        image_gen = updated.get("image_gen")
+        if not isinstance(image_gen, Mapping):
+            updated["image_gen"] = {}
+    if normalized.get("video") == "hermes-video":
+        video_gen = updated.get("video_gen")
+        if not isinstance(video_gen, Mapping):
+            updated["video_gen"] = {}
     return updated

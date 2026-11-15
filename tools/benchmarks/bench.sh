@@ -30,8 +30,9 @@ bench_model() {
     echo "  Launching ($size_gb, $(basename $binary))..."
     LLAMA_LIB_DIR="$lib_dir" LD_LIBRARY_PATH="$lib_dir" CUDA_VISIBLE_DEVICES=1 \
     timeout 120 "$binary" \
-        -m "$path" --host 127.0.0.1 --port $PORT -ngl 999 -fa on -c $CTX --jinja \
+        -m "$path" --port $PORT -ngl 999 -fa on -c $CTX --jinja \
         $presets --main-gpu 0 $([ -f "$mmproj" ] && echo "--mmproj $mmproj") \
+        --host 127.0.0.1 \
         > /dev/null 2>&1 &
     local pid=$!
     

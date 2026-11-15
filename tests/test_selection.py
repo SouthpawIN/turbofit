@@ -81,7 +81,7 @@ def catalog() -> ProfileCatalog:
 def required_tier_catalog() -> ProfileCatalog:
     root = Path(__file__).resolve().parents[1] / "runtime-profiles"
     return ProfileCatalog.from_paths(
-        root / f"{tier}gb.yaml" for tier in (8, 16, 24, 48, 64, 96, 200, 300)
+        root / f"{tier}gb.yaml" for tier in (8, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384)
     )
 
 
@@ -109,9 +109,9 @@ def test_auto_selects_canonical_profile_from_physical_topology(
         ((24576, 24576), "hardware-48gb"),
         ((32768, 32768), "hardware-64gb"),
         ((24576, 24576, 24576, 24576), "hardware-96gb"),
-        ((102400, 102400), "hardware-200gb"),
-        ((102400, 102400, 102400), "hardware-300gb"),
-        ((102400, 102400, 102400, 102400), "hardware-300gb"),
+        ((49152, 49152, 49152, 49152), "hardware-192gb"),
+        ((32768, 32768, 32768, 32768, 32768, 32768, 32768, 32768), "hardware-256gb"),
+        ((49152, 49152, 49152, 49152, 49152, 49152, 49152, 49152), "hardware-384gb"),
     ],
 )
 def test_all_required_tiers_select_exact_topology_and_300_plus_caps_at_300(

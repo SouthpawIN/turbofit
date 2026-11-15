@@ -1,0 +1,148 @@
+{
+  "arms": {
+    "baseline": {
+      "completion_tokens": 128,
+      "context": 65536,
+      "gpu_peak_mb": {
+        "0": 487,
+        "1": 20341
+      },
+      "main_tps": 35.79419345475209,
+      "prompt_tokens": 26,
+      "raw_result_sha256": "sha256:ee01efa635d889e7d01e04c55ee7e2215aad4992447741e449cdd5079687b40f",
+      "recipe_sha256": "sha256:c35e7f8b7825c524741501db754e2b7a5600ec6e50bf3d4d7174e4feae2cf38c",
+      "row_id": "qwen-3-8-27b-q4-k-m-auto-64k",
+      "runtime_command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B/Qwen3.8-27B-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11605",
+        "--alias",
+        "qwen3-8-27b-q4",
+        "-c",
+        "65536",
+        "-ngl",
+        "auto",
+        "--fit",
+        "on",
+        "-fa",
+        "on",
+        "--jinja",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--parallel",
+        "1",
+        "--mmproj",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B/mmproj-Qwen3.8-27B-Q8_0.gguf"
+      ]
+    },
+    "dflash2": {
+      "completion_tokens": 128,
+      "context": 65536,
+      "gpu_peak_mb": {
+        "0": 486,
+        "1": 23181
+      },
+      "main_tps": 45.60155088361084,
+      "prompt_tokens": 26,
+      "raw_result_sha256": "sha256:ad813c49f7b566aeccc3b153fc29a3f26824069124ee8743f1b43c1fcd12ddf1",
+      "recipe_sha256": "sha256:2cc2731bd24ef935511bbbe44221149ed45e7535e0b33c84097b937d3f8cf828",
+      "row_id": "qwen-3-8-27b-q4-k-m-dflash2-auto-64k",
+      "runtime_command": [
+        "/home/sovthpaw/.local/share/turbofit/runtimes/dflash2-llama.cpp-1deefcca395743049c3820ab8f9b15043f3e9446/build-cuda/bin/llama-server",
+        "-m",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B/Qwen3.8-27B-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11605",
+        "--alias",
+        "qwen3-8-27b-q4-dflash2",
+        "-c",
+        "65536",
+        "-ngl",
+        "auto",
+        "--fit",
+        "on",
+        "-fa",
+        "on",
+        "--jinja",
+        "-b",
+        "2048",
+        "-ub",
+        "512",
+        "--cache-type-k",
+        "q4_0",
+        "--cache-type-v",
+        "q4_0",
+        "--parallel",
+        "1",
+        "--model-draft",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B/Qwen3.8-27B-DFlash2-Q4_K_M.gguf",
+        "--spec-type",
+        "draft-dflash",
+        "--spec-draft-n-max",
+        "7",
+        "-ngld",
+        "auto",
+        "--mmproj",
+        "/home/sovthpaw/Models/storage/gguf/Qwen3.8-27B/mmproj-Qwen3.8-27B-Q8_0.gguf"
+      ]
+    }
+  },
+  "comparison": {
+    "accepted_draft_tokens": 105,
+    "additional_peak_gpu_mb": 2839,
+    "baseline_main_tps": 35.79419345475209,
+    "dflash2_main_tps": 45.60155088361084,
+    "draft_acceptance_fraction": 0.7,
+    "draft_tokens": 150,
+    "percent_gain": 27.3993,
+    "same_context": true,
+    "same_hardware": true,
+    "same_prompt": true,
+    "speedup": 1.273993
+  },
+  "evidence_sha256": "sha256:60013593866265755d695fcb1f639a774b85ce2b6d0b3839ac1b50d947f7d87a",
+  "hardware": {
+    "devices": [
+      {
+        "backend": "cuda",
+        "bus_id": "00000000:04:00.0",
+        "compute_capability": "8.6",
+        "index": 0,
+        "memory_total_mb": 24576,
+        "name": "NVIDIA GeForce RTX 3090",
+        "uuid": "GPU-850f05ed-47dc-d111-c850-c3ef2766b8f1",
+        "vendor": "nvidia"
+      },
+      {
+        "backend": "cuda",
+        "bus_id": "00000000:86:00.0",
+        "compute_capability": "8.6",
+        "index": 1,
+        "memory_total_mb": 24576,
+        "name": "NVIDIA GeForce RTX 3090",
+        "uuid": "GPU-ef9a97d6-1efa-797f-fbd3-e20837542aa1",
+        "vendor": "nvidia"
+      }
+    ],
+    "fingerprint_sha256": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b",
+    "topology_key": "2x24576mb"
+  },
+  "promotion": {
+    "eligible": true,
+    "reason": "same-hardware, same-prompt, hash-bound physical A/B"
+  },
+  "recorded_at": "2026-08-24T07:59:30.041752+00:00",
+  "schema": "turbofit.dflash2-ab/v2"
+}

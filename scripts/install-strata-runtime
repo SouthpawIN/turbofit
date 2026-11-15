@@ -1,0 +1,231 @@
+#!/usr/bin/env python3
+"""Install or verify the Strata engine for Qwen 3.8 Flash Next.
+
+Strata runs a 125B MoE on consumer GPUs via expert tiering:
+  hot experts on GPU, all experts in RAM, n-gram table on SSD.
+  Requires 12+ GB VRAM and 64+ GB system RAM.
+
+This installer:
+  1. Clones Niko1221/Strata at the pinned revision
+  2. Creates a venv and installs the Python dependencies
+  3. Verifies the CUDA toolkit is available
+  4. Reports the install status as JSON
+
+Usage:
+    python3 scripts/install-strata-runtime [--check-only]
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+RUNTIME_ROOT = Path.home() / ".local/share/turbofit/runtimes"
+STRATA_DIR = RUNTIME_ROOT / "strata"
+STRATA_REPO = "https://github.com/Niko1221/Strata.git"
+STRATA_REVISION = "main"
+STRATA_VENV = STRATA_DIR / ".venv"
+
+
+def run(cmd: list[str], *, cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, cwd=cwd, check=check, capture_output=True, text=True)
+
+
+def detect_backend() -> str:
+    explicit = os.getenv("TURBOFIT_ACCELERATOR_BACKEND", "").lower()
+    if explicit in ("cuda", "hip", "sycl"):
+        return explicit
+    if shutil.which("nvidia-smi"):
+        return "cuda"
+    if shutil.which("rocm-smi") or shutil.which("amd-smi"):
+        return "hip"
+    return "unknown"
+
+
+def check_cuda() -> dict:
+    """Verify CUDA toolkit availability."""
+    nvcc = shutil.which("nvcc")
+    if not nvcc:
+        # Check common install locations
+        for candidate in ("/usr/local/cuda/bin/nvcc", "/opt/cuda/bin/nvcc"):
+            if Path(candidate).is_file():
+                nvcc = candidate
+                break
+    if not nvcc:
+        return {"available": False, "hint": "Install CUDA toolkit 12.0+ (https://developer.nvidia.com/cuda-downloads)"}
+    version_out = run([nvcc, "--version"], check=False)
+    version = ""
+    for line in (version_out.stdout or "").splitlines():
+        if "release" in line.lower():
+            version = line.strip()
+            break
+    return {"available": True, "path": nvcc, "version": version}
+
+
+def install(*, check_only: bool = False) -> dict:
+    backend = detect_backend()
+    cuda = check_cuda()
+
+    result = {
+        "id": "strata",
+        "backend": backend,
+        "source_dir": str(STRATA_DIR),
+        "venv": str(STRATA_VENV),
+        "cuda": cuda,
+    }
+
+    if backend != "cuda":
+        result["status"] = "unsupported-backend"
+        result["reason"] = f"Strata requires CUDA, detected: {backend}"
+        return result
+
+    if not cuda["available"]:
+        result["status"] = "missing-cuda"
+        result["reason"] = cuda["hint"]
+        return result
+
+    # Check if already installed
+    if STRATA_VENV.is_dir() and (STRATA_VENV / "bin" / "python").is_file():
+        result["status"] = "already-installed"
+        # Verify the venv has the required packages
+        pip_check = run(
+            [str(STRATA_VENV / "bin" / "pip"), "list"],
+            check=False,
+        )
+        installed_pkgs = (pip_check.stdout or "").lower()
+        has_deps = "numpy" in installed_pkgs and "psutil" in installed_pkgs
+        result["dependencies_ok"] = has_deps
+        return result
+
+    if check_only:
+        result["status"] = "not-installed"
+        return result
+
+    # Clone
+    RUNTIME_ROOT.mkdir(parents=True, exist_ok=True)
+    if not (STRATA_DIR / ".git").is_dir():
+        run(["git", "clone", STRATA_REPO, str(STRATA_DIR)])
+    else:
+        run(["git", "-C", str(STRATA_DIR), "fetch", "origin"])
+        run(["git", "-C", str(STRATA_DIR), "checkout", STRATA_REVISION])
+
+    # Create venv
+    run([sys.executable, "-m", "venv", str(STRATA_VENV)])
+
+    # Install dependencies
+    pip = str(STRATA_VENV / "bin" / "pip")
+    run([pip, "install", "--upgrade", "pip", "setuptools", "wheel"])
+    run([pip, "install", "numpy", "psutil", "requests", "pyyaml", "tqdm"])
+
+    result["status"] = "installed"
+    result["dependencies_ok"] = True
+    return result
+
+
+def install_systemd_unit(
+    *,
+    strata_dir: Path,
+    venv_dir: Path,
+    data_dir: Path,
+    model: str = "IQ2_XS",
+    context: int = 65536,
+    port: int = 8082,
+    gpus: str = "0,1",
+    home: Path | None = None,
+    run_cmd: bool = True,
+) -> dict:
+    """Install a systemd user unit so Strata survives sessions and reboots.
+
+    Launching Strata with `nohup` over SSH dies with the session, and on
+    multi-GPU hosts a stale unit (e.g. a leftover llama.cpp service) can
+    squat VRAM and make the engine fail with `instantiate: out of memory`.
+    A managed unit makes the runtime's lifecycle TurboFit's business.
+    """
+    if sys.platform != "linux":
+        return {"service": "unsupported", "reason": "systemd units are Linux-only"}
+
+    base = home or Path.home()
+    bin_dir = base / ".local" / "bin"
+    unit_dir = base / ".config" / "systemd" / "user"
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    unit_dir.mkdir(parents=True, exist_ok=True)
+
+    wrapper = bin_dir / "turbofit-strata-serve"
+    wrapper.write_text(
+        "#!/usr/bin/env bash\n"
+        "# TurboFit-managed Strata launcher (generated by install-strata-runtime)\n"
+        "set -euo pipefail\n"
+        f'export STRATA_ALLOWED_HOSTS="${{STRATA_ALLOWED_HOSTS:-$(hostname),localhost,127.0.0.1}}"\n'
+        f'cd "{strata_dir}"\n'
+        f'exec "{venv_dir / "bin" / "python"}" setup.py \\\n'
+        f'  --family "${{STRATA_FAMILY:-qwen}}" \\\n'
+        f'  --model "${{STRATA_MODEL:-{model}}}" \\\n'
+        f'  --context "${{STRATA_CONTEXT:-{context}}}" \\\n'
+        f'  --port "${{STRATA_PORT:-{port}}}" \\\n'
+        f'  --gpu "${{STRATA_GPUS:-{gpus}}}" \\\n'
+        f'  --host "${{STRATA_HOST:-0.0.0.0}}" \\\n'
+        "  --yes --no-browser \\\n"
+        f'  --data-dir "${{STRATA_DATA_DIR:-{data_dir}}}"\n'
+    )
+    wrapper.chmod(0o755)
+
+    unit = unit_dir / "turbofit-strata.service"
+    unit.write_text(
+        "[Unit]\n"
+        "Description=TurboFit Strata engine (expert-tiered MoE runtime)\n"
+        "After=network.target\n"
+        "\n"
+        "[Service]\n"
+        "Type=simple\n"
+        "ExecStart=%h/.local/bin/turbofit-strata-serve\n"
+        "Restart=on-failure\n"
+        "RestartSec=20\n"
+        "TimeoutStartSec=900\n"
+        "\n"
+        "[Install]\n"
+        "WantedBy=default.target\n"
+    )
+
+    for cmd in (
+        ["systemctl", "--user", "daemon-reload"],
+        ["systemctl", "--user", "enable", "turbofit-strata.service"],
+    ):
+        if run_cmd:
+            run(cmd, check=False)
+
+    return {"service": "installed", "unit": str(unit), "wrapper": str(wrapper)}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check-only", action="store_true", help="Check status without installing")
+    parser.add_argument("--install-service", action="store_true",
+                        help="Also install a systemd user unit (Linux)")
+    parser.add_argument("--model", default="IQ2_XS", help="Strata model variant")
+    parser.add_argument("--context", type=int, default=65536, help="Max context (64K floor)")
+    parser.add_argument("--port", type=int, default=8082, help="Serve port")
+    parser.add_argument("--gpus", default="0,1", help="Comma-separated GPU indices")
+    parser.add_argument("--data-dir", default=str(Path.home() / "Strata-data"),
+                        help="Strata data directory")
+    args = parser.parse_args()
+    result = install(check_only=args.check_only)
+    if args.install_service and result["status"] in ("installed", "already-installed"):
+        result.update(install_systemd_unit(
+            strata_dir=STRATA_DIR,
+            venv_dir=STRATA_VENV,
+            data_dir=Path(args.data_dir),
+            model=args.model,
+            context=args.context,
+            port=args.port,
+            gpus=args.gpus,
+        ))
+    print(json.dumps(result, indent=2))
+    return 0 if result["status"] in ("installed", "already-installed") else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

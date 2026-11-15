@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+"""Install or verify Turbofit's pinned FreeToken candidate runtime."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from typing import Sequence
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.freetoken import (  # noqa: E402
+    FREETOKEN_REPOSITORY,
+    FREETOKEN_REVISION,
+    FREETOKEN_VERSION,
+    probe_freetoken_compatibility,
+)
+
+RUNTIME_HOME = Path(
+    os.getenv("TURBOFIT_RUNTIME_HOME", Path.home() / ".local" / "share" / "turbofit" / "runtimes")
+)
+
+
+def _paths() -> tuple[Path, Path, Path]:
+    target = RUNTIME_HOME / f"freetoken-{FREETOKEN_REVISION}"
+    return target, target / "source", target / ".venv" / "bin" / "ft"
+
+
+def _command(command: list[str], *, cwd: Path | None = None) -> None:
+    subprocess.run(command, cwd=cwd, check=True)
+
+
+def _verify(executable: Path) -> dict[str, str]:
+    if not executable.is_file() or not os.access(executable, os.X_OK):
+        raise FileNotFoundError(executable)
+    output = subprocess.check_output([str(executable), "--version"], text=True, timeout=30).strip()
+    if FREETOKEN_VERSION not in output:
+        raise RuntimeError(f"FreeToken version mismatch: {output}")
+    return {
+        "status": "verified-candidate",
+        "version": FREETOKEN_VERSION,
+        "revision": FREETOKEN_REVISION,
+        "executable": str(executable),
+    }
+
+
+def install_runtime() -> dict[str, str]:
+    target, source, executable = _paths()
+    target.mkdir(parents=True, exist_ok=True)
+    if not source.is_dir():
+        _command(["git", "clone", FREETOKEN_REPOSITORY, str(source)])
+    actual = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
+    if actual != FREETOKEN_REVISION:
+        _command(["git", "-C", str(source), "fetch", "origin", FREETOKEN_REVISION])
+        _command(["git", "-C", str(source), "checkout", "--detach", FREETOKEN_REVISION])
+    uv = shutil.which("uv")
+    venv = target / ".venv"
+    if uv:
+        _command([uv, "venv", str(venv), "--python", sys.executable])
+        _command([
+            uv,
+            "pip",
+            "install",
+            "--python",
+            str(venv / "bin" / "python"),
+            "-e",
+            f"{source}[accel]",
+        ])
+    else:
+        _command([sys.executable, "-m", "venv", str(venv)])
+        _command([str(venv / "bin" / "python"), "-m", "pip", "install", "-e", f"{source}[accel]"])
+    return _verify(executable)
+
+
+def run(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check-only", action="store_true")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args(list(argv) if argv is not None else None)
+
+    compatibility = probe_freetoken_compatibility()
+    payload: dict[str, object] = {
+        "schema": "turbofit.freetoken-runtime/v1",
+        "status": compatibility.status,
+        "compatible": compatibility.compatible,
+        "blockers": list(compatibility.blockers),
+        "requirements": list(compatibility.requirements),
+        "version": FREETOKEN_VERSION,
+        "revision": FREETOKEN_REVISION,
+        "auto_promote": False,
+    }
+    if not compatibility.compatible:
+        code = 2
+    else:
+        _, _, executable = _paths()
+        if args.check_only:
+            try:
+                payload.update(_verify(executable))
+                code = 0
+            except (OSError, RuntimeError) as exc:
+                payload.update({"status": "missing", "error": str(exc)})
+                code = 1
+        else:
+            payload.update(install_runtime())
+            code = 0
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(payload["status"])
+        for blocker in payload.get("blockers", []):
+            print(f"- {blocker}")
+    return code
+
+
+def main() -> int:
+    return run()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

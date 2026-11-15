@@ -62,7 +62,7 @@ def load_catalog():
 
 def kill_port(port):
     """Kill any process listening on the given port."""
-    os.system(f"fuser -k {port}/tcp 2>/dev/null")
+    subprocess.run(["fuser", "-k", f"{port}/tcp"], stderr=subprocess.DEVNULL)
     time.sleep(1)
 
 
@@ -235,7 +235,8 @@ def benchmark_model(alias, entry, ctx, gpu, tasks, limit, speed_only=False):
     if has_nextn:
         gpu_setting = "0,1"
         # Kill Carnice to free GPU 1
-        os.system("systemctl --user stop turbofit-carnice.service 2>/dev/null")
+        subprocess.run(["systemctl", "--user", "stop", "turbofit-carnice.service"],
+                       stderr=subprocess.DEVNULL)
         time.sleep(3)
     else:
         gpu_setting = str(gpu)
@@ -316,7 +317,8 @@ def benchmark_model(alias, entry, ctx, gpu, tasks, limit, speed_only=False):
 
     # Restart Carnice if we killed it for nextn
     if has_nextn:
-        os.system("systemctl --user start turbofit-carnice.service 2>/dev/null")
+        subprocess.run(["systemctl", "--user", "start", "turbofit-carnice.service"],
+                       stderr=subprocess.DEVNULL)
 
     time.sleep(2)
     return result

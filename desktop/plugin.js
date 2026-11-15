@@ -9,6 +9,14 @@ import { jsx, jsxs } from 'react/jsx-runtime'
 
 let api = null
 
+const NEEDLE_TRANSITION = 'transform 700ms cubic-bezier(0.22, 1, 0.36, 1)'
+
+const cardStyle = {
+  border: '1px solid var(--ui-stroke-secondary)',
+  borderRadius: '6px',
+  padding: '9px',
+}
+
 const fieldStyle = {
   width: '100%',
   boxSizing: 'border-box',
@@ -26,6 +34,250 @@ const buttonStyle = {
   background: 'transparent',
   color: 'var(--ui-text-primary)',
   cursor: 'pointer',
+}
+
+
+// Turbofit-scoped theming tokens: Hermes themes cascade through var(--ui-*),
+// theme packs override the --tf-* variables on the gauge card.
+const gaugeTokens = {
+  '--tf-needle': 'var(--ui-text-primary)',
+  '--tf-zone-quiet': 'var(--ui-success, var(--ui-accent))',
+  '--tf-zone-pressure': 'var(--ui-warning, var(--ui-text-secondary))',
+  '--tf-zone-heavy': 'var(--ui-accent)',
+  '--tf-redline': 'var(--ui-error)',
+  '--tf-tick': 'var(--ui-text-quaternary)',
+  '--tf-face': 'var(--ui-surface, transparent)',
+  '--tf-glow': 'var(--ui-accent)',
+  '--tf-readout': 'var(--ui-text-primary)',
+}
+
+const GAUGE_CENTER = 100
+const GAUGE_RADIUS = 80
+const GAUGE_START_DEG = 150 // math degrees; 240-degree sweep to 30
+const GAUGE_SWEEP = 240
+
+function polar(deg, radius) {
+  const rad = (deg * Math.PI) / 180
+  return [
+    GAUGE_CENTER + radius * Math.cos(rad),
+    GAUGE_CENTER - radius * Math.sin(rad),
+  ]
+}
+
+function arcPath(fromDeg, toDeg, radius) {
+  const [x1, y1] = polar(fromDeg, radius)
+  const [x2, y2] = polar(toDeg, radius)
+  const largeArc = Math.abs(fromDeg - toDeg) > 180 ? 1 : 0
+  return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${radius} ${radius} 0 ${largeArc} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`
+}
+
+function needleRotation(fraction) {
+  const clamped = Math.max(0, Math.min(1, Number(fraction) || 0))
+  return GAUGE_SWEEP * clamped - (GAUGE_START_DEG - 90)
+}
+
+function Gauge({
+  maxGb,
+  liveGb,
+  mainModel,
+  auxModel,
+  context,
+  expansionPolicy,
+  onExpansionPolicyChange,
+  needleTransition,
+}) {
+  const span = Math.max(24, Number(maxGb) || 32)
+  const live = Number.isFinite(Number(liveGb)) ? Math.max(0, Number(liveGb)) : 0
+  const fraction = live / span
+
+  const zones = [
+    { from: 0, to: 8, token: '--tf-zone-quiet', label: 'Maple' },
+    { from: 8, to: 16, token: '--tf-zone-pressure', label: 'Cyber-Tiel Coder' },
+    { from: 16, to: span, token: '--tf-zone-heavy', label: 'GSQ-RCO' },
+  ]
+
+  const tickValues = [...new Set([0, 8, 16, 24, span].filter((value) => value <= span))]
+  const rotation = needleRotation(fraction)
+
+  return jsxs('div', {
+    style: { ...cardStyle, ...gaugeTokens, display: 'flex', flexDirection: 'column', gap: '8px' },
+    children: [
+      jsxs('div', { className: 'flex items-baseline justify-between', children: [
+        jsx('div', { className: 'font-medium', children: 'Fit gauge' }),
+        jsx('span', {
+          style: { color: 'var(--ui-text-tertiary)', fontSize: '11px' },
+          children: `${live.toFixed(0)} / ${span} GB usable`,
+        }),
+      ] }),
+      jsx('svg', {
+        viewBox: '0 0 200 132',
+        role: 'img',
+        'aria-label': 'Memory fit gauge',
+        style: { width: '100%', maxWidth: '320px', alignSelf: 'center', background: 'var(--tf-face)', borderRadius: '8px' },
+        children: [
+          ...zones.map((zone) => jsx('path', {
+            key: zone.token,
+            d: arcPath(
+              GAUGE_START_DEG - (zone.from / span) * GAUGE_SWEEP,
+              GAUGE_START_DEG - (zone.to / span) * GAUGE_SWEEP,
+              GAUGE_RADIUS,
+            ),
+            fill: 'none',
+            stroke: `var(${zone.token})`,
+            strokeWidth: '12',
+            strokeLinecap: 'butt',
+            opacity: '0.75',
+          })),
+          jsx('path', {
+            d: arcPath(
+              GAUGE_START_DEG - ((span - 4) / span) * GAUGE_SWEEP,
+              GAUGE_START_DEG,
+              GAUGE_RADIUS + 8,
+            ),
+            fill: 'none',
+            stroke: 'var(--tf-redline)',
+            strokeWidth: '3',
+            strokeLinecap: 'round',
+          }),
+          ...tickValues.map((value) => {
+            const deg = GAUGE_START_DEG - (value / span) * GAUGE_SWEEP
+            const [x1, y1] = polar(deg, GAUGE_RADIUS + 4)
+            const [x2, y2] = polar(deg, GAUGE_RADIUS + 9)
+            const [lx, ly] = polar(deg, GAUGE_RADIUS + 17)
+            return jsxs('g', { key: `tick-${value}`, children: [
+              jsx('line', { x1, y1, x2, y2, stroke: 'var(--tf-tick)', strokeWidth: '1.5' }),
+              jsx('text', {
+                x: lx,
+                y: ly,
+                fill: 'var(--tf-tick)',
+                fontSize: '8',
+                textAnchor: 'middle',
+                dominantBaseline: 'middle',
+                children: `${value}`,
+              }),
+            ] })
+          }),
+          ...zones.map((zone) => {
+            const midDeg = GAUGE_START_DEG - (((zone.from + zone.to) / 2) / span) * GAUGE_SWEEP
+            const [lx, ly] = polar(midDeg, GAUGE_RADIUS - 24)
+            return jsx('text', {
+              key: `label-${zone.label}`,
+              x: lx,
+              y: ly,
+              fill: `var(${zone.token})`,
+              fontSize: '8',
+              textAnchor: 'middle',
+              dominantBaseline: 'middle',
+              children: zone.label,
+            })
+          }),
+          jsx('g', {
+            style: {
+              transform: `rotate(${rotation}deg)`,
+              transformOrigin: `${GAUGE_CENTER}px ${GAUGE_CENTER}px`,
+              transition: needleTransition,
+            },
+            children: jsx('line', {
+              x1: GAUGE_CENTER,
+              y1: GAUGE_CENTER,
+              x2: GAUGE_CENTER,
+              y2: GAUGE_CENTER - (GAUGE_RADIUS - 14),
+              stroke: 'var(--tf-needle)',
+              strokeWidth: '3',
+              strokeLinecap: 'round',
+              style: { filter: 'drop-shadow(0 0 4px var(--tf-glow))' },
+            }),
+          }),
+          jsx('circle', {
+            cx: GAUGE_CENTER,
+            cy: GAUGE_CENTER,
+            r: '5',
+            fill: 'var(--tf-needle)',
+          }),
+        ],
+      }),
+      jsxs('div', {
+        style: { color: 'var(--tf-readout)', textAlign: 'center', fontSize: '12px', lineHeight: '1.5' },
+        children: [
+          jsx('div', { children: mainModel || '—' }),
+          jsxs('div', { style: { color: 'var(--ui-text-tertiary)' }, children: [
+            `aux ${auxModel || '—'} · ctx ${context || '—'}`,
+          ] }),
+        ],
+      }),
+      jsx('label', {
+        className: 'flex flex-col gap-1 text-xs',
+        children: [
+          jsx('span', { style: { color: 'var(--ui-text-secondary)' }, children: 'Expansion policy' }),
+          jsxs('select', {
+            value: expansionPolicy,
+            onChange: (event) => onExpansionPolicyChange(event.target.value),
+            style: { ...fieldStyle, padding: '5px 8px' },
+            children: [
+              jsx('option', { value: 'conservative', children: 'Conservative — one-rung recovery' }),
+              jsx('option', { value: 'jump-to-fit', children: 'Jump-to-fit' }),
+            ],
+          }),
+        ],
+      }),
+    ],
+  })
+}
+
+function Spark({ values }) {
+  const nums = (values || []).map((value) => Number(value) || 0)
+  if (nums.length < 2) return jsx('div', { style: { height: '36px' } })
+  const max = Math.max(...nums, 1)
+  const points = nums.map((value, index) => {
+    const x = (index / (nums.length - 1)) * 120
+    const y = 32 - (value / max) * 28
+    return `${x},${y}`
+  }).join(' ')
+  return jsx('svg', {
+    viewBox: '0 0 120 36',
+    style: { width: '100%', height: '36px' },
+    children: jsx('polyline', {
+      fill: 'none',
+      stroke: 'var(--ui-accent)',
+      strokeWidth: '2',
+      points,
+    }),
+  })
+}
+
+function ScoreBar({ label, value, max = 100 }) {
+  const numeric = Number(value) || 0
+  const ceiling = Number(max) || 100
+  const pct = Math.max(0, Math.min(100, (numeric / ceiling) * 100))
+  return jsxs('div', {
+    className: 'flex flex-col gap-1',
+    children: [
+      jsxs('div', {
+        className: 'flex justify-between text-xs',
+        style: { color: 'var(--ui-text-secondary)' },
+        children: [
+          jsx('span', { children: label }),
+          jsx('span', { children: Number.isFinite(numeric) ? String(value) : '—' }),
+        ],
+      }),
+      jsx('div', {
+        style: {
+          height: '7px',
+          borderRadius: '99px',
+          background: 'var(--ui-stroke-secondary)',
+          overflow: 'hidden',
+        },
+        children: jsx('div', {
+          style: {
+            width: `${pct}%`,
+            height: '100%',
+            borderRadius: '99px',
+            background: 'var(--ui-accent)',
+          },
+        }),
+      }),
+    ],
+  })
 }
 
 function Field({ label, children, help }) {
@@ -57,10 +309,12 @@ function TurbofitPage() {
   const [primary, setPrimary] = useState(false)
   const [fallback, setFallback] = useState(false)
   const [baseUrl, setBaseUrl] = useState('http://127.0.0.1:8091/v1')
-  const [fallbackChain, setFallbackChain] = useState('[]')
+  const [fallbackChain, setFallbackChain] = useState([])
+  const [usageHistory, setUsageHistory] = useState([])
   const [publishTailnet, setPublishTailnet] = useState(false)
-  const [installSirvir, setInstallSirvir] = useState(false)
+  const [installTurboSouth, setInstallTurboSouth] = useState(false)
   const [installNative, setInstallNative] = useState(false)
+  const [installFreeToken, setInstallFreeToken] = useState(false)
   const [installLemonade, setInstallLemonade] = useState(false)
   const [dashboardLocalPort, setDashboardLocalPort] = useState('9127')
   const [providerLocalPort, setProviderLocalPort] = useState('8091')
@@ -68,22 +322,28 @@ function TurbofitPage() {
   const [providerHttpsPort, setProviderHttpsPort] = useState('9443')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
+  const [smoke, setSmoke] = useState(null)
+  const [replacement, setReplacement] = useState(null)
+  const [audition, setAudition] = useState(null)
+  const [expansionPolicy, setExpansionPolicy] = useState('conservative')
 
   const refresh = useCallback(async () => {
     setBusy(true)
     setMessage('')
     try {
-      const [nextStatus, nextCombinations, nextRecommendations, nextMultimodal] = await Promise.all([
+      const [nextStatus, nextCombinations, nextRecommendations, nextMultimodal, nextReplacement] = await Promise.all([
         api.rest('/status'),
         api.rest('/combinations'),
         api.rest(`/recommendations?preference=${encodeURIComponent(preference)}`),
         api.rest('/multimodal'),
+        api.rest('/local-models').catch(() => ({ offer: false })),
       ])
       setStatus(nextStatus)
       const exact = (nextCombinations && nextCombinations.combinations) || []
       setCombinations(exact)
       setRecommendations(nextRecommendations)
       setMultimodal(nextMultimodal)
+      setReplacement(nextReplacement && nextReplacement.offer ? nextReplacement : null)
       const selectedModalities = { ...(nextMultimodal.selected || {}) }
       ;['image', 'video', 'music', 'tts', 'stt'].forEach((modality) => {
         if (!selectedModalities[modality]) {
@@ -97,7 +357,14 @@ function TurbofitPage() {
       setPrimary(Boolean(provider.primary))
       setFallback(Boolean(provider.fallback))
       setBaseUrl(provider.base_url || 'http://127.0.0.1:8091/v1')
-      setFallbackChain(JSON.stringify(provider.fallback_chain || [], null, 2))
+      setFallbackChain(Array.isArray(provider.fallback_chain) ? provider.fallback_chain : [])
+      const usage = nextStatus && nextStatus.usage
+      if (usage) {
+        setUsageHistory((prev) => [...prev, {
+          tps: Number(usage.tps) || 0,
+          vram: ((usage.gpus || []).reduce((sum, gpu) => sum + (Number(gpu.used_mb) || 0), 0)),
+        }].slice(-24))
+      }
       const requested = (nextStatus && nextStatus.selection && nextStatus.selection.requested) || 'auto'
 
       const exactId = requested.startsWith('manual-') ? requested.slice(7) : requested
@@ -129,8 +396,7 @@ function TurbofitPage() {
     setBusy(true)
     setMessage('')
     try {
-      const chain = fallbackChain.trim() ? JSON.parse(fallbackChain) : []
-      if (!Array.isArray(chain)) throw new Error('Fallback chain must be a JSON array.')
+      const chain = Array.isArray(fallbackChain) ? fallbackChain : []
       const chosen = combinations.find((item) =>
         item.main === mainModel && item.aux === auxModel && String(item.context) === String(context)
       )
@@ -146,13 +412,15 @@ function TurbofitPage() {
           profile: selectionMode === 'auto' ? 'auto' : chosen.profile,
           base_url: baseUrl,
           publish_tailnet: publishTailnet,
-          install_sirvir: installSirvir,
+          install_turbosouth: installTurboSouth,
           install_native: installNative,
+          install_freetoken: installFreeToken,
           install_lemonade: installLemonade,
           dashboard_local_port: Number(dashboardLocalPort),
           provider_local_port: Number(providerLocalPort),
           dashboard_https_port: Number(dashboardHttpsPort),
           provider_https_port: Number(providerHttpsPort),
+          expansion_policy: expansionPolicy,
         },
       })
       setMessage(result.restart_required ? 'Saved. Start a new Hermes session to use provider changes.' : 'Saved.')
@@ -164,7 +432,101 @@ function TurbofitPage() {
     }
   }
 
+  async function runShift(target) {
+    setBusy(true)
+    setMessage('')
+    try {
+      const result = await api.rest('/shift', { method: 'POST', body: { target } })
+      setMessage(result.reason || result.error || (result.shifted ? `Shifted to ${result.profile}` : 'Shift complete'))
+      await refresh()
+    } catch (error) {
+      setMessage(String(error && error.message || error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function runAudition() {
+    setBusy(true)
+    setMessage('')
+    try {
+      const pair = mainModel || 'maple-preview-tq2'
+      const result = await api.rest(`/audition?main=${encodeURIComponent(pair)}&aux=${encodeURIComponent(auxModel || 'auto')}&context=${encodeURIComponent(context || '65536')}`)
+      setAudition(result)
+      setMessage(`Auditioned ${pair} across ${((result && result.engines) || []).length} engines.`)
+    } catch (error) {
+      setMessage(String(error && error.message || error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function runRetire(action) {
+    if (!replacement) return
+    setBusy(true)
+    setMessage('')
+    try {
+      const result = await api.rest('/retire-model', {
+        method: 'POST',
+        body: { family: replacement.from_family, action },
+      })
+      setMessage(result.message || `${action} complete`)
+      await refresh()
+    } catch (error) {
+      setMessage(String(error && error.message || error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function runUpdate() {
+    setBusy(true)
+    setMessage('')
+    try {
+      const result = await api.rest('/update', { method: 'POST', body: {} })
+      setMessage(result.message || 'Updated Turbofit and TurboSouth on this device.')
+      await refresh()
+    } catch (error) {
+      setMessage(String(error && error.message || error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function runServe() {
+    setBusy(true)
+    setMessage('')
+    try {
+      const result = await api.rest('/serve', { method: 'POST', body: {} })
+      setMessage(result.message || result.provider_base_url || 'Published on Tailscale Serve.')
+      await refresh()
+    } catch (error) {
+      setMessage(String(error && error.message || error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function runSmoke() {
+    setBusy(true)
+    setMessage('Running local-runtime-smoke-v1 against 127.0.0.1:8091…')
+    setSmoke(null)
+    try {
+      const result = await api.rest('/smoke', {
+        method: 'POST',
+        body: { timeout_seconds: 300 },
+      })
+      setSmoke(result)
+      setMessage(result.message || (result.ok ? 'Local smoke passed. Nothing was promoted.' : 'Local smoke failed. Nothing was promoted.'))
+    } catch (error) {
+      setMessage(String(error && error.message || error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const choices = ((recommendations && recommendations.recommendations) || {})[preference] || []
+  const compatibleLanes = (recommendations && recommendations.compatible_lanes) || []
   const hardware = (recommendations && recommendations.hardware) || {}
 
   const mainModels = [...new Set(combinations.map((item) => item.main))]
@@ -173,6 +535,18 @@ function TurbofitPage() {
   const pairRows = mainRows.filter((item) => item.aux === auxModel)
   const contexts = [...new Set(pairRows.map((item) => item.context))].sort((a, b) => a - b)
   const selectedCombination = pairRows.find((item) => String(item.context) === String(context))
+
+  // Live usable memory for the gauge needle: host pressure probe first, then
+  // GPU usage, then the static hardware fingerprint.
+  const hostUsage = (status && status.usage && status.usage.host) || {}
+  const gpuUsedMb = ((status && status.usage && status.usage.gpus) || [])
+    .reduce((sum, gpu) => sum + (Number(gpu.used_mb) || 0), 0)
+  const liveUsableMb = Number(hostUsage.host_usable_memory_mb)
+    || (gpuUsedMb || 0)
+    || Number(hardware.total_usable_memory_mb)
+    || 0
+  const rawMaxMb = Number(hardware.total_usable_memory_mb) || 32768
+  const gaugeMaxGb = Math.max(24, Math.ceil(rawMaxMb / 1024 / 8) * 8)
 
   return jsxs('div', {
     className: 'flex h-full flex-col gap-4 overflow-auto p-5 text-sm',
@@ -184,9 +558,94 @@ function TurbofitPage() {
           children: `Hardware: ${hardware.topology_key || 'scanning'} · usable memory ${hardware.total_usable_memory_mb || '—'} MiB`,
         }),
       ] }),
+      jsx(Gauge, {
+        maxGb: gaugeMaxGb,
+        liveGb: liveUsableMb / 1024,
+        mainModel,
+        auxModel,
+        context,
+        expansionPolicy,
+        onExpansionPolicyChange: setExpansionPolicy,
+        needleTransition: NEEDLE_TRANSITION,
+      }),
+      jsxs('section', {
+        className: 'grid grid-cols-1 gap-3 md:grid-cols-3',
+        children: [
+          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' }, children: [
+            jsx('div', { className: 'font-medium', children: 'Speed' }),
+            jsx(ScoreBar, { label: 'tok/s', value: (status && status.usage && status.usage.tps) || 0, max: 80 }),
+            jsx(Spark, { values: usageHistory.map((item) => item.tps) }),
+          ] }),
+          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' }, children: [
+            jsx('div', { className: 'font-medium', children: 'VRAM' }),
+            jsx(ScoreBar, {
+              label: 'used MiB',
+              value: ((status && status.usage && status.usage.gpus) || []).reduce((sum, gpu) => sum + (Number(gpu.used_mb) || 0), 0),
+              max: Math.max(1, ((status && status.usage && status.usage.gpus) || []).reduce((sum, gpu) => sum + (Number(gpu.total_mb) || 0), 0)),
+            }),
+            jsx(Spark, { values: usageHistory.map((item) => item.vram) }),
+          ] }),
+          jsxs('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' }, children: [
+            jsx('div', { className: 'font-medium', children: 'Host RAM' }),
+            jsx(ScoreBar, {
+              label: 'usable MiB',
+              value: (status && status.usage && status.usage.host && status.usage.host.host_usable_memory_mb) || 0,
+              max: Math.max(1, (status && status.usage && status.usage.host && status.usage.host.system_ram_mb) || 1),
+            }),
+          ] }),
+        ],
+      }),
+      jsxs('section', { className: 'flex flex-col gap-2', children: [
+        jsx('h2', { className: 'font-semibold', children: 'Auto scale down / up' }),
+        jsx('p', { style: { color: 'var(--ui-text-tertiary)' }, children: 'Pressure drops context, then model, then Nous keyless. Healing walks back up.' }),
+        jsx('div', { className: 'flex flex-wrap gap-2', children: ((status && status.scale_ladder) || []).map((step, index) => jsxs('div', {
+          key: step.id,
+          style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '8px' },
+          children: [
+            jsx('div', { className: 'font-medium', children: `${index + 1}. ${step.label}` }),
+            jsx('div', { style: { color: 'var(--ui-text-tertiary)' }, children: `${step.aux_mode || ''} ${step.context ? `· ${step.context}` : ''}` }),
+          ],
+        })) }),
+      ] }),
       message ? jsx('div', {
         style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '8px' },
         children: message,
+      }) : null,
+      jsxs('div', {
+        className: 'flex flex-wrap gap-2',
+        children: [
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: () => runShift('up'), children: 'Shift up' }),
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: () => runShift('down'), children: 'Shift down' }),
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: () => runShift(preference), children: `Shift ${preference}` }),
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runUpdate, children: 'Update Turbofit + TurboSouth' }),
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runServe, children: 'Serve on Tailscale' }),
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runSmoke, children: 'Smoke local runtime' }),
+          jsx('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: runAudition, children: 'Audition engines' }),
+        ],
+      }),
+      replacement ? jsxs('div', {
+        style: {
+          border: '2px solid #d9aa50',
+          background: 'rgba(217,170,80,0.12)',
+          borderRadius: '8px',
+          padding: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+        },
+        children: [
+          jsx('strong', { children: 'New model recommended' }),
+          jsx('span', { children: replacement.prompt || `Check recommends ${replacement.to_family} instead of ${replacement.from_family}.` }),
+          jsx('span', { style: { color: 'var(--ui-text-secondary)' }, children: 'Archive keeps the old weights off the live path. Delete frees the disk. Keep both leaves them installed.' }),
+          jsxs('div', {
+            className: 'flex flex-wrap gap-2',
+            children: [
+              jsx('button', { type: 'button', disabled: busy, style: { ...buttonStyle, borderColor: '#d9aa50' }, onClick: () => setReplacement(null), children: 'Keep both' }),
+              jsx('button', { type: 'button', disabled: busy, style: { ...buttonStyle, borderColor: '#d9aa50' }, onClick: () => runRetire('archive'), children: 'Archive old model' }),
+              jsx('button', { type: 'button', disabled: busy, style: { ...buttonStyle, borderColor: '#d9aa50', color: '#d9aa50' }, onClick: () => runRetire('delete'), children: 'Delete old model' }),
+            ],
+          }),
+        ],
       }) : null,
       jsxs('div', {
         className: 'grid grid-cols-1 gap-3 md:grid-cols-2',
@@ -206,7 +665,7 @@ function TurbofitPage() {
           }),
           jsx(Field, {
             label: 'Runtime selection',
-            help: 'Auto chooses the best evidence-backed fit. Manual exposes every exact validated combination.',
+            help: 'Auto chooses an exact-hardware winner. Manual exposes physical-fit lanes and clearly marks those that still need an on-box benchmark.',
             children: jsxs('select', {
               value: selectionMode,
               onChange: (event) => setSelectionMode(event.target.value),
@@ -279,7 +738,7 @@ function TurbofitPage() {
             children: jsxs('div', { className: 'flex flex-col gap-1 text-xs', children: [
               jsx('span', { className: 'font-medium', children: selectedCombination.profile }),
               jsx('span', { children: `${selectedCombination.main_quantization} main · ${selectedCombination.aux_quantization} auxiliary` }),
-              jsx('span', { children: `${selectedCombination.min_tps} tok/s · ${selectedCombination.aux_mode} · ${selectedCombination.confidence}` }),
+              jsx('span', { children: `${selectedCombination.validation_required ? 'benchmark required' : `${selectedCombination.min_tps} tok/s`} · ${selectedCombination.aux_mode} · ${selectedCombination.confidence}` }),
               jsx('span', { children: selectedCombination.intelligence_score == null ? 'Intelligence pending' : `Intelligence ${selectedCombination.intelligence_score} · ${selectedCombination.intelligence_level}` }),
               jsx('span', { style: { color: selectedCombination.fit ? 'var(--ui-text-tertiary)' : 'var(--ui-error)' }, children: selectedCombination.fit_reason }),
             ] }),
@@ -304,17 +763,41 @@ function TurbofitPage() {
           ] }),
         ],
       }),
-      jsx(Field, {
-        label: 'Fallback chain',
-        help: 'Ordered provider/model JSON. Keep credentials in Hermes provider configuration.',
-        children: jsx('textarea', {
-          value: fallbackChain,
-          onChange: (event) => setFallbackChain(event.target.value),
-          rows: 7,
-          spellCheck: false,
-          style: { ...fieldStyle, fontFamily: 'var(--ui-font-mono)', resize: 'vertical' },
-        }),
-      }),
+      jsxs('section', { className: 'flex flex-col gap-3', children: [
+        jsx('h2', { className: 'font-semibold', children: 'Subscriptions and keyless fallbacks' }),
+        jsx('p', { style: { color: 'var(--ui-text-tertiary)' }, children: 'Your configured providers first. Nous keyless free models last. Not a JSON dump.' }),
+        jsx('div', { className: 'font-medium', children: 'Your subscriptions' }),
+        ...(((status && status.catalog && status.catalog.subscriptions) || []).length
+          ? (status.catalog.subscriptions.map((item) => jsxs('label', {
+            key: item.id,
+            className: 'flex items-center gap-2',
+            children: [
+              jsx('span', { children: item.label }),
+              jsx('span', { style: { color: 'var(--ui-text-tertiary)' }, children: item.configured ? 'configured' : 'not configured' }),
+            ],
+          })))
+          : [jsx('div', { key: 'no-subs', style: { color: 'var(--ui-text-tertiary)' }, children: 'No paid or OAuth providers in this Hermes config yet.' })]),
+        jsx('div', { className: 'font-medium', children: 'Nous keyless free' }),
+        ...(((status && status.catalog && status.catalog.nous_free) || []).map((item) => {
+          const enabled = fallbackChain.some((row) => row.provider === 'nous' && row.model === item.model)
+          return jsxs('label', {
+            key: item.model,
+            className: 'flex items-center gap-2',
+            children: [
+              jsx('input', {
+                type: 'checkbox',
+                checked: enabled,
+                onChange: (event) => {
+                  if (event.target.checked) setFallbackChain([...fallbackChain, { provider: 'nous', model: item.model }])
+                  else setFallbackChain(fallbackChain.filter((row) => !(row.provider === 'nous' && row.model === item.model)))
+                },
+              }),
+              jsx('span', { children: item.label }),
+              jsx('span', { style: { color: 'var(--ui-text-tertiary)' }, children: item.model }),
+            ],
+          })
+        })),
+      ] }),
       jsxs('section', { className: 'flex flex-col gap-2', children: [
         jsx('h2', { className: 'font-semibold', children: 'Runtime and remote access' }),
         jsx('p', {
@@ -323,15 +806,19 @@ function TurbofitPage() {
         }),
         jsxs('label', { className: 'flex items-center gap-2', children: [
           jsx('input', { type: 'checkbox', checked: installNative, onChange: (event) => setInstallNative(event.target.checked) }),
-          'Install or verify the native adaptive runtime',
+          'Install and activate the native runtime (downloads the selected model and starts local processes)',
+        ] }),
+        jsxs('label', { className: 'flex items-center gap-2', children: [
+          jsx('input', { type: 'checkbox', checked: installFreeToken, onChange: (event) => setInstallFreeToken(event.target.checked) }),
+          'Install FreeToken candidate (NVIDIA, CUDA 13+, text-only MoE)',
         ] }),
         jsxs('label', { className: 'flex items-center gap-2', children: [
           jsx('input', { type: 'checkbox', checked: installLemonade, onChange: (event) => setInstallLemonade(event.target.checked) }),
           'Install or verify Lemonade support',
         ] }),
         jsxs('label', { className: 'flex items-center gap-2', children: [
-          jsx('input', { type: 'checkbox', checked: installSirvir, onChange: (event) => setInstallSirvir(event.target.checked) }),
-          'Install or update bundled Sirvir customer service',
+          jsx('input', { type: 'checkbox', checked: installTurboSouth, onChange: (event) => setInstallTurboSouth(event.target.checked) }),
+          'Install or update GitHub-current TurboSouth customer service',
         ] }),
         jsxs('label', { className: 'flex items-center gap-2', children: [
           jsx('input', { type: 'checkbox', checked: publishTailnet, onChange: (event) => setPublishTailnet(event.target.checked) }),
@@ -387,7 +874,7 @@ function TurbofitPage() {
       ] }),
       jsxs('div', { className: 'flex gap-2', children: [
         jsx('button', { type: 'button', onClick: save, disabled: busy, style: buttonStyle, children: busy ? 'Working…' : 'Apply' }),
-        jsx('button', { type: 'button', onClick: refresh, disabled: busy, style: buttonStyle, children: 'Rescan' }),
+        jsx('button', { type: 'button', onClick: refresh, disabled: busy, style: buttonStyle, children: 'Run TurboFit Check' }),
       ] }),
       jsxs('section', { className: 'flex flex-col gap-2', children: [
         jsx('h2', { className: 'font-semibold', children: `${preference} recommendations` }),
@@ -400,15 +887,65 @@ function TurbofitPage() {
               style: { color: 'var(--ui-text-tertiary)' },
               children: `${item.context} ctx · ${item.min_tps} tok/s · ${item.aux_mode} · ${item.confidence}`,
             }),
+            jsxs('div', {
+              className: 'grid grid-cols-1 gap-2 md:grid-cols-3',
+              children: [
+                jsx(ScoreBar, { label: 'Context', value: item.context, max: 1048576 }),
+                jsx(ScoreBar, { label: 'tok/s', value: item.min_tps, max: 80 }),
+                jsx(ScoreBar, { label: 'Confidence', value: item.confidence === 'measured' ? 100 : item.confidence === 'portable-fit' ? 55 : 25, max: 100 }),
+              ],
+            }),
+            jsx('button', {
+              type: 'button',
+              disabled: busy,
+              style: { ...buttonStyle, marginTop: '6px' },
+              onClick: () => runShift(item.profile),
+              children: 'Shift to this combination',
+            }),
           ],
         })) : jsx('div', {
           style: { color: 'var(--ui-text-tertiary)' },
           children: 'No evidence-backed configuration currently fits this hardware.',
         }),
       ] }),
+      compatibleLanes.length ? jsxs('section', { className: 'flex flex-col gap-2', children: [
+        jsx('h2', { className: 'font-semibold', children: 'Compatible local lanes — same Fit List only' }),
+        jsx('div', {
+          style: { color: 'var(--ui-text-tertiary)' },
+          children: 'Only Maple or Cyber-Tiel Coder on 8 GB VRAM. A dense 27B that spills into RAM is not a lane — it will crawl.',
+        }),
+        ...compatibleLanes.map((item) => jsxs('div', {
+          key: item.profile,
+          style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' },
+          children: [
+            jsx('div', { className: 'font-medium', children: item.profile }),
+            jsx('div', { style: { color: 'var(--ui-text-tertiary)' }, children: `${item.context} ctx · ${item.aux_mode} · ${item.confidence}` }),
+            jsx('div', { style: { color: 'var(--ui-text-quaternary)' }, children: item.fit_reason }),
+          ],
+        })),
+      ] }) : null,
+      smoke ? jsxs('section', { className: 'flex flex-col gap-2', children: [
+        jsx('h2', { className: 'font-semibold', children: 'Local smoke results' }),
+        jsx('p', { style: { color: 'var(--ui-text-tertiary)' }, children: 'Health check of the currently serving loopback gateway. This is not a promotion benchmark and does not rank models.' }),
+        jsx('div', { style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '8px' }, children: `${smoke.status || 'unknown'} · suite ${smoke.suite || 'local-runtime-smoke-v1'}` }),
+        smoke.evidence_path ? jsx('div', { style: { color: 'var(--ui-text-quaternary)' }, children: smoke.evidence_path }) : null,
+        (smoke.resource_warnings || []).length ? jsx('div', { style: { color: 'var(--ui-text-tertiary)' }, children: `Warnings: ${(smoke.resource_warnings || []).join(', ')}` }) : null,
+      ] }) : null,
+      audition ? jsxs('section', { className: 'flex flex-col gap-2', children: [
+        jsx('h2', { className: 'font-semibold', children: 'Engine audition' }),
+        jsx('p', { style: { color: 'var(--ui-text-tertiary)' }, children: `Pair ${audition.main} / ${audition.aux} @ ${audition.context}. Maple GGUF is fork llama.cpp or TurboHaul-on-that-fork. vLLM/SGLang need HF weights, not Maple TQ2_0.` }),
+        ...((audition.engines || []).map((item) => jsxs('div', {
+          key: item.engine_id,
+          style: { border: '1px solid var(--ui-stroke-secondary)', borderRadius: '6px', padding: '9px' },
+          children: [
+            jsx('div', { className: 'font-medium', children: `${item.display_name} · ${item.audition}` }),
+            jsx('div', { style: { color: 'var(--ui-text-tertiary)' }, children: item.serve_note || item.reason }),
+          ],
+        }))),
+      ] }) : null,
       jsx('div', {
         style: { color: 'var(--ui-text-quaternary)' },
-        children: `Gateway ${status && status.gateway && status.gateway.reachable ? 'online' : 'offline'} · recommendations use physical capacity, measured evidence, and current backend support.`,
+        children: `Gateway ${status && status.gateway && status.gateway.reachable ? 'online' : 'offline'} · exact recommendations use measured evidence; portable lanes require an on-box benchmark.`,
       }),
     ],
   })
@@ -437,6 +974,24 @@ export default {
         data: {
           id: 'turbofit.open',
           label: 'Open Turbofit',
+          run: () => host.navigate('/turbofit'),
+        },
+      },
+      {
+        id: 'shift-up',
+        area: PALETTE_AREA,
+        data: {
+          id: 'turbofit.shift-up',
+          label: 'Turbofit: shift up',
+          run: () => host.navigate('/turbofit'),
+        },
+      },
+      {
+        id: 'update',
+        area: PALETTE_AREA,
+        data: {
+          id: 'turbofit.update',
+          label: 'Turbofit: update plugin and TurboSouth',
           run: () => host.navigate('/turbofit'),
         },
       },

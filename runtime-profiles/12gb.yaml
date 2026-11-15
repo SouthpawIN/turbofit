@@ -1,0 +1,34 @@
+schema: turbofit.runtime/v1
+id: hardware-12gb
+revision: 1
+hardware:
+  class_vram_gb: 12
+  min_devices: 1
+  total_vram_gb: 12
+  per_device_min_gb: 12
+  accelerator: llama.cpp-local
+  topology: 1x12
+policy:
+  recommendation: evidence-gated
+  external_gpu_priority: absolute
+  contraction_dwell_s: 5
+  expansion_dwell_s: 120
+  expansion_margin_gb_per_card: 0.5
+  cooldown_s: 30
+  flap_failure_limit: 3
+  flap_window_s: 300
+roles:
+  main: active:main
+  auxiliary: active:aux
+  fallback: active:main
+rungs:
+- id: local-underdog-pq2-131072
+  context: 131072
+  aux_mode: shared-main
+  evidence: sha256:0323602de8a7f7aaca8e89535cd94fd82d1dfef2ca64656aae8c61762f947c74
+  main_manifest: sha256:1111111111111111111111111111111111111111111111111111111111111111
+- id: local-underdog-pq2-65536
+  context: 65536
+  aux_mode: shared-main
+  evidence: sha256:0323602de8a7f7aaca8e89535cd94fd82d1dfef2ca64656aae8c61762f947c74
+  main_manifest: sha256:1111111111111111111111111111111111111111111111111111111111111111

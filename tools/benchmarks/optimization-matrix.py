@@ -66,7 +66,8 @@ def get_vram_free(gpu=0):
 
 
 def kill_port(port):
-    os.system(f"fuser -k {port}/tcp 2>/dev/null; sleep 3")
+    subprocess.run(["fuser", "-k", f"{port}/tcp"], stderr=subprocess.DEVNULL)
+    time.sleep(3)
 
 
 def wait_for_ready(port, timeout=120):

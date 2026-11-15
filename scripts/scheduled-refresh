@@ -1,26 +1,67 @@
-#!/usr/bin/env bash
-set -u
-ROOT=/home/sovthpaw/projects/turbofit
-cd "$ROOT" || exit 1
+#!/usr/bin/env python3
+"""Discover models, advance one safe benchmark batch, and rebuild TurboFit List."""
+from __future__ import annotations
 
-intel_output=$(scripts/update-model-intel 2>&1) || {
-  printf '{"model_intel":"failed","benchmark":"skipped"}\n'
-  exit 1
-}
+import json
+import os
+import subprocess
+from pathlib import Path
 
-if ! gpu_pids=$(nvidia-smi --query-compute-apps=pid --format=csv,noheader,nounits 2>/dev/null); then
-  printf '{"model_intel":"updated","benchmark":"skipped","reason":"accelerator probe unavailable"}\n'
-  exit 0
-fi
-if [ -n "${gpu_pids//[[:space:]]/}" ]; then
-  printf '{"model_intel":"updated","benchmark":"skipped","reason":"external GPU workload active"}\n'
-  exit 0
-fi
+ROOT = Path(__file__).resolve().parents[1]
+ENV = {**os.environ, "PYTHONPATH": f"{ROOT / 'src'}:{ROOT}"}
 
-if scripts/turbofit-catalog-campaign run-one; then
-  printf '{"model_intel":"updated","benchmark":"completed"}\n'
-else
-  status=$?
-  printf '{"model_intel":"updated","benchmark":"failed","exit_code":%d}\n' "$status"
-  exit "$status"
-fi
+
+def run(command: list[str]) -> dict[str, object]:
+    result = subprocess.run(
+        command, cwd=ROOT, env=ENV, text=True, capture_output=True, check=False,
+    )
+    return {
+        "command": " ".join(command),
+        "exit_code": result.returncode,
+        "output": (result.stdout + result.stderr).strip()[-4000:],
+    }
+
+
+def service_active(name: str) -> bool:
+    return subprocess.run(
+        ["systemctl", "--user", "is-active", "--quiet", name], check=False,
+    ).returncode == 0
+
+
+def main() -> int:
+    steps = [
+        run(["python3", "research/discover_huggingface.py"]),
+        run(["python3", "research/discover_model_news.py", "--url", "https://huggingface.co/blog/feed.xml"]),
+        run(["python3", "research/discover_api_models.py", "--provider", "openrouter", "--url", "https://openrouter.ai/api/v1/models"]),
+        run(["python3", "research/discover_external_benchmarks.py"]),
+        run(["python3", "research/render_external_benchmarks.py"]),
+        run(["scripts/update-model-intel"]),
+        run(["scripts/turbofit-discovery-queue"]),
+    ]
+    if service_active("turbofit-benchmark-campaign.service"):
+        benchmark = {"status": "service-active", "exit_code": 0}
+    else:
+        benchmark = run([
+            "scripts/turbofit-benchmark-orchestrator",
+            "--catalog-batch", "1",
+            "--intelligence-batch", "1",
+            "--once",
+        ])
+    promotion = run(["scripts/turbofit-promote-list-winner"])
+    tiers = run(["scripts/turbofit-hardware-tiers", "--output", "references/hardware-tier-report.json"])
+    listing = run(["scripts/turbofit-list"])
+    failed_discovery = sum(int(step["exit_code"]) != 0 for step in steps)
+    payload = {
+        "schema": "turbofit.scheduled-refresh/v2",
+        "discovery": {"steps": steps, "failures": failed_discovery},
+        "benchmark": benchmark,
+        "winner_promotion": promotion,
+        "turbofit_check": {"hardware_tiers": tiers},
+        "turbofit_list": listing,
+    }
+    print(json.dumps(payload, sort_keys=True))
+    return 1 if failed_discovery or int(benchmark.get("exit_code", 0)) != 0 or int(promotion["exit_code"]) != 0 or int(tiers["exit_code"]) != 0 or int(listing["exit_code"]) != 0 else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

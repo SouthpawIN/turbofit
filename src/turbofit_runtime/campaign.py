@@ -8,11 +8,30 @@ import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Protocol
+from typing import Mapping, Protocol
 
 from .evidence import BenchmarkResult, EvidencePublisher
 from .gpu import GPUClearEvent, GPUClearGate
 from .schema import MatrixRow, load_matrix
+
+
+def _default_clear_ceilings() -> dict[int, int]:
+    """Per-card ceiling the GPU clear gate demands before a run starts.
+
+    The 1024 MiB default assumes an idle machine. A live desktop (compositor,
+    browser GPU process, screen recorder) can hold ~1.4 GiB indefinitely, which
+    makes the gate fail forever on an otherwise quiet box. TURBOFIT_GPU_CLEAR_CEILING_MB
+    raises it for such hosts without changing the default for headless runners.
+    """
+    raw = os.environ.get("TURBOFIT_GPU_CLEAR_CEILING_MB")
+    if raw:
+        try:
+            value = int(raw)
+        except ValueError:
+            value = 0
+        if value > 0:
+            return {0: value, 1: value}
+    return {0: 1024, 1: 1024}
 
 
 FAMILY_RANK = {
@@ -77,6 +96,9 @@ class CampaignRunner:
         registry: Registry,
         clear_ceilings_mb: dict[int, int] | None = None,
         deferred_row_ids: frozenset[str] | None = None,
+        waiting_download_rows: Mapping[str, str] | None = None,
+        waiting_memory_rows: Mapping[str, str] | None = None,
+        waiting_runtime_rows: Mapping[str, str] | None = None,
     ) -> None:
         self.matrix_path = matrix_path
         self.state_path = state_path
@@ -84,8 +106,17 @@ class CampaignRunner:
         self.clear_gate = clear_gate
         self.publisher = publisher
         self.registry = registry
-        self.clear_ceilings_mb = clear_ceilings_mb or {0: 1024, 1: 1024}
+        self.clear_ceilings_mb = clear_ceilings_mb or _default_clear_ceilings()
         self.deferred_row_ids = deferred_row_ids or frozenset()
+        # Rows whose weights are not verifiably installed: attempting them can
+        # only rediscover a download that has not finished, so they wait.
+        self.waiting_download_rows = dict(waiting_download_rows or {})
+        # Rows the offload planner measured as too large for this host. Their
+        # reason is the planner's own arithmetic; they are never attempted.
+        self.waiting_memory_rows = dict(waiting_memory_rows or {})
+        # Rows whose recipe names an engine binary this host does not have:
+        # a prerequisite the user installs, not a property of the model.
+        self.waiting_runtime_rows = dict(waiting_runtime_rows or {})
 
     def _load_state(self) -> dict:
         try:
@@ -118,7 +149,12 @@ class CampaignRunner:
         state = self._load_state()
         pending = []
         for row in matrix.rows:
-            if row.id in self.deferred_row_ids:
+            if (
+                row.id in self.deferred_row_ids
+                or row.id in self.waiting_download_rows
+                or row.id in self.waiting_memory_rows
+                or row.id in self.waiting_runtime_rows
+            ):
                 continue
             record = state["rows"].get(row.id) or {}
             campaign_status = record.get("status")
@@ -154,7 +190,12 @@ class CampaignRunner:
         state = self._load_state()
         unresolved = []
         for row in matrix.rows:
-            if row.id in self.deferred_row_ids:
+            if (
+                row.id in self.deferred_row_ids
+                or row.id in self.waiting_download_rows
+                or row.id in self.waiting_memory_rows
+                or row.id in self.waiting_runtime_rows
+            ):
                 continue
             record = state["rows"].get(row.id) or {}
             if row.id in runnable:
@@ -294,6 +335,21 @@ class CampaignRunner:
         matches = [item for item in load_matrix(self.matrix_path).rows if item.id == row.id]
         if len(matches) != 1 or matches[0] != row:
             raise ValueError(f"campaign row is not canonical: {row.id}")
+        waiting = self.waiting_download_rows.get(row.id)
+        if waiting is not None:
+            # No GPU clear, no engine launch, no failure evidence: the row simply
+            # is not runnable until the download finishes.
+            return CampaignOutcome(row_id=row.id, status="waiting-download", error=waiting)
+        too_big = self.waiting_memory_rows.get(row.id)
+        if too_big is not None:
+            # Same rule for a model this host cannot hold: report the planner's
+            # arithmetic instead of launching an engine that must OOM.
+            return CampaignOutcome(row_id=row.id, status="waiting-memory", error=too_big)
+        absent = self.waiting_runtime_rows.get(row.id)
+        if absent is not None:
+            # Same rule for an engine binary that is not installed: a missing
+            # prerequisite is not a model failure, so no GPU clear and no launch.
+            return CampaignOutcome(row_id=row.id, status="waiting-runtime", error=absent)
         before: GPUClearEvent | None = None
         after: GPUClearEvent | None = None
         raw: RawBenchmark | None = None
@@ -306,6 +362,7 @@ class CampaignRunner:
                 prepared = True
             before = self.clear_gate.wait(
                 ceilings_mb=self.clear_ceilings_mb,
+                baseline_mb=None,
                 settle_samples=3,
                 timeout_s=180,
                 label=f"before-{row.id}",
@@ -317,6 +374,10 @@ class CampaignRunner:
             try:
                 after = self.clear_gate.wait(
                     ceilings_mb=self.clear_ceilings_mb,
+                    baseline_mb=(
+                        {sample.gpu: sample.used_mb for sample in before.snapshot}
+                        if before is not None else None
+                    ),
                     settle_samples=3,
                     timeout_s=180,
                     label=f"after-{row.id}",

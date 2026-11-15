@@ -1,0 +1,80 @@
+{
+  "schema": "turbofit.tiel-coder-lanes/v1",
+  "description": "Isolated clean benchmark lanes for Tiel Coder audition — separate from TurboFit main lanes. Base: Cyber-Tiel Coder 35B-A3B (35B MoE, ~3.4B active, 256 experts routed 8/token). Evidence under references/results/tiel-coder/. Pins exact HF artifacts + sizes verified 2026-08-31 from model cards.",
+  "status": "identifier-pinned",
+  "identifier": {
+    "hf_org": "peculiar-ragdoll",
+    "base": "peculiar-ragdoll/Tiel-Coder-35B-A3B",
+    "model": "peculiar-ragdoll/Tiel-Coder-35B-A3B",
+    "gguf_repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF",
+    "gguf_mtp_repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF-MTP",
+    "mlx_repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-MLX-oQ4e",
+    "mlx_mtp_repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-MLX-oQ4e-MTP",
+    "crew": "Saga (same as Dirk 27B)",
+    "imatrix": "Tiel-Coder-35B-A3B.imatrix.gguf (183 MiB, 510 tensors, code-heavy 49M-char calibration)",
+    "vision_projector": "mmproj-BF16.gguf (903 MB, BF16 shared by every GGUF tier)",
+    "chat_template": "Sharp (inside GGUF), sampling temp 1.0 / top_p 0.95 / top_k 20 (agentic 0.6)"
+  },
+  "artifacts": {
+    "gguf": [
+      {"file": "Tiel-Coder-35B-A3B-UD-Q2_K_XL.gguf", "size_gb": 12.3, "fits": "16 GB", "bits": "2-bit", "note": "LAST RESORT; struggles agentic coding"},
+      {"file": "Tiel-Coder-35B-A3B-UD-IQ3_XXS.gguf", "size_gb": 13.2, "fits": "16 GB", "bits": "3-bit", "note": "the 16 GB pick — +0.9 GB over Q2 for meaningful gain"},
+      {"file": "Tiel-Coder-35B-A3B-UD-Q3_K_XL.gguf", "size_gb": 16.8, "fits": "24 GB", "bits": "3-bit", "note": "3-bit with context headroom; prefer IQ4_XS unless need 1 GB"},
+      {"file": "Tiel-Coder-35B-A3B-UD-IQ4_XS.gguf", "size_gb": 17.7, "fits": "24 GB", "bits": "4-bit IQ", "note": "4-bit quality, most context headroom of any 4-bit tier"},
+      {"file": "Tiel-Coder-35B-A3B-UD-Q4_K_S.gguf", "size_gb": 20.9, "fits": "24 GB", "bits": "4-bit", "note": "tight 4-bit; when Q4_K_XL leaves too little KV room"},
+      {"file": "Tiel-Coder-35B-A3B-UD-Q4_K_XL.gguf", "size_gb": 22.4, "fits": "24-32 GB", "bits": "4-bit", "note": "START HERE — benchmarked tier; snug 24 GB, comfortable 32 GB"},
+      {"file": "Tiel-Coder-35B-A3B-UD-Q5_K_XL.gguf", "size_gb": 26.6, "fits": "32 GB", "bits": "5-bit", "note": "the 32 GB pick"},
+      {"file": "Tiel-Coder-35B-A3B-UD-Q6_K_XL.gguf", "size_gb": 31.8, "fits": "48 GB", "bits": "6-bit", "note": "near-lossless; no usable 262K on 32 GB"},
+      {"file": "Tiel-Coder-35B-A3B-UD-Q8_K_XL.gguf", "size_gb": 38.5, "fits": "48 GB", "bits": "8-bit", "note": "reference"}
+    ],
+    "gguf_mtp": [
+      {"file": "Tiel-Coder-35B-A3B-MTP-UD-Q4_K_XL.gguf", "size_gb": 23.3, "fits": "32 GB", "bits": "4-bit+MTP", "note": "benchmarked +0.9 GB head; needs --spec-type draft-mtp else dead weight"},
+      {"file": "Tiel-Coder-35B-A3B-MTP-UD-Q5_K_XL.gguf", "size_gb": 27.5, "fits": "32 GB", "bits": "5-bit+MTP", "note": "more precision headroom; same pinned 0.9 GB head block"},
+      {"file": "Tiel-Coder-35B-A3B-MTP-UD-Q6_K_XL.gguf", "size_gb": 32.7, "fits": "48 GB", "bits": "6-bit+MTP", "note": "inferred 31.8 +0.9; verify on HF file list"}
+    ],
+    "mlx": [
+      {"repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-MLX-oQ4e", "quant": "oQ4e (dynamic 4-bit + imatrix pass)", "size_gb": 21, "fits": "24-32 unified", "vision": "included in folder, mlx_vlm only"},
+      {"repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-MLX-oQ4e-MTP", "quant": "oQ4e+MTP", "size_gb": 22, "fits": "32 unified", "vision": "included, not guaranteed speedup — measured 0.82-0.93x on author Apple box, 1.16x on M5 Max reported by sibling"}
+    ]
+  },
+  "candidate_configs_per_lane": {
+    "hardware-8gb": {"status": "not-viable", "reason": "smallest GGUF 12.3 GB >8 GB; no Tiel quant fits 8 GB dedicated", "candidate": null},
+    "hardware-16gb": {"status": "pending-benchmarks", "primary": {"repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF", "file": "Tiel-Coder-35B-A3B-UD-IQ3_XXS.gguf", "size_gb": 13.2, "context": "64k (q8_0 KV), audition 64k/128k"}, "alternates": ["UD-Q2_K_XL 12.3 GB (fallback if KV-bound)"]},
+    "hardware-24gb": {"status": "pending-benchmarks", "primary": {"repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF", "file": "Tiel-Coder-35B-A3B-UD-Q4_K_XL.gguf", "size_gb": 22.4, "context": "131k-262k q8_0 KV (snug)"}, "alternates": ["UD-IQ4_XS 17.7 GB (most KV headroom for 262k)", "UD-Q4_K_S 20.9 GB (tight 4-bit)", "MLX oQ4e 21 GB on Apple unified"]},
+    "hardware-32gb": {"status": "pending-benchmarks", "primary": {"repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF", "file": "Tiel-Coder-35B-A3B-UD-Q5_K_XL.gguf", "size_gb": 26.6, "context": "262k"}, "alternates": ["MTP-UD-Q4_K_XL 23.3 GB with --spec-type draft-mtp (speculative decode lane, llama.cpp batched-MoE verify)", "MTP-UD-Q5_K_XL 27.5 GB", "MLX oQ4e 21 GB + MLX-MTP on Apple"]},
+    "hardware-48gb": {"status": "pending-benchmarks", "primary": {"repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF", "file": "Tiel-Coder-35B-A3B-UD-Q6_K_XL.gguf", "size_gb": 31.8, "context": "262k comfortable"}, "alternates": ["UD-Q8_K_XL 38.5 GB reference", "MTP-UD-Q6_K_XL ~32.7 GB"]},
+    "hardware-64gb": {"status": "pending-benchmarks", "primary": {"repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF", "file": "Tiel-Coder-35B-A3B-UD-Q6_K_XL.gguf", "size_gb": 31.8, "context": "262k+"}, "alternates": ["Q8 38.5 GB if KV allows 1M"]},
+    "hardware-96gb": {"status": "pending-benchmarks", "primary": {"repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF", "file": "Tiel-Coder-35B-A3B-UD-Q8_K_XL.gguf", "size_gb": 38.5, "context": "262k-1M"}, "alternates": []},
+    "hardware-128gb": {"status": "pending-benchmarks", "primary": {"repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-MLX-oQ4e", "quant": "oQ4e", "size_gb": 21, "context": "262k unified (M5 Max lane, measured headroom)"}, "alternates": ["GGUF Q6/Q8 on 4x32 if dedicated"]},
+    "hardware-192gb": {"status": "pending-benchmarks", "primary": {"repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF", "file": "Tiel-Coder-35B-A3B-UD-Q8_K_XL.gguf", "size_gb": 38.5, "context": "1M (4x48 topology)"}, "alternates": []},
+    "hardware-256gb": {"status": "pending-benchmarks", "primary": {"repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF", "file": "Tiel-Coder-35B-A3B-UD-Q8_K_XL.gguf", "size_gb": 38.5, "context": "1M (8x32 topology)"}, "alternates": []},
+    "hardware-384gb": {"status": "pending-benchmarks", "primary": {"repo": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF", "file": "Tiel-Coder-35B-A3B-UD-Q8_K_XL.gguf", "size_gb": 38.5, "context": "1M (8x48 topology, not bandwidth-bound)"}, "alternates": []}
+  },
+  "vision": {"projector": "mmproj-BF16.gguf 903 MB (shared, BF16, unquantized)", "gguf_cmd": "llama-mtmd-cli -m <tier>.gguf --mmproj mmproj-BF16.gguf -ngl 99 --image screenshot.png -p \"Why failing?\"", "mlx_cmd": "python -m mlx_vlm.generate --model <mlx-dir> --prompt \"What in screenshot?\" --image photo.jpg (must use mlx_vlm not mlx_lm)"},
+  "mtp": {"head_size_gb": 0.9, "pinned_precision": "same block at same precision in every tier, recipe pinned", "llama_cpp": "llama-server --spec-type draft-mtp (without flag head is dead weight — use stripped GGUF)", "mlx": "mtp_enabled in oMLX; author measured 0.82-0.93x on own Apple box (MoE decode cheap), sibling reports 1.16x on M5 Max — measure per-host tok/s on vs off", "imatrix_gguf_fix": "2026-08-23 head re-upload: kurtosis 25.1, 98-sigma outlier, 825 on nextn projection — now ships in -MTP repos"},
+  "isolation": {
+    "tiers_source": "this file only — TIERS_TIEL does not mutate main TIERS",
+    "evidence_root": "references/results/tiel-coder/",
+    "campaign_state": "references/tiel-coder-campaign-state.json (isolated from references/catalog-campaign-state.json)",
+    "intelligence_scores": "references/tiel-coder-intelligence-scores.json",
+    "orchestrator": "scripts/turbofit-benchmark-orchestrator --tiel-coder (isolated)",
+    "no_contamination": "main turbofit-list.json 48 GB GSQ-RCO IQ3_S winner untouched; Tiel promotion uses same lexicographic criteria but isolated ranking"
+  },
+  "harness": {
+    "catalog_campaign": "scripts/turbofit-catalog-campaign --tiel-isolated (state: references/tiel-coder-campaign-state.json)",
+    "intelligence_campaign": "scripts/turbofit-intelligence-campaign --tiel-isolated",
+    "evidence_root": "references/results/tiel-coder/",
+    "hardware_fingerprint_bound": true,
+    "resumable": true,
+    "orchestrator": "scripts/turbofit-benchmark-orchestrator --tiel-coder"
+  },
+  "campaign_priority": "48→32→24→64→16→96→128→8→192→256→384",
+  "promotion_criteria": "lexicographic: intelligence →128K→30TPS→262K→50TPS→1M→fastest (same as main, isolated)",
+  "runnable_on_current_fleet": {
+    "senter_hp_48gb": "UD-Q4_K_XL 22.4 GB (snug) or UD-IQ4_XS 17.7 GB for 262k headroom — fits 48 GB 2x24; Q6 31.8 comfortable; MTP variants carry 0.9 GB overhead so measure spec vs off; mmproj adds 0.9 GB for vision tests",
+    "mac_m_series_unified_32gb": "UD-Q4_K_XL 22.4 or Q5 26.6 or MLX oQ4e 21 GB — current M1 Pro 32 GB can run primary 24/32 lanes",
+    "m5_max_128gb_mlx_target": "MLX oQ4e 21 GB (vision-capable, 262k) — aligns with PR #30 MLX 17.97 tok/s lane; MTP variant to measure 0.82-1.16x per-host"
+  },
+  "audition_contexts": "64k / 128k / 262k per model supported contexts (per-model contexts fix #28); 1M only where KV + hardware allow (96GB+ / 8x topologies); MTP lanes benchmark both spec-on vs off decode tok/s",
+  "sha_pin_next": "After first hf download, pin sha256 of GGUF header + full file in references/tiel-coder-artifact-shas.json and hardware-tier report evidence field; until then size+filename is the artifact key"
+}

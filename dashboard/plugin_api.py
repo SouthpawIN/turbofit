@@ -8,7 +8,13 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+try:
+    from fastapi import APIRouter, HTTPException
+except ImportError as exc:  # the dashboard is an optional extra, the plugin is not
+    raise ImportError(
+        "the TurboFit dashboard needs fastapi: pip install 'turbofit[dashboard]'. "
+        "The plugin itself (and /turbofit) works without it."
+    ) from exc
 
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +29,16 @@ from plugin_tools import (  # noqa: E402
     multimodal_snapshot,
     recommendation_snapshot,
     status_snapshot,
+)
+from product_ops import (  # noqa: E402
+    available_models,
+    local_model_replacement,
+    retire_local_model,
+    serve_status,
+    serve_tailnet,
+    shift_configuration,
+    smoke_local_runtime,
+    update_products,
 )
 
 
@@ -59,6 +75,7 @@ def _profile_rows() -> list[dict[str, Any]]:
 
 def _backend_status() -> dict[str, Any]:
     from turbofit_runtime.hardware import probe_hardware
+    from turbofit_runtime.freetoken import FreeTokenClient, probe_freetoken_compatibility
     from turbofit_runtime.runtime_backends import LemonadeClient
 
     try:
@@ -74,12 +91,53 @@ def _backend_status() -> dict[str, Any]:
         lemonade = {"available": True, "health": LemonadeClient().health()}
     except Exception as exc:
         lemonade = {"available": False, "error": type(exc).__name__}
+    compatibility = probe_freetoken_compatibility()
+    try:
+        freetoken = {
+            "available": True,
+            "status": "candidate",
+            "health": FreeTokenClient().health(),
+            "compatibility": asdict(compatibility),
+            "auto_promote": False,
+        }
+    except Exception as exc:
+        freetoken = {
+            "available": False,
+            "status": compatibility.status,
+            "error": type(exc).__name__,
+            "compatibility": asdict(compatibility),
+            "auto_promote": False,
+        }
+    engines = []
+    try:
+        from dataclasses import asdict as _asdict
+        from turbofit_runtime.engine_check import detect_driver_major, detect_wsl, probe_engines
+        from turbofit_runtime.hardware import probe_hardware as _probe
+
+        live = _probe()
+        engines = [
+            {
+                "engine_id": item.engine_id,
+                "display_name": item.display_name,
+                "compatible": item.compatible,
+                "installed": item.installed,
+                "running": item.running,
+                "eligible": item.eligible,
+                "reason": item.reason,
+                "support_mode": item.support_mode,
+            }
+            for item in probe_engines(live, driver_major=detect_driver_major(), is_wsl=detect_wsl())
+        ]
+    except Exception as exc:
+        engines = [{"error": type(exc).__name__}]
     return {
         "hardware": hardware,
         "hardware_error": hardware_error,
         "local_backend": local_backend,
         "lemonade": lemonade,
-        "supported": ["cuda", "rocm", "metal", "cpu", "lemonade"],
+        "freetoken": freetoken,
+        "engines": engines,
+        "supported": ["cuda", "rocm", "metal", "cpu", "lemonade", "freetoken-candidate", "llama.cpp", "mlx", "sglang", "vllm", "turbohaul-manager"],
     }
 
 
@@ -192,6 +250,39 @@ async def get_hardware_tiers() -> dict[str, Any]:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
+def _leaderboard_rows() -> dict[str, Any]:
+    from turbofit_runtime.leaderboard import build_leaderboard, load_engine_matrix, load_tier_report
+
+    report = load_tier_report(PLUGIN_ROOT / "references" / "hardware-tier-report.json")
+    matrix = load_engine_matrix(PLUGIN_ROOT / "references" / "engine-serve-matrix.json")
+    return build_leaderboard(report, matrix)
+
+
+@router.get("/leaderboard")
+async def get_leaderboard() -> dict[str, Any]:
+    try:
+        return await asyncio.to_thread(_leaderboard_rows)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+def _fit_rows(tier_gb: int | None = None) -> dict[str, Any]:
+    """What to run on this machine, and what is missing to run it."""
+    from turbofit_runtime.fit_view import load_fit_view
+
+    return load_fit_view(PLUGIN_ROOT, tier_gb=tier_gb)
+
+
+@router.get("/fit")
+async def get_fit(tier: int | None = None) -> dict[str, Any]:
+    if tier is not None and not 1 <= tier <= 4096:
+        raise HTTPException(status_code=422, detail="tier must be a GB value from 1 to 4096")
+    try:
+        return await asyncio.to_thread(_fit_rows, tier)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
 @router.get("/auxiliary-tiers")
 async def get_auxiliary_tiers() -> dict[str, Any]:
     try:
@@ -228,10 +319,12 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
     profile = body.get("profile")
     base_url = body.get("base_url")
     publish_tailnet_routes = body.get("publish_tailnet", False)
-    install_sirvir = body.get("install_sirvir", False)
+    install_turbosouth = body.get("install_turbosouth", body.get("install_turbosouth", False))
+    install_turbosouth = body.get("install_turbosouth", install_turbosouth)
     install_desktop = body.get("install_desktop", False)
     install_lemonade = body.get("install_lemonade", False)
     install_native = body.get("install_native", False)
+    install_freetoken = body.get("install_freetoken", False)
     port_defaults = {
         "dashboard_local_port": 9127,
         "provider_local_port": 8091,
@@ -243,10 +336,11 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
         not isinstance(primary, bool)
         or (fallback is not None and not isinstance(fallback, bool))
         or not isinstance(publish_tailnet_routes, bool)
-        or not isinstance(install_sirvir, bool)
+        or not isinstance(install_turbosouth, bool)
         or not isinstance(install_desktop, bool)
         or not isinstance(install_lemonade, bool)
         or not isinstance(install_native, bool)
+        or not isinstance(install_freetoken, bool)
     ):
         raise HTTPException(status_code=422, detail="setup switches must be booleans")
     if profile is not None and not isinstance(profile, str):
@@ -269,11 +363,118 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
             profile=profile,
             base_url=base_url,
             publish_tailnet_routes=publish_tailnet_routes,
-            install_sirvir=install_sirvir,
+            install_turbosouth=install_turbosouth,
             install_desktop=install_desktop,
             install_lemonade=install_lemonade,
             install_native=install_native,
+            install_freetoken=install_freetoken,
             **ports,
         )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/update")
+async def post_update() -> dict[str, Any]:
+    try:
+        return await asyncio.to_thread(update_products)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/smoke")
+async def post_smoke(body: dict[str, Any] | None = None) -> dict[str, Any]:
+    payload = body or {}
+    timeout_seconds = payload.get("timeout_seconds", 300.0)
+    try:
+        return await asyncio.to_thread(smoke_local_runtime, timeout_seconds=timeout_seconds)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception:
+        raise HTTPException(status_code=503, detail="local smoke failed; inspect Turbofit logs") from None
+
+
+@router.get("/audition")
+async def get_audition(main: str = "maple-preview-tq2", aux: str = "maple-preview-tq2", context: int = 65536) -> dict[str, Any]:
+    try:
+        from turbofit_runtime.engine_check import audition_pair, detect_driver_major, detect_wsl
+        from turbofit_runtime.hardware import probe_hardware
+
+        rows = await asyncio.to_thread(
+            audition_pair,
+            probe_hardware(),
+            main_alias=main,
+            aux_alias=aux,
+            context=context,
+        )
+        return {"ok": True, "main": main, "aux": aux, "context": context, "engines": rows, "driver_major": detect_driver_major(), "wsl": detect_wsl()}
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.get("/local-models")
+@router.get("/available-models")
+async def get_available_models() -> dict[str, Any]:
+    """Every catalog model the user can pick, default-first, with presence."""
+    try:
+        return await asyncio.to_thread(available_models)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.get("/models")
+async def get_local_models() -> dict[str, Any]:
+    try:
+        return await asyncio.to_thread(local_model_replacement)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.post("/retire-model")
+async def post_retire_model(body: dict[str, Any] | None = None) -> dict[str, Any]:
+    payload = body or {}
+    family = payload.get("family") or ""
+    action = payload.get("action") or ""
+    if not isinstance(family, str) or not isinstance(action, str):
+        raise HTTPException(status_code=422, detail="family and action must be strings")
+    try:
+        return await asyncio.to_thread(retire_local_model, family, action)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/shift")
+async def post_shift(body: dict[str, Any] | None = None) -> dict[str, Any]:
+    payload = body or {}
+    target = payload.get("target") or payload.get("shift") or ""
+    if not isinstance(target, str):
+        raise HTTPException(status_code=422, detail="target must be a string")
+    try:
+        return await asyncio.to_thread(shift_configuration, target)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/serve")
+async def post_serve(body: dict[str, Any] | None = None) -> dict[str, Any]:
+    payload = body or {}
+    try:
+        return await asyncio.to_thread(
+            serve_tailnet,
+            dashboard_local_port=int(payload.get("dashboard_local_port") or 9127),
+            provider_local_port=int(payload.get("provider_local_port") or 8091),
+            dashboard_https_port=int(payload.get("dashboard_https_port") or 9444),
+            provider_https_port=int(payload.get("provider_https_port") or 9443),
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/serve")
+async def get_serve() -> dict[str, Any]:
+    try:
+        return await asyncio.to_thread(serve_status)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

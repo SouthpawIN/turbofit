@@ -9,9 +9,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 UNIT_PATH = Path.home() / ".config" / "systemd" / "user" / "turbofit-controller.service"
 GATEWAY_UNIT_PATH = UNIT_PATH.with_name("turbofit-gateway.service")
+ENV_PATH = Path.home() / ".config" / "turbofit" / "controller.env"
+
+ENV_TEMPLATE = """\
+# Turbofit service environment. Unset entries fall back to portable defaults.
+# Point these at a deployment layout (for example /srv/turbofit)
+# when models and state live outside the home directory.
+#TURBOFIT_MODEL_ROOT=/srv/turbofit/models
+#TURBOFIT_RUNTIME_STATE=/srv/turbofit/state/runtime-state.json
+"""
 
 
 def unit_text() -> str:
+    runner = ROOT / "scripts" / "turbofit-run"
     controller = ROOT / "scripts" / "turbofit-controller"
     return f"""[Unit]
 Description=Turbofit native adaptive runtime controller
@@ -20,7 +30,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart={controller}
+ExecStart={runner} {controller}
 Restart=on-failure
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
@@ -32,6 +42,7 @@ WantedBy=default.target
 
 
 def gateway_unit_text() -> str:
+    runner = ROOT / "scripts" / "turbofit-run"
     gateway = ROOT / "scripts" / "turbofit-gateway.py"
     return f"""[Unit]
 Description=Turbofit provider gateway with campaign-safe API continuity
@@ -40,45 +51,215 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart={gateway}
+ExecStart={runner} {gateway}
 Restart=on-failure
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
 Environment=TURBOFIT_ALLOW_API=true
 Environment=TURBOFIT_CAMPAIGN_LEASE=%h/.local/state/turbofit/campaign-lease.json
+# Reachable on the tailnet so other machines' gateways can discover this
+# one and list its models. Override in controller.env to bind loopback only.
+Environment=TURBOFIT_GATEWAY_HOST=0.0.0.0
+EnvironmentFile=-%h/.config/turbofit/controller.env
 
 [Install]
 WantedBy=default.target
 """
 
 
+def gateway_launchd_plist() -> dict:
+    """macOS LaunchAgent for the gateway.
+
+    The explicit PATH matters: launchd's default omits /usr/local/bin,
+    where the tailscale CLI lives, so peer discovery silently finds
+    nothing without it.
+    """
+    import sys
+    return {
+        "Label": "com.hermes.turbofit-gateway",
+        "ProgramArguments": [sys.executable, str(ROOT / "scripts" / "turbofit-gateway.py")],
+        "EnvironmentVariables": {
+            "PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+            "PYTHONPATH": str(ROOT / "src") + ":" + str(ROOT),
+            "TURBOFIT_GATEWAY_PORT": "8091",
+            # Bind for the tailnet so other machines' gateways can discover
+            # this one and list its models. Override to 127.0.0.1 in the
+            # plist if you want loopback-only.
+            "TURBOFIT_GATEWAY_HOST": "0.0.0.0",
+            "TURBOFIT_ALLOW_API": "0",
+            "TURBOFIT_PEER_DISCOVERY": "1",
+        },
+        "RunAtLoad": True,
+        "KeepAlive": True,
+        "StandardOutPath": str(Path.home() / ".local/state/turbofit/logs/gateway.log"),
+        "StandardErrorPath": str(Path.home() / ".local/state/turbofit/logs/gateway.err.log"),
+    }
+
+
+def controller_launchd_plist() -> dict:
+    """macOS LaunchAgent for the adaptive model controller.
+
+    Mirrors the Linux systemd controller unit: explicit PATH so the
+    server binaries the controller spawns are found, PYTHONPATH so the
+    runtime package resolves from a service context.
+    """
+    import sys
+    return {
+        "Label": "com.hermes.turbofit-controller",
+        "ProgramArguments": [sys.executable, str(ROOT / "scripts" / "turbofit-controller")],
+        "EnvironmentVariables": {
+            "PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+            "PYTHONPATH": str(ROOT / "src") + ":" + str(ROOT),
+        },
+        "RunAtLoad": True,
+        "KeepAlive": True,
+        "StandardOutPath": str(Path.home() / ".local/state/turbofit/logs/controller.log"),
+        "StandardErrorPath": str(Path.home() / ".local/state/turbofit/logs/controller.err.log"),
+    }
+
+
+def install_launchd(*, enable: bool, start: bool) -> int:
+    import plistlib
+    import platform
+    if platform.system() != "Darwin":
+        print("launchd install is macOS-only", file=__import__("sys").stderr)
+        return 1
+    logs = Path.home() / ".local/state/turbofit/logs"
+    logs.mkdir(parents=True, exist_ok=True)
+    agents = Path.home() / "Library/LaunchAgents"
+    agents.mkdir(parents=True, exist_ok=True)
+    path = agents / "com.hermes.turbofit-gateway.plist"
+    with open(path, "wb") as handle:
+        plistlib.dump(gateway_launchd_plist(), handle, sort_keys=True)
+    controller_path = agents / "com.hermes.turbofit-controller.plist"
+    with open(controller_path, "wb") as handle:
+        plistlib.dump(controller_launchd_plist(), handle, sort_keys=True)
+    if enable or start:
+        for plist_path in (path, controller_path):
+            subprocess.run(["launchctl", "unload", str(plist_path)], check=False,
+                           capture_output=True)
+            subprocess.run(["launchctl", "load", str(plist_path)], check=True)
+    print(path)
+    print(controller_path)
+    return 0
+
+
+def _ensure_runtime_importable() -> None:
+    """Make turbofit_runtime importable from a service/CLI context."""
+    import sys
+    src_dir = str(ROOT / "src")
+    if src_dir not in sys.path:
+        sys.path.insert(0, src_dir)
+
+
+def autoconfigure_tailnet(command_runner=None) -> dict:
+    """Best-effort Tailscale Serve auto-config at install time.
+
+    Publishes the dashboard and provider ports on the tailnet so this
+    machine is federated with no manual steps. Never raises: a missing
+    or unauthenticated tailscale degrades to a warning.
+    """
+    _ensure_runtime_importable()
+    from turbofit_runtime.tailnet import ensure_tailnet
+    return ensure_tailnet(command_runner=command_runner)
+
+
+def _print_tailnet_status() -> None:
+    import sys
+    print("configuring tailscale serve (best-effort)...")
+    result = autoconfigure_tailnet()
+    if result.get("published"):
+        print(f"  tailscale serve published: {result['provider_base_url']}")
+    else:
+        print(f"  tailscale serve skipped: {result.get('error') or 'unknown error'}",
+              file=sys.stderr)
+
+
+def ensure_linger(command_runner=None) -> bool:
+    """Enable systemd linger so user units survive logout and reboot.
+
+    Without linger, a fresh Linux install's services only run while the
+    user is logged in — the "survives a reboot" promise breaks. Enabling
+    linger usually requires root or polkit, so this is best-effort: never
+    raises, never blocks the install. Returns True when linger is on.
+    """
+    import getpass
+    import sys
+
+    def default_runner(command):
+        return subprocess.run(command, capture_output=True, text=True, timeout=15,
+                              check=False)
+
+    runner = command_runner or default_runner
+    user = getpass.getuser()
+    try:
+        result = runner(["loginctl", "enable-linger", user])
+    except Exception:
+        result = None
+    if result is not None and result.returncode == 0:
+        print(f"  linger enabled for {user}")
+        return True
+    # May already be on (or enable failed on permissions) — check state.
+    try:
+        status = runner(["loginctl", "show-user", user])
+        if status is not None and status.returncode == 0 and \
+                "Linger=yes" in (status.stdout or ""):
+            return True
+    except Exception:
+        pass
+    print(
+        f"  warning: linger is off, services will not start at boot without "
+        f"a login. Fix: sudo loginctl enable-linger {user}",
+        file=sys.stderr,
+    )
+    return False
+
+
 def main() -> int:
+    import platform
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--enable", action="store_true", help="enable for future user sessions")
     parser.add_argument("--start", action="store_true", help="start immediately after installing")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--no-tailnet", action="store_true",
+                        help="skip best-effort tailscale serve auto-config")
     args = parser.parse_args()
+
+    if platform.system() == "Darwin":
+        code = install_launchd(enable=args.enable, start=args.start)
+        if code == 0 and not args.no_tailnet:
+            _print_tailnet_status()
+        return code
+
     content = unit_text()
     gateway_content = gateway_unit_text()
     if args.dry_run:
         print(content, end="")
         print("\n# turbofit-gateway.service")
         print(gateway_content, end="")
+        print("\n# controller.env (written only when absent)")
+        print(ENV_TEMPLATE, end="")
         return 0
     UNIT_PATH.parent.mkdir(parents=True, exist_ok=True)
     UNIT_PATH.write_text(content, encoding="utf-8")
     GATEWAY_UNIT_PATH.write_text(gateway_content, encoding="utf-8")
+    if not ENV_PATH.exists():
+        ENV_PATH.parent.mkdir(parents=True, exist_ok=True)
+        ENV_PATH.write_text(ENV_TEMPLATE, encoding="utf-8")
     subprocess.run(["systemctl", "--user", "daemon-reload"], check=True)
     if args.enable or args.start:
         subprocess.run([
             "systemctl", "--user", "enable", "turbofit-controller.service", "turbofit-gateway.service",
         ], check=True)
+        ensure_linger()
     if args.start:
         subprocess.run([
             "systemctl", "--user", "restart", "turbofit-gateway.service", "turbofit-controller.service",
         ], check=True)
     print(UNIT_PATH)
     print(GATEWAY_UNIT_PATH)
+    if not args.no_tailnet:
+        _print_tailnet_status()
     return 0
 
 

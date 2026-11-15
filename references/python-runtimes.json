@@ -1,0 +1,14 @@
+{
+  "schema": "turbofit.python-runtimes/v1",
+  "runtimes": {
+    "mlx-lm": {
+      "version": "0.31.3",
+      "packages": {
+        "mlx": "mlx==0.32.2",
+        "mlx-lm": "mlx-lm==0.31.3"
+      },
+      "platforms": ["darwin-arm64"],
+      "entrypoint": "python -m mlx_lm server"
+    }
+  }
+}

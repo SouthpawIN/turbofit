@@ -20,5 +20,7 @@ def test_model_intelligence_workflow_runs_all_collectors_and_opens_reviewable_pr
     assert "research/discover_model_news.py" in commands
     assert "research/discover_api_models.py" in commands
     assert "research/discover_external_benchmarks.py" in commands
+    assert "scripts/turbofit-discovery-queue" in commands
+    assert "research/benchmark-queue.json" in commands
     assert "gh pr create" in commands
     assert "git push --force-with-lease" in commands

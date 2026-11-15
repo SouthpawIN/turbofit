@@ -10,16 +10,20 @@ from turbofit_runtime.recommend import hardware_satisfies
 
 
 ROOT = Path(__file__).parents[1]
-CLASSES = (8, 16, 24, 48, 64, 96, 200, 300)
+CLASSES = (8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384)
 TOPOLOGIES = {
     8: "1x8",
+    12: "1x12",
     16: "1x16",
     24: "1x24",
+    32: "1x32",
     48: "2x24",
     64: "2x32",
     96: "4x24",
-    200: "2x100",
-    300: "3x100",
+    128: "4x32",
+    192: "4x48",
+    256: "8x32",
+    384: "8x48",
 }
 
 
@@ -125,6 +129,49 @@ def test_hardware_envelopes_match_their_canonical_topologies() -> None:
         assert hardware_satisfies(fingerprint(tuple(sizes)), profile.hardware)
 
 
+def test_dedicated_8gb_tier_allows_only_the_windows_vulkan_reporting_delta() -> None:
+    profile = load_yaml_profile(ROOT / "runtime-profiles" / "8gb.yaml")
+    windows_vulkan = HardwareFingerprint(
+        os="windows",
+        architecture="amd64",
+        system_ram_mb=65_455,
+        devices=(
+            AcceleratorDevice(
+                index=0,
+                uuid="00000000-0900-0000-0000-000000000000",
+                name="AMD Radeon RX 6600",
+                vendor="amd",
+                backend="vulkan",
+                memory_total_mb=8_176,
+                compute_capability=None,
+                bus_id=None,
+            ),
+        ),
+    )
+    undersized = HardwareFingerprint(
+        os="windows",
+        architecture="amd64",
+        system_ram_mb=65_455,
+        devices=(
+            AcceleratorDevice(
+                index=0,
+                uuid="00000000-0900-0000-0000-000000000001",
+                name="AMD Radeon RX 6600",
+                vendor="amd",
+                backend="vulkan",
+                memory_total_mb=8_175,
+                compute_capability=None,
+                bus_id=None,
+            ),
+        ),
+    )
+
+    assert hardware_satisfies(windows_vulkan, profile.hardware)
+    assert not hardware_satisfies(undersized, profile.hardware)
+    assert [rung.id for rung in profile.rungs] == ["local-maple-65536", "local-maple-131072"]
+    assert [rung.context for rung in profile.rungs] == [65536, 131072]
+
+
 def test_large_shared_memory_pools_are_not_rejected_by_discrete_card_topology() -> None:
     profile = load_yaml_profile(ROOT / "runtime-profiles" / "96gb.yaml")
     cpu = HardwareFingerprint("linux", "x86_64", 131_072)
@@ -138,6 +185,28 @@ def test_large_shared_memory_pools_are_not_rejected_by_discrete_card_topology() 
 
     assert hardware_satisfies(cpu, profile.hardware)
     assert hardware_satisfies(apple, profile.hardware)
+
+
+def test_shared_memory_machine_gets_the_class_profile_at_the_tier_floor() -> None:
+    # Maple is evidence-backed inside an 8 GiB CPU process envelope
+    # (references/results/maple-preview-small-device-evidence.json: peak
+    # ~5.6 GiB at 65K/128K), so an installed-8GiB shared-memory laptop is
+    # the hardware-8gb tier by the fit-list definition. A real "8 GB"
+    # laptop reports ~7.8 GiB of MemTotal and reserves 1 GiB+ for the
+    # runtime, so the class gate must measure installed system RAM, not
+    # the post-reserve usable amount, or every floor-tier machine on the
+    # shared list is rejected by its own class floor.
+    from turbofit_runtime.selection import ProfileCatalog
+
+    eight_gib_laptop = HardwareFingerprint("linux", "x86_64", 7_828)
+    profile = load_yaml_profile(ROOT / "runtime-profiles" / "8gb.yaml")
+    assert hardware_satisfies(eight_gib_laptop, profile.hardware)
+
+    choice = ProfileCatalog([profile]).select(eight_gib_laptop, requested="auto")
+    assert choice.profile.id == "hardware-8gb"
+
+    undersized = HardwareFingerprint("linux", "x86_64", 6_144)
+    assert not hardware_satisfies(undersized, profile.hardware)
 
 
 def test_tournament_ranking_uses_current_30_and_50_tps_milestones() -> None:

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Protocol, cast
 
 from .controller import (
     AdaptiveController,
@@ -19,6 +19,13 @@ from .routes import RuntimeResolutions, build_route_state, publish_route_state
 from .selection import ProfileCatalog, load_selection
 
 BackendFactory = Callable[[object, ReconcilerState], RuntimeBackend]
+
+
+class ResidencyBackend(Protocol):
+    def ensure_role(self, role: str) -> None: ...
+    def stop_role(self, role: str) -> bool: ...
+    def residency_snapshot(self) -> dict: ...
+    def release_idle_role(self, role: str) -> str: ...
 
 
 class RuntimeService:
@@ -120,12 +127,35 @@ class RuntimeService:
         )
         return self.controller
 
-    def tick(self, pressure: PressureSnapshot, *, now: float) -> ControllerResult:
+    def tick(self, pressure: PressureSnapshot, *, now: float, restore_current: bool = True) -> ControllerResult:
         if self.controller is None:
             raise RuntimeError("runtime service must synchronize before ticking")
-        result = self.controller.tick(pressure, now=now)
+        result = self.controller.tick(pressure, now=now, restore_current=restore_current)
         save_controller_state(self.controller_state_path, result.state)
         return result
+
+    def residency_role(self, role: str) -> str | None:
+        if self.controller is None:
+            raise RuntimeError("controller has not synchronised")
+        if role not in {"main", "aux"}:
+            raise ValueError("invalid residency role")
+        rung = self.controller.profile.rungs[self.controller.state.reconciler.rung_index]
+        if rung.aux_mode.value == "api":
+            return None
+        return "main" if role == "aux" and rung.aux_mode.value == "shared-main" else role
+
+    def observe_residency(self, lifecycle) -> None:
+        if self.controller is not None:
+            lifecycle.observe(cast(ResidencyBackend, self.controller.backend).residency_snapshot())
+
+    def ensure_residency(self, role: str) -> None:
+        if self.controller is None:
+            raise RuntimeError("controller has not synchronised")
+        cast(ResidencyBackend, self.controller.backend).ensure_role(role)
+
+    def release_idle_residency(self, lifecycle) -> None:
+        if self.controller is not None:
+            lifecycle.release_idle(cast(ResidencyBackend, self.controller.backend).release_idle_role)
 
     def _retire_previous(self, existing: ControllerState) -> None:
         previous = next(

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 from turbofit_runtime.profile_io import load_yaml_profile
@@ -25,11 +26,12 @@ def test_builds_shared_main_route_for_24gb_profile() -> None:
     state = build_route_state(profile(24), 0, resolutions, manager_port=11401)
 
     assert state["active"] == "hardware-24gb"
-    assert state["rung_id"] == "local-bonsai-262144"
+    assert state["rung_id"] == "local-gsq-rco-iq3s-262144"
     assert state["routes"]["main"] == {
         "kind": "local",
-        "alias": "bonsai-27b-1bit-262k-main",
+        "alias": "gsq-rco-iq3s-262144-main",
         "port": 8092,
+        "context_length": 262144,
     }
     assert state["routes"]["aux"] == {"kind": "shared-main"}
 
@@ -40,7 +42,7 @@ def test_builds_context_matched_shared_route_for_48gb_profile() -> None:
     )
     state = build_route_state(profile(48), 0, resolutions, manager_port=11401)
 
-    assert state["routes"]["main"]["alias"] == "bonsai-27b-1bit-262k-main"
+    assert state["routes"]["main"]["alias"] == "gsq-rco-iq3s-262k-main"
     assert state["routes"]["aux"] == {"kind": "shared-main"}
     assert state["routes"]["main"]["port"] == 8092
 
@@ -69,3 +71,19 @@ def test_route_publication_is_atomic(tmp_path: Path) -> None:
 
     assert json.loads(path.read_text()) == state
     assert not list(tmp_path.glob(".runtime-state.json.*"))
+
+
+def test_one_million_context_route_extends_backend_timeout_for_host_offload() -> None:
+    resolutions = load_runtime_resolutions(
+        ROOT / "runtime-profiles" / "runtime-resolutions.json"
+    )
+    selected = profile(24)
+    selected = replace(
+        selected,
+        rungs=(replace(selected.rungs[0], context=1_048_576),) + selected.rungs[1:],
+    )
+
+    state = build_route_state(selected, 0, resolutions, manager_port=11401)
+
+    assert state["routes"]["main"]["request_policy"]["maximum_timeout_s"] == 3600
+    assert state["routes"]["main"]["request_policy"]["initial_response_timeout_s"] == 1800

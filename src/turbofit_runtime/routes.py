@@ -5,11 +5,21 @@ import json
 import os
 from pathlib import Path
 import tempfile
-from typing import Any, Mapping
+from typing import Any, Dict, Mapping, Union
 
 from .runtime_profile import AuxMode, Turbofile
 
-RuntimeResolutions = dict[str, dict[str, dict[str, dict[str, int | str]]]]
+RuntimeResolutions = Dict[str, Dict[str, Dict[str, Dict[str, Union[int, str]]]]]
+
+
+def _large_context_request_policy(context: int) -> dict[str, int] | None:
+    if context < 1_048_576:
+        return None
+    return {
+        "initial_response_timeout_s": 1800,
+        "maximum_timeout_s": 3600,
+        "generation_grace_s": 1800,
+    }
 
 
 def load_runtime_resolutions(path: str | Path) -> RuntimeResolutions:
@@ -37,7 +47,7 @@ def load_runtime_resolutions(path: str | Path) -> RuntimeResolutions:
                     not isinstance(value, Mapping)
                     or not {"model_tag", "expected_vram_mb"} <= set(value)
                     or not set(value) <= {
-                        "model_tag", "expected_vram_mb", "split_mode", "family", "gpu", "port"
+                        "model_tag", "expected_vram_mb", "split_mode", "family", "gpu", "port", "context"
                     }
                 ):
                     raise ValueError("invalid runtime resolution role")
@@ -72,6 +82,11 @@ def load_runtime_resolutions(path: str | Path) -> RuntimeResolutions:
                     parsed["gpu"] = gpu
                 if port is not None:
                     parsed["port"] = port
+                context = value.get("context")
+                if context is not None:
+                    if isinstance(context, bool) or not isinstance(context, int) or context <= 0:
+                        raise ValueError("runtime context must be a positive integer")
+                    parsed["context"] = context
                 parsed_roles[role] = parsed
             result[profile_id][rung_id] = parsed_roles
     return result
@@ -118,25 +133,39 @@ def build_route_state(
         except KeyError as exc:
             raise ValueError(f"missing runtime resolution for {profile.id}/{rung.id}") from exc
         main = roles["main"]
+        main_context = int(main.get("context", rung.main_context or rung.context))
+        if rung.main_context is not None and main_context != rung.main_context:
+            raise ValueError("main role context disagrees with selected rung")
         routes = {
             "main": {
                 "kind": "local",
                 "alias": main["model_tag"],
                 "port": int(main.get("port", manager_port)),
+                "context_length": main_context,
             }
         }
+        request_policy = _large_context_request_policy(main_context)
+        if request_policy is not None:
+            routes["main"]["request_policy"] = request_policy
         if rung.aux_mode is AuxMode.SHARED_MAIN:
             routes["aux"] = {"kind": "shared-main"}
         else:
             aux = roles.get("aux")
             if aux is None:
                 raise ValueError(f"dedicated rung {profile.id}/{rung.id} lacks aux resolution")
+            aux_context = int(aux.get("context", rung.auxiliary_context or rung.context))
+            if rung.auxiliary_context is not None and aux_context != rung.auxiliary_context:
+                raise ValueError("aux role context disagrees with selected rung")
             routes["aux"] = {
                 "kind": "local",
                 "alias": aux["model_tag"],
                 "port": int(aux.get("port", manager_port)),
                 "mode": "dedicated",
+                "context_length": aux_context,
             }
+            request_policy = _large_context_request_policy(aux_context)
+            if request_policy is not None:
+                routes["aux"]["request_policy"] = request_policy
     return {
         "schema": "turbofit.runtime-routes/v1",
         "active": profile.id,

@@ -66,9 +66,13 @@ TURBOFIT_CONFIGURE = {
                 "type": "boolean",
                 "description": "Publish the provider and Hermes dashboard privately with Tailscale Serve and use the resulting HTTPS provider URL.",
             },
-            "install_sirvir": {
+            "install_turbosouth": {
                 "type": "boolean",
-                "description": "Install or update the bundled Sirvir Turbofit customer-service profile while preserving its user data.",
+                "description": "Install TurboSouth — TurboFit Customer Service (SouthpawIN/turbosouth GitHub-current) — with tested pull requests upstream.",
+            },
+            "install_turbosouth": {
+                "type": "boolean",
+                "description": "Install or update TurboSouth — TurboFit Customer Service (SouthpawIN/turbosouth GitHub-current, formerly TurboSouth) — plus its Sovthpaw mascot pet (auburn hair, sunglasses), with tested pull requests upstream, while preserving user data.",
             },
             "install_desktop": {
                 "type": "boolean",
@@ -77,6 +81,14 @@ TURBOFIT_CONFIGURE = {
             "install_lemonade": {
                 "type": "boolean",
                 "description": "Install or start the digest-pinned loopback Lemonade Server runtime.",
+            },
+            "install_native": {
+                "type": "boolean",
+                "description": "Explicitly install and activate the pinned native runtime. On supported Apple Silicon this downloads the selected MLX snapshot and starts loopback model and gateway processes.",
+            },
+            "install_freetoken": {
+                "type": "boolean",
+                "description": "Install pinned FreeToken 0.1.2 as an NVIDIA/CUDA-13 text-only MoE candidate; never auto-promotes without on-box evidence.",
             },
             "dashboard_local_port": {"type": "integer", "minimum": 1, "maximum": 65535},
             "provider_local_port": {"type": "integer", "minimum": 1, "maximum": 65535},

@@ -1,255 +1,679 @@
 {
+  "schema": "turbofit.runtime-resolutions/v1",
   "profiles": {
-    "carwin-nano-1-bit-bonsai-262k": {
-      "local-262144": {
-        "aux": {
-          "expected_vram_mb": 11163,
-          "family": "carwin-nano",
-          "gpu": "0",
-          "model_tag": "carwin-nano-1-bit-bonsai-262k-aux",
-          "port": 8093
-        },
+    "hardware-128gb": {
+      "local-gsq-rco-iq3s-1m": {
         "main": {
-          "expected_vram_mb": 15284,
-          "family": "carwin-nano",
-          "gpu": "1",
-          "model_tag": "carwin-nano-1-bit-bonsai-262k-main",
+          "model_tag": "gsq-rco-iq3s-1m-main",
+          "expected_vram_mb": 34200,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
           "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-1m-aux",
+          "expected_vram_mb": 17100,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-gsq-rco-iq3s-262k": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-262k-main",
+          "expected_vram_mb": 17400,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-262k-aux",
+          "expected_vram_mb": 8700,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-gsq-rco-iq3s-128k": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-128k-main",
+          "expected_vram_mb": 13800,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-128k-aux",
+          "expected_vram_mb": 6900,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
         }
       }
     },
-    "carwin-nano-ternary-bonsai-262k": {
-      "local-262144": {
-        "aux": {
-          "expected_vram_mb": 14503,
-          "family": "carwin-nano",
-          "gpu": "0",
-          "model_tag": "carwin-nano-ternary-bonsai-262k-aux",
-          "port": 8093
-        },
+    "hardware-12gb": {
+      "local-underdog-pq2-131072": {
         "main": {
-          "expected_vram_mb": 15284,
-          "family": "carwin-nano",
-          "gpu": "1",
-          "model_tag": "carwin-nano-ternary-bonsai-262k-main",
+          "model_tag": "underdog-pq2-131072-main",
+          "expected_vram_mb": 9200,
+          "family": "Underdog 27B",
+          "gpu": "0",
+          "port": 8092
+        }
+      },
+      "local-underdog-pq2-65536": {
+        "main": {
+          "model_tag": "underdog-pq2-65536-main",
+          "expected_vram_mb": 7700,
+          "family": "Underdog 27B",
+          "gpu": "0",
           "port": 8092
         }
       }
     },
     "hardware-16gb": {
-      "local-bonsai-131072": {
+      "local-gsq-rco-iq3s-131072": {
         "main": {
-          "expected_vram_mb": 8149,
-          "family": "bonsai-27b",
+          "model_tag": "gsq-rco-iq3s-131072-main",
+          "expected_vram_mb": 13800,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
           "gpu": "0",
-          "model_tag": "bonsai-27b-1bit-128k-main",
           "port": 8092
         }
       },
-      "local-bonsai-262144": {
+      "local-gsq-rco-iq3s-65536": {
         "main": {
-          "expected_vram_mb": 11093,
-          "family": "bonsai-27b",
+          "model_tag": "gsq-rco-iq3s-65536-main",
+          "expected_vram_mb": 12300,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
           "gpu": "0",
-          "model_tag": "bonsai-27b-1bit-262k-main",
           "port": 8092
         }
-      },
-      "local-bonsai-65536": {
+      }
+    },
+    "hardware-192gb": {
+      "local-gsq-rco-iq3s-262144": {
         "main": {
-          "expected_vram_mb": 6677,
-          "family": "bonsai-27b",
+          "model_tag": "gsq-rco-iq3s-262144-main",
+          "expected_vram_mb": 17400,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
           "gpu": "0",
-          "model_tag": "bonsai-27b-1bit-64k-main",
           "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-262144-aux",
+          "expected_vram_mb": 8700,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-gsq-rco-iq3s-131072": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-131072-main",
+          "expected_vram_mb": 13800,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-131072-aux",
+          "expected_vram_mb": 6900,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-gsq-rco-iq3s-65536": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-65536-main",
+          "expected_vram_mb": 12300,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-65536-aux",
+          "expected_vram_mb": 6150,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
         }
       }
     },
     "hardware-200gb": {
-      "local-bonsai-131072": {
-        "main": {
-          "expected_vram_mb": 8149,
-          "family": "bonsai-27b",
-          "gpu": "1",
-          "model_tag": "bonsai-27b-1bit-128k-main",
-          "port": 8092
-        }
-      },
       "local-bonsai-262144": {
         "main": {
-          "expected_vram_mb": 11093,
-          "family": "bonsai-27b",
-          "gpu": "1",
-          "model_tag": "bonsai-27b-1bit-262k-main",
+          "model_tag": "bonsai-262144-main",
+          "expected_vram_mb": 11200,
+          "family": "Ternary Bonsai 2 27B",
+          "gpu": "0",
           "port": 8092
+        },
+        "aux": {
+          "model_tag": "bonsai-262144-aux",
+          "expected_vram_mb": 5600,
+          "family": "Ternary Bonsai 2 27B",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-bonsai-131072": {
+        "main": {
+          "model_tag": "bonsai-131072-main",
+          "expected_vram_mb": 9000,
+          "family": "Ternary Bonsai",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "bonsai-131072-aux",
+          "expected_vram_mb": 4500,
+          "family": "Ternary Bonsai",
+          "gpu": "1",
+          "port": 8093
         }
       },
       "local-bonsai-65536": {
         "main": {
-          "expected_vram_mb": 6677,
-          "family": "bonsai-27b",
-          "gpu": "1",
-          "model_tag": "bonsai-27b-1bit-64k-main",
+          "model_tag": "bonsai-65536-main",
+          "expected_vram_mb": 7500,
+          "family": "Ternary Bonsai",
+          "gpu": "0",
           "port": 8092
+        },
+        "aux": {
+          "model_tag": "bonsai-65536-aux",
+          "expected_vram_mb": 3750,
+          "family": "Ternary Bonsai",
+          "gpu": "1",
+          "port": 8093
         }
       }
     },
     "hardware-24gb": {
-      "local-bonsai-131072": {
+      "local-gsq-rco-iq3s-262144": {
         "main": {
-          "expected_vram_mb": 8149,
-          "family": "bonsai-27b",
+          "model_tag": "gsq-rco-iq3s-262144-main",
+          "expected_vram_mb": 17400,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
           "gpu": "0",
-          "model_tag": "bonsai-27b-1bit-128k-main",
           "port": 8092
         }
       },
-      "local-bonsai-262144": {
+      "local-gsq-rco-iq3s-131072": {
         "main": {
-          "expected_vram_mb": 11093,
-          "family": "bonsai-27b",
+          "model_tag": "gsq-rco-iq3s-131072-main",
+          "expected_vram_mb": 13800,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
           "gpu": "0",
-          "model_tag": "bonsai-27b-1bit-262k-main",
           "port": 8092
         }
       },
-      "local-bonsai-65536": {
+      "local-gsq-rco-iq3s-65536": {
         "main": {
-          "expected_vram_mb": 6677,
-          "family": "bonsai-27b",
+          "model_tag": "gsq-rco-iq3s-65536-main",
+          "expected_vram_mb": 12300,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
           "gpu": "0",
-          "model_tag": "bonsai-27b-1bit-64k-main",
           "port": 8092
+        }
+      }
+    },
+    "hardware-256gb": {
+      "local-gsq-rco-iq3s-262144": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-262144-main",
+          "expected_vram_mb": 17400,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-262144-aux",
+          "expected_vram_mb": 8700,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-gsq-rco-iq3s-131072": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-131072-main",
+          "expected_vram_mb": 13800,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-131072-aux",
+          "expected_vram_mb": 6900,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-gsq-rco-iq3s-65536": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-65536-main",
+          "expected_vram_mb": 12300,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-65536-aux",
+          "expected_vram_mb": 6150,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
         }
       }
     },
     "hardware-300gb": {
-      "local-bonsai-131072": {
-        "main": {
-          "expected_vram_mb": 8149,
-          "family": "bonsai-27b",
-          "gpu": "2",
-          "model_tag": "bonsai-27b-1bit-128k-main",
-          "port": 8092
-        }
-      },
       "local-bonsai-262144": {
         "main": {
-          "expected_vram_mb": 11093,
-          "family": "bonsai-27b",
-          "gpu": "2",
-          "model_tag": "bonsai-27b-1bit-262k-main",
+          "model_tag": "bonsai-262144-main",
+          "expected_vram_mb": 11200,
+          "family": "Ternary Bonsai 2 27B",
+          "gpu": "0",
           "port": 8092
+        },
+        "aux": {
+          "model_tag": "bonsai-262144-aux",
+          "expected_vram_mb": 5600,
+          "family": "Ternary Bonsai 2 27B",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-bonsai-131072": {
+        "main": {
+          "model_tag": "bonsai-131072-main",
+          "expected_vram_mb": 9000,
+          "family": "Ternary Bonsai",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "bonsai-131072-aux",
+          "expected_vram_mb": 4500,
+          "family": "Ternary Bonsai",
+          "gpu": "1",
+          "port": 8093
         }
       },
       "local-bonsai-65536": {
         "main": {
-          "expected_vram_mb": 6677,
-          "family": "bonsai-27b",
-          "gpu": "2",
-          "model_tag": "bonsai-27b-1bit-64k-main",
+          "model_tag": "bonsai-65536-main",
+          "expected_vram_mb": 7500,
+          "family": "Ternary Bonsai",
+          "gpu": "0",
           "port": 8092
+        },
+        "aux": {
+          "model_tag": "bonsai-65536-aux",
+          "expected_vram_mb": 3750,
+          "family": "Ternary Bonsai",
+          "gpu": "1",
+          "port": 8093
+        }
+      }
+    },
+    "hardware-32gb": {
+      "local-gsq-rco-iq3s-262144": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-262144-main",
+          "expected_vram_mb": 17400,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        }
+      },
+      "local-gsq-rco-iq3s-131072": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-131072-main",
+          "expected_vram_mb": 13800,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        }
+      },
+      "local-gsq-rco-iq3s-65536": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-65536-main",
+          "expected_vram_mb": 12300,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        }
+      }
+    },
+    "hardware-384gb": {
+      "local-gsq-rco-iq3s-262144": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-262144-main",
+          "expected_vram_mb": 17400,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-262144-aux",
+          "expected_vram_mb": 8700,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-gsq-rco-iq3s-131072": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-131072-main",
+          "expected_vram_mb": 13800,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-131072-aux",
+          "expected_vram_mb": 6900,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-gsq-rco-iq3s-65536": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-65536-main",
+          "expected_vram_mb": 12300,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-65536-aux",
+          "expected_vram_mb": 6150,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
         }
       }
     },
     "hardware-48gb": {
-      "local-bonsai-131072": {
+      "local-gsq-rco-iq3s-262k": {
         "main": {
-          "expected_vram_mb": 8149,
-          "family": "bonsai-27b",
-          "gpu": "1",
-          "model_tag": "bonsai-27b-1bit-128k-main",
+          "model_tag": "gsq-rco-iq3s-262k-main",
+          "expected_vram_mb": 17400,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
           "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-262k-aux",
+          "expected_vram_mb": 8700,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-gsq-rco-iq3s-128k": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-128k-main",
+          "expected_vram_mb": 13800,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-128k-aux",
+          "expected_vram_mb": 6900,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-gsq-rco-iq3s-65k": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-65k-main",
+          "expected_vram_mb": 12300,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-65k-aux",
+          "expected_vram_mb": 6150,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
         }
       },
       "local-bonsai-262144": {
         "main": {
-          "expected_vram_mb": 11093,
-          "family": "bonsai-27b",
-          "gpu": "1",
-          "model_tag": "bonsai-27b-1bit-262k-main",
+          "model_tag": "bonsai-262144-main",
+          "expected_vram_mb": 11200,
+          "family": "Ternary Bonsai 2 27B",
+          "gpu": "0",
           "port": 8092
+        },
+        "aux": {
+          "model_tag": "bonsai-262144-aux",
+          "expected_vram_mb": 5600,
+          "family": "Ternary Bonsai 2 27B",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-bonsai-131072": {
+        "main": {
+          "model_tag": "bonsai-131072-main",
+          "expected_vram_mb": 9000,
+          "family": "Ternary Bonsai",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "bonsai-131072-aux",
+          "expected_vram_mb": 4500,
+          "family": "Ternary Bonsai",
+          "gpu": "1",
+          "port": 8093
         }
       },
       "local-bonsai-65536": {
         "main": {
-          "expected_vram_mb": 6677,
-          "family": "bonsai-27b",
-          "gpu": "1",
-          "model_tag": "bonsai-27b-1bit-64k-main",
+          "model_tag": "bonsai-65536-main",
+          "expected_vram_mb": 7500,
+          "family": "Ternary Bonsai",
+          "gpu": "0",
           "port": 8092
+        },
+        "aux": {
+          "model_tag": "bonsai-65536-aux",
+          "expected_vram_mb": 3750,
+          "family": "Ternary Bonsai",
+          "gpu": "1",
+          "port": 8093
         }
       }
     },
     "hardware-64gb": {
-      "local-bonsai-131072": {
+      "local-gsq-rco-iq3s-262144": {
         "main": {
-          "expected_vram_mb": 8149,
-          "family": "bonsai-27b",
-          "gpu": "1",
-          "model_tag": "bonsai-27b-1bit-128k-main",
+          "model_tag": "gsq-rco-iq3s-262144-main",
+          "expected_vram_mb": 17400,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
           "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-262144-aux",
+          "expected_vram_mb": 8700,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
         }
       },
-      "local-bonsai-262144": {
+      "local-gsq-rco-iq3s-131072": {
         "main": {
-          "expected_vram_mb": 11093,
-          "family": "bonsai-27b",
-          "gpu": "1",
-          "model_tag": "bonsai-27b-1bit-262k-main",
+          "model_tag": "gsq-rco-iq3s-131072-main",
+          "expected_vram_mb": 13800,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
           "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-131072-aux",
+          "expected_vram_mb": 6900,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
         }
       },
-      "local-bonsai-65536": {
+      "local-gsq-rco-iq3s-65536": {
         "main": {
-          "expected_vram_mb": 6677,
-          "family": "bonsai-27b",
-          "gpu": "1",
-          "model_tag": "bonsai-27b-1bit-64k-main",
+          "model_tag": "gsq-rco-iq3s-65536-main",
+          "expected_vram_mb": 12300,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
           "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-65536-aux",
+          "expected_vram_mb": 6150,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
         }
       }
     },
     "hardware-8gb": {
-      "local-bonsai-65536": {
+      "local-maple-65536": {
         "main": {
-          "expected_vram_mb": 6677,
-          "family": "bonsai-27b",
+          "model_tag": "maple-65536-main",
+          "expected_vram_mb": 6300,
+          "family": "Maple Preview",
           "gpu": "0",
-          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
+        }
+      },
+      "local-maple-131072": {
+        "main": {
+          "model_tag": "maple-131072-main",
+          "expected_vram_mb": 7800,
+          "family": "Maple Preview",
+          "gpu": "0",
           "port": 8092
         }
       }
     },
     "hardware-96gb": {
-      "local-bonsai-131072": {
+      "local-gsq-rco-iq3s-262144": {
         "main": {
-          "expected_vram_mb": 8149,
-          "family": "bonsai-27b",
-          "gpu": "3",
-          "model_tag": "bonsai-27b-1bit-128k-main",
+          "model_tag": "gsq-rco-iq3s-262144-main",
+          "expected_vram_mb": 17400,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-262144-aux",
+          "expected_vram_mb": 8700,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-gsq-rco-iq3s-131072": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-131072-main",
+          "expected_vram_mb": 13800,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-131072-aux",
+          "expected_vram_mb": 6900,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
+        }
+      },
+      "local-gsq-rco-iq3s-65536": {
+        "main": {
+          "model_tag": "gsq-rco-iq3s-65536-main",
+          "expected_vram_mb": 12300,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "0",
+          "port": 8092
+        },
+        "aux": {
+          "model_tag": "gsq-rco-iq3s-65536-aux",
+          "expected_vram_mb": 6150,
+          "family": "Qwen 3.8 27B GSQ-RCO IQ3_S",
+          "gpu": "1",
+          "port": 8093
+        }
+      }
+    },
+    "apple-16gb": {
+      "local-cyber-tiel-131k": {
+        "main": {
+          "model_tag": "cyber-tiel-131k-main",
+          "expected_vram_mb": 13000,
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "gpu": "0",
           "port": 8092
         }
       },
-      "local-bonsai-262144": {
+      "local-maple-131k": {
         "main": {
-          "expected_vram_mb": 11093,
-          "family": "bonsai-27b",
-          "gpu": "3",
-          "model_tag": "bonsai-27b-1bit-262k-main",
+          "model_tag": "maple-131k-main",
+          "expected_vram_mb": 7800,
+          "family": "Maple Preview",
+          "gpu": "0",
           "port": 8092
         }
       },
-      "local-bonsai-65536": {
+      "local-maple-65k": {
         "main": {
-          "expected_vram_mb": 6677,
-          "family": "bonsai-27b",
-          "gpu": "3",
-          "model_tag": "bonsai-27b-1bit-64k-main",
+          "model_tag": "maple-65k-main",
+          "expected_vram_mb": 6300,
+          "family": "Maple Preview",
+          "gpu": "0",
+          "port": 8092
+        }
+      }
+    },
+    "apple-32gb": {
+      "local-cyber-tiel-262k": {
+        "main": {
+          "model_tag": "cyber-tiel-262k-main",
+          "expected_vram_mb": 29600,
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "gpu": "0",
+          "port": 8092
+        }
+      },
+      "local-maple-262k": {
+        "main": {
+          "model_tag": "maple-262k-main",
+          "expected_vram_mb": 11400,
+          "family": "Maple Preview",
+          "gpu": "0",
+          "port": 8092
+        }
+      },
+      "local-maple-131k": {
+        "main": {
+          "model_tag": "maple-131k-main",
+          "expected_vram_mb": 7800,
+          "family": "Maple Preview",
+          "gpu": "0",
           "port": 8092
         }
       }
     }
-  },
-  "schema": "turbofit.runtime-resolutions/v1"
+  }
 }

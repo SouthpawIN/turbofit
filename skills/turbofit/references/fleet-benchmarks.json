@@ -102,17 +102,6 @@
       "context_8k_ok": null,
       "context_32k_ok": null
     },
-    "ornith-35b": {
-      "alias": "ornith-35b",
-      "size_gb": null,
-      "tier": null,
-      "ctx": null,
-      "healthy": false,
-      "speed_small_tok_s": null,
-      "speed_large_tok_s": null,
-      "context_8k_ok": null,
-      "context_32k_ok": null
-    },
     "carnice.toks": {
       "alias": "carnice.toks",
       "size_gb": null,
@@ -189,17 +178,6 @@
         },
         "holo-3.1-35a3b": {
           "alias": "holo-3.1-35a3b",
-          "size_gb": null,
-          "tier": null,
-          "ctx": null,
-          "healthy": false,
-          "speed_small_tok_s": null,
-          "speed_large_tok_s": null,
-          "context_8k_ok": null,
-          "context_32k_ok": null
-        },
-        "ornith-35b": {
-          "alias": "ornith-35b",
           "size_gb": null,
           "tier": null,
           "ctx": null,
@@ -302,17 +280,6 @@
           "context_8k_ok": null,
           "context_32k_ok": null
         },
-        "ornith-35b": {
-          "alias": "ornith-35b",
-          "size_gb": null,
-          "tier": null,
-          "ctx": null,
-          "healthy": false,
-          "speed_small_tok_s": null,
-          "speed_large_tok_s": null,
-          "context_8k_ok": null,
-          "context_32k_ok": null
-        },
         "qwable-5-27b-coder": {
           "alias": "qwable-5-27b-coder",
           "size_gb": null,
@@ -397,17 +364,6 @@
         },
         "holo-3.1-35a3b": {
           "alias": "holo-3.1-35a3b",
-          "size_gb": null,
-          "tier": null,
-          "ctx": null,
-          "healthy": false,
-          "speed_small_tok_s": null,
-          "speed_large_tok_s": null,
-          "context_8k_ok": null,
-          "context_32k_ok": null
-        },
-        "ornith-35b": {
-          "alias": "ornith-35b",
           "size_gb": null,
           "tier": null,
           "ctx": null,
@@ -510,17 +466,6 @@
           "context_8k_ok": null,
           "context_32k_ok": null
         },
-        "ornith-35b": {
-          "alias": "ornith-35b",
-          "size_gb": null,
-          "tier": null,
-          "ctx": null,
-          "healthy": false,
-          "speed_small_tok_s": null,
-          "speed_large_tok_s": null,
-          "context_8k_ok": null,
-          "context_32k_ok": null
-        },
         "qwable-5-27b-coder": {
           "alias": "qwable-5-27b-coder",
           "size_gb": null,
@@ -605,17 +550,6 @@
         },
         "holo-3.1-35a3b": {
           "alias": "holo-3.1-35a3b",
-          "size_gb": null,
-          "tier": null,
-          "ctx": null,
-          "healthy": false,
-          "speed_small_tok_s": null,
-          "speed_large_tok_s": null,
-          "context_8k_ok": null,
-          "context_32k_ok": null
-        },
-        "ornith-35b": {
-          "alias": "ornith-35b",
           "size_gb": null,
           "tier": null,
           "ctx": null,

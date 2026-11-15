@@ -12,8 +12,20 @@
       "id": "prism-llama.cpp",
       "repository": "https://github.com/PrismML-Eng/llama.cpp.git",
       "revision": "9ca265a57f85f2117942490f421f64a226dd9847",
-      "purpose": "Ternary Bonsai Q2_0_g128 and DSpark kernels",
-      "cuda_binary": "~/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server"
+      "purpose": "Ternary Bonsai 2 27B (ternary g128 weights, hybrid attention). Cross-platform: CUDA, Metal, CPU.",
+      "cuda_binary": "~/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server",
+      "metal_binary": "~/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-metal/bin/llama-server",
+      "cpu_binary": "~/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cpu/bin/llama-server",
+      "rocm_binary": "~/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-rocm/bin/llama-server",
+      "vulkan_binary": "~/.local/share/turbofit/runtimes/prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-vulkan/bin/llama-server"
+    },
+    {
+      "id": "dflash2-llama.cpp",
+      "repository": "https://github.com/z-lab/llama.cpp-fork.git",
+      "revision": "1deefcca395743049c3820ab8f9b15043f3e9446",
+      "purpose": "Qwen 3.8 27B DFlash2 grouped convolution and candidate selector",
+      "status": "candidate-until-physically-validated",
+      "cuda_binary": "~/.local/share/turbofit/runtimes/dflash2-llama.cpp-1deefcca395743049c3820ab8f9b15043f3e9446/build-cuda/bin/llama-server"
     },
     {
       "id": "ik-llama.cpp",
@@ -21,6 +33,111 @@
       "revision": "f2328aa0c19954d0ab31a3de60fbf50e47c2429f",
       "purpose": "GLM 5.2 IQ2_KL, DSA, IndexShare, graph split, and MTP",
       "cuda_binary": "~/.local/share/turbofit/runtimes/ik-llama.cpp-f2328aa0c19954d0ab31a3de60fbf50e47c2429f/build-cuda/bin/llama-server"
+    },
+    {
+      "id": "freetoken",
+      "kind": "python-cli",
+      "repository": "https://github.com/FlashML-org/FreeToken.git",
+      "revision": "0ab982f10905fa775962a4eddcb44caa50065251",
+      "version": "0.1.2",
+      "purpose": "candidate NVIDIA MoE runtime with bandwidth-adaptive CPU-GPU execution",
+      "status": "candidate",
+      "auto_promote": false,
+      "executable": "~/.local/share/turbofit/runtimes/freetoken-0ab982f10905fa775962a4eddcb44caa50065251/.venv/bin/ft",
+      "requirements": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "backend": "cuda",
+        "driver_min": 580,
+        "cuda_toolkit_min": "13.0",
+        "multimodal": false,
+        "model_format": "hf-safetensors-or-ftw"
+      }
+    },
+    {
+      "id": "maple-llama.cpp",
+      "repository": "https://github.com/stamsam/llama.cpp.git",
+      "revision": "9ee03eec62d088a117ab916bbe489e7a3872a21f",
+      "purpose": "Maple architecture and TQ2_0 GPU kernels",
+      "cuda_binary": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-cuda/bin/llama-server",
+      "metal_binary": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-metal/bin/llama-server",
+      "cpu_binary": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-cpu/bin/llama-server",
+      "rocm_binary": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-rocm/bin/llama-server",
+      "vulkan_binary": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-vulkan/bin/llama-server",
+      "windows_binary": "~/.local/share/turbofit/runtimes/maple-llama.cpp-9ee03eec62d088a117ab916bbe489e7a3872a21f/build-cuda/bin/Release/llama-server.exe"
+    },
+    {
+      "id": "strata",
+      "kind": "python-cli",
+      "repository": "https://github.com/Niko1221/Strata.git",
+      "revision": "v0.2.10",
+      "purpose": "Qwen 3.8 Flash Next and DeepSeek-V4.1-Flash (ISTA-DAS Coder) with expert tiering, DFlash2 drafter and the all-cards split engine. 8 GB cards start at 128K context; the split engine needs about 43 GiB free RAM.",
+      "executable": "~/.local/share/turbofit/runtimes/strata/.venv/bin/python",
+      "launch_command": "strata launch",
+      "port": 8082,
+      "requirements": {
+        "os": [
+          "linux",
+          "windows",
+          "darwin"
+        ],
+        "architecture": [
+          "x86_64",
+          "amd64",
+          "arm64",
+          "aarch64"
+        ],
+        "backend": [
+          "cuda",
+          "rocm",
+          "metal",
+          "sycl",
+          "vulkan"
+        ],
+        "min_vram_gb": 8,
+        "min_vram_gb_native_context": 12,
+        "small_card_context_tokens": 131072,
+        "split_engine": {
+          "os": [
+            "linux"
+          ],
+          "shapes": [
+            "2x nvidia sm_86",
+            "2x nvidia sm_120",
+            "4x radeon ai pro r9700"
+          ],
+          "max_context_tokens": 131072,
+          "free_ram_mb": 44032
+        },
+        "multimodal": true,
+        "model_format": "gguf"
+      },
+      "status": "production",
+      "engine_version": "0.1.56",
+      "install_command": "download install.sh from https://github.com/Niko1221/Strata/releases/latest and run it with bash",
+      "feed": {
+        "x86_64": "https://github.com/Niko1221/Strata/releases/latest/download/strata-feed.json",
+        "aarch64": "https://github.com/Niko1221/Strata/releases/latest/download/strata-feed-linux-aarch64.json"
+      }
+    },
+    {
+      "id": "maple-flash-moe",
+      "kind": "python-cli",
+      "repository": "https://github.com/PUT-Request/maple-flash-moe.git",
+      "revision": "main",
+      "purpose": "Maple Preview with file-backed expert offload. Streams 256 experts from disk, keeps active 8 in DRAM. 9x RAM reduction (~0.63 GB resident vs 5.9 GB full).",
+      "executable": "~/.local/share/turbofit/runtimes/maple-flash-moe/.venv/bin/python",
+      "launch_command": "-m mlx_lm server",
+      "port": 8085,
+      "requirements": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "backend": "metal",
+        "min_system_ram_gb": 4,
+        "multimodal": false,
+        "model_format": "mlx"
+      },
+      "status": "production"
     }
   ]
 }

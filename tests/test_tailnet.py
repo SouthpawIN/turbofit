@@ -8,8 +8,8 @@ import pytest
 from turbofit_runtime.tailnet import build_serve_commands, publish_tailnet, tailnet_status
 
 
-def completed(command: list[str], stdout: str = "", returncode: int = 0) -> subprocess.CompletedProcess[str]:
-    return subprocess.CompletedProcess(command, returncode, stdout=stdout, stderr="")
+def completed(command: list[str], stdout: str = "", returncode: int = 0, stderr: str = "") -> subprocess.CompletedProcess[str]:
+    return subprocess.CompletedProcess(command, returncode, stdout=stdout, stderr=stderr)
 
 
 def test_tailnet_status_reports_dns_and_existing_serve_routes() -> None:
@@ -61,6 +61,21 @@ def test_publish_refuses_to_overwrite_an_unrelated_existing_serve_route() -> Non
         publish_tailnet(command_runner=run)
 
     assert len(calls) == 2
+
+
+def test_run_does_not_escalate(monkeypatch) -> None:
+    import turbofit_runtime.tailnet as tn
+
+    calls: list[list[str]] = []
+
+    def fake_run(command, **kwargs):
+        calls.append(list(command))
+        return completed(command, returncode=1, stderr="permission denied (root required)")
+
+    monkeypatch.setattr(tn.subprocess, "run", fake_run)
+    result = tn._run(["tailscale", "serve", "--bg", "--yes", "--https=9443", "http://127.0.0.1:8091"])
+    assert result.returncode == 1
+    assert calls == [["tailscale", "serve", "--bg", "--yes", "--https=9443", "http://127.0.0.1:8091"]]
 
 
 def test_publish_tailnet_returns_shareable_dashboard_and_provider_urls() -> None:

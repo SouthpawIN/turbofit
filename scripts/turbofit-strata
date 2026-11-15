@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+"""What Strata would do on this machine — and why.
+
+Composes the `strata launch` command TurboFit will use, from the Strata 0.2.10
+rules encoded in turbofit_runtime.strata. Pure planning: it starts nothing.
+
+    turbofit-strata                 # human summary
+    turbofit-strata --json          # the plan as data
+    turbofit-strata --context 262144 --parallel 2
+    turbofit-strata --family deepseek-v4.1-flash
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from turbofit_runtime import strata  # noqa: E402
+from turbofit_runtime.hardware import probe_hardware  # noqa: E402
+
+
+def installed_version() -> str | None:
+    binary = shutil.which("strata")
+    if not binary:
+        return None
+    for args in ([binary, "--version"], [binary, "version"]):
+        try:
+            done = subprocess.run(args, capture_output=True, text=True, timeout=10)
+        except (OSError, subprocess.SubprocessError):
+            continue
+        text = (done.stdout or done.stderr or "").strip()
+        if text:
+            return text.splitlines()[0][:120]
+    return None
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--family", default=strata.FAMILY_QWEN)
+    parser.add_argument("--context", type=int, default=None, help="requested context tokens")
+    parser.add_argument("--parallel", type=int, default=1, help="concurrent requests")
+    parser.add_argument("--quant", default=None)
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args(argv)
+
+    fingerprint = probe_hardware()
+    plan = strata.plan(
+        fingerprint,
+        family=args.family,
+        context_tokens=args.context,
+        parallel=args.parallel,
+        quant=args.quant,
+    )
+
+    version = installed_version()
+    found = re.findall(r"\d+\.\d+\.\d+", version or "")
+    problems = strata.version_problems(
+        found[0] if found else None,
+        found[1] if len(found) > 1 else None,
+    )
+
+    if args.json:
+        print(json.dumps(
+            {
+                "hardware": {
+                    "os": fingerprint.os,
+                    "architecture": fingerprint.architecture,
+                    "system_ram_mb": fingerprint.system_ram_mb,
+                    "host_usable_memory_mb": fingerprint.host_usable_memory_mb,
+                    "devices": [
+                        {
+                            "index": d.index,
+                            "name": d.name,
+                            "vendor": d.vendor,
+                            "backend": d.backend,
+                            "memory_total_mb": d.memory_total_mb,
+                            "compute_capability": d.compute_capability,
+                        }
+                        for d in fingerprint.devices
+                    ],
+                },
+                "plan": plan.to_mapping(),
+                "strata_installed": version,
+                "pinned": {
+                    "app": strata.STRATA_APP_VERSION,
+                    "engine": strata.STRATA_ENGINE_VERSION,
+                },
+                "feed": strata.feed_url(fingerprint.os, fingerprint.architecture),
+            },
+            indent=2,
+        ))
+        return 0
+
+    print(f"Strata plan for {fingerprint.os}/{fingerprint.architecture}")
+    for device in fingerprint.devices:
+        print(
+            f"  card {device.index}: {device.name} "
+            f"{device.memory_total_mb // 1024} GiB ({device.compute_capability or device.backend})"
+        )
+    if not fingerprint.devices:
+        print("  no accelerator detected — Strata needs CUDA, ROCm, Metal, SYCL or Vulkan")
+    print()
+    print(f"  model       {plan.model}  ({plan.quant})")
+    print(f"  context     {plan.context_tokens:,} tokens")
+    print(f"  drafting    {plan.drafting}")
+    print(f"  split       {plan.split_engine}")
+    print(f"  parallel    {plan.parallel}")
+    print()
+    for reason in plan.reasons:
+        print(f"  · {reason}")
+    for warning in plan.warnings:
+        print(f"  ! {warning}")
+    print()
+    print("  command:")
+    print("    " + " ".join(plan.launch_args))
+    print()
+    if version:
+        print(f"  installed   {version}")
+        for problem in problems:
+            print(f"  ! {problem}")
+    else:
+        print("  installed   strata not on PATH")
+    print(f"  feed        {strata.feed_url(fingerprint.os, fingerprint.architecture)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

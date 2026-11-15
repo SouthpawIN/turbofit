@@ -134,8 +134,8 @@ def _find_api_fallback_in_profiles():
     """Search every profile's config + the global config for an API endpoint.
 
     Order:
-      1. ~/.hermes/config.yaml (default profile)
-      2. ~/.hermes/profiles/senter/config.yaml (the orchestrator, often a useful default)
+      1. The default profile's Hermes config file
+      2. The "senter" orchestrator profile's config file
       3. Any other profile that has a non-localhost base_url
     """
     candidates = [

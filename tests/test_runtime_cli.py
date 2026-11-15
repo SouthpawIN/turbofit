@@ -63,7 +63,10 @@ def test_list_marks_manual_profiles_by_safe_compatibility(tmp_path: Path) -> Non
     assert rows["hardware-16gb"]["manual_compatible"] is True
 
 
-def test_status_is_read_only_and_reports_missing_selection(tmp_path: Path) -> None:
+def test_status_is_read_only_and_reports_missing_selection(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setenv("TURBOFIT_RUNTIME_STATE", str(tmp_path / "no-state.json"))
     output = io.StringIO()
     code = run(
         ["status"],
@@ -74,6 +77,36 @@ def test_status_is_read_only_and_reports_missing_selection(tmp_path: Path) -> No
     )
     assert code == 1
     assert json.loads(output.getvalue())["configured"] is False
+
+
+def test_status_falls_back_to_published_runtime_state(tmp_path: Path, monkeypatch) -> None:
+    state = tmp_path / "runtime-state.json"
+    state.write_text(
+        json.dumps(
+            {
+                "schema": 1,
+                "active": "hardware-test-profile",
+                "rung_id": "local-test-rung",
+                "context_length": 32768,
+                "routes": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("TURBOFIT_RUNTIME_STATE", str(state))
+    output = io.StringIO()
+    code = run(
+        ["status"],
+        catalog=catalog(),
+        hardware=hardware(8192),
+        selection_path=tmp_path / "missing.json",
+        output=output,
+    )
+    assert code == 0
+    payload = json.loads(output.getvalue())
+    assert payload["configured"] is True
+    assert payload["selection"]["profile_id"] == "hardware-test-profile"
+    assert payload["selection"]["context_length"] == 32768
 
 
 def test_runtime_entrypoint_has_no_direct_process_authority() -> None:

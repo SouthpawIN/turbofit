@@ -249,3 +249,48 @@ def test_executor_rejects_readiness_from_the_wrong_model_alias(tmp_path: Path) -
 
     with pytest.raises(RuntimeError, match="main readiness model mismatch"):
         executor.execute(row("Ternary Bonsai", "1 Bit Bonsai", 65_536))
+
+
+class ClaimingBackend(FakeBackend):
+    def __init__(self) -> None:
+        super().__init__()
+        self.claims: list[tuple[str, int]] = []
+
+    def claim_port(self, component, *, reserved=None):
+        self.claims.append((component.role, component.port))
+        return component
+
+
+def test_prepare_reconciles_ports_before_the_gpu_clear_gate(tmp_path: Path) -> None:
+    """A residual engine holds VRAM, so reclaim must happen before the gate."""
+    backend = ClaimingBackend()
+    executor = LocalPairExecutor(
+        recipes=RecipeBook.load(
+            ROOT / "references/model-recipes.json", platform_name="linux"
+        ),
+        backend=backend,
+        result_dir=tmp_path,
+        physical_hardware_probe=fake_physical_hardware,
+    )
+
+    executor.prepare(row("Ternary Bonsai", "1 Bit Bonsai", 65_536))
+
+    assert backend.claims == [("aux", 11610), ("main", 11605)]
+    assert backend.actions == []
+
+
+def test_prepare_tolerates_matrix_display_names(tmp_path: Path) -> None:
+    """Catalog display names do not address recipes; prepare must not raise."""
+    backend = ClaimingBackend()
+    executor = LocalPairExecutor(
+        recipes=RecipeBook.load(
+            ROOT / "references/model-recipes.json", platform_name="linux"
+        ),
+        backend=backend,
+        result_dir=tmp_path,
+        physical_hardware_probe=fake_physical_hardware,
+    )
+
+    executor.prepare(row("LFM3 Omni 2B Q4_K_M", "auto", 65_536))
+
+    assert backend.claims == []

@@ -1,20 +1,30 @@
 # Turbofit
 
-## 2.2 new models
+## Current catalog — 89 entries, 86 main models, 4 engines
 
-| New model | Variants or role | State |
+Serves each model on the runtime that can hold it: llama.cpp (mainline, and the Prism fork for ternary), **Strata** for large MoE on small VRAM, **vLLM** for raw checkpoints with no GGUF, and per-model media runtimes. Every entry pins a Hugging Face revision and a sha256.
+
+| Model | Variants or role | State |
 |---|---|---|
-| **Qwen 3.8 27B** | Q4, Q8, and BF16; each with or without MTP; pinned vision projectors | 6 active catalog candidates replacing the 6 retired GRM entries |
-| **DeepSeek V4 Flash 0731 Q2 DwarfStar** | Q2 main model + DSpark and expert offload | Active high-memory catalog candidate |
-| **MiniMax Music 3** | Music generation | Pinned integration candidate |
+| **Qwen 3.6 35B-A3B** | UD-Q4_K_M + MTP, 64K/128K/262K | Active catalog candidate |
+| **Qwen 3.5 35B-A3B** | UD-Q4_K_M + MTP, 64K/128K/262K | Active catalog candidate |
+| **LFM2.5 24B-A2B** | Q4_K_M, 64K/128K | Active catalog candidate |
+| **LFM3 Omni 2B** | Q4_K_M + vision projector | Active catalog candidate |
+| **Nemotron Bolt 74B-A9B** | 24GB native, MoE + vision | Active catalog candidate |
+| **Inkling 2 Small** | 366.5 GiB checkpoint, **vLLM**, 1M context | Engine-wired; needs vLLM installed |
+| **Maple Preview 20B-A1B** | TQ2_0 8 GB main candidate; the only auxiliary at every tier | CPU 8 GiB envelope verified; exact 8 GB GPU pending |
+| **Qwen 3.8 27B GSQ-RCO** | IQ3_S → Q8, with or without MTP | Active catalog candidate |
+| **MiniMax Music 3** | Music generation (diffusers-modular) | Pinned integration candidate |
 | **NVIDIA Parakeet TDT 0.6B v3** | Speech-to-text | Pinned integration candidate |
 | **Soprano TTS** | Text-to-speech | Pinned integration candidate |
 
-Qwen 3.8 27B is now the active dense multimodal 27B family. No retired GRM recipe or artifact remains active. The 1,620-row campaign remains evidence-gated: a catalog candidate is not a benchmark winner until current-recipe physical and intelligence evidence passes.
+Uncensored line, same rules: Arete 27B Uncensored V2, Qwen 3.8 27B Unleashed, Qwen 3.6 35B-A3B Abliterated, LFM2.5 24B-A2B Uncensored, Flint 40B Abliterated, Nemotron Bolt Abliterated, Flash Next Abliterated.
+
+DeepSeek V4 Flash 0731 is retired. API fallback is the five keyless Nous free models. Catalog candidates are not benchmark winners until current-recipe physical and intelligence evidence passes.
 
 The canonical model IDs, source revisions, artifacts, sizes, and hashes are in `references/model-catalog.json`, `references/artifact-manifest.json`, and `references/multimodal-models.json` at the repository root.
 
-Turbofit is a first-class Hermes plugin and adaptive local-model runtime. It scans physical hardware and total usable memory, recommends evidence-backed main/auxiliary configurations, exposes one OpenAI-compatible provider, and manages setup through Hermes Dashboard and Hermes Desktop.
+Turbofit is a first-class Hermes plugin and adaptive local-model runtime. It scans physical hardware and total usable memory, recommends evidence-backed main/auxiliary configurations, exposes one OpenAI-compatible provider, and manages setup through Hermes Desktop.
 
 ## Install
 
@@ -22,19 +32,27 @@ Turbofit is a first-class Hermes plugin and adaptive local-model runtime. It sca
 hermes plugins install --enable https://github.com/SouthpawIN/Turbofit.git
 ```
 
-Restart the gateway, then launch guided setup:
+Restart Hermes Desktop or start a fresh **default-profile** CLI session so plugin registrations reload. `/turbofit setup` refreshes the Desktop Turbofit page; it does not start `:8091` by itself.
 
 ```text
 /turbofit setup
 ```
 
+Finish Apply on the Turbofit page, then verify `http://127.0.0.1:8091/v1/models` before opening TurboSouth. Do not diagnose a refused 8091 from inside TurboSouth, and do not restart the Hermes messaging gateway expecting the model endpoint to appear.
+
+When Dashboard/slash is unavailable on Windows, use [`docs/windows-native-install.md`](../../docs/windows-native-install.md).
+
 ## Daily commands
 
 ```text
 /turbofit                 # rescan + intelligence/balanced/speed recommendations
-/turbofit intelligence    # quality-first recommendation
-/turbofit balanced        # context/balance recommendation
-/turbofit speed           # throughput-first recommendation
+/turbofit update          # update Turbofit plugin + TurboSouth on this device
+/turbofit shift up        # next smarter measured configuration
+/turbofit shift down      # next lighter measured configuration
+/turbofit shift <model>   # recommended combination for that model
+/turbofit intelligence    # quality-first recommendation (scan)
+/turbofit balanced        # context/balance recommendation (scan)
+/turbofit speed           # throughput-first recommendation (scan)
 /turbofit status          # provider, route, runtime, and gateway state
 ```
 
@@ -68,7 +86,7 @@ PYTHONPATH=src:. scripts/turbofit-catalog-campaign status
 PYTHONPATH=src:. scripts/turbofit-catalog-campaign run
 ```
 
-The generated campaign covers all valid pinned main/add-on combinations, every auxiliary option, and 64K/128K/262K/1M context. Candidate rows remain candidates until physical evidence passes.
+The generated campaign covers all valid pinned main/add-on combinations, the single Maple auxiliary, and 64K/128K/262K/1M context. Candidate rows remain candidates until physical evidence passes.
 
 ## Verification
 
@@ -79,4 +97,13 @@ node --check desktop/plugin.js
 scripts/release-check
 ```
 
-Full architecture, setup, model zoo, evidence policy, and repository map: [`../../README.md`](../../README.md).
+Full architecture, setup, model zoo, evidence policy, and repository map: [README.md](README.md).
+
+## Supported Models
+
+- **Maple Preview 20B-A1B**
+- **Qwen 3.8 27B GSQ-RCO**
+- **Cyber-Tiel Coder 35B-A3B**
+- **MiniMax Music 3**
+- **NVIDIA Parakeet TDT 0.6B v3**
+- **Soprano TTS**

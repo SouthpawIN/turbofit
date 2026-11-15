@@ -11,6 +11,7 @@ from turbofit_runtime.hardware import (
     _run_command,
     parse_nvidia_inventory_csv,
     parse_rocm_smi_json,
+    parse_vulkaninfo_text,
     probe_hardware,
 )
 
@@ -184,6 +185,133 @@ def test_probe_falls_back_to_rocm_when_nvidia_is_absent() -> None:
     assert fingerprint.total_vram_mb == 24576
 
 
+def test_probe_falls_back_to_vulkan_on_windows_with_dedicated_heap_capacity() -> None:
+    raw = """GPU0:
+    vendorID           = 0x1002
+    deviceName         = AMD Radeon RX 6600
+    deviceUUID         = 00112233-4455-6677-8899-aabbccddeeff
+    memoryHeaps: count = 2
+    memoryHeaps[0]:
+        size   = 8304721920
+        budget = 6937617920
+        flags: count = 1
+            MEMORY_HEAP_DEVICE_LOCAL_BIT
+    memoryHeaps[1]:
+        size   = 34317664256
+        budget = 33512374272
+        flags:
+            None
+    memoryTypes: count = 2
+"""
+
+    devices = parse_vulkaninfo_text(raw)
+    fingerprint = probe_hardware(
+        command_runner=lambda command: (_ for _ in ()).throw(FileNotFoundError(command[0]))
+        if command[0] == "nvidia-smi" else raw,
+        os_name="Windows",
+        architecture="amd64",
+        system_ram_mb=65536,
+    )
+
+    assert devices[0].vendor == "amd"
+    assert devices[0].backend == "vulkan"
+    assert devices[0].memory_total_mb == 7920
+    assert fingerprint.topology_key == "1x7920mb"
+    assert fingerprint.backends == ("vulkan",)
+
+
+def test_vulkan_probe_drops_integrated_gpu_when_discrete_gpus_present() -> None:
+    # A desktop box with discrete cards: the iGPU's device-local heap is
+    # shared system RAM (Arrow Lake reports ~46 GiB from a 64 GB machine),
+    # so it must not inflate device counts or VRAM totals.
+    raw = """GPU0:
+    vendorID           = 0x8086
+    deviceType         = PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+    deviceName         = Intel(R) Graphics (BMG G31)
+    deviceUUID         = 868023e2-0000-0000-0400-000000000000
+    memoryHeaps: count = 1
+    memoryHeaps[0]:
+        size   = 34242297856
+        budget = 34242297856
+        flags: count = 1
+            MEMORY_HEAP_DEVICE_LOCAL_BIT
+    memoryTypes: count = 2
+GPU1:
+    vendorID           = 0x8086
+    deviceType         = PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU
+    deviceName         = Intel(R) Graphics (ARL)
+    deviceUUID         = 8680677d-0600-0000-0002-000000000000
+    memoryHeaps: count = 1
+    memoryHeaps[0]:
+        size   = 49976927232
+        budget = 49976927232
+        flags: count = 1
+            MEMORY_HEAP_DEVICE_LOCAL_BIT
+    memoryTypes: count = 2
+"""
+
+    devices = parse_vulkaninfo_text(raw)
+
+    assert [device.name for device in devices] == ["Intel(R) Graphics (BMG G31)"]
+    assert devices[0].memory_total_mb == 32656
+
+
+def test_vulkan_probe_keeps_integrated_gpu_when_no_discrete_gpus() -> None:
+    raw = """GPU0:
+    vendorID           = 0x8086
+    deviceType         = PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU
+    deviceName         = Intel(R) Graphics (ARL)
+    deviceUUID         = 8680677d-0600-0000-0002-000000000000
+    memoryHeaps: count = 1
+    memoryHeaps[0]:
+        size   = 49976927232
+        budget = 49976927232
+        flags: count = 1
+            MEMORY_HEAP_DEVICE_LOCAL_BIT
+    memoryTypes: count = 2
+"""
+
+    devices = parse_vulkaninfo_text(raw)
+
+    assert len(devices) == 1
+    assert devices[0].name == "Intel(R) Graphics (ARL)"
+
+
+def test_probe_falls_back_to_vulkan_on_linux_when_cuda_and_rocm_are_absent() -> None:
+    raw = """GPU0:
+    vendorID           = 0x1002
+    deviceName         = AMD Radeon RX 6600
+    deviceUUID         = 00112233-4455-6677-8899-aabbccddeeff
+    memoryHeaps: count = 2
+    memoryHeaps[0]:
+        size   = 8304721920
+        budget = 6937617920
+        flags: count = 1
+            MEMORY_HEAP_DEVICE_LOCAL_BIT
+    memoryHeaps[1]:
+        size   = 34317664256
+        budget = 33512374272
+        flags:
+            None
+    memoryTypes: count = 2
+"""
+
+    def run(command: list[str]) -> str:
+        if command[0] in {"nvidia-smi", "rocm-smi"}:
+            raise FileNotFoundError(command[0])
+        return raw
+
+    fingerprint = probe_hardware(
+        command_runner=run,
+        os_name="linux",
+        architecture="x86_64",
+        system_ram_mb=65536,
+    )
+
+    assert fingerprint.backends == ("vulkan",)
+    assert fingerprint.topology_key == "1x7920mb"
+
+
 def test_probe_apple_silicon_exposes_unified_memory_as_metal_capacity() -> None:
     def missing(_command: list[str]) -> str:
         raise FileNotFoundError("nvidia-smi")
@@ -270,6 +398,19 @@ def test_run_command_retries_nvidia_smi_with_loaded_kernel_compatibility_library
     )
 
 
+def test_run_command_gives_vulkaninfo_a_longer_timeout() -> None:
+    seen: list[int] = []
+
+    def check_output(_command: list[str], *, text: bool, timeout: int, stderr: int) -> str:
+        seen.append(timeout)
+        return "GPU0:\n"
+
+    _run_command(["vulkaninfo"], check_output=check_output)
+    _run_command(["nvidia-smi"], check_output=check_output)
+
+    assert seen == [30, 5]
+
+
 @pytest.mark.parametrize(
     "error",
     [subprocess.CalledProcessError(1, ["nvidia-smi"]), subprocess.TimeoutExpired(["nvidia-smi"], 5)],
@@ -304,3 +445,186 @@ def test_parse_nvidia_inventory_gb10_unified_memory_falls_back_to_system_ram(
     assert devices[0].name == "NVIDIA GB10"
     assert devices[0].memory_total_mb == 131072
     assert devices[0].compute_capability == "12.1"
+
+
+def test_memory_capacity_distinguishes_dedicated_unified_and_cpu_pools() -> None:
+    dedicated = HardwareFingerprint(
+        os="linux", architecture="x86_64", system_ram_mb=393216,
+        devices=(
+            AcceleratorDevice(0, "a", "RTX 3090", "nvidia", "cuda", 24576, "8.6", "01"),
+            AcceleratorDevice(1, "b", "RTX 3090", "nvidia", "cuda", 24576, "8.6", "02"),
+        ),
+    )
+    unified = HardwareFingerprint(
+        os="linux", architecture="aarch64", system_ram_mb=131072,
+        devices=(AcceleratorDevice(0, "u", "NVIDIA GB10", "nvidia", "cuda", 131072, "12.1", "01"),),
+    )
+    cpu = HardwareFingerprint(os="linux", architecture="x86_64", system_ram_mb=65536)
+
+    assert dedicated.memory_pool_kind == "dedicated"
+    assert dedicated.host_usable_memory_mb == 385024
+    assert dedicated.total_usable_memory_mb == 434176
+    assert unified.memory_pool_kind == "unified"
+    assert unified.total_usable_memory_mb == unified.host_usable_memory_mb == 124518
+    assert cpu.memory_pool_kind == "cpu"
+    assert cpu.total_usable_memory_mb == cpu.host_usable_memory_mb == 62259
+
+
+# The RAM probe is the accelerator budget on unified-memory parts (GB10 reports memory.total as
+# "[N/A]"; Metal shares system RAM), so it must answer or say it cannot -- never raise, and never
+# hand back a negative capacity. Every source is stubbed below so all branches run on any runner.
+
+MEMINFO_128 = "MemTotal:       134217728 kB\nMemFree:         1000000 kB\n"
+
+
+def _sysconf(values: dict | None):
+    # A libc that does not define a name makes os.sysconf raise, not return 0.
+    def fake(name: str) -> int:
+        if values is None or name not in values:
+            raise ValueError(f"unrecognized configuration name: {name}")
+        return values[name]
+
+    return fake
+
+
+def _host(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    sysconf: dict | None,
+    meminfo: str | None,
+    windows: bool = False,
+) -> None:
+    """Pin every source the probe can consult. ``sysconf=None`` is a libc without the names;
+    ``windows=False`` takes GlobalMemoryStatusEx away so the POSIX branches run on a Windows
+    runner too."""
+    import ctypes
+
+    import turbofit_runtime.hardware as hw
+
+    if sysconf is None:
+        monkeypatch.delattr(hw.os, "sysconf", raising=False)
+    else:
+        monkeypatch.setattr(hw.os, "sysconf", _sysconf(sysconf or None), raising=False)
+    if not windows:
+        monkeypatch.delattr(ctypes, "windll", raising=False)
+
+    def read_text(self, *args, **kwargs):
+        if self.as_posix() == "/proc/meminfo" and meminfo is not None:
+            return meminfo
+        raise FileNotFoundError(self.as_posix())
+
+    monkeypatch.setattr(hw.Path, "read_text", read_text)
+
+
+class _FakeWindll:
+    """GlobalMemoryStatusEx writes through the byref pointer and reports success separately."""
+
+    def __init__(self, *, ok: bool, total_bytes: int) -> None:
+        self.kernel32 = self
+        self._ok, self._total = ok, total_bytes
+
+    def GlobalMemoryStatusEx(self, ref) -> int:  # noqa: N802 - Win32 spelling
+        if self._ok:
+            ref._obj.ullTotalPhys = self._total
+        return 1 if self._ok else 0
+
+
+def test_system_ram_is_read_in_process_without_consulting_another_source(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import turbofit_runtime.hardware as hw
+
+    _host(monkeypatch, sysconf={"SC_PHYS_PAGES": 32768, "SC_PAGE_SIZE": 4096}, meminfo=None)
+
+    assert hw._system_ram_mb() == 128
+
+
+def test_system_ram_survives_a_libc_that_lacks_the_sysconf_names(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # os.sysconf raises ValueError for a name its libc does not define. That escaped the probe and
+    # propagated out of probe_hardware; the fallbacks below it were never reached.
+    import turbofit_runtime.hardware as hw
+
+    _host(monkeypatch, sysconf={}, meminfo=MEMINFO_128)
+
+    assert hw._system_ram_mb() == 131072
+
+
+def test_system_ram_treats_an_indeterminate_sysconf_answer_as_no_answer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # sysconf signals "indeterminate" with -1 rather than raising. Multiplied through, that
+    # reached HardwareFingerprint as a negative capacity.
+    import turbofit_runtime.hardware as hw
+
+    _host(monkeypatch, sysconf={"SC_PHYS_PAGES": -1, "SC_PAGE_SIZE": 4096}, meminfo=MEMINFO_128)
+
+    assert hw._system_ram_mb() == 131072
+
+
+def test_system_ram_is_zero_when_every_source_is_gone(monkeypatch: pytest.MonkeyPatch) -> None:
+    import turbofit_runtime.hardware as hw
+
+    _host(monkeypatch, sysconf=None, meminfo=None)
+
+    assert hw._system_ram_mb() == 0
+
+
+def test_windows_ram_does_not_read_a_failed_call_as_a_zero_byte_machine(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import ctypes
+
+    import turbofit_runtime.hardware as hw
+
+    monkeypatch.setattr(ctypes, "windll", _FakeWindll(ok=False, total_bytes=0), raising=False)
+    assert hw._windows_ram_bytes() == 0
+
+    monkeypatch.setattr(ctypes, "windll", _FakeWindll(ok=True, total_bytes=68 * 1024**3),
+                        raising=False)
+    assert hw._windows_ram_bytes() == 68 * 1024**3
+
+
+def test_windows_ram_is_reached_when_sysconf_has_no_answer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The ctypes path was gated on hasattr(os, "sysconf") alone, so it was unreachable on every
+    # POSIX host -- including one whose sysconf could not answer.
+    import ctypes
+
+    import turbofit_runtime.hardware as hw
+
+    _host(monkeypatch, sysconf={}, meminfo=None, windows=True)
+    monkeypatch.setattr(ctypes, "windll", _FakeWindll(ok=True, total_bytes=68 * 1024**3),
+                        raising=False)
+
+    assert hw._system_ram_mb() == 68 * 1024
+
+
+def test_probe_gb10_survives_a_libc_without_the_sysconf_names(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The end-to-end symptom: on a GB10 the GPU's whole capacity comes from the RAM probe, so a
+    # libc whose sysconf lacks SC_PHYS_PAGES took probe_hardware down instead of reading 128 GB.
+    _host(monkeypatch, sysconf={}, meminfo=MEMINFO_128)
+
+    def runner(command: list[str]) -> str:
+        if command[0] == "nvidia-smi":
+            return "0, GPU-gb10, NVIDIA GB10, [N/A], 12.1, 00000000:01:00.0\n"
+        raise FileNotFoundError(command[0])
+
+    fingerprint = probe_hardware(command_runner=runner, os_name="linux", architecture="aarch64")
+
+    assert fingerprint.system_ram_mb == 131072
+    assert fingerprint.devices[0].memory_total_mb == 131072
+    assert fingerprint.memory_pool_kind == "unified"
+
+def test_apple_silicon_without_enumerated_gpu_is_unified_not_cpu() -> None:
+    """A MacBook reports no discrete device; its RAM is still the GPU's memory."""
+    unified = HardwareFingerprint(os="darwin", architecture="arm64", system_ram_mb=32768)
+    assert unified.memory_pool_kind == "unified"
+    intel_mac = HardwareFingerprint(os="darwin", architecture="x86_64", system_ram_mb=32768)
+    assert intel_mac.memory_pool_kind == "cpu"
+    linux = HardwareFingerprint(os="linux", architecture="x86_64", system_ram_mb=32768)
+    assert linux.memory_pool_kind == "cpu"

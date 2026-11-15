@@ -1,0 +1,145 @@
+{
+  "checks": [
+    {
+      "evidence": {
+        "manifest": "CORE-FILES.sha256",
+        "manifest_files": 89,
+        "mismatched": 18,
+        "missing_private_only": 14,
+        "pinned_commit": "407675aab4fc3f8cbb03206386a45b92b00e78a4",
+        "pinned_commit_present": true,
+        "repo": "/Users/sovthpaw/.hermes/cache/scratch/SALT-core",
+        "verified": 57
+      },
+      "id": "G1",
+      "name": "source-provenance",
+      "status": "pass"
+    },
+    {
+      "evidence": {
+        "binary_present": true,
+        "command": [
+          "make",
+          "salt"
+        ],
+        "exit_code": 0,
+        "log_tail": "make: `salt' is up to date."
+      },
+      "id": "G2",
+      "name": "host-build",
+      "status": "pass"
+    },
+    {
+      "evidence": {
+        "command": [
+          "make",
+          "test"
+        ],
+        "exit_code": 0,
+        "log_tail": "y\n[gemma4-server-ms-tk] {\"completion_tokens\":50,\"decode_cycles\":0,\"decode_misses\":0,\"decode_ms_per_completion_token\":0.0,\"elapsed_ms\":0.0,\"live_kv_loaded_tokens\":0,\"modality\":\"text\",\"nomogram_hits\":0,\"parent_hits\":0,\"prefill_cached_tokens\":0,\"prefill_hits\":0,\"prefill_ms_per_input_token\":0.0,\"prompt_tokens\":23,\"proposal_ms_per_proposed_token\":null,\"request\":null,\"target_ms_per_accepted_token\":null}"
+      },
+      "id": "G3",
+      "name": "smoke-suite",
+      "status": "pass"
+    },
+    {
+      "evidence": {
+        "launcher_present": true,
+        "live": null,
+        "live_note": "live probe not attempted; model artifacts are excluded from the public export, so a live endpoint requires separately obtained weights",
+        "routes_found": [
+          "/v1/models",
+          "/v1/chat/completions"
+        ],
+        "routes_missing": [],
+        "serve_py_present": true,
+        "static": true
+      },
+      "id": "G4",
+      "name": "server-contract",
+      "status": "pass"
+    },
+    {
+      "evidence": {
+        "criteria": {
+          "context_tokens": 262144,
+          "expected_band_tps": [
+            4,
+            8
+          ],
+          "hallucination_delta_max_pct": 2,
+          "launch": "single-process",
+          "sustained_tps_min": 4,
+          "target_band_tps": [
+            8,
+            12
+          ]
+        },
+        "evidence": "no live inference run recorded for the 4 GB VRAM configuration"
+      },
+      "id": "G5",
+      "name": "inference-qualification",
+      "status": "blocked"
+    }
+  ],
+  "engine": "salt-core",
+  "gate": {
+    "checks": [
+      {
+        "id": "G1",
+        "kind": "static",
+        "name": "source-provenance"
+      },
+      {
+        "id": "G2",
+        "kind": "host",
+        "name": "host-build"
+      },
+      {
+        "id": "G3",
+        "kind": "host",
+        "name": "smoke-suite"
+      },
+      {
+        "id": "G4",
+        "kind": "static-or-live",
+        "name": "server-contract"
+      },
+      {
+        "id": "G5",
+        "kind": "live",
+        "name": "inference-qualification"
+      }
+    ],
+    "kind": "inference-qualification",
+    "pass_criteria": {
+      "context_tokens": 262144,
+      "expected_band_tps": [
+        4,
+        8
+      ],
+      "hallucination_delta_max_pct": 2,
+      "launch": "single-process",
+      "sustained_tps_min": 4,
+      "target_band_tps": [
+        8,
+        12
+      ]
+    },
+    "repo": {
+      "manifest": "CORE-FILES.sha256",
+      "pinned_commit": "407675aab4fc3f8cbb03206386a45b92b00e78a4",
+      "url": "https://github.com/SouthpawIN/SALT-core"
+    }
+  },
+  "host": {
+    "machine": "arm64",
+    "os": "Darwin"
+  },
+  "repo": "/Users/sovthpaw/.hermes/cache/scratch/SALT-core",
+  "schema": "turbofit.salt-core-gate/v1",
+  "unmet": [
+    "G5"
+  ],
+  "verdict": "candidate"
+}

@@ -1,6 +1,6 @@
 # Turbofit Hermes plugin distribution
 name: turbofit
-version: "2.2.0"
+version: "2.4.1"
 description: >-
   Hermes plugin and setup dashboard for hardware-aware adaptive local inference,
   portable Turbofiles, pinned native llama.cpp residency, stable auto/active role
@@ -20,6 +20,8 @@ distribution_owned:
   - __init__.py
   - schemas.py
   - plugin_tools.py
+  - product_ops.py
+  - after-install.md
   - dashboard/
   - desktop/
   - SKILL.md
@@ -29,7 +31,6 @@ distribution_owned:
   - benchmarks/
   - docs/
   - research/
-  - profiles/sirvir/
   - promo/
   - runtime-profiles/
   - runtime-patches/
@@ -58,7 +59,12 @@ distribution_owned:
   - scripts/build-promo-video
   - scripts/download-models.py
   - scripts/download-artifacts
+  - scripts/install-mlx-runtime
+  - scripts/turbofit-gateway-runtime
+  - scripts/turbofit-mlx-runtime
   - scripts/install-dspark-runtime
+  - scripts/install-strata.sh
+  - scripts/test-turbofit-pipeline.sh
   - scripts/install-lemonade-runtime
   - scripts/install-macos-native-service
   - scripts/install-windows-native-service.ps1
@@ -69,7 +75,6 @@ distribution_owned:
   - scripts/controlled-pressure-acceptance
   - scripts/vram-pressure-acceptance
   - scripts/release-check
-  - references/results/
   - references/model-catalog.json
   - references/multimodal-models.json
   - references/archived-model-zoo.json
@@ -79,11 +84,13 @@ distribution_owned:
 
   - references/model-recipes.json
   - references/artifact-manifest.json
+  - references/python-runtimes.json
   - references/hardware-tier-tournaments.json
   - references/auxiliary-tier-recommendations.json
   - references/intelligence-scores.json
   - references/external-benchmarks.md
 
-# Installation does not start launchers, watchers, or modify provider credentials.
-# Runtime activation remains an explicit Turbofile selection.
+# Plugin installation alone does not start launchers, watchers, or modify provider
+# credentials. Explicit install_native setup may install a selected model and start
+# its loopback runtime and provider gateway.
 post_install: []

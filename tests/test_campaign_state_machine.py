@@ -37,9 +37,14 @@ def clear_event(label: str) -> GPUClearEvent:
 class FakeClearGate:
     def __init__(self) -> None:
         self.labels: list[str] = []
+        self.baselines: list[dict[int, int] | None] = []
+
+    def sample_now(self) -> tuple[GPUSample, ...]:
+        return (GPUSample(gpu=0, total_mb=24576, used_mb=500, free_mb=24076, utilization_pct=0),)
 
     def wait(self, **kwargs) -> GPUClearEvent:
         self.labels.append(kwargs["label"])
+        self.baselines.append(kwargs.get("baseline_mb"))
         return clear_event(kwargs["label"])
 
 
@@ -131,6 +136,7 @@ def test_success_clears_before_and_after_publishes_and_registers(tmp_path: Path)
 
     assert outcome.status == "success"
     assert clear.labels == [f"before-{item.id}", f"after-{item.id}"]
+    assert clear.baselines == [None, {0: 500}]
     assert executor.rows == [item.id]
     assert publisher.results[0].gpu_clear_after.label == f"after-{item.id}"
     assert registry.rows == [item.id]
@@ -379,3 +385,28 @@ def test_run_one_returns_complete_when_nothing_is_pending(tmp_path: Path) -> Non
     )
 
     assert runner.run_one().status == "complete"
+
+
+def test_waiting_download_rows_are_skipped_and_never_launched(tmp_path: Path) -> None:
+    """Rows whose weights are incomplete are not attempted at all."""
+    matrix_path = tmp_path / "matrix.json"
+    ready = row("Carwin Nano", "auto", 65_536)
+    waiting = row("Laguna S2.1", "auto", 65_536)
+    write_matrix(matrix_path, (ready, waiting))
+    clear = FakeClearGate(); executor = FakeExecutor()
+    runner = CampaignRunner(
+        matrix_path=matrix_path, state_path=tmp_path / "state.json",
+        executor=executor, clear_gate=clear, publisher=FakePublisher(), registry=FakeRegistry(),
+        waiting_download_rows={waiting.id: "waiting-download: 100.0 GiB missing"},
+    )
+
+    pending = [item.id for item in runner.pending_rows()]
+
+    assert pending == [ready.id]
+    outcome = runner.run_row(waiting)
+    assert outcome.status == "waiting-download"
+    assert "GiB missing" in outcome.error
+    # No GPU clear gate, no engine launch, no failure record.
+    assert clear.labels == []
+    assert executor.rows == []
+    assert not (tmp_path / "state.json").exists()

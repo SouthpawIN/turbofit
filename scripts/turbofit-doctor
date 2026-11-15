@@ -1,0 +1,272 @@
+#!/usr/bin/env python3
+"""One command that answers "is this TurboFit install healthy?" — and fixes what is safe.
+
+Checks, in the order they usually break a machine:
+
+  1. interpreter   which Python the services run, and what it can import
+  2. units         whether ExecStart goes through turbofit-run
+  3. health        whether /health tells the truth about local vs hosted
+  4. runtime_state the declared rung is serving (or released on purpose)
+  5. strata        the app/engine version pair, when Strata is installed
+  6. engine_pins   the local engine store
+
+    turbofit-doctor            # diagnose
+    turbofit-doctor --json
+    turbofit-doctor --fix      # apply the safe repairs (units, restart)
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shutil
+import socket
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from turbofit_runtime import doctor, strata  # noqa: E402
+
+STATE_HOME = Path(os.environ.get("TURBOFIT_STATE_HOME") or (Path.home() / ".local/state"))
+RUNNER = ROOT / "scripts" / "turbofit-run"
+GATEWAY_URL = os.environ.get("TURBOFIT_GATEWAY_URL", "http://127.0.0.1:8091")
+UNIT_DIR = Path.home() / ".config" / "systemd" / "user"
+UNITS = ("turbofit-controller", "turbofit-gateway")
+
+
+def _python_candidates() -> list[str]:
+    found: list[str] = []
+    for candidate in (
+        os.environ.get("TURBOFIT_PYTHON"),
+        f"{os.environ.get('HERMES_HOME', '')}/hermes-agent/.venv/bin/python",
+        str(Path.home() / ".hermes/hermes-agent/.venv/bin/python"),
+        sys.executable,
+        shutil.which("python3"),
+    ):
+        if candidate and candidate not in found and Path(candidate).exists():
+            found.append(candidate)
+    return found
+
+
+def _can_import(python: str, module: str) -> bool:
+    try:
+        done = subprocess.run(
+            [python, "-c", f"import {module}"],
+            capture_output=True, timeout=25,
+        )
+        return done.returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def check_interpreter():
+    best = None
+    for candidate in _python_candidates():
+        has_hermes = _can_import(candidate, "hermes_cli")
+        has_psutil = _can_import(candidate, "psutil")
+        score = (has_hermes, has_psutil)
+        if best is None or score > best[0]:
+            best = (score, candidate, has_hermes, has_psutil)
+        if has_hermes and has_psutil:
+            break
+    if best is None:
+        return doctor.diagnose_interpreter(
+            python=None, has_psutil=False, has_hermes=False, adopted=0, total=10
+        ), None
+    (score, python, has_hermes, has_psutil) = best
+    adopted = 10 if (has_hermes and has_psutil) else (8 if has_hermes else 0)
+    return doctor.diagnose_interpreter(
+        python=python, has_psutil=has_psutil, has_hermes=has_hermes,
+        adopted=adopted, total=10,
+    ), python
+
+
+def check_units():
+    findings = []
+    for name in UNITS:
+        path = UNIT_DIR / f"{name}.service"
+        if not path.exists():
+            findings.append(doctor.Finding(
+                f"unit:{name}", doctor.WARN, "unit not installed",
+            ))
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if doctor.unit_needs_runner(text):
+            findings.append(doctor.Finding(
+                f"unit:{name}", doctor.WARN,
+                f"launches the script directly ({doctor.unit_exec_line(text)}); "
+                "adoption of Hermes' runtime depends on that interpreter",
+                repair="unit",
+            ))
+        else:
+            findings.append(doctor.Finding(
+                f"unit:{name}", doctor.OK, doctor.unit_exec_line(text) or "",
+            ))
+    return findings
+
+
+def check_health():
+    try:
+        with urllib.request.urlopen(f"{GATEWAY_URL}/health", timeout=8) as response:
+            payload = json.load(response)
+    except (urllib.error.URLError, OSError, ValueError):
+        payload = None
+    return doctor.classify_health(payload)
+
+
+def check_runtime_state():
+    state_path = STATE_HOME / "turbofit" / "runtime-state.json"
+    status_path = STATE_HOME / "turbofit" / "controller-status.json"
+    declared = None
+    released = False
+    try:
+        state = json.loads(state_path.read_text(encoding="utf-8-sig"))
+        route = (state.get("routes") or {}).get("main")
+        if isinstance(route, dict) and route.get("kind") == "local":
+            declared = {**route, "rung_id": state.get("rung_id")}
+    except (OSError, ValueError):
+        pass
+    try:
+        released = bool(json.loads(status_path.read_text(encoding="utf-8-sig")).get("released"))
+    except (OSError, ValueError):
+        pass
+    listening = False
+    if declared and declared.get("port"):
+        try:
+            with socket.create_connection(("127.0.0.1", int(declared["port"])), timeout=2):
+                listening = True
+        except OSError:
+            listening = False
+    return doctor.diagnose_runtime_state(
+        declared=declared, listening=listening, released=released
+    ), declared
+
+
+def _strata_unit_exec() -> str | None:
+    """Strata is often a systemd unit with its own venv, not a PATH binary."""
+    unit = UNIT_DIR / "turbofit-strata.service"
+    if not unit.is_file():
+        return None
+    line = doctor.unit_exec_line(unit.read_text(encoding="utf-8", errors="replace"))
+    if not line:
+        return None
+    for token in line.split():
+        if token.endswith(("strata", "strata.exe")) or "/strata" in token:
+            return token
+    return None
+
+
+def check_strata():
+    binary = shutil.which("strata") or _strata_unit_exec()
+    version = None
+    if binary:
+        try:
+            done = subprocess.run([binary, "--version"], capture_output=True,
+                                  text=True, timeout=15)
+            version = (done.stdout or done.stderr or "").strip().splitlines()[0][:120] or None
+        except (OSError, subprocess.SubprocessError):
+            version = None
+    found = __import__("re").findall(r"\d+\.\d+\.\d+", version or "")
+    problems = strata.version_problems(
+        found[0] if found else None, found[1] if len(found) > 1 else None
+    )
+    finding = doctor.diagnose_strata(installed=version, problems=problems)
+    if version is None and (UNIT_DIR / "turbofit-strata.service").is_file():
+        finding = doctor.Finding(
+            "strata", doctor.OK,
+            "installed as turbofit-strata.service (no strata binary on PATH)",
+        )
+    return finding
+
+
+def check_engine_pins():
+    store = Path.home() / ".local/share/turbofit/runtimes"
+    present = [p.name for p in store.iterdir()] if store.is_dir() else []
+    return doctor.diagnose_engine_pins(expected=None, present=present)
+
+
+def apply_repairs(diagnosis: doctor.Diagnosis, findings_to_units: bool) -> list[str]:
+    """Apply only the repairs that cannot lose data: rewrite units, restart units."""
+    done: list[str] = []
+    if findings_to_units:
+        for name in UNITS:
+            path = UNIT_DIR / f"{name}.service"
+            if not path.exists():
+                continue
+            text = path.read_text(encoding="utf-8", errors="replace")
+            if not doctor.unit_needs_runner(text):
+                continue
+            backup = path.with_suffix(f".service.bak.{int(time.time())}")
+            backup.write_text(text, encoding="utf-8")
+            path.write_text(doctor.rewrite_unit(text, str(RUNNER)), encoding="utf-8")
+            done.append(f"rewrote {path.name} to use turbofit-run (backup {backup.name})")
+        if done and shutil.which("systemctl"):
+            for command in (["daemon-reload"], ["restart", *UNITS]):
+                try:
+                    subprocess.run(["systemctl", "--user", *command], timeout=90)
+                except (OSError, subprocess.SubprocessError):
+                    pass
+            done.append("reloaded and restarted the user units")
+    return done
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--fix", action="store_true", help="apply safe repairs")
+    args = parser.parse_args(argv)
+
+    diagnosis = doctor.Diagnosis()
+    interpreter_finding, python = check_interpreter()
+    diagnosis.findings.append(interpreter_finding)
+    unit_findings = check_units()
+    diagnosis.findings.extend(unit_findings)
+    diagnosis.findings.append(check_health())
+    runtime_finding, _declared = check_runtime_state()
+    diagnosis.findings.append(runtime_finding)
+    diagnosis.findings.append(check_strata())
+    diagnosis.findings.append(check_engine_pins())
+
+    repairs: list[str] = []
+    if args.fix:
+        needs_units = any(f.name.startswith("unit:") and f.repair == "unit"
+                          for f in unit_findings)
+        repairs = apply_repairs(diagnosis, needs_units)
+        if repairs:
+            diagnosis.findings.append(doctor.Finding(
+                "repair", doctor.OK, "; ".join(repairs),
+            ))
+
+    if args.json:
+        payload = diagnosis.to_mapping()
+        payload["interpreter_used"] = python
+        payload["repairs_applied"] = repairs
+        print(json.dumps(payload, indent=2))
+    else:
+        print(f"TurboFit doctor — {doctor.summarise(diagnosis)}")
+        print()
+        for finding in diagnosis.findings:
+            mark = {"ok": "✓", "warn": "!", "fail": "✗"}.get(finding.status, "·")
+            print(f"  {mark} {finding.name:22} {finding.detail}")
+        if repairs:
+            print()
+            print("applied:")
+            for line in repairs:
+                print(f"  · {line}")
+        elif diagnosis.repairs() and not args.fix:
+            print()
+            print("safe repairs available — re-run with --fix:")
+            for finding in diagnosis.repairs():
+                print(f"  · {finding.name}: {finding.repair}")
+    return 1 if diagnosis.worst == doctor.FAIL else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -138,6 +139,10 @@ def test_llama_timings_produce_measured_ttft() -> None:
     }
 
 
+@pytest.mark.skipif(
+    sys.platform != "darwin",
+    reason="exercises the Darwin ps/vm_stat sampling fallback; on Linux /proc/<pid> satisfies the /proc branch first, so the fallback is unreachable",
+)
 def test_macos_resource_sampling_uses_unified_memory_and_ps(monkeypatch) -> None:
     import turbofit_runtime.benchmark_stage as stage
 

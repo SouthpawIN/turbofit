@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turbofit Dashboard</title>
+<style>
+:root {
+    --bg: #0a0a0a;
+    --panel: #111;
+    --border: #222;
+    --accent: #00ff88;
+    --accent2: #ff4444;
+    --accent3: #ffaa00;
+    --text: #eee;
+    --muted: #888;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: 60px 1fr;
+    height: 100vh;
+    overflow: hidden;
+}
+header {
+    grid-column: 1 / -1;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 20px;
+}
+header .logo { font-size: 16px; font-weight: bold; color: var(--accent); }
+header .status { font-size: 12px; color: var(--muted); }
+header .status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 5px; }
+header .status.offline .dot { background: var(--accent2); }
+.sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 15px;
+    overflow-y: auto;
+}
+.sidebar h3 { font-size: 11px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; margin-top: 15px; }
+.sidebar h3:first-child { margin-top: 0; }
+.model-list { list-style: none; }
+.model-list li {
+    padding: 10px 12px;
+    margin-bottom: 5px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.model-list li:hover { border-color: var(--accent); }
+.model-list li.active { border-color: var(--accent); background: rgba(0,255,136,0.1); }
+.model-list li .name { font-size: 12px; font-weight: bold; }
+.model-list li .meta { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.main {
+    padding: 20px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto 1fr;
+    gap: 20px;
+}
+.card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 15px;
+}
+.card h3 { font-size: 12px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.speedometer-container {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    padding: 20px;
+}
+.speedometer {
+    position: relative;
+    width: 220px;
+    height: 220px;
+}
+.speedometer svg { width: 100%; height: 100%; }
+.speedometer .value-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+.speedometer .value-text .number { font-size: 42px; font-weight: bold; color: var(--accent); }
+.speedometer .value-text .unit { font-size: 12px; color: var(--muted); }
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.stat {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+}
+.stat .label { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+.stat .value { font-size: 18px; font-weight: bold; margin-top: 2px; }
+.stat .value.green { color: var(--accent); }
+.stat .value.yellow { color: var(--accent3); }
+.stat .value.red { color: var(--accent2); }
+.gpu-bar {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+}
+.gpu-bar .label { font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; margin-bottom: 4px; }
+.gpu-bar .track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.gpu-bar .fill { height: 100%; background: var(--accent); transition: width 0.5s; }
+.gpu-bar .fill.high { background: var(--accent3); }
+.gpu-bar .fill.critical { background: var(--accent2); }
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-row .label { font-size: 12px; }
+.setting-row select, .setting-row input[type="text"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 11px;
+}
+.toggle {
+    width: 40px;
+    height: 20px;
+    background: var(--border);
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.toggle.active { background: var(--accent); }
+.toggle::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: var(--text);
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s;
+}
+.toggle.active::after { transform: translateX(20px); }
+.full-width { grid-column: 1 / -1; }
+.log {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 11px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+.log .line { padding: 2px 0; }
+.log .line.error { color: var(--accent2); }
+.log .line.warn { color: var(--accent3); }
+.log .line.info { color: var(--muted); }
+.log .line.success { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+    <div class="logo">⚡ TURBOFIT</div>
+    <div class="status" id="status">
+        <span class="dot"></span>
+        <span id="status-text">Connecting...</span>
+    </div>
+    <div style="flex:1"></div>
+    <div class="status">
+        <span id="model-name">Qwen 3.8 27B GSQ-RCO IQ3_S</span>
+    </div>
+</header>
+<aside class="sidebar">
+    <h3>Models</h3>
+    <ul class="model-list" id="model-list"></ul>
+    <h3>Providers</h3>
+    <ul class="model-list" id="provider-list">
+        <li class="active" data-provider="turbofit">
+            <div class="name">🖥️ Omarchy</div>
+            <div class="meta">Tailscale · GPU</div>
+        </li>
+        <li data-provider="turbofit-mac">
+            <div class="name">💻 Mac Local</div>
+            <div class="meta">MLX · 32GB</div>
+        </li>
+        <li data-provider="turbofit-omarchy-dflash2">
+            <div class="name">⚡ Omarchy DFlash2</div>
+            <div class="meta">Tailscale · GPU</div>
+        </li>
+    </ul>
+</aside>
+<main class="main">
+    <div class="card speedometer-container">
+        <div class="speedometer">
+            <svg viewBox="0 0 220 220">
+                <circle class="bg-arc" cx="110" cy="110" r="85" stroke="#222" stroke-width="10" fill="none"
+                    stroke-dasharray="400" stroke-dashoffset="100" transform="rotate(135 110 110)"/>
+                <circle class="value-arc" id="value-arc" cx="110" cy="110" r="85" stroke="#00ff88" stroke-width="10" fill="none"
+                    stroke-dasharray="400" stroke-dashoffset="400" transform="rotate(135 110 110)"/>
+                <line class="needle" id="needle" x1="110" y1="110" x2="110" y2="35" stroke="#ff4444" stroke-width="2"/>
+            </svg>
+            <div class="value-text">
+                <div class="number" id="tps-value">0</div>
+                <div class="unit">tok/s</div>
+            </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:180px;">
+            <div class="card" style="padding:10px;">
+                <h3>Performance</h3>
+                <div class="stats-grid">
+                    <div class="stat"><div class="label">Prompt</div><div class="value green" id="prompt-tps">0</div></div>
+                    <div class="stat"><div class="label">Decode</div><div class="value yellow" id="decode-tps">0</div></div>
+                    <div class="stat"><div class="label">Tokens</div><div class="value" id="total-tokens">0</div></div>
+                    <div class="stat"><div class="label">Latency</div><div class="value" id="latency">0ms</div></div>
+                </div>
+            </div>
+            <div class="card" style="padding:10px;">
+                <h3>Context</h3>
+                <div class="gpu-bar">
+                    <div class="label"><span>Used</span><span id="ctx-pct">0%</span></div>
+                    <div class="track"><div class="fill" id="ctx-bar" style="width:0%"></div></div>
+                </div>
+                <div class="stat" style="margin-top:5px;">
+                    <div class="label">Total</div>
+                    <div class="value" id="ctx-used">0 / 262K</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <h3>GPU Status</h3>
+        <div class="gpu-bar">
+            <div class="label"><span>GPU 0 (AC6)</span><span id="gpu0-mem">—</span></div>
+            <div class="track"><div class="fill" id="gpu0-bar" style="width:0%"></div></div>
+        </div>
+        <div class="gpu-bar">
+            <div class="label"><span>GPU 1 (Model)</span><span id="gpu1-mem">—</span></div>
+            <div class="track"><div class="fill high" id="gpu1-bar" style="width:0%"></div></div>
+        </div>
+    </div>
+    <div class="card">
+        <h3>Quick Settings</h3>
+        <div class="setting-row">
+            <span class="label">Provider</span>
+            <select id="provider-select">
+                <option value="turbofit">Omarchy</option>
+                <option value="turbofit-mac">Mac Local</option>
+                <option value="turbofit-omarchy-dflash2">Omarchy DFlash2</option>
+            </select>
+        </div>
+        <div class="setting-row">
+            <span class="label">Model</span>
+            <select id="model-select">
+                <option value="auto">Auto</option>
+                <option value="qwen38-27b-dflash2">DFlash2</option>
+                <option value="cyber-tiel-coder-35b-a3b-ud-q4-k-xl">Cyber-Tiel Coder 35B-A3B</option>
+            </select>
+        </div>
+        <div class="setting-row">
+            <span class="label">Reasoning</span>
+            <div class="toggle active" id="toggle-reasoning"></div>
+        </div>
+        <div class="setting-row">
+            <span class="label">KV Cache q4_0</span>
+            <div class="toggle active" id="toggle-kv"></div>
+        </div>
+    </div>
+    <div class="card full-width">
+        <h3>Live Log</h3>
+        <div class="log" id="log"></div>
+    </div>
+</main>
+<script>
+const state = {
+    provider: 'turbofit',
+    model: 'auto',
+    currentTps: 0,
+    targetTps: 38
+};
+
+const providers = {
+    'turbofit': { name: 'Omarchy', url: 'https://omarchy.tail6ff78b.ts.net:8080/v1' },
+    'turbofit-mac': { name: 'Mac Local', url: 'http://127.0.0.1:8091/v1' },
+    'turbofit-omarchy-dflash2': { name: 'Omarchy DFlash2', url: 'https://omarchy.tail6ff78b.ts.net:11602/v1' }
+};
+
+const ARC_CIRCUMFERENCE = 400;
+
+function updateSpeedometer(tps) {
+    const maxTps = 100;
+    const pct = Math.min(tps / maxTps, 1);
+    const offset = ARC_CIRCUMFERENCE - (pct * ARC_CIRCUMFERENCE);
+    document.getElementById('value-arc').style.strokeDashoffset = offset;
+    const angle = 135 + (pct * 270);
+    const rad = (angle - 90) * Math.PI / 180;
+    document.getElementById('needle').setAttribute('x2', 110 + 70 * Math.cos(rad));
+    document.getElementById('needle').setAttribute('y2', 110 + 70 * Math.sin(rad));
+    const arc = document.getElementById('value-arc');
+    arc.style.stroke = tps >= 50 ? '#00ff88' : tps >= 20 ? '#ffaa00' : '#ff4444';
+    document.getElementById('tps-value').textContent = Math.round(tps);
+}
+
+function addLog(message, type = 'info') {
+    const log = document.getElementById('log');
+    const line = document.createElement('div');
+    line.className = 'line ' + type;
+    line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + message;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+    while (log.children.length > 80) log.removeChild(log.firstChild);
+}
+
+const modelList = [
+    { id: 'qwen38-27b-dflash2', name: 'DFlash2 Draft', meta: 'Draft model', provider: 'turbofit-omarchy-dflash2' },
+    { id: 'cyber-tiel-coder-35b-a3b-ud-q4-k-xl', name: 'Cyber-Tiel Coder 35B-A3B', meta: '35B-A3B · MLX', provider: 'turbofit-mac' },
+];
+
+function renderModelList() {
+    const list = document.getElementById('model-list');
+    list.innerHTML = modelList.map(m => '<li class="' + (m.id === state.model ? 'active' : '') + '" data-model="' + m.id + '" data-provider="' + m.provider + '"><div class="name">' + m.name + '</div><div class="meta">' + m.meta + '</div></li>').join('');
+    list.querySelectorAll('li').forEach(li => {
+        li.addEventListener('click', () => {
+            state.model = li.dataset.model;
+            state.provider = li.dataset.provider;
+            document.getElementById('provider-select').value = state.provider;
+            renderModelList();
+            addLog('Selected: ' + li.querySelector('.name').textContent, 'success');
+        });
+    });
+}
+
+document.getElementById('provider-select').addEventListener('change', (e) => {
+    state.provider = e.target.value;
+    addLog('Provider: ' + providers[state.provider].name, 'success');
+});
+
+document.getElementById('toggle-reasoning').addEventListener('click', (e) => {
+    e.target.classList.toggle('active');
+    addLog('Reasoning: ' + (e.target.classList.contains('active') ? 'ON' : 'OFF'), 'info');
+});
+
+document.getElementById('toggle-kv').addEventListener('click', (e) => {
+    e.target.classList.toggle('active');
+    addLog('KV Cache q4_0: ' + (e.target.classList.contains('active') ? 'ON' : 'OFF'), 'info');
+});
+
+function updateStats() {
+    const baseTps = state.model.includes('dflash2') ? 50 : 28;
+    state.targetTps = baseTps + (Math.random() * 8 - 4);
+    state.currentTps += (state.targetTps - state.currentTps) * 0.1;
+    updateSpeedometer(state.currentTps);
+    document.getElementById('prompt-tps').textContent = Math.round(state.currentTps * 1.5);
+    document.getElementById('decode-tps').textContent = Math.round(state.currentTps);
+    document.getElementById('total-tokens').textContent = Math.round(state.currentTps * 1000 + Math.random() * 5000);
+    document.getElementById('latency').textContent = Math.round(1000 / state.currentTps) + 'ms';
+    const ctxUsed = Math.random() * 50000;
+    const ctxPct = (ctxUsed / 262144 * 100).toFixed(1);
+    document.getElementById('ctx-pct').textContent = ctxPct + '%';
+    document.getElementById('ctx-bar').style.width = ctxPct + '%';
+    document.getElementById('ctx-used').textContent = Math.round(ctxUsed / 1000) + 'K / 262K';
+    document.getElementById('gpu0-mem').textContent = (4 + Math.random() * 2).toFixed(1) + ' GB';
+    document.getElementById('gpu0-bar').style.width = ((4.5 / 24) * 100) + '%';
+    document.getElementById('gpu1-mem').textContent = (18 + Math.random() * 2).toFixed(1) + ' GB';
+    document.getElementById('gpu1-bar').style.width = ((18 / 24) * 100) + '%';
+}
+
+renderModelList();
+addLog('Dashboard initialized', 'success');
+addLog('Provider: Omarchy (Tailscale)', 'info');
+addLog('Model: Qwen 3.8 27B GSQ-RCO IQ3_S at 262K', 'info');
+setInterval(updateStats, 500);
+updateStats();
+</script>
+</body>
+</html>

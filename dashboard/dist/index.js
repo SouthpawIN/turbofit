@@ -25,6 +25,17 @@
     return h(Badge, { className: ok ? "tf-ok" : "tf-muted" }, ok ? yes : no);
   }
 
+  const FIT_STATUS_LABELS = {
+    "missing-artifacts": "needs downloads",
+    "engine-unsupported": "engine unsupported",
+    "no-measurements": "no measurements yet",
+    unresolvable: "cannot be resolved",
+  };
+
+  function statusLabel(status) {
+    return FIT_STATUS_LABELS[status] || status || "unknown";
+  }
+
   function Field(props) {
     return h("div", { className: "tf-field" },
       h(Label, { htmlFor: props.id }, props.label),
@@ -51,6 +62,8 @@
     const [tournaments, setTournaments] = useState(null);
     const [hardwareTiers, setHardwareTiers] = useState(null);
     const [auxiliaryTiers, setAuxiliaryTiers] = useState(null);
+    const [leaderboard, setLeaderboard] = useState(null);
+    const [fit, setFit] = useState(null);
     const [multimodal, setMultimodal] = useState(null);
     const [multimodalSelections, setMultimodalSelections] = useState({});
     const [primary, setPrimary] = useState(false);
@@ -63,10 +76,11 @@
     const [servingBackend, setServingBackend] = useState("adaptive");
     const [baseUrl, setBaseUrl] = useState("http://127.0.0.1:8091/v1");
     const [publishTailnet, setPublishTailnet] = useState(false);
-    const [installSirvir, setInstallSirvir] = useState(true);
+    const [installTurboSouth, setInstallTurboSouth] = useState(true);
     const [installDesktop, setInstallDesktop] = useState(true);
     const [installLemonade, setInstallLemonade] = useState(false);
     const [installNative, setInstallNative] = useState(false);
+    const [installFreeToken, setInstallFreeToken] = useState(false);
     const [dashboardLocalPort, setDashboardLocalPort] = useState("9127");
     const [providerLocalPort, setProviderLocalPort] = useState("8091");
     const [dashboardHttpsPort, setDashboardHttpsPort] = useState("9444");
@@ -77,7 +91,7 @@
     const load = useCallback(async function () {
       setMessage("");
       try {
-        const [nextStatus, nextCombinations, nextBackends, nextTournaments, nextHardwareTiers, nextAuxiliaryTiers, nextMultimodal] = await Promise.all([
+        const [nextStatus, nextCombinations, nextBackends, nextTournaments, nextHardwareTiers, nextAuxiliaryTiers, nextMultimodal, nextLeaderboard, nextFit] = await Promise.all([
           SDK.fetchJSON("/api/plugins/turbofit/status"),
           SDK.fetchJSON("/api/plugins/turbofit/combinations"),
           SDK.fetchJSON("/api/plugins/turbofit/backends"),
@@ -85,6 +99,8 @@
           SDK.fetchJSON("/api/plugins/turbofit/hardware-tiers"),
           SDK.fetchJSON("/api/plugins/turbofit/auxiliary-tiers"),
           SDK.fetchJSON("/api/plugins/turbofit/multimodal"),
+          SDK.fetchJSON("/api/plugins/turbofit/leaderboard"),
+          SDK.fetchJSON("/api/plugins/turbofit/fit"),
         ]);
         setStatus(nextStatus);
         const exact = nextCombinations.combinations || [];
@@ -93,6 +109,8 @@
         setTournaments(nextTournaments);
         setHardwareTiers(nextHardwareTiers);
         setAuxiliaryTiers(nextAuxiliaryTiers);
+        setLeaderboard(nextLeaderboard);
+        setFit(nextFit);
         setMultimodal(nextMultimodal);
         const selectedModalities = Object.assign({}, nextMultimodal.selected || {});
         ["image", "video", "music", "tts", "stt"].forEach((modality) => {
@@ -154,10 +172,11 @@
             primary, fallback, fallback_chain: fallbackChain, multimodal: multimodalSelections,
             profile: selectionMode === "auto" ? "auto" : selectedCombination.profile, base_url: baseUrl,
             publish_tailnet: publishTailnet,
-            install_sirvir: installSirvir,
+            install_turbosouth: installTurboSouth,
             install_desktop: installDesktop,
             install_lemonade: installLemonade,
             install_native: installNative,
+            install_freetoken: installFreeToken,
             dashboard_local_port: Number(dashboardLocalPort),
             provider_local_port: Number(providerLocalPort),
             dashboard_https_port: Number(dashboardHttpsPort),
@@ -195,6 +214,7 @@
           statusBadge(Boolean(tailnet.connected), "Tailnet connected", "Tailnet unavailable"),
           statusBadge(Boolean(value(status, "provider.registered", false)), "Provider registered", "Not registered"),
           statusBadge(Boolean(value(backends, "lemonade.available", false)), "Lemonade online", "Lemonade optional"),
+          statusBadge(Boolean(value(backends, "freetoken.available", false)), "FreeToken candidate online", "FreeToken candidate gated"),
         ),
       ),
 
@@ -207,7 +227,7 @@
             h("div", { className: "tf-two" },
               h(Field, {
                 id: "tf-selection-mode", label: "Runtime selection",
-                help: "Auto chooses the best evidence-backed fit. Manual exposes every exact validated combination.",
+                help: "Auto chooses an exact-hardware winner. Manual exposes physical-fit lanes and marks candidates that require an on-box benchmark.",
               },
                 h(Select, { id: "tf-selection-mode", value: selectionMode, onChange: (event) => setSelectionMode(event.target.value) },
                   h(SelectOption, { value: "auto" }, "Auto — recommended"),
@@ -267,7 +287,9 @@
                 h("strong", null, selectedCombination.profile),
                 h("p", { className: "tf-help" }, selectedCombination.main_quantization + " main · " + selectedCombination.aux_quantization + " auxiliary"),
                 h("p", { className: "tf-help" },
-                  selectedCombination.min_tps + " tok/s · " + selectedCombination.aux_mode + " · " + selectedCombination.confidence
+                  selectedCombination.validation_required
+                    ? "benchmark required · " + selectedCombination.aux_mode + " · " + selectedCombination.confidence
+                    : selectedCombination.min_tps + " tok/s · " + selectedCombination.aux_mode + " · " + selectedCombination.confidence
                 ),
                 h("p", { className: "tf-help" }, selectedCombination.fit_reason),
               ) : null,
@@ -328,13 +350,18 @@
             h("div", { className: "tf-toggles" },
               h(Toggle, { checked: primary, onChange: setPrimary, label: "Use Turbofit as primary provider (model: auto)" }),
               h(Toggle, { checked: fallback, onChange: setFallback, label: "Add Turbofit to Hermes fallback providers" }),
-              h(Toggle, { checked: installSirvir, onChange: setInstallSirvir, label: "Install Sirvir customer service profile" }),
+              h(Toggle, { checked: installTurboSouth, onChange: setInstallTurboSouth, label: "Install or update GitHub-current TurboSouth customer service" }),
               h(Toggle, { checked: installDesktop, onChange: setInstallDesktop, label: "Install native Hermes Desktop Turbofit page" }),
               servingBackend === "adaptive" ? h(Toggle, {
                 checked: installNative,
                 onChange: setInstallNative,
                 label: "Build or check the pinned native llama.cpp runtime",
               }) : null,
+              h(Toggle, {
+                checked: installFreeToken,
+                onChange: setInstallFreeToken,
+                label: "Install FreeToken candidate (NVIDIA, CUDA 13+, text-only MoE)",
+              }),
               servingBackend === "lemonade" ? h(Toggle, {
                 checked: installLemonade,
                 onChange: setInstallLemonade,
@@ -356,7 +383,7 @@
             ),
             h("div", { className: "tf-actions" },
               h(Button, { onClick: save, disabled: busy }, busy ? "Applying…" : "Apply configuration"),
-              h(Button, { variant: "outline", onClick: load, disabled: busy }, "Refresh"),
+              h(Button, { variant: "outline", onClick: load, disabled: busy }, "Run TurboFit Check"),
             ),
           ),
         ),
@@ -415,6 +442,25 @@
         ),
 
         h(Card, { className: "tf-card tf-span-2" },
+          h(CardHeader, null, h(CardTitle, null, "Fit · what to run on this machine")),
+          h(CardContent, null,
+            h("p", { className: "tf-help" }, value(fit, "summary", "Checking this machine…")),
+            h("dl", { className: "tf-stats" },
+              value(fit, "tiers", []).map((tier) => h("div", { key: tier.hardware_tier_gb },
+                h("dt", null,
+                  tier.hardware_tier_gb + " GB · " +
+                  (tier.status === "ready" ? "ready" : statusLabel(tier.status))
+                ),
+                h("dd", null, tier.message),
+              )),
+            ),
+            value(fit, "cpu.statement", null)
+              ? h("p", { className: "tf-help" }, value(fit, "cpu.statement", ""))
+              : null,
+          ),
+        ),
+
+        h(Card, { className: "tf-card tf-span-2" },
           h(CardHeader, null, h(CardTitle, null, "Hardware tiers · speed versus intelligence")),
           h(CardContent, null,
             h("p", { className: "tf-help" },
@@ -435,6 +481,30 @@
                     (shown ? shown.configuration_id : "no physical winner") +
                     " · intelligence " + intel + " · " + tps + " tok/s" +
                     (balanced ? " · balanced " + balanced.configuration_id : "")
+                  ),
+                );
+              }),
+            ),
+          ),
+        ),
+
+        h(Card, { className: "tf-card tf-span-2" },
+          h(CardHeader, null, h(CardTitle, null, "Leaderboard · best model + engines per tier")),
+          h(CardContent, null,
+            h("p", { className: "tf-help" },
+              "Measured winner where the tier is physically validated; otherwise the top catalog candidate. Engines resolve by exact slug match against the engine/serve matrix — unmatched models default to native."
+            ),
+            h("dl", { className: "tf-stats" },
+              value(leaderboard, "tiers", []).map((tier) => {
+                const w = tier.winner || {};
+                const tps = w.measured_tps != null ? w.measured_tps.toFixed(2) + " tok/s" : "tps pending";
+                const engines = (tier.engines || []).join(", ") + (tier.engine_source === "default" ? " (default)" : "");
+                return h("div", { key: tier.tier_id },
+                  h("dt", null, tier.capacity_gb + " GB · " + (tier.status || "unknown")),
+                  h("dd", null,
+                    (w.model_name || w.model || "—") + " · " + (w.quantization || "—") +
+                    " · " + (w.context != null ? Number(w.context).toLocaleString() + " ctx" : "ctx —") +
+                    " · " + tps + " · " + engines
                   ),
                 );
               }),

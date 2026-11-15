@@ -28,6 +28,7 @@ class ModelVariant:
     roles: tuple[str, ...]
     upstream_source: str | None = None
     upstream_revision: str | None = None
+    supported_contexts: tuple[int, ...] = CONTEXTS
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> "ModelVariant":
@@ -35,7 +36,7 @@ class ModelVariant:
             "id", "name", "family", "source", "revision", "artifact", "quantization",
             "vision", "moe", "runtime_features", "roles",
         }
-        optional = {"upstream_source", "upstream_revision"}
+        optional = {"upstream_source", "upstream_revision", "supported_contexts"}
         if not required <= set(value) or set(value) - required - optional:
             raise ValueError("model variant fields do not match catalog schema")
         item = cls(
@@ -52,6 +53,7 @@ class ModelVariant:
             roles=tuple(value["roles"]),
             upstream_source=str(value["upstream_source"]) if value.get("upstream_source") else None,
             upstream_revision=str(value["upstream_revision"]) if value.get("upstream_revision") else None,
+            supported_contexts=tuple(value.get("supported_contexts", CONTEXTS)),
         )
         item.validate()
         return item
@@ -78,6 +80,8 @@ class ModelVariant:
             raise ValueError(f"model {self.id} has invalid roles")
         if len(self.runtime_features) != len(set(self.runtime_features)):
             raise ValueError(f"model {self.id} repeats a runtime feature")
+        if not self.supported_contexts or not set(self.supported_contexts) <= set(CONTEXTS):
+            raise ValueError(f"model {self.id} has invalid supported contexts")
 
 
 @dataclass(frozen=True)
@@ -110,9 +114,16 @@ class ModelCatalog:
         if self.contexts != CONTEXTS:
             raise ValueError("catalog must expose 64K, 128K, 262K, and 1M contexts")
         by_id = {item.id: item for item in self.models}
-        if not self.auxiliary_options or self.auxiliary_options[-1] != "auto":
-            raise ValueError("auxiliary options must end with auto")
-        for model_id in self.auxiliary_options[:-1]:
+        if not self.auxiliary_options:
+            raise ValueError("catalog must name at least one auxiliary option")
+        if len(set(self.auxiliary_options)) != len(self.auxiliary_options):
+            raise ValueError("auxiliary options must be unique")
+        # `auto` is a runtime routing mode (share the main process), not a
+        # model, so it must never become a swept matrix column. Only concrete
+        # auxiliary models belong here.
+        for model_id in self.auxiliary_options:
+            if model_id == "auto":
+                raise ValueError("auxiliary options are concrete models; auto is a runtime mode")
             if model_id not in by_id or "aux" not in by_id[model_id].roles:
                 raise ValueError(f"invalid auxiliary option: {model_id}")
         if any(not set(item.roles) & {"main", "aux"} for item in self.models):
@@ -129,7 +140,7 @@ def build_configuration_matrix(catalog: ModelCatalog) -> dict[str, Any]:
     rows = []
     for main in catalog.main_models:
         for aux in catalog.auxiliary_options:
-            for context in catalog.contexts:
+            for context in main.supported_contexts:
                 rows.append({
                     "id": f"{main.id}--{aux}--{_context_slug(context)}",
                     "main": main.id,

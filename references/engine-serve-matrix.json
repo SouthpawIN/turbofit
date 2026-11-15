@@ -1,0 +1,276 @@
+{
+  "schema": "turbofit.engine-serve-matrix/v1",
+  "researched_at": "2026-08-25",
+  "updated": "2026-10-19",
+  "note": "General preference order is a fallback. Per-model `priority` (best-first) is authoritative; `fit_ladders` applies class awareness (apple/darwin, GPU, unified) on top of it. `probe_order` is the TurboFit Check registry order; per-engine runtime fields (display_name, openai_port, install_hint, detect, endpoint_discoverable) make engine registration a data-only edit.",
+  "preference_order": [
+    "turbohaul-manager",
+    "llama.cpp",
+    "mlx",
+    "sglang",
+    "vllm",
+    "freetoken",
+    "strata",
+    "prism-llama.cpp",
+    "salt-core",
+    "saliency"
+  ],
+  "probe_order": [
+    "llama.cpp",
+    "mlx",
+    "sglang",
+    "vllm",
+    "freetoken",
+    "turbohaul-manager",
+    "strata",
+    "prism-llama.cpp",
+    "salt-core",
+    "saliency"
+  ],
+  "engines": {
+    "llama.cpp": {
+      "serves": "GGUF via llama-server OpenAI /v1",
+      "os": ["linux", "windows", "darwin"],
+      "backends": ["cuda", "rocm", "metal", "vulkan", "cpu"],
+      "status": "released",
+      "display_name": "llama.cpp",
+      "openai_port": 8080,
+      "install_hint": "Install Turbofit's pinned native llama.cpp runtime.",
+      "detect": {"commands": ["llama-server", "llama-server.exe"], "modules": []},
+      "maple_gguf": "stamsam/llama.cpp prism fork only; mainline cannot load maple or TQ2_0 type 35",
+      "qwen38_gguf": "pinned mainline llama.cpp",
+      "cyber_tiel_gguf": "pinned mainline llama.cpp with --cpu-moe"
+    },
+    "mlx": {
+      "serves": "MLX weights via mlx-lm or mlx-lm-deepgrove",
+      "os": ["darwin"],
+      "backends": ["metal"],
+      "status": "released",
+      "display_name": "MLX",
+      "openai_port": 8081,
+      "install_hint": "Install mlx-lm on Apple Silicon macOS.",
+      "detect": {"commands": ["mlx_lm.server"], "modules": ["mlx_lm"]},
+      "maple_gguf": "incompatible; use deepgrove/maple-preview-2bit-mlx with mlx-lm-deepgrove --flash-head",
+      "qwen38_gguf": "incompatible; use OrcaRouter Uncensored MLX 4/6/8-bit",
+      "cyber_tiel_gguf": "incompatible"
+    },
+    "sglang": {
+      "serves": "HuggingFace / FP8 / some standard GGUF via sglang.launch_server",
+      "os": ["linux"],
+      "backends": ["cuda", "rocm"],
+      "status": "released",
+      "display_name": "SGLang",
+      "openai_port": 30000,
+      "install_hint": "Install SGLang on native Linux or inside WSL.",
+      "detect": {"commands": ["sglang"], "modules": ["sglang"]},
+      "windows": "WSL only",
+      "maple_gguf": "incompatible; maple arch is not in SGLang",
+      "qwen38_gguf": "prefer Qwen/Qwen3.8-27B HF; standard Qwen GGUF is optional and unproven here",
+      "cyber_tiel_gguf": "unproven"
+    },
+    "vllm": {
+      "serves": "HuggingFace / FP8 / NVFP4 via vllm serve",
+      "os": ["linux", "darwin"],
+      "backends": ["cuda", "rocm", "metal"],
+      "status": "released",
+      "display_name": "vLLM",
+      "openai_port": 8000,
+      "install_hint": "Install vLLM on Linux/WSL or vLLM-Metal on Apple Silicon.",
+      "detect": {"commands": ["vllm"], "modules": ["vllm"]},
+      "windows": "WSL only",
+      "maple_gguf": "incompatible; maple arch is not in vLLM",
+      "qwen38_gguf": "prefer Qwen/Qwen3.8-27B or NVFP4/FP8 recipes, not GSQ-RCO GGUF",
+      "cyber_tiel_gguf": "unproven"
+    },
+    "freetoken": {
+      "serves": "HF safetensors or FTW MoE via ft on Linux x86_64 CUDA 13 / driver r580+",
+      "os": ["linux"],
+      "backends": ["cuda"],
+      "status": "released",
+      "display_name": "FreeToken",
+      "openai_port": 1919,
+      "install_hint": "Install freetoken[accel] on Linux x86_64 with CUDA 13.",
+      "detect": {"commands": ["ft"], "modules": ["freetoken"]},
+      "windows": "WSL only",
+      "maple_gguf": "incompatible; FreeToken does not load maple GGUF",
+      "qwen38_gguf": "incompatible as GGUF; only if a supported HF MoE recipe exists",
+      "cyber_tiel_gguf": "candidate only after an exact FreeToken recipe"
+    },
+    "turbohaul-manager": {
+      "serves": "OpenAI/Ollama-compatible manager over a llama.cpp backend",
+      "os": ["linux"],
+      "backends": ["cuda"],
+      "status": "released",
+      "display_name": "Turbohaul Manager",
+      "openai_port": 11401,
+      "install_hint": "Install MrTrenchTrucker/turbohaul-manager from its pinned GitHub release.",
+      "detect": {"commands": ["turbohaul-manager"], "modules": ["turbohaul"]},
+      "endpoint_discoverable": true,
+      "source": "https://github.com/MrTrenchTrucker/turbohaul-manager",
+      "ref": "v0.7.0",
+      "revision": "905b4506883313b17e1d4e0480a8e6ca6c63399b",
+      "maple_gguf": "only if the managed llama.cpp binary is the Maple fork",
+      "qwen38_gguf": "preferred manager over pinned mainline llama.cpp",
+      "cyber_tiel_gguf": "preferred manager over pinned mainline llama.cpp"
+    },
+    "strata": {
+      "serves": "Qwen3.8 Flash Next (125B MoE) via expert tiering: hot experts on GPU, all in RAM, n-gram on SSD",
+      "os": ["linux"],
+      "backends": ["cuda", "rocm"],
+      "status": "released",
+      "display_name": "Strata",
+      "openai_port": 8082,
+      "install_hint": "Install Strata with scripts/install-strata-runtime (Qwen3.8 Flash Next 125B MoE).",
+      "detect": {"commands": [], "modules": []},
+      "endpoint_discoverable": true,
+      "source": "https://github.com/Niko1221/Strata",
+      "ref": "0.1.39",
+      "revision": "",
+      "maple_gguf": "incompatible",
+      "qwen38_gguf": "incompatible; Strata serves Flash Next, not Qwen 3.8 27B",
+      "cyber_tiel_gguf": "incompatible",
+      "flash_next": "IQ2_XS recommended; 12-24 GB VRAM + 64 GB RAM; 60-95 tok/s on RTX 5070"
+    },
+    "prism-llama.cpp": {
+      "serves": "Ternary Bonsai 2 27B / Underdog 27B via PrismML llama.cpp fork (CUDA, Metal, CPU)",
+      "os": ["linux", "windows", "darwin"],
+      "backends": ["cuda", "rocm", "metal", "vulkan", "cpu"],
+      "status": "released",
+      "display_name": "Prism llama.cpp",
+      "openai_port": 8083,
+      "install_hint": "Install PrismML-Eng/llama.cpp fork for Ternary Bonsai 2 (CUDA, Metal, CPU).",
+      "detect": {"commands": ["llama-server"], "modules": []},
+      "endpoint_discoverable": true,
+      "source": "https://github.com/PrismML-Eng/llama.cpp",
+      "ref": "",
+      "revision": "",
+      "maple_gguf": "incompatible",
+      "qwen38_gguf": "incompatible; Prism fork serves Ternary Bonsai 2 / Underdog, not Qwen 3.8 27B",
+      "cyber_tiel_gguf": "incompatible",
+      "bonsai2_gguf": "PTQ1_0 (5.95 GB) or PQ2_0 (7.21 GB); 262K context; ~47 tok/s on M5 Max"
+    },
+    "salt-core": {
+      "serves": "Dense 27B via KV-cache offload to host RAM + expert/weight disk streaming from HDD + n-gram 262K context",
+      "os": ["linux"],
+      "backends": ["cuda"],
+      "status": "candidate",
+      "display_name": "SALT Core",
+      "openai_port": 8084,
+      "install_hint": "Candidate engine (qualification gate pending): 4 GB VRAM / 16 GB RAM / HDD box; derived from Strata n-gram + llama.cpp --split-mode row + mmap.",
+      "detect": {"commands": [], "modules": []},
+      "endpoint_discoverable": true,
+      "model_target": "dense 27B (GSQ-RCO, Bonsai 2, Underdog)",
+      "min_vram_gb": 4,
+      "note": "Qualification gate: 4 GB VRAM / 16 GB RAM / HDD box. Pass = 4-8 tok/s sustained, 262K context, <2% hallucination delta vs 24 GB, single-process launch. Target 8-12 tok/s once KV offload is tuned.",
+      "source": "derived: Strata n-gram + llama.cpp --split-mode row + mmap",
+      "upstream": {
+        "engine": "C99 SALT engine (State Assured Latent-Trasition)",
+        "repo": "https://github.com/SouthpawIN/SALT-core",
+        "pinned_commit": "407675aab4fc3f8cbb03206386a45b92b00e78a4",
+        "private_pin_revision": "ce0363260a488c96b951b4d826a188e1014575d4",
+        "export_pin_date": "2026-10-02",
+        "manifest": "CORE-FILES.sha256",
+        "paper": "SALT: Reusable Computation for Stateful Language-Model Inference (https://zenodo.org/records/23111764)"
+      },
+      "gate": {
+        "kind": "inference-qualification",
+        "checks": [
+          {"id": "G1", "name": "source-provenance", "kind": "static"},
+          {"id": "G2", "name": "host-build", "kind": "host"},
+          {"id": "G3", "name": "smoke-suite", "kind": "host"},
+          {"id": "G4", "name": "server-contract", "kind": "static-or-live"},
+          {"id": "G5", "name": "inference-qualification", "kind": "live"}
+        ],
+        "repo": {
+          "url": "https://github.com/SouthpawIN/SALT-core",
+          "pinned_commit": "407675aab4fc3f8cbb03206386a45b92b00e78a4",
+          "manifest": "CORE-FILES.sha256"
+        },
+        "pass_criteria": {
+          "sustained_tps_min": 4,
+          "expected_band_tps": [4, 8],
+          "target_band_tps": [8, 12],
+          "context_tokens": 262144,
+          "hallucination_delta_max_pct": 2,
+          "launch": "single-process"
+        }
+      }
+    },
+    "saliency": {
+      "serves": "Dense 27B via dynamic token pruning + KV offload + disk streaming (candidate)",
+      "os": ["linux"],
+      "backends": ["cuda"],
+      "status": "candidate",
+      "display_name": "Saliency",
+      "openai_port": 8085,
+      "install_hint": "Candidate engine (qualification gate pending): requires a qualified 27B pruning checkpoint + custom pruning kernels.",
+      "detect": {"commands": [], "modules": []},
+      "endpoint_discoverable": true,
+      "model_target": "dense 27B",
+      "min_vram_gb": 4,
+      "note": "Target 40-80 tok/s on 4 GB VRAM. Requires a verified 27B pruning checkpoint + custom pruning kernels (SGLang-style). Not runnable until a checkpoint is qualified."
+    }
+  },
+  "pairs": {
+    "maple-preview-tq2": {
+      "artifact": "GGUF TQ2_0",
+      "priority": ["llama.cpp", "turbohaul-manager"],
+      "eligible_engines": ["llama.cpp", "turbohaul-manager"],
+      "apple_alternate": "mlx",
+      "ineligible_engines": ["sglang", "vllm", "freetoken", "strata", "prism-llama.cpp", "salt-core", "saliency"]
+    },
+    "cyber-tiel-coder-35b-a3b-ud-q4-k-xl": {
+      "artifact": "GGUF MoE (UD-Q4_K_XL)",
+      "priority": ["llama.cpp", "turbohaul-manager"],
+      "eligible_engines": ["llama.cpp", "turbohaul-manager"],
+      "apple_alternate": "mlx",
+      "hf_engines": ["vllm", "sglang"],
+      "family": ["cyber-tiel-coder-35b-a3b-ud-q3-k-l", "cyber-tiel-coder-35b-a3b-ud-q4-k-l", "cyber-tiel-coder-35b-a3b-ud-q4-k-xl", "cyber-tiel-coder-35b-a3b-ud-q5-k-xl", "cyber-tiel-coder-35b-a3b-ud-q6-k-xl"]
+    },
+    "qwen3-8-27b-gsq-rco-iq3xxs": {
+      "artifact": "GGUF GSQ-RCO",
+      "priority": ["turbohaul-manager", "llama.cpp", "vllm", "sglang"],
+      "eligible_engines": ["turbohaul-manager", "llama.cpp"],
+      "apple_alternate": "mlx",
+      "hf_engines": ["vllm", "sglang"],
+      "low_vram_dense_candidates": ["salt-core", "saliency"]
+    },
+    "qwen3-8-27b-gsq-rco-iq3s": {
+      "artifact": "GGUF GSQ-RCO",
+      "priority": ["turbohaul-manager", "llama.cpp", "vllm", "sglang"],
+      "eligible_engines": ["turbohaul-manager", "llama.cpp"],
+      "apple_alternate": "mlx",
+      "hf_engines": ["vllm", "sglang"],
+      "low_vram_dense_candidates": ["salt-core", "saliency"]
+    },
+    "qwen3-8-flash-next-strata": {
+      "artifact": "Strata engine (expert tiering), IQ2_XS",
+      "priority": ["strata"],
+      "eligible_engines": ["strata"],
+      "darwin_alternate": ["mlx", "llama.cpp"],
+      "darwin_status": "candidate; no released macOS engine for Flash Next yet",
+      "ineligible_engines": ["mlx", "sglang", "vllm", "freetoken", "turbohaul-manager", "prism-llama.cpp", "salt-core", "saliency"]
+    },
+    "ternary-bonsai-2-27b-ptq1": {
+      "artifact": "GGUF Ternary PTQ1_0",
+      "priority": ["prism-llama.cpp"],
+      "eligible_engines": ["prism-llama.cpp"],
+      "low_vram_dense_candidates": ["salt-core", "saliency"],
+      "ineligible_engines": ["llama.cpp", "mlx", "sglang", "vllm", "freetoken", "turbohaul-manager", "strata"]
+    },
+    "ternary-bonsai-2-27b-pq2": {
+      "artifact": "GGUF Ternary PQ2_0",
+      "priority": ["prism-llama.cpp"],
+      "eligible_engines": ["prism-llama.cpp"],
+      "low_vram_dense_candidates": ["salt-core", "saliency"],
+      "ineligible_engines": ["llama.cpp", "mlx", "sglang", "vllm", "freetoken", "turbohaul-manager", "strata"]
+    },
+    "underdog-27b-pq2": {
+      "artifact": "GGUF Ternary PQ2_0",
+      "priority": ["prism-llama.cpp"],
+      "eligible_engines": ["prism-llama.cpp"],
+      "low_vram_dense_candidates": ["salt-core", "saliency"],
+      "ineligible_engines": ["llama.cpp", "mlx", "sglang", "vllm", "freetoken", "turbohaul-manager", "strata"]
+    }
+  }
+}

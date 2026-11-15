@@ -108,6 +108,23 @@ def test_topology_constraint_distinguishes_one_48_from_two_24() -> None:
     assert tuple(item.profile.id for item in result.eligible) == ("two-24",)
 
 
+def test_reported_heap_just_under_card_size_still_matches_class() -> None:
+    # A 32 GiB card (Battlemage B70) exposes a device-local heap of 32656 MiB
+    # (31.89 GiB): ~112 MiB under the binary 32768 MiB boundary because the
+    # driver/runtime reserves memory. A fixed 16 MiB tolerance mis-classified
+    # a 2x32 box as 2x24; a class-scaled tolerance must keep it in 2x32.
+    two_thirty_two = profile("two-32", topology="2x32")
+    two_twenty_four = profile("two-24", topology="2x24")
+
+    b70_box = hardware(32656, 32656)
+    assert hardware_satisfies(b70_box, two_thirty_two.hardware)
+    # The lower class still matches too; selection ranks the higher class.
+    assert hardware_satisfies(b70_box, two_twenty_four.hardware)
+
+    # A card genuinely below the class (29 GiB usable) must NOT match 2x32.
+    assert not hardware_satisfies(hardware(29696, 29696), two_thirty_two.hardware)
+
+
 def test_portable_llama_cpp_profile_matches_cuda_and_metal_backends() -> None:
     portable = profile("portable-24", topology="1x24")
     portable = replace(

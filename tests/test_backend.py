@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import subprocess
 from types import SimpleNamespace
 
@@ -92,6 +93,10 @@ def test_campaign_lease_stops_and_restores_only_previously_active_services(
     backend.release_campaign_lease()
     assert not (tmp_path / "campaign-lease.json").exists()
 
+    if os.name == "nt":
+        assert calls == []
+        return
+
     assert ["systemctl", "--user", "stop", "turbofit-controller.service"] in calls
     assert ["systemctl", "--user", "start", "turbofit-controller.service"] in calls
     assert not any(
@@ -102,6 +107,9 @@ def test_campaign_lease_stops_and_restores_only_previously_active_services(
 
 
 def test_failed_controller_suspend_removes_campaign_marker(tmp_path: Path, monkeypatch) -> None:
+    if os.name == "nt":
+        pytest.skip("systemctl lease behavior is Linux-only")
+
     def fake_run(command, **kwargs):
         if command[:4] == ["systemctl", "--user", "is-active", "--quiet"]:
             return SimpleNamespace(returncode=0)
@@ -133,3 +141,58 @@ def test_wait_port_reusable_requires_three_clear_samples(tmp_path: Path, monkeyp
     monkeypatch.setattr("turbofit_runtime.backend.time.sleep", lambda seconds: None)
 
     backend._wait_port_reusable(11605, timeout_s=1)
+
+
+def test_windows_stop_kills_owned_process_tree(tmp_path: Path, monkeypatch) -> None:
+    calls = []
+
+    class FakeProcess:
+        pid = 4242
+
+        def poll(self):
+            return None
+
+        def wait(self, timeout=None):
+            return 0
+
+    monkeypatch.setattr("turbofit_runtime.backend.platform.system", lambda: "Windows")
+    monkeypatch.setattr(
+        "turbofit_runtime.backend.subprocess.run",
+        lambda command, **kwargs: calls.append(command) or SimpleNamespace(returncode=0),
+    )
+    backend = CampaignBackend(
+        gateway_script=tmp_path / "gateway.py", result_dir=tmp_path,
+        runtime_state=tmp_path / "runtime.json",
+    )
+    handle = {"process": FakeProcess()}
+    backend._handles.append(handle)
+
+    backend.stop(SimpleNamespace(role="main"), handle)
+
+    assert ["taskkill.exe", "/PID", "4242", "/T", "/F"] in calls
+
+def test_missing_engine_binary_names_the_binary_and_family(tmp_path) -> None:
+    from types import SimpleNamespace
+
+    from turbofit_runtime.backend import CampaignBackend
+
+    (tmp_path / "x.gguf").write_bytes(b"gguf" + b"\0" * (1024 * 1024))
+    component = SimpleNamespace(
+        command=["/nonexistent/llama-server", "-m", "x.gguf"],
+        gpu="0", port=1, role="main", alias="arete-27b", family="Arete 27B",
+        kind="process", method="baseline", projector_path=None, model_path=str(tmp_path / "x.gguf"),
+    )
+    backend = CampaignBackend(
+        gateway_script=tmp_path / "gw.py", result_dir=tmp_path, runtime_state=tmp_path / "state.json",
+        accelerator_backend="cuda",
+    )
+    with pytest.raises(RuntimeError) as raised:
+        backend.start(component)
+    # A genuine launch attempt keeps the original message: name the binary and
+    # family, and give the one install action. The row-level gate only moves
+    # the verdict earlier; it does not soften this refusal.
+    assert str(raised.value) == (
+        "engine binary not found for Arete 27B: '/nonexistent/llama-server'. "
+        "Install the runtime (scripts/install.sh) or set the engine path in "
+        "references/model-recipes.json for this family."
+    )

@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+"""Rebuild the hardware-tier tournaments: full-GPU and offload placements.
+
+The candidate list is the ranking surface of the intelligence campaign, so it
+must not pre-select a winner.  Every catalog main that can hold a 64K ctx in
+the tier's memory band is listed against the single auxiliary
+``maple-preview-tq2``; the campaign then measures intelligence and speed for
+all of them and the leaderboard picks one recommended per slot.
+
+A model that exceeds the band but fits VRAM + the stated system-RAM assumption
+is *not* mixed into that list: it goes to ``offload_candidates`` with the expert
+bytes it needs in RAM, so "runs entirely on the GPU" and "runs with 67 GiB of
+experts in RAM" never look alike.  The RAM assumption is explicit
+(``--ram-gb``, ``TURBOFIT_RAM_GIB``, else the documented default) rather than
+one machine's figure.
+
+Winners stay ``null`` until a Maple-aux configuration has hash-bound physical
+evidence for that class; the old winners referenced ``--auto--`` rows that are
+no longer candidates.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.tier_fit import (
+    AUXILIARY_ID,
+    DEFAULT_RAM_GIB,
+    RAM_GIB_ENV,
+    RAM_RESERVE_BYTES,
+    TIERS,
+    default_ram_gib,
+    load_footprints,
+    ram_budget_bytes,
+    select_offload_candidates,
+    select_placements,
+    unmeasured_moe_mains,
+)
+from turbofit_runtime.tier_tournament import SCHEMA, validate_tournaments
+
+RANKING = [
+    "quality",
+    "context_128k",
+    "server_decode_30_tps",
+    "context_262k",
+    "server_decode_50_tps",
+    "context_1m",
+]
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, default=ROOT / "references/hardware-tier-tournaments.json")
+    parser.add_argument(
+        "--ram-gb", type=float, default=None,
+        help=f"system RAM budget in GiB for offload placement (default: ${RAM_GIB_ENV} or {DEFAULT_RAM_GIB})",
+    )
+    args = parser.parse_args()
+
+    ram_gb = args.ram_gb if args.ram_gb is not None else default_ram_gib()
+    ram_bytes = ram_budget_bytes(ram_gb)
+
+    configurations = json.loads((ROOT / "references/configuration-matrix.json").read_text(encoding="utf-8"))
+    catalog = json.loads((ROOT / "references/model-catalog.json").read_text(encoding="utf-8"))
+    footprints = load_footprints(ROOT)
+
+    tiers = []
+    for vram_gb in TIERS:
+        placements = select_placements(
+            catalog, configurations, footprints, vram_gb, ram_bytes,
+        )
+        candidates = [item.configuration_id for item in placements if item.placement == "gpu"]
+        if not candidates:
+            raise ValueError(f"no fitting main model for the {vram_gb} GB tier")
+        offload = select_offload_candidates(
+            catalog, configurations, footprints, vram_gb, ram_bytes,
+        )
+        tiers.append({
+            "id": f"hardware-{vram_gb}gb",
+            "vram_gb": vram_gb,
+            "physical_evidence_required": True,
+            "candidates": candidates,
+            "offload_candidates": [
+                {key: entry[key] for key in (
+                    "configuration_id", "placement", "total_gib", "vram_gib", "ram_gib",
+                    "n_cpu_moe", "expert_layers", "evidence", "reason",
+                )}
+                for entry in offload
+            ],
+            "winner": None,
+        })
+    payload = {
+        "schema": SCHEMA,
+        "ranking": RANKING,
+        "ram_assumption": {
+            "gib": ram_gb,
+            "source": (
+                f"documented default {DEFAULT_RAM_GIB} GiB of available system RAM"
+                if args.ram_gb is None and not os.environ.get(RAM_GIB_ENV)
+                else "explicit --ram-gb / TURBOFIT_RAM_GIB override"
+            ),
+            "override": f"--ram-gb on this script, or {RAM_GIB_ENV} for every caller",
+            "reserve_gib": round(RAM_RESERVE_BYTES / 1024 ** 3, 2),
+        },
+        "tiers": tiers,
+    }
+    validate_tournaments(payload, configurations)
+    args.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({
+        "path": str(args.output),
+        "auxiliary": AUXILIARY_ID,
+        "ram_assumption_gib": ram_gb,
+        "unmeasured_moe_mains": unmeasured_moe_mains(catalog, footprints),
+        "tiers": [
+            {
+                "vram_gb": tier["vram_gb"],
+                "mains": len({item.split("--", 1)[0] for item in tier["candidates"]}),
+                "candidates": len(tier["candidates"]),
+                "offload_candidates": len(tier["offload_candidates"]),
+            }
+            for tier in tiers
+        ],
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -2,25 +2,38 @@
 from __future__ import annotations
 
 import json
+import math
 import os
+import time
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 import tempfile
 from typing import Any, Mapping, Sequence
 
-from .policy import ActionKind, AdaptiveState, CapacitySnapshot, reconcile
+from .policy import ActionKind, ActionPlan, AdaptiveState, CapacitySnapshot, reconcile
 from .pressure import PressureSnapshot
 from .reconciler import ReconcilerState, RollbackFailedError, RuntimeBackend, transition
 from .runtime_profile import AuxMode, Turbofile
 from .selection import ProfileChoice, SelectionMode
 
 
+# Upper bound for monotonic waits restored from disk. Live cooldowns are tens
+# of seconds; anything beyond an hour cannot come from this boot.
+MAX_PERSISTED_WAIT_S = 3600.0
+
+
 @dataclass(frozen=True)
 class RungRequirements:
     profile_id: str
     required_mb_by_rung: tuple[tuple[int, ...], ...]
+    host_ram_mb_per_card: tuple[tuple[int, ...], ...] = ()
 
-    def __init__(self, profile_id: str, required_mb_by_rung: Sequence[Sequence[int]]) -> None:
+    def __init__(
+        self,
+        profile_id: str,
+        required_mb_by_rung: Sequence[Sequence[int]],
+        host_ram_mb_per_card: Sequence[Sequence[int]] | None = None,
+    ) -> None:
         values = tuple(tuple(row) for row in required_mb_by_rung)
         if not profile_id:
             raise ValueError("profile_id must be non-empty")
@@ -30,8 +43,20 @@ class RungRequirements:
             for value in row
         ):
             raise ValueError("rung requirements must be non-negative integers")
+        host_values = tuple(
+            tuple(row) for row in (host_ram_mb_per_card or ())
+        )
+        if len(host_values) not in (0, len(values)):
+            raise ValueError("host_ram_mb_per_card length must match required_mb_by_rung or be empty")
+        if any(
+            isinstance(value, bool) or not isinstance(value, int) or value < 0
+            for row in host_values
+            for value in row
+        ):
+            raise ValueError("host RAM requirements must be non-negative integers")
         object.__setattr__(self, "profile_id", profile_id)
         object.__setattr__(self, "required_mb_by_rung", values)
+        object.__setattr__(self, "host_ram_mb_per_card", host_values)
 
 
 def load_rung_requirements(path: str | Path, profile: Turbofile) -> RungRequirements:
@@ -53,6 +78,7 @@ def load_rung_requirements(path: str | Path, profile: Turbofile) -> RungRequirem
             "rung_id",
             "evidence",
             "required_mb_per_card",
+            "host_ram_mb_per_card",
         }:
             raise ValueError(f"invalid requirement row {index}")
         rung_id = row["rung_id"]
@@ -63,6 +89,7 @@ def load_rung_requirements(path: str | Path, profile: Turbofile) -> RungRequirem
         by_rung[rung_id] = row
 
     values: list[tuple[int, ...]] = []
+    host_values: list[tuple[int, ...]] = []
     for index, rung in enumerate(profile.rungs):
         row = by_rung.get(rung.id)
         if row is None:
@@ -73,7 +100,14 @@ def load_rung_requirements(path: str | Path, profile: Turbofile) -> RungRequirem
         if not isinstance(required, list):
             raise ValueError(f"requirement row {index} must contain a list")
         values.append(tuple(required))
-    return RungRequirements(profile.id, values)
+        raw_host = row.get("host_ram_mb_per_card")
+        if raw_host is None:
+            host_values.append(())
+        else:
+            if not isinstance(raw_host, list):
+                raise ValueError(f"requirement row {index} host_ram_mb_per_card must be a list")
+            host_values.append(tuple(raw_host))
+    return RungRequirements(profile.id, values, host_values)
 
 
 def load_rung_requirements_any(
@@ -153,7 +187,7 @@ def save_controller_state(path: str | Path, state: ControllerState) -> None:
             pass
 
 
-def load_controller_state(path: str | Path) -> ControllerState:
+def load_controller_state(path: str | Path, *, now: float | None = None) -> ControllerState:
     raw: Any = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(raw, Mapping):
         raise ValueError("invalid controller state root")
@@ -167,7 +201,7 @@ def load_controller_state(path: str | Path) -> ControllerState:
         raise ValueError("invalid controller state root")
     adaptive_raw = raw["adaptive"]
     reconciler_raw = raw["reconciler"]
-    if not isinstance(adaptive_raw, Mapping) or set(adaptive_raw) != {
+    required_adaptive = {
         "current_index",
         "last_stable_index",
         "pending_index",
@@ -177,7 +211,10 @@ def load_controller_state(path: str | Path) -> ControllerState:
         "cooldown_until",
         "failure_times",
         "quarantine_until",
-    }:
+    }
+    if not isinstance(adaptive_raw, Mapping) or not required_adaptive <= set(adaptive_raw) or (
+        set(adaptive_raw) - required_adaptive - {"released"}
+    ):
         raise ValueError("invalid adaptive controller state")
     if not isinstance(reconciler_raw, Mapping) or set(reconciler_raw) != {
         "profile_id",
@@ -191,6 +228,17 @@ def load_controller_state(path: str | Path) -> ControllerState:
     if not isinstance(failures, list):
         raise ValueError("controller failure_times must be a list")
     adaptive_values["failure_times"] = tuple(failures)
+    # Monotonic timestamps do not survive a reboot. A cooldown persisted by a
+    # previous boot would otherwise block transitions for longer than the
+    # machine has been up, so clamp wall-relative waits into a sane window.
+    clock = time.monotonic() if now is None else now
+    for key in ("cooldown_until", "quarantine_until"):
+        stamp = adaptive_values.get(key)
+        if isinstance(stamp, bool) or not isinstance(stamp, (int, float)):
+            raise ValueError(f"controller {key} must be a number")
+        if not math.isfinite(stamp):
+            raise ValueError(f"controller {key} must be finite")
+        adaptive_values[key] = min(max(0.0, stamp), clock + MAX_PERSISTED_WAIT_S)
     state = ControllerState(
         selection_mode=SelectionMode(raw["selection_mode"]),
         profile_id=raw["profile_id"],
@@ -238,6 +286,91 @@ class AdaptiveController:
         self.backend = backend
         self.state = state
         self._next_readiness_check = 0.0
+        self._next_release_check = 0.0
+
+    def _enforce_release(self, now: float) -> ControllerResult | None:
+        """A yielded rung that came back must be yielded again, not ignored.
+
+        Something outside TurboFit (an unrelated `systemctl start`, a wrapper
+        script, a scout) can revive a unit we released. Silence there would let
+        the card fill up again while the state claims residency is yielded.
+        """
+        if not self.state.adaptive.released:
+            return None
+        if now < self._next_release_check:
+            return None
+        self._next_release_check = now + 30.0
+        rung = self.profile.rungs[self.state.adaptive.current_index]
+        if not self.backend.verify_rung(rung.id):
+            return None
+        release = getattr(self.backend, "release_current", None)
+        if release is None:
+            return None
+        try:
+            outcome = release()
+        except Exception as exc:
+            return ControllerResult(
+                self.state, False, ActionKind.RELEASE, f"re-release failed: {exc}"
+            )
+        if outcome in {"absent", "not-local"}:
+            return None
+        return ControllerResult(
+            self.state, True, ActionKind.RELEASE, "release did not hold; re-released residency"
+        )
+
+    def _yield_residency(self, plan: ActionPlan) -> ControllerResult:
+        """Release the resident rung so an external GPU app can use the card."""
+        self.state = replace(self.state, adaptive=plan.state)
+        release = getattr(self.backend, "release_current", None)
+        if release is None:
+            return ControllerResult(
+                self.state, False, ActionKind.RELEASE, "backend cannot release residency"
+            )
+        try:
+            outcome = release()
+        except Exception as exc:
+            # Keep the intent unset on failure: the rung is still resident, so a
+            # later tick must be free to retry instead of believing it yielded.
+            self.state = replace(self.state, adaptive=replace(plan.state, released=False))
+            return ControllerResult(
+                self.state, False, ActionKind.RELEASE, f"release failed: {exc}"
+            )
+        if outcome in {"absent", "not-local"}:
+            # Nothing of ours was holding VRAM; do not claim a yield we did not make.
+            self.state = replace(self.state, adaptive=replace(plan.state, released=False))
+            return ControllerResult(
+                self.state, False, ActionKind.RELEASE, f"{plan.reason} (nothing resident)"
+            )
+        return ControllerResult(
+            self.state, True, ActionKind.RELEASE, f"{plan.reason} ({outcome})"
+        )
+
+    def _restore_in_place(
+        self, plan: ActionPlan, capacity: CapacitySnapshot, now: float
+    ) -> ControllerResult:
+        """Bring a released rung back on the same index once pressure clears."""
+        index = self.state.adaptive.current_index
+        try:
+            self.backend.restore(self.state.reconciler)
+        except Exception as exc:
+            failed = replace(capacity, activation_failed=True)
+            rollback = reconcile(plan.state, failed, self.profile, now)
+            self.state = replace(self.state, adaptive=rollback.state)
+            return ControllerResult(
+                self.state,
+                False,
+                ActionKind.ROLLBACK,
+                f"residency restore failed: {exc}",
+            )
+        committed = reconcile(
+            plan.state, replace(capacity, activation_succeeded=True), self.profile, now
+        )
+        self.state = replace(
+            self.state,
+            adaptive=committed.state,
+            reconciler=replace(self.state.reconciler, rung_index=index),
+        )
+        return ControllerResult(self.state, True, ActionKind.ACTIVATE, plan.reason)
 
     def _ensure_current_rung_ready(
         self, available: tuple[int, ...], now: float
@@ -268,7 +401,7 @@ class AdaptiveController:
             return False
         return True
 
-    def tick(self, pressure: PressureSnapshot, *, now: float) -> ControllerResult:
+    def tick(self, pressure: PressureSnapshot, *, now: float, restore_current: bool = True) -> ControllerResult:
         available = tuple(card.available_for_managed_mb for card in pressure.cards)
         for index, (rung, required) in enumerate(
             zip(self.profile.rungs, self.requirements.required_mb_by_rung, strict=True)
@@ -277,14 +410,31 @@ class AdaptiveController:
                 raise ValueError(
                     f"rung {index} requirement card count does not match pressure card count"
                 )
+        contended = tuple(card.contended for card in pressure.cards)
+        current_rung = self.profile.rungs[self.state.adaptive.current_index]
         capacity = CapacitySnapshot(
             available_mb_per_card=available,
             required_mb_by_rung=self.requirements.required_mb_by_rung,
+            contended_per_card=contended,
+            current_rung_releaseable=current_rung.aux_mode is not AuxMode.API,
         )
         plan = reconcile(self.state.adaptive, capacity, self.profile, now)
+        if plan.action is ActionKind.RELEASE:
+            return self._yield_residency(plan)
+        if plan.action is ActionKind.ACTIVATE and plan.target_index == self.state.adaptive.current_index:
+            # transition() is a no-op for same-index moves, so a yielded rung
+            # must be brought back here rather than through the ladder.
+            return self._restore_in_place(plan, capacity, now)
         if plan.action is not ActionKind.ACTIVATE:
             self.state = replace(self.state, adaptive=plan.state)
-            restored = self._ensure_current_rung_ready(available, now)
+            enforced = self._enforce_release(now)
+            if enforced is not None:
+                return enforced
+            restored = (
+                restore_current
+                and not self.state.adaptive.released
+                and self._ensure_current_rung_ready(available, now)
+            )
             if restored:
                 return ControllerResult(
                     self.state, True, ActionKind.ACTIVATE, "restored missing current rung"

@@ -1,0 +1,22 @@
+{
+ "schema": "turbofit.intelligence-leaderboard/v1",
+ "tiers": [
+  {
+   "hardware_tier_gb": 48,
+   "recommended": {
+    "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--auto--262k",
+    "main": "qwen3-8-27b-gsq-rco-iq3s",
+    "auxiliary": "auto:qwen3-8-27b-gsq-rco-iq3s",
+    "context": 262144,
+    "intelligence_score": 46.875,
+    "throughput_tps": 39.39215795117914,
+    "balanced_score": 58.77821,
+    "level": "screening",
+    "recorded_at": "2026-08-23T05:38:24.951167+00:00"
+   },
+   "options": [],
+   "measured": 1
+  }
+ ],
+ "measured_configurations": 1
+}

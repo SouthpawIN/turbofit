@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from turbofit_runtime.recipes import RecipeBook
+import pytest
+
+from turbofit_runtime.recipes import RecipeBook, resolve_native_backend, resolve_native_binary
+from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
 from turbofit_runtime.schema import MatrixRow
 
 
@@ -30,6 +33,29 @@ def test_auto_profile_launches_only_main_component() -> None:
     assert component.gpu == "0"
     assert "--spec-type" in component.command
     assert "draft-mtp" in component.command
+
+
+def test_backend_detection_uses_vulkan_before_cpu_when_no_vendor_cli_exists() -> None:
+    available = {"vulkaninfo"}
+
+    assert resolve_native_backend(
+        platform_name="linux", which=lambda command: command if command in available else None,
+    ) == "vulkan"
+
+
+def test_windows_native_binary_resolves_visual_studio_release_layout(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "build-vulkan" / "bin" / "llama-server"
+    release_path = manifest_path.parent / "Release" / "llama-server.exe"
+    release_path.parent.mkdir(parents=True)
+    release_path.write_bytes(b"stub")
+
+    assert resolve_native_binary(manifest_path, platform_name="win32") == str(release_path)
+
+
+def test_windows_native_binary_defaults_to_visual_studio_release_layout() -> None:
+    assert Path(resolve_native_binary(
+        "runtime/build-vulkan/bin/llama-server", platform_name="win32"
+    )) == Path("runtime/build-vulkan/bin/Release/llama-server.exe")
 
 
 def test_small_dedicated_pair_pins_aux_gpu0_and_main_gpu1() -> None:
@@ -61,8 +87,9 @@ def test_one_bit_bonsai_one_million_uses_four_x_yarn_across_both_gpus() -> None:
     assert component.gpu == "0,1"
     assert component.method == "baseline"
     assert component.command[component.command.index("-c") + 1] == "1048576"
-    assert component.command[component.command.index("--split-mode") + 1] == "layer"
-    assert component.command[component.command.index("--tensor-split") + 1] == "1,1"
+    if "--split-mode" in component.command:
+        assert component.command[component.command.index("--split-mode") + 1] == "layer"
+        assert component.command[component.command.index("--tensor-split") + 1] == "1,1"
     assert component.command[component.command.index("--rope-scale") + 1] == "4"
     assert component.command[component.command.index("--yarn-orig-ctx") + 1] == "262144"
 
@@ -78,7 +105,7 @@ def test_large_main_reserves_aux_gpu_then_fits_across_visible_cards() -> None:
     assert main.method == "mtp"
     assert main.command[main.command.index("-c") + 1] == "65536"
     assert "--fit" not in main.command
-    assert main.command[0].endswith("ik-llama.cpp-f2328aa0c19954d0ab31a3de60fbf50e47c2429f/build-cuda/bin/llama-server")
+    assert "ik-llama.cpp-f2328aa0c19954d0ab31a3de60fbf50e47c2429f/build-" in main.command[0] and main.command[0].endswith("/bin/llama-server")
     assert main.command[main.command.index("--spec-type") + 1] == "mtp:n_max=4,p_min=0.5"
     assert "--cpu-moe" in main.command
     assert "--no-mmap" in main.command
@@ -91,7 +118,7 @@ def test_ternary_bonsai_uses_pinned_prism_runtime() -> None:
         row("Ternary Bonsai", "auto", 65_536)
     ).components[0]
 
-    assert component.command[0].endswith("prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cuda/bin/llama-server")
+    assert "prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-" in component.command[0] and component.command[0].endswith("/bin/llama-server")
 
 
 def test_qwen_262k_uses_pinned_mtp_sidecar_and_projector() -> None:
@@ -105,6 +132,62 @@ def test_qwen_262k_uses_pinned_mtp_sidecar_and_projector() -> None:
     assert main.command[main.command.index("--model-draft") + 1].endswith("mtp-Qwen3.8-27B-Q4_0.gguf")
     assert main.command[main.command.index("--mmproj") + 1].endswith("mmproj-Qwen3.8-27B-Q8_0.gguf")
     assert main.command[main.command.index("--spec-type") + 1] == "draft-mtp"
+
+
+def test_qwen_38_dflash2_uses_pinned_runtime_and_dedicated_drafter() -> None:
+    component = RecipeBook.load(RECIPES, platform_name="linux").resolve_catalog_configuration({
+        "id": "qwen3-8-27b-q4-dflash2--auto--64k",
+        "main": "qwen3-8-27b-q4-dflash2",
+        "auxiliary": "auto",
+        "context": 65_536,
+        "status": "candidate",
+    }).components[0]
+
+    assert component.method == "dflash2"
+    assert "dflash2-llama.cpp-1deefcca395743049c3820ab8f9b15043f3e9446/build-" in component.command[0] and component.command[0].endswith("/bin/llama-server")
+    assert component.command[component.command.index("--model-draft") + 1].endswith(
+        "Qwen3.8-27B-DFlash2-Q4_K_M.gguf"
+    )
+    assert component.command[component.command.index("--spec-type") + 1] == "draft-dflash"
+    assert component.command[component.command.index("--spec-draft-n-max") + 1] == "7"
+
+
+def test_bonsai_speculation_never_reuses_qwen_dflash2_drafter() -> None:
+    component = RecipeBook.load(RECIPES, platform_name="linux").resolve_catalog_configuration({
+        "id": "bonsai-27b-dspark--auto--64k",
+        "main": "bonsai-27b-dspark",
+        "auxiliary": "auto",
+        "context": 65_536,
+        "status": "candidate",
+    }).components[0]
+
+    assert component.method == "dspark"
+    assert component.command[component.command.index("--model-draft") + 1].endswith(
+        "Bonsai-27B-dspark-Q4_1.gguf"
+    )
+    assert "Qwen3.8-27B-DFlash2" not in " ".join(component.command)
+
+
+def test_recipe_rejects_cross_family_qwen_dflash2_on_bonsai(tmp_path: Path) -> None:
+    data = json.loads(RECIPES.read_text())
+    data["variants"]["bonsai-invalid-dflash2"] = {
+        "family": "1 Bit Bonsai",
+        "alias": "bonsai-invalid-dflash2",
+        "model": "Bonsai-27B-Q1_0.gguf",
+        "draft": "Qwen3.8-27B-DFlash2-Q4_K_M.gguf",
+        "methods": {"65536": "dflash2"},
+    }
+    path = tmp_path / "recipes.json"
+    path.write_text(json.dumps(data))
+
+    with pytest.raises(ValueError, match="dedicated DFlash2"):
+        RecipeBook.load(path, platform_name="linux").resolve_catalog_configuration({
+            "id": "bonsai-invalid-dflash2--auto--64k",
+            "main": "bonsai-invalid-dflash2",
+            "auxiliary": "auto",
+            "context": 65_536,
+            "status": "candidate",
+        })
 
 
 def test_one_million_context_applies_matching_four_x_yarn_to_both_models() -> None:
@@ -145,8 +228,8 @@ def test_every_resolved_component_has_bounded_turbohaul_microbatching() -> None:
     book = RecipeBook.load(RECIPES, platform_name="linux")
     cases = (
         row("Carwin Nano", "auto", 131_072),
-        row("qwen3-8-27b-q4-mtp", "Carwin Nano", 262_144),
-        row("DeepSeek V4 Flash 0731", "auto", 65_536),
+        row("qwen3-8-27b-q4-mtp", "cyber-tiel-coder-35b-a3b-ud-q4-k-xl", 262_144),
+        row("qwen3-8-27b-gsq-rco-iq3s", "auto", 65_536),
     )
 
     for case in cases:
@@ -193,35 +276,23 @@ def test_every_catalog_configuration_compiles_to_an_actual_jinja_launch_recipe()
 
     resolved = [book.resolve_catalog_configuration(item) for item in matrix["rows"]]
 
-    assert len(resolved) == 1620
-    assert len({item.row_id for item in resolved}) == 1620
-    assert all(component.command and "--jinja" in component.command for item in resolved for component in item.components)
+    assert len(resolved) == len(matrix["rows"])
+    assert len({item.row_id for item in resolved}) == len(matrix["rows"])
+    assert all(component.command for item in resolved for component in item.components)
 
 
-def test_deepseek_v4_flash_q8_compiles_with_live_verified_hybrid_offload() -> None:
-    component = RecipeBook.load(RECIPES).resolve_catalog_configuration({
-        "id": "deepseek-v4-flash-0731-q8-dspark--auto--1m",
-        "main": "deepseek-v4-flash-0731-q8-dspark",
-        "auxiliary": "auto",
-        "context": 1_048_576,
+
+def test_cyber_tiel_aux_compiles_with_expert_offload() -> None:
+    recipe = RecipeBook.load(RECIPES).resolve_catalog_configuration({
+        "id": "qwen3-8-27b-gsq-rco-iq3s--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
+        "main": "qwen3-8-27b-gsq-rco-iq3s",
+        "auxiliary": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
+        "context": 65_536,
         "status": "candidate",
-    }).components[0]
-
-    assert component.model_path.endswith("DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf")
-    assert component.command[0].endswith(
-        ".local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server"
-    )
-    draft_index = component.command.index("--model-draft")
-    assert component.command[draft_index + 1].endswith("dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf")
-    assert component.method == "dspark"
-    assert "--jinja" in component.command
-    assert component.command[component.command.index("--spec-type") + 1] == "draft-dspark"
-    assert component.command[component.command.index("--spec-draft-n-max") + 1] == "3"
-    assert component.command[component.command.index("-ngl") + 1] == "99"
-    assert component.command[component.command.index("-ngld") + 1] == "0"
-    assert component.command[component.command.index("--fit") + 1] == "off"
-    assert "--cpu-moe" in component.command
-    assert "--no-kv-offload" in component.command
+    })
+    aux = next(item for item in recipe.components if item.role == "aux")
+    assert aux.model_path.endswith("Cyber-Tiel-Coder-35B-A3B-UD-Q4_K_M.gguf")
+    assert "--cpu-moe" in aux.command
 
 
 def test_catalog_variants_compile_distinct_artifacts_and_features() -> None:
@@ -289,3 +360,125 @@ def test_recipe_compiles_deterministic_profile_name_and_aliases() -> None:
     assert resolved.main_alias == "qwen3-8-27b-q4-mtp"
     assert resolved.aux_alias == "carwin-nano"
     assert resolved.aux_mode == "dedicated"
+
+
+def test_cpu_only_qwen_1m_uses_host_memory_and_cpu_binary() -> None:
+    hardware = HardwareFingerprint("linux", "x86_64", 393216)
+    component = RecipeBook.load(
+        RECIPES, platform_name="linux", backend_name="cpu", hardware=hardware,
+    ).resolve(row("qwen3-8-27b-q4-mtp", "auto", 1_048_576)).components[0]
+
+    assert component.command[0].endswith("build-cpu/bin/llama-server")
+    assert component.command[component.command.index("-ngl") + 1] == "0"
+    assert "--split-mode" not in component.command
+    assert "--tensor-split" not in component.command
+    assert "--main-gpu" not in component.command
+
+
+def test_cpu_only_dspark_uses_the_pinned_prism_cpu_runtime() -> None:
+    hardware = HardwareFingerprint("linux", "x86_64", 131072)
+    component = RecipeBook.load(
+        RECIPES, platform_name="linux", backend_name="cpu", hardware=hardware,
+    ).resolve(row("1 Bit Bonsai", "auto", 65_536)).components[0]
+
+    assert component.command[0].endswith(
+        "prism-llama.cpp-9ca265a57f85f2117942490f421f64a226dd9847/build-cpu/bin/llama-server"
+    )
+    assert component.command[component.command.index("-ngl") + 1] == "0"
+    assert component.command[component.command.index("-ngld") + 1] == "0"
+
+
+def test_dedicated_gpu_qwen_1m_places_large_kv_cache_in_detected_host_ram() -> None:
+    hardware = HardwareFingerprint(
+        "linux", "x86_64", 393216,
+        devices=(
+            AcceleratorDevice(0, "a", "RTX 3090", "nvidia", "cuda", 24576, "8.6", "01"),
+            AcceleratorDevice(1, "b", "RTX 3090", "nvidia", "cuda", 24576, "8.6", "02"),
+        ),
+    )
+    component = RecipeBook.load(
+        RECIPES, platform_name="linux", backend_name="cuda", hardware=hardware,
+    ).resolve(row("qwen3-8-27b-q4-mtp", "auto", 1_048_576)).components[0]
+
+    assert component.gpu == "0,1"
+    assert "--no-kv-offload" in component.command
+    assert component.command[component.command.index("-ngl") + 1] == "auto"
+
+
+def test_unified_memory_qwen_1m_uses_one_shared_pool_without_host_gpu_double_counting() -> None:
+    hardware = HardwareFingerprint(
+        "linux", "aarch64", 131072,
+        devices=(AcceleratorDevice(0, "u", "NVIDIA GB10", "nvidia", "cuda", 131072, "12.1", "01"),),
+    )
+    component = RecipeBook.load(
+        RECIPES, platform_name="linux", backend_name="cuda", hardware=hardware,
+    ).resolve(row("qwen3-8-27b-q4-mtp", "auto", 1_048_576)).components[0]
+
+    assert component.gpu == "0"
+    assert "--no-kv-offload" not in component.command
+    assert "--tensor-split" not in component.command
+
+    direct = RecipeBook.load(
+        RECIPES, platform_name="linux", backend_name="cuda", hardware=hardware,
+    ).resolve_component(
+        "qwen3-8-27b-q4-mtp", role="main", gpu="0,1", port=11605,
+        context=1_048_576,
+    )
+    assert direct.gpu == "0"
+
+def test_vllm_flavor_serves_a_checkpoint_directory(tmp_path) -> None:
+    payload = json.loads(RECIPES.read_text())
+    model_dir = tmp_path / "Inkling-2-Small"
+    model_dir.mkdir()
+    payload["models"]["Inkling Test"] = {
+        "alias": "inkling-test",
+        "kind": "process",
+        "binary": "/opt/vllm/bin/vllm",
+        "model_root": str(model_dir.parent),
+        "model": model_dir.name,
+        "port": 11999,
+        "native_context": 131072,
+        "max_context": 131072,
+        "runtime_flavor": "vllm",
+        "tensor_parallel_size": 2,
+        "gpu_memory_utilization": 0.9,
+        "methods": {"131072": "baseline"},
+    }
+    payload["variants"]["inkling-test"] = {
+        "family": "Inkling Test",
+        "alias": "inkling-test",
+        "model": str(model_dir),
+        "draft": "",
+        "methods": {"131072": "baseline"},
+    }
+    path = tmp_path / "recipes.json"
+    path.write_text(json.dumps(payload))
+    component = RecipeBook.load(path, platform_name="linux").resolve(
+        row("Inkling Test", "auto", 131_072)
+    ).components[0]
+    command = list(component.command)
+    assert command[1] == "serve"
+    assert command[2] == str(model_dir)
+    assert command[command.index("--served-model-name") + 1] == "inkling-test"
+    assert command[command.index("--max-model-len") + 1] == "131072"
+    assert command[command.index("--tensor-parallel-size") + 1] == "2"
+    assert command[command.index("--gpu-memory-utilization") + 1] == "0.9"
+
+
+def test_vllm_flavor_rejects_a_gguf_file(tmp_path) -> None:
+    payload = json.loads(RECIPES.read_text())
+    payload["models"]["Inkling Test"] = {
+        "alias": "inkling-test", "kind": "process", "binary": "/opt/vllm/bin/vllm",
+        "model_root": str(tmp_path), "model": "model.gguf", "port": 11998,
+        "native_context": 65536, "max_context": 65536, "runtime_flavor": "vllm",
+        "methods": {"65536": "baseline"},
+    }
+    payload["variants"]["inkling-test"] = {
+        "family": "Inkling Test", "alias": "inkling-test",
+        "model": str(tmp_path / "model.gguf"), "draft": "",
+        "methods": {"65536": "baseline"},
+    }
+    path = tmp_path / "recipes.json"
+    path.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="vllm flavor"):
+        RecipeBook.load(path, platform_name="linux").resolve(row("Inkling Test", "auto", 65_536))

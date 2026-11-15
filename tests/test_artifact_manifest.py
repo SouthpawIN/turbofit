@@ -26,11 +26,39 @@ def test_artifact_manifest_covers_every_executable_matrix_file() -> None:
     model_root = Path.home() / "Models/storage/gguf"
     expected_destinations = {str(Path(path).relative_to(model_root)) for path in expected}
     actual = {item["destination"] for item in payload["artifacts"]}
+    mlx_destinations = {
+        item["destination"]
+        for item in payload["artifacts"]
+        if "qwen3-8-27b-uncensored-mlx-8bit" in item.get("families", [])
+    }
+    # Catalog entries tracked in the manifest before their recipe rows are
+    # automatable: MiniMax M3 has no local matrix row, and Darwin 180B RSI
+    # is a PLE/SSD-streamed checkpoint awaiting its dedicated runtime flavor.
+    known_non_matrix_repos = {
+        "unsloth/MiniMax-M3-GGUF",
+        "Baekpica/Darwin-180B-RSI-Mixed-Quant-GGUF",
+        # vLLM serves the checkpoint directory as a unit; the manifest tracks it
+        # with a snapshot digest rather than one row per safetensors shard.
+        "thinkingmachines/Inkling-2-Small",
+    }
+    known_non_matrix_destinations = {
+        item["destination"]
+        for item in payload["artifacts"]
+        if item.get("repo_id") in known_non_matrix_repos
+    }
 
     assert payload["schema"] == "turbofit.artifact-manifest/v1"
     assert expected_destinations <= actual
-    assert len(actual) == 44
-    assert all(len(item["sha256"]) == 64 for item in payload["artifacts"])
+    assert actual == expected_destinations | known_non_matrix_destinations | mlx_destinations
+    assert mlx_destinations
+    assert all(
+        len(item["sha256"]) == 64
+        or (
+            item["sha256"].startswith("snapshot:")
+            and len(item["sha256"].removeprefix("snapshot:")) == 40
+        )
+        for item in payload["artifacts"]
+    )
     assert all(len(item["revision"]) == 40 for item in payload["artifacts"])
     assert all(item["size_bytes"] > 0 for item in payload["artifacts"])
 
@@ -38,19 +66,19 @@ def test_artifact_manifest_covers_every_executable_matrix_file() -> None:
 def test_model_catalog_pins_every_source_revision() -> None:
     catalog = ModelCatalog.load(ROOT / "references/model-catalog.json")
 
-    assert len(catalog.models) == 47
+    assert len(catalog.models) == 84  # Carwin Nano's two aux-only entries retired: Maple is the only auxiliary
     assert all(len(model.revision) == 40 for model in catalog.models)
 
 
-def test_deepseek_artifacts_pin_current_0731_quant_and_official_upstream() -> None:
-    catalog = ModelCatalog.load(ROOT / "references/model-catalog.json")
-    deepseek = [model for model in catalog.models if model.id.startswith("deepseek-v4-flash-0731-")]
-    manifest = json.loads((ROOT / "references/artifact-manifest.json").read_text())
-    artifacts = [item for item in manifest["artifacts"] if item["repo_id"] == "unsloth/DeepSeek-V4-Flash-0731-GGUF"]
 
-    assert len(deepseek) == 5
-    assert {model.revision for model in deepseek} == {"fbbb5b93fb787c21338159b0af3318bb3f4d9768"}
-    assert {model.upstream_revision for model in deepseek} == {"7872f01b1d1fe23eabc4c98b48bffcef5a386062"}
-    assert artifacts
-    assert {item["revision"] for item in artifacts} == {"fbbb5b93fb787c21338159b0af3318bb3f4d9768"}
-    assert any(item["path"] == "dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf" for item in artifacts)
+def test_qwen_dflash2_drafter_is_immutable_and_bonsai_specific_drafters_stay_separate() -> None:
+    manifest = json.loads((ROOT / "references/artifact-manifest.json").read_text())
+    dflash = next(item for item in manifest["artifacts"] if item["path"] == "Qwen3.8-27B-DFlash2-Q4_K_M.gguf")
+    bonsai = [item for item in manifest["artifacts"] if "Bonsai-27B-dspark" in item["path"]]
+
+    assert dflash["repo_id"] == "incoai/Qwen3.8-27B-DFlash2-GGUF"
+    assert dflash["revision"] == "6cb5872e2cee6b4e780a8414922350be8e42d65c"
+    assert dflash["sha256"] == "18a380efc9b7ed8d88677fc895f5c11ae170653434ee378f7348f715c14d0594"
+    assert dflash["families"] == ["qwen3-8-27b-q4-dflash2"]
+    assert bonsai
+    assert all("qwen3-8-27b" not in item["families"] for item in bonsai)

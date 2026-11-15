@@ -12,22 +12,62 @@ import threading
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Mapping
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
+
+import yaml
 
 # Hermes loads directory plugins as packages without installing their Python
 # projects.  Make the repository's src-layout importable from that real load
 # path instead of relying on a developer-set PYTHONPATH.
 PLUGIN_ROOT = Path(__file__).resolve().parent
+# Canonical TurboSouth distribution. Override with TURBOFIT_TURBOSOUTH_SOURCE
+# when the persona lives under another repository name or a private mirror.
+TURBOSOUTH_DISTRIBUTION = "https://github.com/SouthpawIN/turbosouth.git"
 MULTIMODAL_CATALOG = PLUGIN_ROOT / "references" / "multimodal-models.json"
 SRC_ROOT = PLUGIN_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from turbofit_runtime.tailnet import publish_tailnet, tailnet_status
+from turbofit_runtime.tailnet import ensure_tailnet, publish_tailnet, tailnet_status
 
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8091/v1"
+# Looked up from Hermes-Agent, not guessed:
+# - stealth/ox-alpha is the official Nous curated "Ox Alpha" model
+#   ($0/$0 on the Portal; same weights as OpenCode Zen x-preview-f-free).
+# - The other four are live Portal freeRecommendedModels as of 2026-08-22
+#   that Hermes also documents as the free Portal tail (stepfun + hy3 +
+#   both Laguna :free slugs). No Hermes-branded models. No NVIDIA NIM.
+NOUS_FREE_LABELS = {
+    "stealth/ox-alpha": "Ox Alpha",
+    "stepfun/step-3.7-flash:free": "Step 3.7 Flash",
+    "tencent/hy3:free": "Tencent HY3",
+    "poolside/laguna-s-2.1:free": "Laguna S 2.1",
+    "poolside/laguna-xs-2.1:free": "Laguna XS 2.1",
+}
+SUBSCRIPTION_LABELS = {
+    "nous": "Nous (subscription)",
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "openrouter": "OpenRouter",
+    "xai": "xAI",
+    "groq": "Groq",
+    "google": "Google",
+    "gemini": "Gemini",
+    "mistral": "Mistral",
+    "deepseek": "DeepSeek",
+    "together": "Together",
+    "fireworks": "Fireworks",
+}
+NOUS_FREE_FALLBACK_CHAIN = [
+    {"provider": "nous", "model": "stealth/ox-alpha"},
+    {"provider": "nous", "model": "stepfun/step-3.7-flash:free"},
+    {"provider": "nous", "model": "tencent/hy3:free"},
+    {"provider": "nous", "model": "poolside/laguna-s-2.1:free"},
+    {"provider": "nous", "model": "poolside/laguna-xs-2.1:free"},
+]
 SELECTION_PATH = Path(
     os.getenv(
         "TURBOFIT_SELECTION_STATE",
@@ -45,25 +85,117 @@ RUNTIME_STATE_PATH = Path(
 _CONFIG_LOCK = threading.RLock()
 
 
-def install_sirvir_profile(*, hermes_home: Path | None = None) -> dict[str, Any]:
-    """Install or update Sirvir while preserving profile-owned user state."""
-    source = PLUGIN_ROOT / "profiles" / "sirvir"
-    if not source.is_dir():
-        raise FileNotFoundError(f"missing bundled Sirvir profile: {source}")
+SOVTHPAW_PET_SLUG = "s0uthpaw"
+
+
+def install_sovthpaw_pet(*, hermes_home: Path | None = None) -> dict[str, Any]:
+    """Install and select the bundled Sovthpaw mascot pet (idempotent)."""
+    executable = shutil.which("hermes")
+    if not executable:
+        raise FileNotFoundError("hermes executable is not available")
     root = Path(hermes_home or os.getenv("HERMES_HOME") or Path.home() / ".hermes")
-    target = root / "profiles" / "sirvir"
-    updated = target.exists()
-    target.mkdir(parents=True, exist_ok=True)
-    for name in ("README.md", "SOUL.md", "AGENTS.md", "config.yaml", "distribution.yaml"):
-        source_file = source / name
-        if not source_file.is_file():
-            raise FileNotFoundError(f"incomplete bundled Sirvir profile: {source_file}")
-        shutil.copyfile(source_file, target / name)
+    environment = {**os.environ, "HERMES_HOME": str(root)}
+    result = subprocess.run(
+        [executable, "pets", "install", SOVTHPAW_PET_SLUG, "--select"],
+        text=True,
+        capture_output=True,
+        timeout=300,
+        check=False,
+        env=environment,
+    )
+    if result.returncode:
+        raise RuntimeError((result.stderr or result.stdout or "Sovthpaw pet installation failed").strip())
+    return {
+        "pet": SOVTHPAW_PET_SLUG,
+        "selected": True,
+        "path": str(root / "pets" / SOVTHPAW_PET_SLUG),
+    }
+
+
+def distribution_source() -> str:
+    """Canonical TurboSouth distribution URL, overridable per deployment."""
+    return (os.getenv("TURBOFIT_TURBOSOUTH_SOURCE") or TURBOSOUTH_DISTRIBUTION).strip()
+
+
+def probe_distribution_source(url: str) -> None:
+    """Fail early when a GitHub distribution is missing or private.
+
+    ``hermes profile install`` shells out to git, so an unreachable repo
+    surfaces as a raw clone error in the caller's UI. Checking first turns it
+    into one sentence that says what to do. Network errors stay non-fatal:
+    only a definitive HTTP answer blocks the install.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return
+    target = url[:-4] if url.endswith(".git") else url
+    try:
+        with urlopen(Request(target, method="HEAD"), timeout=15):
+            return
+    except HTTPError as exc:
+        if exc.code in {401, 403, 404}:
+            raise RuntimeError(
+                f"TurboSouth distribution is not reachable: {url} (HTTP {exc.code}). "
+                "The repository is missing or private, so `git clone` cannot see it. "
+                "Publish it under that name or set TURBOFIT_TURBOSOUTH_SOURCE to the "
+                "real distribution URL."
+            ) from exc
+        return
+    except (URLError, OSError):
+        return
+
+
+def install_turbosouth_profile(*, hermes_home: Path | None = None) -> dict[str, Any]:
+    """Install or update TurboSouth from its canonical GitHub distribution."""
+    executable = shutil.which("hermes")
+    if not executable:
+        raise FileNotFoundError("hermes executable is not available")
+    root = Path(hermes_home or os.getenv("HERMES_HOME") or Path.home() / ".hermes")
+    target = root / "profiles" / "turbosouth"
+    updated = (target / "distribution.yaml").is_file()
+    source = distribution_source()
+    if not updated:
+        probe_distribution_source(source)
+    command = (
+        [executable, "profile", "update", "turbosouth", "--yes"]
+        if updated else
+        [
+            executable,
+            "profile",
+            "install",
+            source,
+            "--name",
+            "turbosouth",
+            "--yes",
+        ]
+    )
+    environment = {**os.environ, "HERMES_HOME": str(root)}
+    result = subprocess.run(
+        command,
+        text=True,
+        capture_output=True,
+        timeout=300,
+        check=False,
+        env=environment,
+    )
+    if result.returncode:
+        raise RuntimeError((result.stderr or result.stdout or "TurboSouth profile installation failed").strip())
+    manifest_path = target / "distribution.yaml"
+    if not manifest_path.is_file():
+        raise RuntimeError("Hermes reported success but the TurboSouth profile was not installed")
+    try:
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
+    except (OSError, ValueError) as exc:
+        raise RuntimeError("installed TurboSouth distribution manifest is invalid") from exc
+    pet = install_sovthpaw_pet(hermes_home=root)
     return {
         "installed": True,
         "updated": updated,
-        "profile": "sirvir",
+        "profile": "turbosouth",
         "path": str(target),
+        "source": source,
+        "version": str(manifest.get("version") or "unknown"),
+        "pet": pet,
     }
 
 
@@ -77,32 +209,125 @@ def install_desktop_plugin(*, hermes_home: Path | None = None) -> dict[str, Any]
     updated = target.exists()
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, target)
+    activation = activate_slash_commands(hermes_home=root)
     return {
         "installed": True,
         "updated": updated,
         "plugin": "turbofit",
         "path": str(target),
+        "slash_commands": activation,
     }
 
 
+def _default_hermes_home(hermes_home: Path) -> Path:
+    if hermes_home.parent.name == "profiles":
+        return hermes_home.parent.parent
+    return hermes_home
+
+
+def hermes_homes(hermes_home: Path | None = None) -> list[Path]:
+    """Return the default Hermes home plus every named profile home."""
+    current = Path(hermes_home or os.getenv("HERMES_HOME") or Path.home() / ".hermes")
+    default = _default_hermes_home(current)
+    homes = [default]
+    profiles = default / "profiles"
+    if profiles.is_dir():
+        homes.extend(sorted(path for path in profiles.iterdir() if path.is_dir()))
+    if current not in homes:
+        homes.append(current)
+    return homes
+
+
+def _enable_plugin(config_path: Path) -> bool:
+    try:
+        payload = yaml.safe_load(config_path.read_text(encoding="utf-8")) if config_path.is_file() else {}
+    except (OSError, ValueError):
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+    plugins = payload.get("plugins")
+    if not isinstance(plugins, dict):
+        plugins = {}
+        payload["plugins"] = plugins
+    enabled = plugins.get("enabled")
+    if not isinstance(enabled, list):
+        enabled = []
+        plugins["enabled"] = enabled
+    names = {str(item).strip().lower() for item in enabled}
+    if "turbofit" in names or "user/turbofit" in names:
+        return False
+    enabled.append("turbofit")
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    return True
+
+
+def _publish_path(source: Path, destination: Path) -> str:
+    if destination.exists() or destination.is_symlink():
+        return "exists"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        destination.symlink_to(source, target_is_directory=source.is_dir())
+        return "symlink"
+    except OSError:
+        pass
+    if os.name == "nt":
+        result = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(destination), str(source)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0:
+            return "junction"
+    if source.is_dir():
+        shutil.copytree(source, destination)
+    else:
+        shutil.copy2(source, destination)
+    return "copy"
+
+
+def activate_slash_commands(
+    *,
+    hermes_home: Path | None = None,
+    plugin_root: Path | None = None,
+) -> dict[str, Any]:
+    """Enable /turbofit in every Hermes home, including TurboSouth.
+
+    Desktop profile sessions only scan that profile's plugins/ and
+    plugins.enabled. Installing into ~/.hermes alone leaves /turbofit
+    unknown in TurboSouth with 'not a quick/plugin/bundle/skill command'.
+    """
+    source = Path(plugin_root or PLUGIN_ROOT).resolve()
+    skill = PLUGIN_ROOT / "skills" / "turbofit"
+    homes = hermes_homes(hermes_home)
+    published = []
+    for home in homes:
+        plugin_dest = home / "plugins" / "turbofit"
+        skill_dest = home / "skills" / "turbofit"
+        published.append({
+            "home": str(home),
+            "enabled": _enable_plugin(home / "config.yaml"),
+            "plugin": _publish_path(source, plugin_dest) if plugin_dest.resolve() != source else "self",
+            "skill": _publish_path(skill, skill_dest) if skill.is_dir() else "missing-skill",
+        })
+    return {"ok": True, "homes": len(homes), "published": published}
+
+
 def launch_setup_screen() -> dict[str, Any]:
-    """Launch Hermes Dashboard so the Turbofit setup page can be opened."""
-    executable = shutil.which("hermes")
-    if not executable:
-        raise FileNotFoundError("hermes executable is not available")
-    process = subprocess.Popen(
-        [executable, "dashboard"],
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        start_new_session=True,
-        close_fds=True,
-    )
+    """Refresh the Hermes Desktop Turbofit page. Dashboard is deprecated."""
+    desktop = install_desktop_plugin()
+    models = ensure_recommended_models()
+    slash = activate_slash_commands()
     return {
         "launched": True,
-        "pid": process.pid,
-        "url": "http://127.0.0.1:9119/",
+        "surface": "desktop",
+        "path": "/turbofit",
         "page": "Turbofit",
+        "desktop": desktop,
+        "models": models,
+        "slash_commands": slash,
+        "message": "Recommended models are downloading or verified. Open Hermes Desktop → Turbofit, or ask TurboSouth to finish setup.",
     }
 
 
@@ -151,6 +376,174 @@ def install_native_runtime(backend: str = "auto") -> dict[str, Any]:
     return payload
 
 
+def probe_hardware():
+    """Profile-local seam for deterministic setup tests and platform routing."""
+    from turbofit_runtime.hardware import probe_hardware as probe
+
+    return probe()
+
+
+def _apple_mlx_hardware(hardware) -> bool:
+    devices = tuple(getattr(hardware, "devices", ()) or ())
+    return any(
+        getattr(device, "vendor", "") == "apple"
+        or getattr(device, "backend", "") == "metal"
+        for device in devices
+    )
+
+
+def install_mlx_runtime() -> dict[str, Any]:
+    script = PLUGIN_ROOT / "scripts" / "install-mlx-runtime"
+    result = subprocess.run(
+        [str(script), "--json"],
+        text=True,
+        capture_output=True,
+        timeout=1800,
+        check=False,
+    )
+    try:
+        payload = json.loads(result.stdout or result.stderr)
+    except ValueError as exc:
+        raise RuntimeError((result.stdout or result.stderr).strip() or "MLX install failed") from exc
+    if result.returncode:
+        raise RuntimeError(payload.get("error") or "MLX install failed")
+    return payload
+
+
+def activate_apple_mlx_stack() -> dict[str, Any]:
+    model_script = PLUGIN_ROOT / "scripts" / "turbofit-mlx-runtime"
+    gateway_script = PLUGIN_ROOT / "scripts" / "turbofit-gateway-runtime"
+    model = subprocess.run(
+        [str(model_script), "start"],
+        text=True,
+        capture_output=True,
+        timeout=1200,
+        check=False,
+    )
+    if model.returncode:
+        raise RuntimeError((model.stderr or model.stdout or "MLX runtime failed").strip())
+    gateway = subprocess.run(
+        [str(gateway_script), "start"],
+        text=True,
+        capture_output=True,
+        timeout=180,
+        check=False,
+    )
+    if gateway.returncode:
+        subprocess.run([str(model_script), "stop"], check=False, timeout=60)
+        raise RuntimeError((gateway.stderr or gateway.stdout or "gateway failed").strip())
+    return {
+        "ok": True,
+        "engine": "mlx",
+        "model": json.loads(model.stdout),
+        "gateway": json.loads(gateway.stdout),
+    }
+
+
+def recommended_artifact_families(
+    usable_memory_mb: int | None = None,
+    *,
+    hardware=None,
+) -> list[str]:
+    """Return artifacts for the machine's actual memory pool and engine lane."""
+    if hardware is None and usable_memory_mb is None:
+        from turbofit_runtime.hardware import probe_hardware
+
+        hardware = probe_hardware()
+    if hardware is not None:
+        devices = tuple(getattr(hardware, "devices", ()) or ())
+        backend = str(getattr(devices[0], "backend", "") if devices else "")
+        vendor = str(getattr(devices[0], "vendor", "") if devices else "")
+        if backend == "metal" or vendor == "apple":
+            from turbofit_runtime.allowed_lineup import check_local_options
+
+            options = check_local_options(
+                vram_gb=0,
+                host_ram_gb=float(hardware.system_ram_mb) / 1024,
+                memory_pool="unified",
+                backend=backend or "metal",
+                vendor=vendor or "apple",
+            )
+            mains = [str(item["alias"]) for item in options if item.get("role") == "main"]
+            if not mains:
+                raise RuntimeError("Apple MLX recommendation produced no main model")
+            return [mains[0]]
+        usable_memory_mb = int(hardware.total_usable_memory_mb)
+    if usable_memory_mb is None:
+        raise ValueError("usable memory or hardware is required")
+    if usable_memory_mb < 16 * 1024:
+        main = "maple-preview-tq2"
+    elif usable_memory_mb < 24 * 1024:
+        main = "qwen3-8-27b-gsq-rco-iq3xxs"
+    elif usable_memory_mb < 96 * 1024:
+        main = "qwen3-8-27b-gsq-rco-iq3s"
+    else:
+        main = "qwen3-8-27b-bf16"
+    aux = "maple-preview-tq2"
+    return [main] if main == aux else [main, aux]
+
+
+def ensure_recommended_models(
+    *,
+    families: list[str] | None = None,
+    usable_memory_mb: int | None = None,
+    download_fn=None,
+) -> dict[str, Any]:
+    """Download SHA-pinned recommended artifacts if they are missing."""
+    from importlib.machinery import SourceFileLoader
+    import importlib.util
+
+    script = PLUGIN_ROOT / "scripts" / "download-artifacts"
+    loader = SourceFileLoader("turbofit_download_artifacts", str(script))
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    if spec is None or spec.loader is None:
+        raise FileNotFoundError(f"missing artifact downloader: {script}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    wanted = set(families or recommended_artifact_families(usable_memory_mb))
+    payload = json.loads((PLUGIN_ROOT / "references" / "artifact-manifest.json").read_text(encoding="utf-8"))
+    rows = module.selected_artifacts(payload, wanted)
+    kwargs = {"root": module.model_root()}
+    if download_fn is not None:
+        kwargs["download_fn"] = download_fn
+    results = [module.install_artifact(item, **kwargs) for item in rows]
+    return {
+        "ok": True,
+        "families": sorted(wanted),
+        "downloaded": sum(1 for item in results if item.get("downloaded")),
+        "verified": sum(1 for item in results if item.get("verified")),
+        "artifacts": results,
+    }
+
+
+def install_freetoken_runtime() -> dict[str, Any]:
+    """Install the pinned FreeToken candidate only on its supported hardware contract."""
+    script = PLUGIN_ROOT / "scripts" / "install-freetoken-runtime"
+    if not script.is_file():
+        raise FileNotFoundError(f"missing FreeToken installer: {script}")
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = os.pathsep.join(
+        value for value in (str(SRC_ROOT), environment.get("PYTHONPATH", "")) if value
+    )
+    result = subprocess.run(
+        [sys.executable, str(script), "--json"],
+        text=True,
+        capture_output=True,
+        timeout=3600,
+        check=False,
+        env=environment,
+    )
+    try:
+        payload = json.loads(result.stdout or result.stderr)
+    except ValueError as exc:
+        raise RuntimeError((result.stdout or result.stderr).strip() or "FreeToken install failed") from exc
+    if result.returncode:
+        blockers = payload.get("blockers") or []
+        detail = "; ".join(str(item) for item in blockers) or payload.get("error") or "FreeToken install failed"
+        raise RuntimeError(detail)
+    return payload
+
+
 def _is_local_or_tailnet(hostname: str) -> bool:
     host = hostname.strip().lower().rstrip(".")
     if host == "localhost" or host.endswith(".localhost") or host.endswith(".ts.net"):
@@ -160,7 +553,7 @@ def _is_local_or_tailnet(hostname: str) -> bool:
     except ValueError:
         return False
     tailnet = ipaddress.ip_network("100.64.0.0/10")
-    return address.is_loopback or address in tailnet
+    return address.is_loopback or address.is_private or address in tailnet
 
 
 def _validated_base_url(value: str | None) -> str:
@@ -177,16 +570,94 @@ def _validated_base_url(value: str | None) -> str:
     return base_url if base_url.endswith("/v1") else f"{base_url}/v1"
 
 
-def provider_definition(base_url: str | None = None) -> dict[str, Any]:
+def _model_entry(context_length: int | None = None) -> dict[str, Any]:
+    if context_length is None:
+        return {}
+    parsed = int(context_length)
+    if parsed <= 0:
+        raise ValueError("context_length must be a positive integer")
+    return {"context_length": parsed}
+
+
+def provider_definition(
+    base_url: str | None = None,
+    context_length: int | None = None,
+    aux_model: str = "active:aux",
+) -> dict[str, Any]:
     """Return the canonical named custom-provider definition."""
+    entry = _model_entry(context_length)
+    models = {
+        "auto": dict(entry),
+        "active:main": dict(entry),
+        "active:aux": dict(entry),
+    }
+    if aux_model not in models:
+        models[aux_model] = dict(entry)
     return {
         "name": "TurboFit",
         "api": _validated_base_url(base_url),
         "api_key": "not-needed",
         "transport": "chat_completions",
         "default_model": "auto",
-        "models": {"auto": {}, "active:main": {}, "active:aux": {}},
+        "models": models,
     }
+
+
+def _is_turbofit_target(provider: Any, model: Any) -> bool:
+    provider_name = str(provider or "").strip().lower()
+    model_name = str(model or "").strip().lower()
+    return provider_name in {"custom:turbofit", "turbofit"} or model_name.startswith("active:")
+
+
+def _align_compression_context(
+    config: dict[str, Any],
+    *,
+    primary: bool,
+    context_length: int | None,
+    aux_model: str = "active:aux",
+) -> None:
+    """Keep auxiliary.compression on the same context window as main."""
+    raw_aux = config.get("auxiliary")
+    auxiliary: dict[str, Any] = copy.deepcopy(dict(raw_aux)) if isinstance(raw_aux, Mapping) else {}
+    raw_compression = auxiliary.get("compression")
+    compression: dict[str, Any] = (
+        copy.deepcopy(dict(raw_compression)) if isinstance(raw_compression, Mapping) else {}
+    )
+    raw_model = config.get("model")
+    model_cfg = raw_model if isinstance(raw_model, Mapping) else {}
+
+    if primary:
+        compression["provider"] = "custom:turbofit"
+        compression["model"] = aux_model
+        if context_length is not None:
+            compression["context_length"] = int(context_length)
+        auxiliary["compression"] = compression
+        config["auxiliary"] = auxiliary
+        return
+
+    if not compression:
+        return
+    if not _is_turbofit_target(compression.get("provider"), compression.get("model")):
+        if context_length is not None and compression.get("context_length") is None:
+            compression["context_length"] = int(context_length)
+            auxiliary["compression"] = compression
+            config["auxiliary"] = auxiliary
+        return
+
+    main_provider = str(model_cfg.get("provider") or "").strip()
+    main_model = str(model_cfg.get("default") or "").strip()
+    if not main_provider or not main_model:
+        return
+    compression["provider"] = main_provider
+    compression["model"] = main_model
+    compression.pop("base_url", None)
+    main_context = model_cfg.get("context_length")
+    if main_context is not None:
+        compression["context_length"] = int(main_context)
+    else:
+        compression.pop("context_length", None)
+    auxiliary["compression"] = compression
+    config["auxiliary"] = auxiliary
 
 
 def configure_hermes(
@@ -196,10 +667,18 @@ def configure_hermes(
     fallback: bool | None = None,
     fallback_chain: list[Mapping[str, Any]] | None = None,
     base_url: str | None = None,
+    context_length: int | None = None,
+    aux_model: str = "active:aux",
 ) -> dict[str, Any]:
-    """Return a copied Hermes config with Turbofit registered idempotently."""
+    """Return a copied Hermes config with Turbofit registered idempotently.
+
+    Main and aux always receive the same context_length. When Turbofit is
+    primary, compression is pinned to the requested aux model at that same
+    window. When it is not primary, a leftover Turbofit compression target
+    is rebound to the configured main model so the two limits cannot drift.
+    """
     updated = copy.deepcopy(dict(config))
-    provider = provider_definition(base_url)
+    provider = provider_definition(base_url, context_length=context_length, aux_model=aux_model)
 
     raw_providers = updated.get("providers")
     providers = copy.deepcopy(dict(raw_providers)) if isinstance(raw_providers, Mapping) else {}
@@ -224,7 +703,11 @@ def configure_hermes(
         model: dict[str, Any] = copy.deepcopy(dict(raw_model)) if isinstance(raw_model, Mapping) else {}
         model["provider"] = "custom:turbofit"
         model["default"] = "auto"
+        if context_length is not None:
+            model["context_length"] = int(context_length)
         updated["model"] = model
+
+    _align_compression_context(updated, primary=primary, context_length=context_length, aux_model=aux_model)
 
     if fallback_chain is not None:
         normalized_chain: list[dict[str, str]] = []
@@ -275,6 +758,35 @@ def configure_hermes(
     return updated
 
 
+def configure_aux_model(
+    config: Mapping[str, Any],
+    *,
+    aux_model: str,
+    base_url: str | None = None,
+    context_length: int | None = None,
+) -> dict[str, Any]:
+    """Rebind auxiliary.compression to a specific Turbofit model ID."""
+    updated = copy.deepcopy(dict(config))
+    provider = provider_definition(base_url, context_length=context_length, aux_model=aux_model)
+    raw_providers = updated.get("providers")
+    providers = copy.deepcopy(dict(raw_providers)) if isinstance(raw_providers, Mapping) else {}
+    providers["turbofit"] = provider
+    updated["providers"] = providers
+    existing = updated.get("custom_providers")
+    legacy = list(existing) if isinstance(existing, list) else []
+    legacy = [
+        item
+        for item in legacy
+        if not (isinstance(item, Mapping) and str(item.get("name", "")).lower() == "turbofit")
+    ]
+    if legacy:
+        updated["custom_providers"] = legacy
+    else:
+        updated.pop("custom_providers", None)
+    _align_compression_context(updated, primary=True, context_length=context_length, aux_model=aux_model)
+    return updated
+
+
 def _load_json(path: Path) -> dict[str, Any] | None:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
@@ -322,6 +834,96 @@ def gateway_health(base_url: str = DEFAULT_BASE_URL, timeout: float = 1.5) -> di
         return {"reachable": False, "endpoint": endpoint, "error": str(exc)}
 
 
+def _live_usage() -> dict[str, Any]:
+    gpus: list[dict[str, Any]] = []
+    try:
+        from turbofit_runtime.gpu import probe_gpus
+
+        gpus = [sample.to_dict() for sample in probe_gpus()]
+    except Exception:
+        pass
+    host: dict[str, Any] = {}
+    try:
+        from turbofit_runtime.hardware import probe_hardware
+
+        hardware = probe_hardware()
+        host = {
+            "system_ram_mb": hardware.system_ram_mb,
+            "host_usable_memory_mb": hardware.host_usable_memory_mb,
+            "total_vram_mb": hardware.total_vram_mb,
+            "topology_key": hardware.topology_key,
+        }
+    except Exception:
+        pass
+    runtime = _load_json(RUNTIME_STATE_PATH) or {}
+    tps = None
+    for key in ("main_tps", "tps", "predicted_per_second"):
+        value = runtime.get(key)
+        if isinstance(value, (int, float)) and value > 0:
+            tps = float(value)
+            break
+    return {"gpus": gpus, "host": host, "tps": tps, "runtime_keys": sorted(runtime)}
+
+
+def _provider_catalog(config: Mapping[str, Any]) -> dict[str, Any]:
+    named = config.get("providers") if isinstance(config.get("providers"), Mapping) else {}
+    subscriptions = []
+    for name, spec in named.items():
+        token = str(name).strip()
+        if not token or token.lower() == "turbofit":
+            continue
+        body = spec if isinstance(spec, Mapping) else {}
+        configured = any(body.get(key) for key in ("api_key", "api", "base_url", "oauth"))
+        subscriptions.append({
+            "id": token,
+            "label": SUBSCRIPTION_LABELS.get(token.lower(), token.replace("_", " ").title()),
+            "kind": "nous-subscription" if token.lower() == "nous" else "subscription",
+            "configured": bool(configured),
+        })
+    nous_free = [
+        {
+            "provider": "nous",
+            "model": item["model"],
+            "label": NOUS_FREE_LABELS.get(item["model"], item["model"]),
+            "kind": "nous-free",
+        }
+        for item in NOUS_FREE_FALLBACK_CHAIN
+    ]
+    return {"subscriptions": subscriptions, "nous_free": nous_free}
+
+
+def _local_scale_ladder(selection: Mapping[str, Any] | None) -> list[dict[str, Any]]:
+    requested = ""
+    if isinstance(selection, Mapping):
+        requested = str(selection.get("profile") or selection.get("requested") or "")
+    stem = requested.replace("hardware-", "") if requested.startswith("hardware-") else "8gb"
+    path = PLUGIN_ROOT / "runtime-profiles" / f"{stem}.yaml"
+    steps: list[dict[str, Any]] = []
+    if path.is_file():
+        try:
+            payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            for rung in payload.get("rungs") or []:
+                if not isinstance(rung, Mapping):
+                    continue
+                ident = str(rung.get("id") or "")
+                steps.append({
+                    "id": ident,
+                    "label": ident.replace("local-", "").replace("-", " "),
+                    "context": rung.get("context"),
+                    "aux_mode": rung.get("aux_mode"),
+                    "kind": "local",
+                })
+        except Exception:
+            pass
+    if not steps:
+        steps = [
+            {"id": "local-maple-131072", "label": "maple 131072", "context": 131072, "aux_mode": "shared-main", "kind": "local"},
+            {"id": "local-maple-65536", "label": "maple 65536", "context": 65536, "aux_mode": "shared-main", "kind": "local"},
+        ]
+    steps.append({"id": "nous-free", "label": "Nous keyless free", "context": None, "aux_mode": "api", "kind": "api"})
+    return steps
+
+
 def status_snapshot(config: Mapping[str, Any], *, probe: bool = True) -> dict[str, Any]:
     primary, fallback, endpoint = _provider_flags(config)
     selection = _load_json(SELECTION_PATH)
@@ -337,6 +939,7 @@ def status_snapshot(config: Mapping[str, Any], *, probe: bool = True) -> dict[st
         and isinstance(item.get("model"), str)
         and item.get("model")
     ]
+    usage = _live_usage() if probe else {"gpus": [], "host": {}, "tps": None}
     return {
         "ok": True,
         "provider": {
@@ -354,7 +957,25 @@ def status_snapshot(config: Mapping[str, Any], *, probe: bool = True) -> dict[st
         "gateway": gateway_health(endpoint) if probe else {"reachable": None, "endpoint": endpoint},
         "tailnet": tailnet_status(),
         "platform": {"os": os.name, "sys_platform": sys.platform},
+        "usage": usage,
+        "catalog": _provider_catalog(config),
+        "scale_ladder": _local_scale_ladder(selection),
+        "dials": _dials(selection, usage),
     }
+
+
+def _dials(selection: Mapping[str, Any] | None, usage: Mapping[str, Any] | None) -> dict[str, Any]:
+    """The three dials: memory pressure, context window, and the fallback chain.
+
+    Never raises: a status call must still answer when the chain document is missing or
+    a probe came back empty.
+    """
+    try:
+        from turbofit_runtime.chain import dials_for_selection
+
+        return dials_for_selection(usage=usage, selection=selection)
+    except Exception as exc:  # pragma: no cover - defensive surface
+        return {"error": str(exc)}
 
 
 def select_profile(profile: str) -> dict[str, Any]:
@@ -382,11 +1003,14 @@ def select_profile(profile: str) -> dict[str, Any]:
         raise RuntimeError(payload.get("error") or payload.get("output") or "profile selection failed")
     if combination_id is not None:
         payload["combination_id"] = combination_id
-        active = subprocess.run(
-            ["systemctl", "--user", "is-active", "--quiet", "turbofit-controller.service"],
-            check=False,
-            timeout=15,
-        ).returncode == 0
+        controller_available = os.name != "nt" and bool(shutil.which("systemctl"))
+        active = False
+        if controller_available:
+            active = subprocess.run(
+                ["systemctl", "--user", "is-active", "--quiet", "turbofit-controller.service"],
+                check=False,
+                timeout=15,
+            ).returncode == 0
         if active:
             restarted = subprocess.run(
                 ["systemctl", "--user", "restart", "turbofit-controller.service"],
@@ -405,7 +1029,17 @@ def combination_snapshot() -> dict[str, Any]:
     """Return every current exact configuration with fit or incompatibility evidence."""
     script = PLUGIN_ROOT / "scripts" / "turbofit-runtime-recommend"
     result = subprocess.run(
-        [sys.executable, str(script), "--json", "--limit", "10000", "--prefer", "balanced"],
+        [
+            sys.executable,
+            str(script),
+            "--json",
+            "--limit",
+            "10000",
+            "--prefer",
+            "balanced",
+            "--evidence-scope",
+            "portable-fit",
+        ],
         text=True,
         capture_output=True,
         timeout=180,
@@ -416,7 +1050,8 @@ def combination_snapshot() -> dict[str, Any]:
         rows = json.loads(result.stdout)
     except ValueError as exc:
         raise RuntimeError((result.stderr or "failed to enumerate exact combinations").strip()) from exc
-    if result.returncode or not isinstance(rows, list):
+    no_match = result.returncode == 1 and rows == []
+    if (result.returncode and not no_match) or not isinstance(rows, list):
         raise RuntimeError((result.stderr or "failed to enumerate exact combinations").strip())
     from turbofit_runtime.catalog_campaign import build_configuration_index
     from turbofit_runtime.model_catalog import ModelCatalog
@@ -500,7 +1135,7 @@ def recommendation_snapshot(
     *,
     limit: int = 3,
 ) -> dict[str, Any]:
-    """Rescan physical hardware and return evidence-backed user choices."""
+    """Run TurboFit Check: scan physical hardware and return evidence-backed choices."""
     from turbofit_runtime.hardware import probe_hardware
 
     requested = str(preference or "").strip().lower() or None
@@ -545,8 +1180,47 @@ def recommendation_snapshot(
         recommendations[name] = payload if isinstance(payload, list) else []
         if result.returncode and not recommendations[name]:
             errors[name] = (result.stderr or "no evidence-backed configuration fits").strip()
+
+    portable_preference = requested or "balanced"
+    portable = subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--json",
+            "--fit-only",
+            "--limit",
+            str(limit),
+            "--prefer",
+            portable_preference,
+            "--evidence-scope",
+            "portable-fit",
+        ],
+        text=True,
+        capture_output=True,
+        timeout=90,
+        check=False,
+        env={**os.environ, "PYTHONPATH": str(SRC_ROOT)},
+    )
+    try:
+        portable_payload = json.loads(portable.stdout)
+    except ValueError:
+        portable_payload = []
+    exact_profiles = {
+        str(item.get("profile"))
+        for rows in recommendations.values()
+        for item in rows
+        if isinstance(item, Mapping)
+    }
+    compatible_lanes = [
+        item
+        for item in (portable_payload if isinstance(portable_payload, list) else [])
+        if isinstance(item, Mapping) and str(item.get("profile")) not in exact_profiles
+    ]
+    if portable.returncode and not compatible_lanes:
+        errors["portable_fit"] = (portable.stderr or "no portable local lane fits").strip()
     return {
-        "ok": any(recommendations.values()),
+        "ok": any(recommendations.values()) or bool(compatible_lanes),
+        "process": "TurboFit Check",
         "hardware": {
             **asdict(hardware),
             "topology_key": hardware.topology_key,
@@ -556,6 +1230,8 @@ def recommendation_snapshot(
         "requested_preference": requested,
         "preferences": list(preferences),
         "recommendations": recommendations,
+        "compatible_lanes": compatible_lanes,
+        "compatible_lane_policy": "only Fit List mains for this topology; dense 27B is not offered on 8 GB VRAM",
         "errors": errors,
     }
 
@@ -588,6 +1264,106 @@ def multimodal_snapshot(config: Mapping[str, Any] | None = None) -> dict[str, An
     return payload
 
 
+def _write_home_config(home: Path, config: Mapping[str, Any]) -> Path:
+    """Merge *config* into one home's config.yaml and write it.
+
+    Hermes' ``save_config`` always targets the *active* home (it resolves
+    ``get_config_path()``), so calling it once per profile rewrote the current
+    home N times and never reached a profile -- a serve/tailnet URL published
+    for a profile silently landed in the wrong file. Writing each home's own
+    config.yaml is the only way to reach them.
+    """
+    path = home / "config.yaml"
+    existing: dict[str, Any] = {}
+    if path.is_file():
+        try:
+            loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            loaded = {}
+        if isinstance(loaded, Mapping):
+            existing = dict(loaded)
+    merged = _deep_merge_mapping(existing, config)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(yaml.safe_dump(merged, sort_keys=False, allow_unicode=True),
+                    encoding="utf-8")
+    return path
+
+
+def _deep_merge_mapping(base: Mapping[str, Any], overlay: Mapping[str, Any]) -> dict[str, Any]:
+    """Overlay wins, except where both sides are mappings (then merge)."""
+    merged = dict(base)
+    for key, value in overlay.items():
+        current = merged.get(key)
+        if isinstance(current, Mapping) and isinstance(value, Mapping):
+            merged[key] = _deep_merge_mapping(current, value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def ensure_provider_registered(
+    *, hermes_home: Path | None = None, base_url: str | None = None,
+) -> list[str]:
+    """Give every Hermes home ``providers.turbofit``, idempotently.
+
+    A freshly created profile (TurboSouth included) has no Turbofit provider, so
+    ``custom:turbofit`` fails with "Unknown provider" on its first request. This
+    is the heal that runs at plugin registration.
+    """
+    touched: list[str] = []
+    for home in hermes_homes(hermes_home):
+        path = home / "config.yaml"
+        payload: dict[str, Any] = {}
+        if path.is_file():
+            try:
+                loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                loaded = {}
+            if isinstance(loaded, Mapping):
+                payload = dict(loaded)
+        providers = payload.get("providers")
+        if isinstance(providers, Mapping) and isinstance(providers.get("turbofit"), Mapping):
+            continue
+        try:
+            updated = configure_hermes(payload, base_url=base_url)
+        except Exception:  # noqa: BLE001 - a heal must never break registration
+            continue
+        touched.append(str(_write_home_config(home, updated)))
+    return touched
+
+
+def _save_configuration_to_all_homes(config: dict | str, *, base_url: str | None = None) -> None:
+    """Fan a configuration out to every Hermes profile home."""
+    if isinstance(config, str):
+        # Older callers passed the URL alone; treat it as the base URL.
+        config, base_url = {}, (base_url or config)
+    if base_url:
+        config = dict(config)
+        providers = config.get("providers")
+        if providers is None:
+            providers = {}
+        if isinstance(providers, Mapping):
+            merged_providers = dict(providers)
+            merged_providers["turbofit"] = provider_definition(
+                base_url,
+                context_length=None,
+                aux_model="active:aux",
+            )
+            config["providers"] = merged_providers
+        # A non-mapping providers section is not ours to rewrite: leave the
+        # configuration exactly as the caller built it.
+    current = Path(os.getenv("HERMES_HOME") or Path.home() / ".hermes")
+    default = _default_hermes_home(current)
+    for home in hermes_homes(current):
+        # A sibling directory without config.yaml may be plugin data or a deleted profile.
+        if home not in (default, current) and not (home / "config.yaml").is_file():
+            continue
+        try:
+            _write_home_config(home, config)
+        except OSError:
+            continue
+
+
 def apply_configuration(
     *,
     primary: bool,
@@ -596,10 +1372,11 @@ def apply_configuration(
     multimodal: Mapping[str, str] | None = None,
     profile: str | None,
     base_url: str | None,
-    install_sirvir: bool = False,
+    install_turbosouth: bool = False,
     install_desktop: bool = False,
     install_lemonade: bool = False,
     install_native: bool = False,
+    install_freetoken: bool = False,
     publish_tailnet_routes: bool = False,
     dashboard_local_port: int = 9127,
     provider_local_port: int = 8091,
@@ -609,13 +1386,29 @@ def apply_configuration(
     from hermes_cli.config import load_config, save_config
 
     with _CONFIG_LOCK:
-        sirvir = install_sirvir_profile() if install_sirvir else None
+        hardware = probe_hardware()
+        apple_hardware = profile == "auto" and _apple_mlx_hardware(hardware)
+        families = recommended_artifact_families(hardware=hardware) if apple_hardware else None
+        apple_family = families[0] if families else None
+        apple_mlx = apple_family in ("qwen3-8-27b-gsq-rco-iq3s", "qwen3-8-27b-gsq-rco-iq3xxs")
+        if apple_family and "-mlx-" in apple_family and not apple_mlx:
+            raise RuntimeError(
+                f"managed Apple MLX artifact is not pinned for {apple_family}; setup is blocked"
+            )
+        if apple_mlx and not install_native:
+            raise ValueError(
+                "Apple MLX auto activation requires install_native=true because it installs "
+                "the pinned runtime and starts loopback model and gateway processes"
+            )
+        turbosouth = install_turbosouth_profile() if install_turbosouth else None
         desktop = install_desktop_plugin() if install_desktop else None
         lemonade = install_lemonade_runtime() if install_lemonade else None
-        native = install_native_runtime() if install_native else None
-        selected = select_profile(profile) if profile else None
+        native = install_native_runtime() if install_native and not apple_mlx else None
+        freetoken = install_freetoken_runtime() if install_freetoken else None
+        models = ensure_recommended_models(families=families) if families else ensure_recommended_models()
+        mlx_runtime = install_mlx_runtime() if apple_mlx else None
         publication = (
-            publish_tailnet(
+            ensure_tailnet(
                 dashboard_local_port=dashboard_local_port,
                 provider_local_port=provider_local_port,
                 dashboard_https_port=dashboard_https_port,
@@ -625,11 +1418,12 @@ def apply_configuration(
             else None
         )
         effective_base_url = publication["provider_base_url"] if publication else base_url
+        original_config = load_config()
         configured = configure_hermes(
-            load_config(),
+            original_config,
             primary=primary,
             fallback=fallback,
-            fallback_chain=fallback_chain,
+            fallback_chain=list(NOUS_FREE_FALLBACK_CHAIN) if fallback_chain is None else fallback_chain,
             base_url=effective_base_url,
         )
         if multimodal is not None:
@@ -641,15 +1435,27 @@ def apply_configuration(
                 catalog=MultimodalCatalog.load(MULTIMODAL_CATALOG),
             )
         save_config(configured, merge_existing=False)
+        try:
+            selected = (
+                activate_apple_mlx_stack()
+                if apple_mlx
+                else (select_profile(profile) if profile else None)
+            )
+        except Exception:
+            save_config(original_config, merge_existing=False)
+            raise
     return {
         "ok": True,
         "configured": True,
         "selection": selected,
         "tailnet": publication,
-        "sirvir": sirvir,
+        "turbosouth": turbosouth,
         "desktop_plugin": desktop,
         "lemonade": lemonade,
         "native_runtime": native,
+        "mlx_runtime": mlx_runtime,
+        "freetoken_runtime": freetoken,
+        "models": models,
         "restart_required": True,
     }
 
@@ -668,18 +1474,20 @@ def handle_configure(args: dict[str, Any], **_: Any) -> str:
         primary = args.get("primary", False)
         fallback = args.get("fallback") if "fallback" in args else None
         publish_routes = args.get("publish_tailnet", False)
-        install_sirvir = args.get("install_sirvir", False)
+        install_turbosouth = args.get("install_turbosouth", False)
         install_desktop = args.get("install_desktop", False)
         install_lemonade = args.get("install_lemonade", False)
         install_native = args.get("install_native", False)
+        install_freetoken = args.get("install_freetoken", False)
         if (
             not isinstance(primary, bool)
             or (fallback is not None and not isinstance(fallback, bool))
             or not isinstance(publish_routes, bool)
-            or not isinstance(install_sirvir, bool)
+            or not isinstance(install_turbosouth, bool)
             or not isinstance(install_desktop, bool)
             or not isinstance(install_lemonade, bool)
             or not isinstance(install_native, bool)
+            or not isinstance(install_freetoken, bool)
         ):
             raise ValueError("setup switches must be booleans")
         profile = args.get("profile")
@@ -713,10 +1521,11 @@ def handle_configure(args: dict[str, Any], **_: Any) -> str:
             profile=profile,
             base_url=base_url,
             publish_tailnet_routes=publish_routes,
-            install_sirvir=install_sirvir,
+            install_turbosouth=install_turbosouth,
             install_desktop=install_desktop,
             install_lemonade=install_lemonade,
             install_native=install_native,
+            install_freetoken=install_freetoken,
             **ports,
         )
         return json.dumps(result)

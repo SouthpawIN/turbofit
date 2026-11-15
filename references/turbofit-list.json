@@ -1,0 +1,75 @@
+{
+  "generated_at": "2026-11-15T00:17:39.461672+00:00",
+  "levels": [
+    {
+      "hardware_level_gb": 8,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-8gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 16,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-16gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 24,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-24gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 32,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-32gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 48,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-48gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 64,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-64gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 96,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-96gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 128,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-128gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 192,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-192gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 256,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-256gb",
+      "winner": null
+    },
+    {
+      "hardware_level_gb": 384,
+      "status": "pending-benchmarks",
+      "tier_id": "hardware-384gb",
+      "winner": null
+    }
+  ],
+  "name": "TurboFit List",
+  "policy": "exact hardware + current recipe + physical evidence + intelligence + TPS",
+  "schema": "turbofit.list/v1",
+  "source_schema": "turbofit.hardware-tier-report/v1"
+}

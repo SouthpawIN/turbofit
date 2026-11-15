@@ -1,0 +1,167 @@
+#!/usr/bin/env python3
+"""Regenerate per-main weight footprints from the pinned artifact manifest.
+
+Every model family is resolved through ``references/artifact-manifest.json``
+(pinned revision + SHA-256).  Sharded checkpoints are completed from the repo
+listing at the same pinned revision, because the manifest tracks only the shard
+the recipe points llama.cpp at.
+
+``--measure-experts`` additionally reads each MoE artifact's GGUF tensor table
+over HTTP Range (headers only, a few MiB per shard) and records the bytes held
+by expert tensors.  That is what lets a model bigger than VRAM be *placed* as an
+offload option instead of guessed at; a model without ``expert_bytes`` stays
+unmeasured and is never advertised as offloadable.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Mapping
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.gguf_footprint import GGUFFormatError
+from turbofit_runtime.gguf_remote import (
+    RemoteShard,
+    huggingface_url,
+    measure_remote_expert_footprint,
+)
+from turbofit_runtime.tier_fit import artifact_files_for_family, build_footprints
+
+
+def pinned_siblings(repo_id: str, revision: str) -> dict[str, int]:
+    url = f"https://huggingface.co/api/models/{repo_id}/revision/{revision}?blobs=true"
+    with urllib.request.urlopen(url, timeout=60) as response:
+        payload: dict[str, Any] = json.load(response)
+    listing: dict[str, int] = {}
+    for sibling in payload.get("siblings") or []:
+        size = sibling.get("size")
+        if size is None:
+            size = (sibling.get("lfs") or {}).get("size")
+        if size is not None:
+            listing[str(sibling["rfilename"])] = int(size)
+    return listing
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--offline", action="store_true", help="sum only manifest rows (understates sharded repos)")
+    parser.add_argument(
+        "--measure-experts", action="store_true",
+        help="read each MoE GGUF header over HTTP Range and record expert bytes (needs network)",
+    )
+    parser.add_argument(
+        "--timestamp", default=None,
+        help="ISO timestamp for generated_at/measured_at (default: now); fix it for a byte-identical rerun",
+    )
+    parser.add_argument("--output", type=Path, default=ROOT / "references/model-footprints.json")
+    args = parser.parse_args()
+
+    catalog = json.loads((ROOT / "references/model-catalog.json").read_text(encoding="utf-8"))
+    manifest = json.loads((ROOT / "references/artifact-manifest.json").read_text(encoding="utf-8"))
+    timestamp = args.timestamp or datetime.now(timezone.utc).isoformat()
+
+    revisions = {
+        str(item["repo_id"]): str(item["revision"])
+        for item in manifest["artifacts"]
+        if isinstance(item, dict)
+    }
+    cache: dict[str, dict[str, int]] = {}
+
+    def listing(repo_id: str) -> dict[str, int]:
+        if repo_id not in cache:
+            cache[repo_id] = {} if args.offline else pinned_siblings(repo_id, revisions[repo_id])
+        return cache[repo_id]
+
+    by_family: dict[str, list[Mapping[str, Any]]] = {}
+    for artifact in manifest.get("artifacts") or []:
+        if not isinstance(artifact, Mapping):
+            continue
+        for family in artifact.get("families") or []:
+            by_family.setdefault(str(family), []).append(artifact)
+
+    unmeasured: list[str] = []
+
+    def expert_provider(model: Mapping[str, Any]) -> Mapping[str, Any] | None:
+        model_id = str(model["id"])
+        if not model.get("moe"):
+            return None
+        artifacts = by_family.get(model_id) or []
+        repos = {str(item["repo_id"]) for item in artifacts}
+        files, _complete = artifact_files_for_family(
+            artifacts, {repo: listing(repo) for repo in repos},
+        )
+        shards = [
+            RemoteShard(
+                path=path,
+                url=huggingface_url(repo, revisions[repo], path),
+                size_bytes=int(size),
+            )
+            for repo, path, size in files
+            # A family can ship non-GGUF companions (Darwin's PLE embedding
+            # pack is a .bin). They hold no expert tensors; count their bytes
+            # as resident so the measured total still equals the footprint.
+            if path.lower().endswith(".gguf")
+        ]
+        companions = sum(
+            int(size) for _repo, path, size in files if not path.lower().endswith(".gguf")
+        )
+        if not shards:
+            print(f"unmeasured {model_id}: no GGUF files in the artifact", file=sys.stderr)
+            unmeasured.append(model_id)
+            return None
+        try:
+            footprint = measure_remote_expert_footprint(shards)
+        except (GGUFFormatError, OSError, ValueError) as exc:
+            print(f"unmeasured {model_id}: {type(exc).__name__}: {exc}", file=sys.stderr)
+            unmeasured.append(model_id)
+            return None
+        if footprint.expert_bytes <= 0:
+            print(f"unmeasured {model_id}: header has no expert tensors", file=sys.stderr)
+            unmeasured.append(model_id)
+            return None
+        total_bytes = footprint.total_bytes + companions
+        return {
+            "expert_bytes": footprint.expert_bytes,
+            "expert_layers": footprint.expert_layers,
+            "total_bytes": total_bytes,
+            "source": "huggingface:" + ",".join(
+                f"{repo}@{revisions[repo]}" for repo in sorted(repos)
+            ),
+            "measured_at": timestamp,
+        }
+
+    payload = build_footprints(
+        catalog,
+        manifest,
+        siblings_provider=None if args.offline else listing,
+        generated_at=timestamp,
+        expert_provider=expert_provider if args.measure_experts else None,
+    )
+    args.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    incomplete = [key for key, value in payload["models"].items() if not value["shard_set_complete"]]
+    measured = [key for key, value in payload["models"].items() if "expert_bytes" in value]
+    mismatched = [
+        key for key, value in payload["models"].items()
+        if value.get("expert_measurement", {}).get("matches_weight_bytes") is False
+    ]
+    print(json.dumps({
+        "models": len(payload["models"]),
+        "path": str(args.output),
+        "incomplete_shard_sets": incomplete,
+        "expert_measured": len(measured),
+        "expert_unmeasured": sorted(unmeasured),
+        "expert_total_mismatch": sorted(mismatched),
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

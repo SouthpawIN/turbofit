@@ -159,6 +159,10 @@ def main() -> int:
     parser.add_argument("--catalog", type=Path, default=DEFAULT_CATALOG)
     parser.add_argument("--base-dir", type=Path, default=DEFAULT_BASE)
     parser.add_argument("--group", action="append", dest="groups")
+    parser.add_argument(
+        "--file", action="append", dest="file_ids",
+        help="single file/quant id to download within (or instead of) a group; repeatable",
+    )
     parser.add_argument("--list-groups", action="store_true")
     parser.add_argument("--verify-only", action="store_true")
     parser.add_argument("--receipt", type=Path)
@@ -169,7 +173,7 @@ def main() -> int:
         for group in sorted(catalog.groups):
             print(group)
         return 0
-    groups = args.groups or ["production-floor"]
+    groups = args.groups or (["production-floor"] if not args.file_ids else [])
     selected: list[DownloadFile] = []
     seen: set[str] = set()
     for group in groups:
@@ -177,7 +181,22 @@ def main() -> int:
             if item.id not in seen:
                 selected.append(item)
                 seen.add(item.id)
+    for file_id in args.file_ids or []:
+        if file_id not in catalog.files:
+            known = ", ".join(sorted(catalog.files)) or "(none)"
+            raise SystemExit(
+                f"error: unknown download file id: {file_id}\n"
+                f"Known ids: {known}"
+            )
+        item = catalog.files[file_id]
+        if item.id not in seen:
+            selected.append(item)
+            seen.add(item.id)
     files = tuple(selected)
+    if not files:
+        raise SystemExit(
+            "error: nothing selected; pass --group <group> and/or --file <file-id>"
+        )
     if args.verify_only:
         failures = [item.id for item in files if not verify_file(item, args.base_dir / item.destination)]
         if failures:

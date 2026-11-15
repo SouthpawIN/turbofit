@@ -8,6 +8,7 @@ import platform
 import re
 import subprocess
 from collections import Counter
+from contextlib import suppress
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
@@ -27,6 +28,7 @@ ROCM_INVENTORY_QUERY = [
     "--showbus",
     "--json",
 ]
+VULKAN_INVENTORY_QUERY = ["vulkaninfo"]
 
 
 @dataclass(frozen=True)
@@ -85,6 +87,15 @@ class HardwareFingerprint:
         return sum(device.memory_total_mb for device in self.devices)
 
     @property
+    def host_reserve_mb(self) -> int:
+        """RAM kept available for the OS and non-model processes."""
+        return min(8192, max(1024, round(self.system_ram_mb * 0.05)))
+
+    @property
+    def host_usable_memory_mb(self) -> int:
+        return max(0, self.system_ram_mb - self.host_reserve_mb)
+
+    @property
     def unified_memory(self) -> bool:
         return any(
             device.vendor == "apple"
@@ -100,11 +111,24 @@ class HardwareFingerprint:
         return not self.devices or self.unified_memory
 
     @property
+    def memory_pool_kind(self) -> str:
+        if not self.devices:
+            # Apple Silicon has no discrete device to enumerate, but its RAM *is*
+            # the GPU's memory: classify it as unified so the MoE ladder engages
+            # instead of falling through to the CPU chain.
+            if self.os == "darwin" and self.architecture.lower() in {"arm64", "aarch64"}:
+                return "unified"
+            return "cpu"
+        return "unified" if self.unified_memory else "dedicated"
+
+    @property
     def total_usable_memory_mb(self) -> int:
         """Memory usable by local inference without double-counting unified RAM."""
-        reserve_mb = min(8192, max(1024, round(self.system_ram_mb * 0.05)))
-        usable_system_mb = max(0, self.system_ram_mb - reserve_mb)
-        return usable_system_mb if self.shared_memory_pool else usable_system_mb + self.total_vram_mb
+        return (
+            self.host_usable_memory_mb
+            if self.shared_memory_pool
+            else self.host_usable_memory_mb + self.total_vram_mb
+        )
 
     @property
     def vendors(self) -> tuple[str, ...]:
@@ -225,6 +249,63 @@ def parse_rocm_smi_json(raw: str) -> tuple[AcceleratorDevice, ...]:
     return tuple(sorted(devices, key=lambda item: (item.bus_id or "", item.index)))
 
 
+def parse_vulkaninfo_text(raw: str) -> tuple[AcceleratorDevice, ...]:
+    """Extract stable Vulkan device identity and dedicated heap capacity."""
+    blocks = re.finditer(
+        r"^GPU(?P<index>\d+):\s*$\n(?P<body>.*?)(?=^GPU\d+:\s*$|\Z)",
+        raw,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    devices: list[AcceleratorDevice] = []
+    vendor_names = {"0x1002": "amd", "0x10de": "nvidia", "0x8086": "intel"}
+    integrated_indices: set[int] = set()
+    for block in blocks:
+        body = block.group("body")
+        name_match = re.search(r"^\s*deviceName\s*=\s*(.+)$", body, re.MULTILINE)
+        uuid_match = re.search(r"^\s*deviceUUID\s*=\s*(\S+)$", body, re.MULTILINE)
+        vendor_match = re.search(r"^\s*vendorID\s*=\s*(0x[0-9a-fA-F]+)$", body, re.MULTILINE)
+        heaps_match = re.search(r"^\s*memoryHeaps:.*?\n(?P<heaps>.*?)(?=^\s*memoryTypes:)", body, re.MULTILINE | re.DOTALL)
+        if not (name_match and uuid_match and vendor_match and heaps_match):
+            continue
+        integrated = "PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU" in body
+        device_local_bytes = 0
+        for heap in re.finditer(
+            r"^\s*memoryHeaps\[\d+\]:\s*$\n(?P<body>.*?)(?=^\s*memoryHeaps\[\d+\]:|\Z)",
+            heaps_match.group("heaps"),
+            re.MULTILINE | re.DOTALL,
+        ):
+            heap_body = heap.group("body")
+            size_match = re.search(r"^\s*size\s*=\s*(\d+)", heap_body, re.MULTILINE)
+            if size_match and "MEMORY_HEAP_DEVICE_LOCAL_BIT" in heap_body:
+                device_local_bytes += int(size_match.group(1))
+        if device_local_bytes <= 0:
+            continue
+        if integrated:
+            integrated_indices.add(int(block.group("index")))
+        vendor_id = vendor_match.group(1).lower()
+        devices.append(AcceleratorDevice(
+            index=int(block.group("index")),
+            uuid=uuid_match.group(1),
+            name=name_match.group(1).strip(),
+            vendor=vendor_names.get(vendor_id, "vulkan"),
+            backend="vulkan",
+            memory_total_mb=device_local_bytes // (1024 * 1024),
+            compute_capability=None,
+            bus_id=None,
+        ))
+    if not devices:
+        raise ValueError("no Vulkan devices with dedicated memory heaps")
+    # An integrated GPU's device-local heap is system RAM: it is a display
+    # device, not dedicated inference VRAM. Drop it only when discrete GPUs
+    # are present; keep it on iGPU-only machines where it is the pool.
+    discrete_indices = {device.index for device in devices} - integrated_indices
+    if integrated_indices and discrete_indices:
+        devices = [device for device in devices if device.index not in integrated_indices]
+    if not devices:
+        raise ValueError("no Vulkan devices with dedicated memory heaps")
+    return tuple(sorted(devices, key=lambda item: item.index))
+
+
 def probe_hardware(
     *,
     command_runner: Callable[[list[str]], str] | None = None,
@@ -245,6 +326,25 @@ def probe_hardware(
     if not devices and normalized_os == "linux":
         try:
             devices = parse_rocm_smi_json(runner(list(ROCM_INVENTORY_QUERY)))
+        except (FileNotFoundError, OSError, ValueError, subprocess.SubprocessError):
+            devices = ()
+    # Intel discrete GPUs answer to xpu-smi; when it reports devices they are
+    # authoritative, because vulkaninfo device-local heaps charge an integrated
+    # part's shared aperture as dedicated VRAM. Integrated parts are excluded
+    # and counted through host RAM only.
+    xpu_answered = False
+    if not devices and normalized_os == "linux":
+        from .intel_xpu import probe_xpu_devices  # local import: avoids cycle
+        try:
+            rows = probe_xpu_devices(runner)
+        except (FileNotFoundError, OSError, ValueError, subprocess.SubprocessError):
+            rows = ()
+        if rows:
+            xpu_answered = True
+            devices = tuple(row.device for row in rows if not row.integrated)
+    if not devices and normalized_os in {"windows", "linux"} and not xpu_answered:
+        try:
+            devices = parse_vulkaninfo_text(runner(list(VULKAN_INVENTORY_QUERY)))
         except (FileNotFoundError, OSError, ValueError, subprocess.SubprocessError):
             devices = ()
     if not devices and normalized_os == "darwin" and normalized_architecture in {"arm64", "aarch64"}:
@@ -273,6 +373,13 @@ def probe_hardware(
     )
 
 
+def _command_timeout(command: list[str]) -> int:
+    name = Path(command[0]).name.lower() if command else ""
+    if name in {"vulkaninfo", "vulkaninfo.exe"}:
+        return 30
+    return 5
+
+
 def _run_command(
     command: list[str],
     *,
@@ -280,8 +387,9 @@ def _run_command(
     compatibility_library_dir: Callable[[], str | None] | None = None,
 ) -> str:
     run = check_output or subprocess.check_output
+    timeout = _command_timeout(command)
     try:
-        return run(command, text=True, timeout=5, stderr=subprocess.PIPE)
+        return run(command, text=True, timeout=timeout, stderr=subprocess.PIPE)
     except subprocess.CalledProcessError:
         if not command or Path(command[0]).name != "nvidia-smi":
             raise
@@ -297,7 +405,7 @@ def _run_command(
         return run(
             command,
             text=True,
-            timeout=5,
+            timeout=timeout,
             stderr=subprocess.PIPE,
             env=env,
         )
@@ -326,28 +434,76 @@ def _nvidia_compatibility_library_dir() -> str | None:
     return str(candidate) if candidate.is_dir() else None
 
 
+def _sysconf_ram_bytes() -> int:
+    """``SC_PHYS_PAGES * SC_PAGE_SIZE``, in-process: no PATH, no fork, nothing to time out.
+
+    0 where the platform does not carry both names -- ``os.sysconf`` raises ValueError for a name
+    its libc does not define -- or where the libc declines to answer, which it signals by
+    returning -1 rather than raising.
+    """
+    sysconf = getattr(os, "sysconf", None)
+    if sysconf is None:
+        return 0
+    with suppress(OSError, ValueError):
+        pages, page = sysconf("SC_PHYS_PAGES"), sysconf("SC_PAGE_SIZE")
+        if pages > 0 and page > 0:
+            return pages * page
+    return 0
+
+
+def _windows_ram_bytes() -> int:
+    """GlobalMemoryStatusEx. 0 wherever kernel32 is not there to answer."""
+    with suppress(AttributeError, OSError, ValueError):
+        import ctypes
+
+        class MEMORYSTATUSEX(ctypes.Structure):
+            _fields_ = [
+                ("dwLength", ctypes.c_ulong),
+                ("dwMemoryLoad", ctypes.c_ulong),
+                ("ullTotalPhys", ctypes.c_ulonglong),
+                ("ullAvailPhys", ctypes.c_ulonglong),
+                ("ullTotalPageFile", ctypes.c_ulonglong),
+                ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong),
+                ("ullAvailVirtual", ctypes.c_ulonglong),
+                ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+            ]
+
+        stat = MEMORYSTATUSEX()
+        stat.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+        # The call reports success in its return value; without checking it, a failed call is
+        # read as a 0-byte machine from the zeroed struct.
+        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat)):
+            return int(stat.ullTotalPhys)
+    return 0
+
+
+def _proc_meminfo_ram_bytes() -> int:
+    """MemTotal from /proc/meminfo, in kB. The last resort on a Linux libc whose sysconf does
+    not carry the page-count names."""
+    with suppress(OSError, ValueError, IndexError):
+        for line in Path("/proc/meminfo").read_text().splitlines():
+            if line.startswith("MemTotal:"):
+                return int(line.split()[1]) * 1024
+    return 0
+
+
 def _system_ram_mb() -> int:
-    if hasattr(os, "sysconf"):
-        page_size = os.sysconf("SC_PAGE_SIZE")
-        page_count = os.sysconf("SC_PHYS_PAGES")
-        return int(page_size * page_count // (1024 * 1024))
-    # Windows fallback via ctypes GlobalMemoryStatusEx
-    import ctypes
+    """Total physical memory in MB, or 0 when no source could answer.
 
-    class MEMORYSTATUSEX(ctypes.Structure):
-        _fields_ = [
-            ("dwLength", ctypes.c_ulong),
-            ("dwMemoryLoad", ctypes.c_ulong),
-            ("ullTotalPhys", ctypes.c_ulonglong),
-            ("ullAvailPhys", ctypes.c_ulonglong),
-            ("ullTotalPageFile", ctypes.c_ulonglong),
-            ("ullAvailPageFile", ctypes.c_ulonglong),
-            ("ullTotalVirtual", ctypes.c_ulonglong),
-            ("ullAvailVirtual", ctypes.c_ulonglong),
-            ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
-        ]
+    On unified-memory parts this number *is* the accelerator budget: nvidia-smi reports
+    ``memory.total`` as ``[N/A]`` on GB10 and Metal shares system RAM, so both paths above read
+    the machine's capacity from here. A bad reading is therefore not a small machine, and the
+    probe must not turn one into a crash: ``os.sysconf`` raises on a libc that does not define
+    the name and returns -1 when the value is indeterminate, and neither was handled -- the
+    first propagated out of ``probe_hardware``, the second reached ``HardwareFingerprint`` as a
+    negative capacity. The Windows fallback could not catch either, because it was gated on
+    ``hasattr(os, "sysconf")`` alone and so was unreachable on every POSIX host.
 
-    stat = MEMORYSTATUSEX()
-    stat.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
-    ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
-    return int(stat.ullTotalPhys // (1024 * 1024))
+    Each source is tried in turn and 0 is the honest "unknown machine" answer.
+    """
+    for source in (_sysconf_ram_bytes, _windows_ram_bytes, _proc_meminfo_ram_bytes):
+        total = source()
+        if total > 0:
+            return int(total // (1024 * 1024))
+    return 0

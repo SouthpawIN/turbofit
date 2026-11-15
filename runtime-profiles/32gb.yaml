@@ -1,0 +1,39 @@
+schema: turbofit.runtime/v1
+id: hardware-32gb
+revision: 4
+hardware:
+  class_vram_gb: 32
+  min_devices: 1
+  total_vram_gb: 32
+  per_device_min_gb: 32
+  accelerator: llama.cpp-local
+  topology: 1x32
+policy:
+  recommendation: evidence-gated
+  external_gpu_priority: absolute
+  contraction_dwell_s: 5
+  expansion_dwell_s: 120
+  expansion_margin_gb_per_card: 0.5
+  cooldown_s: 30
+  flap_failure_limit: 3
+  flap_window_s: 300
+roles:
+  main: active:main
+  auxiliary: active:aux
+  fallback: active:main
+rungs:
+- id: local-gsq-rco-iq3s-262144
+  context: 262144
+  aux_mode: shared-main
+  evidence: sha256:f215afc21c18bbad0ef3f4cb42d727c7f8b2ea28f39df021dc549a792ffe4d22
+  main_manifest: sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b
+- id: local-gsq-rco-iq3s-131072
+  context: 131072
+  aux_mode: shared-main
+  evidence: sha256:4237fae3f8855344dbe203a12d97eda11b2a7bbec554b8c53b34c3c3ee9936f7
+  main_manifest: sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b
+- id: local-gsq-rco-iq3s-65536
+  context: 65536
+  aux_mode: shared-main
+  evidence: sha256:f215afc21c18bbad0ef3f4cb42d727c7f8b2ea28f39df021dc549a792ffe4d22
+  main_manifest: sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b

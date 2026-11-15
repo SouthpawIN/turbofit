@@ -277,19 +277,6 @@
       "reason": "launch failed"
     },
     {
-      "name": "ornith-35b",
-      "tier": "f",
-      "role": "main",
-      "ctx": 262144,
-      "tok_s": 129.9,
-      "tokens": 512,
-      "time_s": 3.94,
-      "has_mtp": false,
-      "has_vision": false,
-      "status": "ok",
-      "size_gb": 21.2
-    },
-    {
       "name": "heretic-35b-a3b-apex-mtp",
       "tier": "sf",
       "role": "aux",
@@ -316,19 +303,6 @@
       "size_gb": 16.5,
       "status": "failed",
       "reason": "launch failed"
-    },
-    {
-      "name": "ornith-9b",
-      "tier": "f",
-      "role": "main",
-      "ctx": 65536,
-      "tok_s": 98.2,
-      "tokens": 512,
-      "time_s": 5.22,
-      "has_mtp": false,
-      "has_vision": false,
-      "status": "ok",
-      "size_gb": 5.3
     },
     {
       "name": "omnistep-sft-8b",

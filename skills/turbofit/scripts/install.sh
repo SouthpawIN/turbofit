@@ -98,31 +98,38 @@ slots:
 
   # API MAIN — used when no local GPU or --api flag
   main_api:
-    description: API main picks — free models first, ranked by reasoning quality.
+    description: API main picks — keyless Nous free models first.
     s:
-    - alias: deepseek-v4-pro
-      provider: nvidia-nim
-      model_id: deepseek-ai/deepseek-v4-pro
-      why: Best free reasoning + coding. 1M ctx. Free on NIM.
+    - alias: ox-alpha
+      provider: nous
+      model_id: stealth/ox-alpha
+      why: Official Nous Ox Alpha. $0/$0 curated.
       vision: false
       free: true
     sf:
-    - alias: deepseek-v4-flash
-      provider: nvidia-nim
-      model_id: deepseek-ai/deepseek-v4-flash
-      why: Fast reasoning, free tier.
-      vision: false
+    - alias: step-37-flash-free
+      provider: nous
+      model_id: stepfun/step-3.7-flash:free
+      why: Official StepFun free. Portal vision + compaction recommendation.
+      vision: true
       free: true
 
-  # API AUX — vision-capable, free first
+  # API AUX — vision-capable, keyless Nous first
   aux_api:
-    description: API aux picks — vision required, free first.
+    description: API aux picks — Nous keyless free models, vision first.
     sf:
-    - alias: minimax-m3
-      provider: nvidia-nim
-      model_id: minimaxai/minimax-m3
-      why: Free vision model. 1M ctx, image+video.
+    - alias: step-37-flash-free
+      provider: nous
+      model_id: stepfun/step-3.7-flash:free
+      why: Nous keyless free vision/compaction model.
       vision: true
+      free: true
+    s:
+    - alias: ox-alpha
+      provider: nous
+      model_id: stealth/ox-alpha
+      why: Official Nous Ox Alpha. $0/$0 curated.
+      vision: false
       free: true
 YAML
     echo "✓ Created curated slots at ${TURBOFIT_CONFIG_DIR}/curated.yaml"

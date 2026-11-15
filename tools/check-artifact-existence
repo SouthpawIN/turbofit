@@ -1,0 +1,223 @@
+#!/usr/bin/env python3
+"""Verify every pinned artifact in the manifest still exists upstream.
+
+The catalog once carried four Cyber-Tiel quants that were never published, and
+a 35B-A3B MoE row pointing at a directory. Both only surfaced when a user's machine
+failed to download them. This checks the manifest against Hugging Face before
+that happens again.
+
+``--local`` checks the model root instead: a file that exists but is a 15-byte
+placeholder is reported as absent, which is the state that produced a bare
+"failed to load model" from llama.cpp while the installer said "complete".
+
+Usage:
+    tools/check-artifact-existence            # human table + exit code
+    tools/check-artifact-existence --json     # machine readable
+    tools/check-artifact-existence --local    # verify the on-disk model root
+    tools/check-artifact-existence --local --model-root /path/to/gguf
+
+Exit codes: 0 all reachable/complete, 1 one or more missing, 2 network unavailable.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path, PurePosixPath
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.artifacts import (  # noqa: E402
+    human_bytes,
+    inspect_file,
+    parse_shard,
+    shard_names,
+)
+
+MANIFEST = ROOT / "references/artifact-manifest.json"
+
+
+def _shard_sets(artifacts: list[dict]) -> dict[tuple[str, str, int], list[dict]]:
+    """Group manifest rows that belong to the same ``-of-N`` shard set.
+
+    A catalog may list only one member of a set (the first shard is often the
+    only row), so completeness has to be judged from the filename and the
+    directory, not from how many rows happen to be pinned.
+    """
+    groups: dict[tuple[str, str, int], list[dict]] = {}
+    for artifact in artifacts:
+        destination = str(artifact.get("destination") or "")
+        if not destination:
+            continue
+        parsed = parse_shard(PurePosixPath(destination).name)
+        if not parsed:
+            continue
+        prefix, count, _ext = parsed
+        key = (str(PurePosixPath(destination).parent), prefix, count)
+        groups.setdefault(key, []).append(artifact)
+    return groups
+
+
+def _partial_shard_findings(
+    artifacts: list[dict], model_root: Path
+) -> tuple[list[dict], set[str]]:
+    """Findings for shard sets that are not fully materialized on disk.
+
+    Returns the findings plus the destinations already covered by a set, so the
+    per-file pass does not report the same shard twice.
+    """
+    findings: list[dict] = []
+    covered: set[str] = set()
+    for (directory, prefix, count), members in _shard_sets(artifacts).items():
+        covered.update(str(member.get("destination")) for member in members)
+        expected = shard_names(f"{prefix}-00001-of-{count:05d}.gguf", count)
+        pinned = {
+            PurePosixPath(str(member.get("destination"))).name: member.get("size_bytes")
+            for member in members
+        }
+        missing: list[str] = []
+        present_bytes = 0
+        expected_bytes = 0
+        unknown_bytes = False
+        for name in expected:
+            target = model_root / directory / name if directory != "." else model_root / name
+            size = pinned.get(name)
+            expected_size = size if isinstance(size, int) and not isinstance(size, bool) and size > 0 else None
+            state = inspect_file(target, expected_size)
+            if not state.present:
+                hint = f" ({human_bytes(expected_size)})" if expected_size else ""
+                missing.append(f"{name}{hint}")
+                if expected_size:
+                    expected_bytes += expected_size
+                else:
+                    unknown_bytes = True
+                continue
+            present_bytes += state.size_bytes
+            if expected_size:
+                expected_bytes += expected_size
+        if not missing:
+            continue
+        label = f"{directory}/{prefix}" if directory != "." else prefix
+        findings.append({
+            "destination": label,
+            "status": "incomplete-shard-set",
+            "size_bytes": present_bytes,
+            "expected_bytes": None if unknown_bytes else expected_bytes,
+            "missing": missing,
+            "detail": (
+                f"shard set {label}-*-of-{count:05d} has "
+                f"{len(expected) - len(missing)} of {len(expected)} shards: "
+                f"missing {', '.join(missing)}"
+            ),
+        })
+    return findings, covered
+
+
+def local_check(artifacts: list[dict], model_root: Path) -> list[dict]:
+    """Report every artifact that is not usable on disk right now."""
+    findings, covered = _partial_shard_findings(artifacts, model_root)
+    for artifact in artifacts:
+        destination = str(artifact.get("destination") or "")
+        if not destination or destination in covered:
+            continue
+        target = model_root / destination
+        if str(artifact.get("sha256") or "").startswith("snapshot:"):
+            # Directory snapshots (MLX/mlx-lm checkpoints) are materialized as a
+            # tree; the file-level rules do not apply.
+            if target.is_dir():
+                continue
+            findings.append({
+                "destination": destination,
+                "status": "snapshot-missing",
+                "size_bytes": 0,
+                "expected_bytes": artifact.get("size_bytes"),
+                "detail": f"{target} is not a materialized directory snapshot",
+            })
+            continue
+        raw = artifact.get("size_bytes")
+        expected = raw if isinstance(raw, int) and not isinstance(raw, bool) and raw > 0 else None
+        state = inspect_file(target, expected)
+        if state.present:
+            continue
+        findings.append({
+            "destination": destination,
+            "status": state.reason,
+            "size_bytes": state.size_bytes,
+            "expected_bytes": state.expected_bytes,
+            "detail": state.describe(),
+        })
+    return findings
+
+
+
+def check(artifact: dict) -> tuple[str, str]:
+    destination = artifact["destination"]
+    if str(artifact.get("sha256", "")).startswith("snapshot:"):
+        return destination, "snapshot"
+    if not artifact.get("path"):
+        return destination, "no-path"
+    url = (
+        f"https://huggingface.co/{artifact['repo_id']}"
+        f"/resolve/{artifact['revision']}/{artifact['path']}"
+    )
+    request = urllib.request.Request(url, method="HEAD")
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return destination, "ok" if response.status < 400 else f"http-{response.status}"
+    except urllib.error.HTTPError as exc:
+        return destination, f"http-{exc.code}"
+    except Exception as exc:  # noqa: BLE001 - report, never raise
+        return destination, f"error:{type(exc).__name__}"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json", action="store_true", help="machine readable output")
+    parser.add_argument("--local", action="store_true", help="verify the on-disk model root")
+    parser.add_argument("--model-root", type=Path, help="override TURBOFIT_MODEL_ROOT for --local")
+    args = parser.parse_args()
+
+    artifacts = json.loads(MANIFEST.read_text(encoding="utf-8"))["artifacts"]
+    if args.local:
+        root = Path(
+            args.model_root
+            or os.environ.get("TURBOFIT_MODEL_ROOT", "~/Models/storage/gguf")
+        ).expanduser()
+        findings = local_check(artifacts, root)
+        if args.json:
+            print(json.dumps({"total": len(artifacts), "missing": findings}, indent=1))
+        else:
+            print(f"checked {len(artifacts)} artifacts under {root}")
+            for row in findings:
+                print(f"  {row['status'].upper():22} {row['detail']}")
+            print(f"unusable {len(findings)} of {len(artifacts)}")
+        return 1 if findings else 0
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(check, artifacts))
+
+    missing = [(d, s) for d, s in results if s not in {"ok", "snapshot"}]
+    network_down = results and all(s.startswith("error:URLError") for _, s in results)
+
+    if args.json:
+        print(json.dumps({"total": len(results), "missing": missing}, indent=1))
+    else:
+        print(f"checked {len(results)} artifacts")
+        for destination, status in missing:
+            print(f"  MISSING  {status:12} {destination}")
+        print(f"missing {len(missing)} of {len(results)}")
+
+    if network_down:
+        return 2
+    return 1 if missing else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

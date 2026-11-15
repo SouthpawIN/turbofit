@@ -23,6 +23,14 @@ def test_cuda_environment_selects_cuda_without_hip() -> None:
     assert "ROCR_VISIBLE_DEVICES" not in env
 
 
+def test_vulkan_environment_selects_devices_without_cuda_or_hip() -> None:
+    env = llama_environment("vulkan", devices="1", base={"CUDA_VISIBLE_DEVICES": "9"})
+
+    assert env["GGML_VK_VISIBLE_DEVICES"] == "1"
+    assert "CUDA_VISIBLE_DEVICES" not in env
+    assert "HIP_VISIBLE_DEVICES" not in env
+
+
 def test_lemonade_client_uses_openai_compatible_api_and_explicit_rocm_load() -> None:
     calls: list[tuple[str, str, dict | None]] = []
 

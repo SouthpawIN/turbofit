@@ -1,5 +1,227 @@
 # Changelog
 
+## Unreleased — a missing engine binary waits, it does not fail
+
+- **`waiting-runtime` row status**: the catalog campaign resolves each
+  recipe's engine binary before selecting a row. If the build is not installed
+  (`~/.local/share/turbofit/runtimes/<engine>/build-<backend>/bin/…` missing,
+  or a bare command absent from `PATH`), the row is recorded as
+  `waiting-runtime` with the binary path and the install hint, excluded from
+  `pending`/`runnable`, and counted next to `waiting_download` and
+  `waiting_memory` in `scripts/turbofit-catalog-campaign status`, so a
+  one-command prerequisite is no longer reported as a model failure.
+  `pending + resolved + deferred + waiting_download + waiting_memory +
+  waiting_runtime` still equals all active rows. The launch-time
+  `engine binary not found` error is unchanged.
+
+## Unreleased — downloads fetch every shard and survive a bad family
+
+- **Missing shards are downloaded, not fatal**: `scripts/download-artifacts`
+  no longer aborts with `ShardSetError` when a repo listing does not carry a
+  shard of a known set. The shard becomes a work item, is probed before the
+  rest of the set (so a genuinely removed shard fails fast instead of after
+  hundreds of GiB), and is verified against the weights floor when the repo
+  pins no size or hash for it. A shard the listing omits but upstream still
+  serves is now installed instead of ending the run.
+- **`--all` isolates per-family failures**: each family is attempted
+  independently; a gated/404/truncated artifact marks that family failed with
+  its reason and remaining bytes, and every remaining family still runs. The
+  exit status is non-zero only after the whole run, with a
+  `N families failed: …` summary.
+- **`check-artifact-existence --local`** now judges shard sets by filename, so
+  one shard of six on disk is reported as `incomplete-shard-set` rather than
+  complete because the pinned row matched.
+## Unreleased — tier placement is VRAM *and* system RAM
+
+- **Placement is two-dimensional.** A catalog main no longer has to fit the
+  tier's VRAM band to be offered: if it is MoE and its measured expert bytes fit
+  alongside the band in a stated RAM budget, it is published as an
+  **offload option** (`placement: "offload"`) with the GiB in RAM, the GiB left
+  on the GPU and the `--n-cpu-moe N/L` it needs. Full-GPU and offloaded
+  configurations are separate lists (`candidates` vs `offload_candidates`), so
+  "runs entirely on the GPU" can never be confused with "runs with 67 GiB of
+  experts in RAM". The arithmetic is `experts.plan_expert_offload` — the same
+  function the launcher uses — not a second fit model.
+- **RAM is a stated assumption, not a machine.** The committed tournaments and
+  report carry `ram_assumption`/`ram_budget` (default **128 GiB of available
+  system RAM**), overridable per run with `--ram-gb` or globally with
+  `TURBOFIT_RAM_GIB`; `scripts/turbofit-hardware-tiers` with no flag reads the
+  host's real `MemAvailable`. No personal RAM figure is committed.
+- **Expert bytes are measured.** `scripts/generate-model-footprints
+  --measure-experts` reads each pinned MoE artifact's GGUF header over HTTP
+  Range (no weights downloaded) and records `expert_bytes`/`expert_layers`
+  against the pinned revision; 29 of 30 MoE mains are measured, Inkling 2 Small
+  is unmeasured (repo unavailable) and is therefore never advertised as
+  offloadable. DeepSeek V4.1 Flash 1017, GLM 5.3 Flash (XS/S24/M/L) and Qwen 3.8
+  Flash Next become placeable at 48 GB and below for the first time.
+  See `docs/tier-placement.md`.
+
+## Unreleased — expert offload measured per host
+
+- **Models bigger than VRAM now run**: `auto_cpu_moe: true` on a recipe
+  measures the GGUF's real expert footprint (tensor table, not a size guess) and
+  this host's free VRAM/`MemAvailable`, then passes llama.cpp `--n-cpu-moe N`.
+  Models that fit still plan zero offload; an infeasible plan refuses to launch
+  with the planner's reason instead of an OOM. Strata/vLLM recipes never receive
+  the flag. Laguna S2.1, MiniMax M3 and Qwen 3.8 Flash Next Abliterated use it.
+  See `docs/expert-offload.md`.
+
+## Unreleased — one MoE family, one 64K floor
+
+- **`GET /api/plugins/turbofit/fit`**: one answer per hardware tier — the
+  configuration the intelligence leaderboard measured, its engine, whether every
+  artifact that configuration actually opens is present and complete, and the
+  Maple auxiliary. Tiers with no measurement say `no-measurements` instead of
+  borrowing a neighbour's recommendation, and a tier that cannot run states why
+  in one sentence (missing GiB, AVX-512 the engine needs, no measurements), not
+  a status code. `?tier=<gb>` narrows to one tier. The dashboard renders it as
+  "Fit · what to run on this machine".
+
+- **Catalog**: the retired 35B-A3B MoE family is gone. **Maple Preview TQ2_0
+  (`maple-preview-tq2`) is the only auxiliary** — `auxiliary_options` names one
+  concrete model, the sweep generates 290 rows (84 mains × Maple × their own
+  contexts), and Carwin Nano's two aux-only entries are retired. `auto` stays a
+  runtime routing mode (share the main process) and is never a matrix column.
+- **64K floor**: `context_floor` defaults to 65536 in `chain.py`,
+  `fallback-chain.json`, the Strata installer and every runtime profile; nothing
+  plans or ships a window below 64K. `context_steps()` raises a sub-floor window
+  to 64K rather than shedding below it.
+- **Data**: measurements, tournaments, tier reports, campaign state and download
+  groups for the retired family were removed rather than relabelled, so no
+  benchmark row is attributed to a model that never ran.
+- **`scripts/download-artifacts`**: imports the HuggingFace client lazily, so the
+  module loads (and tests run) without the network client installed.
+- **README**: a generated Hermes-Index table (`src/turbofit_runtime/intelligence_readme.py`)
+  now shows every measured configuration per memory tier — interim suite mean as
+  `index`, `suites measured / total`, tok/s, and `s/task @1k` in place of a dollar
+  cost. Unmeasured tiers stay listed as `no measurements yet`. `tools/sync-wiki-readme.sh`
+  re-renders it after the wiki copy, so the table survives a README sync.
+- **Tailnet federation**: the gateway now binds `0.0.0.0` by default (a loopback
+  gateway is invisible to every peer) and admits loopback/LAN/tailnet clients
+  only. Peer probes run concurrently under a deadline and classify `open` /
+  `refused` (peer up, gateway down) / `unreachable` / `unresolved` instead of
+  collapsing every failure into "no peers"; `TURBOFIT_TAILSCALE_SOCKET` is
+  honoured so rootless daemons are not reported as unavailable. `/v1/models`
+  advertises the node's RAM/VRAM bands, and remote entries are no longer
+  overwritten with local role metadata. Verified inventory and probe commands:
+  `docs/tailnet-federation.md`.
+
+## 2.4.1 — pressure yield, external-unit rungs, naming
+
+- **Yield under external GPU pressure**: when a card is contended and no cheaper
+  rung fits, policy returns `release` and residency is unloaded instead of
+  squatting on the card (`external_gpu_priority: absolute` finally enforced on
+  single-rung and top-rung profiles). Residency is restored on the same rung
+  once the pressure clears; a yielded rung is never reloaded while contended.
+- **Unavailable rungs no longer wedge the controller**: startup prunes rungs
+  whose artifacts are missing and logs one `skipped_rung` line each. Previously
+  one missing model file made every tick fail before pressure was measured.
+- **Optional vision**: a missing projector GGUF serves the text model instead of
+  failing the rung.
+- **Externally managed rungs**: a portable rung may declare
+  `launcher: systemd-unit` + `unit: <name>`. Lifecycle is
+  `systemctl --user start|stop`, never a signal to a PID TurboFit did not
+  launch. Strata can therefore be a real ladder rung that pressure can release.
+- **Controller observability**: last tick published to
+  `controller-status.json` (`degraded`, `last_error`, `error_count`); an
+  identical tick error is logged once a minute instead of every interval.
+- **Recipe aliases**: declared `aliases` plus alphanumeric normalization resolve
+  hand-written spellings; unknown names fail with the closest candidates
+  instead of a bare `unknown model family`.
+- **Fit reporting**: a requirement recorded against a device index this box does
+  not have is reported as host spill, not as a phantom card.
+- **`/turbofit` on unmeasured hardware**: falls back to the best portable-fit
+  lane and says so, instead of reporting "no evidence-backed configuration fits"
+  while listing lanes that do.
+- **TurboSouth rename**: the support profile and its repository are TurboSouth
+  (`SouthpawIN/sirvir` → `SouthpawIN/turbosouth`; the old URL redirects). The
+  profile id is now `turbosouth` (distribution 2.3.0), and every `sirvir`
+  reference is gone from both repos. `TURBOSOUTH_DISTRIBUTION` stays overridable
+  with `TURBOFIT_TURBOSOUTH_SOURCE`, and an unreachable distribution fails with
+  one actionable sentence before `git clone`.
+
+## 2.4.0 — Two-ladder TurboFit List, Strata engine, federated gateway
+
+- Version surfaces are `2.4.0`.
+- **Two-ladder fit doctrine**: dedicated-VRAM (dense) and unified/CPU (MoE) ladders converge on Qwen 3.8 Flash Next. Bonsai 2 27B PTQ1_0/PQ2_0 is the 8 GB rung; 24 GB reaches 262K; DeepSeek V4.1 (1017) is the top rung on the unified ladder (native engine + fit data pending). MTP on at every rung; IQ3_S is lossless, so no heavier quant past it (power bill). Canonical data in `references/fit-lists.json`, `references/fit-ladder.md`, and `references/model-lineup.md`.
+- **Strata engine**: systemd user unit installed from the runtime installer; GSQ-RCO recipes and remote backend with pipeline tests.
+- **Gateway federation**: local-alias routing plus automatic Tailscale peer discovery (10 s timeout); Tailscale auto-configure at install; gateway installed as a service on macOS and bound for tailnet reachability.
+- **SALT-core engine integration**: machine-readable G1–G5 qualification gate with a committed gate report from a real checkout (36 tests).
+- **Benchmark leaderboard**: deterministic best model + serve engines per tier from committed references; `/leaderboard` endpoint and dashboard card.
+- **Engine registry**: data-driven engine-serve matrix with native-identity checks.
+- **`hermes_fit` bridge**: built-in Hermes local-model recommendation — non-blocking, physics-predicted (no live model call, ~40 ms), deterministic, degrades to the allowlist + ladders.
+- **hermes_cli discovery** wired (runtime + tests) with the physics-predicted TurboFit List.
+- **sovthpaw mascot** bundled into the TurboSouth install (idempotent `hermes pets install s0uthpaw --select`).
+- Auxiliary model streams from the hard drive at every tier.
+- Cross-OS test suite made deterministic and fresh-install complete.
+- Dependency floors aligned to Hermes pins: `fastapi>=0.133.1`, `huggingface_hub>=1.24.0`.
+- Privilege auto-escalation removed — plugin security scan verdict is `safe`.
+- `after-install.md` deterministic install + verify + recovery path for `not a command: turbofit`.
+- Phase G: systemd linger enabled on Linux so user units survive logout/reboot (best-effort).
+
+## 2.3.1 — Windows campaign gate fixes + remote-Mac docs
+
+- Version surfaces are `2.3.1` (the Maple Fit List line stays 2.3; 2.4 is held).
+- Windows GPU clear gate is baseline-relative: pre-existing driver residency no longer reads as a leaked Turbofit allocation (absolute safety floor preserved).
+- Windows process-tree stop via `taskkill /T`, PowerShell GPU probing, AMD driver inventory via CIM.
+- Maple Preview TQ2_0 added to the catalog as the 8 GB Fit List candidate (native 64K/128K).
+- Documented the remote-Mac model-server topology (Turbofit on the Mac, Hermes in a Proxmox LXC).
+
+## 2.3 — Maple small-device Fit List
+
+- Version surfaces are `2.3.0`.
+- Dedicated VRAM and integrated/RAM-only total memory are separate Fit List dimensions. 8 GB of VRAM is not 8 GB of RAM.
+- Dedicated 8 GB main candidate is Maple Preview 20B-A1B TQ2_0. Cyber-Tiel Coder remains the alternative when host RAM can hold offloaded experts. Bonsai stays in the catalog but is no longer the 8 GB default.
+- Shared total memory: Maple at 8–15 GB, Cyber-Tiel Coder 35B-A3B at 16–23 GB, Unleashed UD-Q3_K_XL at 24 GB+.
+- Maple is native 64K/128K only and needs the Maple llama.cpp fork. Auto on 8 GB is Maple 128K → 64K.
+- README is the whole-product 2.4 surface: Check, List, Desktop, slash, TurboSouth, Tailscale, engines, multimodal. Campaign depth stays in `docs/`.
+- Posters use the existing gold/mint starfield language.
+- Desktop shows a gold **New model recommended** card when Check suggests a replacement and the old weights are still installed: Keep both, Archive old model, or Delete old model.
+- Auto on `hardware-8gb` is Maple TQ2_0 at 128K, contracting to Maple 64K. Bonsai is no longer the 8 GB Auto floor.
+- Check now auditions llama.cpp, MLX, SGLang, vLLM, FreeToken, and Turbohaul Manager against the selected model pair. Maple GGUF is fork-only; vLLM/SGLang stay HF/FP8/NVFP4.
+- Compatible lanes are Fit List mains only. 8 GB VRAM + any host RAM is Maple or Cyber-Tiel Coder. Host-spill of a dense 27B is not a recommendation.
+- Default aux is Cyber-Tiel Coder UD-Q4_K_XL at 40 GB+ total VRAM and UD-Q5_K_XL at 64 GB+. Speed preference ranks Cyber-Tiel Coder over dense Qwen 27B. Unleashed stays the intelligence pick on 16/24 GB.
+- Unleashed Qwen 27B now serves with DFlash2 (`n_max=7`) on the pinned z-lab fork. Cyber-Tiel Coder UD-Q is MTP. Spec decode is the default where a draft exists.
+- Desktop opens with speed/VRAM/RAM graphs, the live scale-down/up ladder, subscriptions, and Nous keyless free models instead of fallback JSON.
+
+## 2.3 — Unleashed / Cyber-Tiel Coder / Nous free fallback
+
+### Setup / troubleshooting
+
+- `/turbofit` now enables itself in every Hermes profile home (including TurboSouth). Desktop was reporting `not a quick/plugin/bundle/skill command: turbofit` because standalone plugins are opt-in and profile sessions do not see `~/.hermes/plugins`.
+- `/turbofit update` pulls the plugin and TurboSouth onto the current device and refreshes the Desktop surface.
+- `/turbofit shift up|down|<model>|intelligence|balanced|speed` walks the same measured ladder the healer uses.
+- `/turbofit serve` publishes `:8091` on Tailscale Serve so other tailnet devices can use the same local model server. Funnel is never used.
+- Setup downloads the Auto-chain artifacts for this machine if they are missing. TurboSouth owns install and setup, with a bootstrap fallback only until `:8091` answers.
+- Private-LAN HTTP (`192.168.x`) is a valid Turbofit provider URL. Windows scheduled tasks accept Vulkan and `-GatewayHost 0.0.0.0` for remote Hermes.
+
+
+- Documented the three gateways: Hermes messaging vs Turbofit `:8091` vs native model server. Plugin install and messaging-gateway restart do not start `:8091`.
+- `/turbofit setup` refreshes Hermes Desktop. Headless Windows path is linked from README to `docs/windows-native-install.md`.
+- TurboSouth GitHub install now uses `https://github.com/SouthpawIN/turbosouth.git` so Hermes 0.20.0 on Windows can resolve it.
+- Support text now forbids diagnosing a dead `:8091` from inside TurboSouth.
+
+### Recommendations
+
+- Auto/Check will never recommend a 9B. Low-VRAM dedicated devices get Bonsai 27B and/or Cyber-Tiel Coder 35B-A3B. Cyber-Tiel Coder experts mmap from disk when host RAM is under 32 GB. Apple Silicon uses OrcaRouter Uncensored MLX 4/6/8-bit (never 2-bit). Integrated/unified non-Apple uses Cyber-Tiel Coder 35B-A3B.
+
+### Model runtime
+
+- Re-ran the canonical Qwen 3.8 Q4 baseline/DFlash2 pair on the same dual-RTX-3090 fingerprint: 35.79 versus 45.60 tok/s, 1.273993× speedup, 70% draft acceptance, and 2,839 MiB additional aggregate peak GPU residency. Added a deterministic exporter that refuses mismatched hardware, context, prompt shape, raw hashes, or invalid acceptance counters before emitting self-hashed A/B evidence.
+- Added a separate evidence record for the reported Spark/SGLang Qwen 3.8 27B NVFP4 + DFlash2 lane: 116 aggregate output tok/s at concurrency 10 and 262K configured context. It remains non-promotable until raw harness, exact topology, immutable image digest, workload/latency details, acceptance statistics, and a same-runtime baseline are attached.
+- Added an evidence-gated Qwen 3.8 27B DFlash2 candidate: pinned Inco Q4_K_M draft artifact, pinned z-lab llama.cpp PR runtime, 64K/128K/262K/1M recipes, and a hard no-cross-family guard preserving Bonsai's own DSpark sidecar.
+- Removed DeepSeek V4 Flash 0731 from the active catalog, recipes, downloads, and hardware-tier candidates.
+- Main Auto chain is now Bonsai 27B at 8GB, Qwen 3.8 27B Unleashed UD-IQ3_XXS at 16GB, UD-Q3_K_XL at 24–95GB, and the existing Qwen 3.8 27B 16-bit recipe at 96GB+ until an Unleashed FP16 GGUF is published.
+- Auxiliary authority is Cyber-Tiel Coder 35B-A3B, optional Carwin Nano, or auto. Cyber-Tiel Coder is MoE: scale-down offloads experts, then lowers context, then switches aux to auto, then a listed Unleashed quant, then Bonsai.
+- Replaced the API fallback chain with the five looked-up Nous free/keyless models from the current Hermes-Agent catalog: `stealth/ox-alpha` (Ox Alpha, $0/$0 curated), `stepfun/step-3.7-flash:free`, `tencent/hy3:free`, `poolside/laguna-s-2.1:free`, `poolside/laguna-xs-2.1:free`. No Hermes-branded models. No NVIDIA NIM.
+
+### Hermes plugin install
+
+- Repaired the discovery/benchmark/List pipeline: current-hardware tournament priority, non-collapsing real-suite intelligence composites, model-call/token/route evidence gates, discovery-to-onboarding queue, exact-tier winner promotion, generated TurboFit List, and TurboFit Check scan-to-configuration terminology.
+- Added pinned FreeToken 0.1.2 (`0ab982f…`) as an optional Linux x86_64 / NVIDIA driver 580+ / CUDA toolkit 13+ text-only MoE candidate, with setup controls, loopback command/client contracts, compatibility gating, and no Auto promotion before exact physical evidence.
+- Turbofit's TurboSouth setup option now installs or updates the canonical `SouthpawIN/turbosouth` GitHub profile instead of copying a bundled snapshot; TurboSouth's bootstrap reciprocally installs Turbofit first when it is missing.
+- Slimmed `distribution.yaml` so plugin install no longer ships benchmark result dumps as payload.
+
 ## 2.2 — Qwen 3.8 27B day-zero release
 
 ### Model runtime
@@ -9,6 +231,8 @@
 - Added SHA-256-pinned main GGUFs, Q8/BF16 vision projectors, and Q4/Q8/BF16 MTP sidecars.
 - Fixed the MTP compiler to emit `--model-draft` for separately published MTP artifacts; regression tests now verify draft and projector wiring.
 - Added the executable DeepSeek V4 Flash 0731 `UD-Q2_K_XL` DwarfStar variant and expanded the exhaustive matrix to 1,620 rows.
+- Made native allocation portable across dedicated VRAM + host RAM, unified-memory accelerators, Vulkan/ROCm/Metal, and CPU-only hosts. Large contexts explicitly place KV cache in usable host RAM when needed; shared pools are counted once; CPU/shared pressure no longer requires an NVIDIA inventory.
+- Physically validated Qwen 3.8 27B Q4+MTP at a 1,048,576-token configured context on dual RTX 3090 plus host RAM: 0.51 tok/s, 81.82% MTP acceptance, 23,471/23,253 MiB peak VRAM.
 
 ### Catalog and release surfaces
 
@@ -41,8 +265,8 @@
 
 - Added first-class Hermes plugin tools and `/turbofit` plus `/turbofit setup` behavior.
 - Added guided Dashboard and native Hermes Desktop management.
-- Added primary provider, ordered credential-free fallback-chain, private Tailscale Serve, Sirvir, native runtime, Lemonade, and multimodal setup controls.
-- Rewrote Sirvir as Turbofit customer service and PR-suggestion support.
+- Added primary provider, ordered credential-free fallback-chain, private Tailscale Serve, TurboSouth, native runtime, Lemonade, and multimodal setup controls.
+- Rewrote TurboSouth as Turbofit customer service and PR-suggestion support.
 
 ### Multimodal
 
