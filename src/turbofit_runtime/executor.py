@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import hashlib
 import platform
 import shutil
@@ -255,7 +256,7 @@ class LocalPairExecutor:
                     "sha256": hashlib.sha256(destination.read_bytes()).hexdigest(),
                 }
         path = failure_dir / "failure.json"
-        path.write_text(json.dumps({
+        payload = ({
             "schema": "turbofit.catalog-failure/v1",
             "timestamp": timestamp,
             "row": {
@@ -267,7 +268,13 @@ class LocalPairExecutor:
             "gpu_clear_after": asdict(after) if after is not None else None,
             "raw_result": raw_record,
             "logs": logs,
-        }, indent=2) + "\n", encoding="utf-8")
+        })
+        # Write-then-rename: a run killed mid-write must never leave an empty or
+        # half-written failure.json. A reader that finds a truncated file learns
+        # nothing, and the path in the error points at it as if it were evidence.
+        temporary = path.with_suffix(".json.tmp")
+        temporary.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        os.replace(temporary, path)
         return str(path)
 
     def execute(self, item: MatrixRow) -> RawBenchmark:
