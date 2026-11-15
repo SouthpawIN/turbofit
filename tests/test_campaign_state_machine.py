@@ -385,3 +385,28 @@ def test_run_one_returns_complete_when_nothing_is_pending(tmp_path: Path) -> Non
     )
 
     assert runner.run_one().status == "complete"
+
+
+def test_waiting_download_rows_are_skipped_and_never_launched(tmp_path: Path) -> None:
+    """Rows whose weights are incomplete are not attempted at all."""
+    matrix_path = tmp_path / "matrix.json"
+    ready = row("Carwin Nano", "auto", 65_536)
+    waiting = row("Laguna S2.1", "auto", 65_536)
+    write_matrix(matrix_path, (ready, waiting))
+    clear = FakeClearGate(); executor = FakeExecutor()
+    runner = CampaignRunner(
+        matrix_path=matrix_path, state_path=tmp_path / "state.json",
+        executor=executor, clear_gate=clear, publisher=FakePublisher(), registry=FakeRegistry(),
+        waiting_download_rows={waiting.id: "waiting-download: 100.0 GiB missing"},
+    )
+
+    pending = [item.id for item in runner.pending_rows()]
+
+    assert pending == [ready.id]
+    outcome = runner.run_row(waiting)
+    assert outcome.status == "waiting-download"
+    assert "GiB missing" in outcome.error
+    # No GPU clear gate, no engine launch, no failure record.
+    assert clear.labels == []
+    assert executor.rows == []
+    assert not (tmp_path / "state.json").exists()

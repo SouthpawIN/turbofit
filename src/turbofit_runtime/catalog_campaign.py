@@ -28,6 +28,11 @@ class CatalogExecutorAdapter:
 
     def prepare(self, item: Any) -> None:
         self.executor.prepare(item)
+        reconcile = getattr(self.executor, "reconcile_ports", None)
+        if callable(reconcile) and item.id in self.configurations:
+            # Same pre-gate port reconciliation the MatrixRow path gets, using
+            # the catalog configuration this row actually executes.
+            reconcile(self.executor.recipes.resolve_catalog_configuration(self.configurations[item.id]))
 
     def finish(self, item: Any) -> None:
         self.executor.finish(item)

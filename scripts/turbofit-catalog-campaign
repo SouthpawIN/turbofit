@@ -13,6 +13,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+from turbofit_runtime.artifact_gate import waiting_download_rows
 from turbofit_runtime.backend import CampaignBackend
 from turbofit_runtime.campaign import CampaignRunner
 from turbofit_runtime.catalog_campaign import (
@@ -119,6 +120,18 @@ def capability_deferred_rows(configuration_index: dict) -> set[str]:
     }
 
 
+def artifact_waiting_rows(recipes: RecipeBook | None = None) -> dict[str, object]:
+    """Rows whose weights are not verifiably installed on this host.
+
+    Uses the campaign's own recipe resolution and the artifact verifier's single
+    definition of "installed", so a sub-1 MiB stub or a truncated download is
+    never attempted as if the model were ready.
+    """
+    catalog, configurations = canonical()
+    book = recipes or RecipeBook.load(RECIPES, hardware=probe_hardware())
+    return waiting_download_rows(build_configuration_index(configurations, catalog), book)
+
+
 def build_runner() -> CampaignRunner:
     catalog, configurations = canonical()
     recipes = RecipeBook.load(RECIPES, hardware=probe_hardware())
@@ -130,6 +143,7 @@ def build_runner() -> CampaignRunner:
     local = LocalPairExecutor(recipes=recipes, backend=backend, result_dir=RESULTS)
     configuration_index = build_configuration_index(configurations, catalog)
     deferred_row_ids, _ = deferred_rows(configurations, catalog)
+    waiting = waiting_download_rows(configuration_index, recipes)
     executor = CatalogExecutorAdapter(local, configuration_index)
     publisher = EvidencePublisher(matrix_path=MATRIX, checklist_path=WIKI, evidence_dir=EVIDENCE)
     publisher.ensure_checklist()
@@ -150,6 +164,9 @@ def build_runner() -> CampaignRunner:
         publisher=publisher,
         registry=registry_adapter,
         deferred_row_ids=deferred_row_ids,
+        waiting_download_rows={
+            row_id: item.reason for row_id, item in waiting.items()
+        },
     )
 
 
@@ -170,6 +187,7 @@ def status() -> int:
     pending_ids = {row.id for row in runner.pending_rows()}
     unresolved_ids = {row.id for row in runner.unresolved_rows()}
     deferred_ids, policy = deferred_rows(configurations, catalog)
+    waiting = artifact_waiting_rows()
     current = {}
     for row in matrix.rows:
         record = attempts.get(row.id) or {}
@@ -198,7 +216,23 @@ def status() -> int:
             "runnable": len(pending_ids),
             "retry_waiting": len(unresolved_ids - pending_ids),
             "deferred": len(deferred_ids),
-            "resolved": len(matrix.rows) - len(unresolved_ids) - len(deferred_ids),
+            "waiting_download": len(waiting),
+            "resolved": len(
+                {row.id for row in matrix.rows}
+                - unresolved_ids
+                - deferred_ids
+                - set(waiting)
+            ),
+        },
+        "waiting_download": {
+            "rows": len(waiting),
+            "missing_bytes": sum(item.missing_bytes for item in waiting.values()),
+            "reason": "weights are not verifiably installed; rows are not attempted until the download completes",
+            "detail": [
+                item.to_dict()
+                for item in sorted(waiting.values(), key=lambda entry: entry.row_id)[:20]
+            ],
+            "truncated": max(0, len(waiting) - 20),
         },
         "policy": {
             "deferred": len(deferred_ids),
