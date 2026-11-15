@@ -112,10 +112,20 @@ def _durable_winner_is_current(
     )
 
 
-def _native_tier(hardware: HardwareFingerprint) -> int:
+def native_tier(hardware: HardwareFingerprint) -> int:
+    """The published capacity band this host belongs to.
+
+    Public because onboarding needs the same band the report uses: two answers
+    to "which tier is this machine?" would put the first-run download on one
+    tier and the recommendation card on another.
+    """
     capacity = hardware.total_usable_memory_mb if hardware.shared_memory_pool else hardware.total_vram_mb
     gb = capacity / 1024
     return max(tier for tier in TIERS if tier <= max(8, gb))
+
+
+#: Backwards-compatible alias: the report and older callers used the private name.
+_native_tier = native_tier
 
 
 def _exact_physical_topology(hardware: HardwareFingerprint, constraint: dict[str, Any]) -> bool:

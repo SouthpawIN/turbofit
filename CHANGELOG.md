@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased — first run scans, recommends one model, downloads only that
+
+- **`scripts/turbofit-onboard`** is the first-run entry point: it detects the
+  host, takes the capacity band from `tier_report.native_tier`, recommends the
+  measured winner for that band (or, where nothing is measured, the first
+  fallback-chain rung that fits, labelled `portable-fit`), and prints exactly
+  what it would fetch — each artifact with its byte size, which files are
+  already verified on disk, the optional fallback-chain rungs with their own
+  sizes, and the total. Dry run by default; `--download` fetches that same
+  list; `--include-fallback N|all` opts into rungs.
+- **It never downloads the library**: the plan is the recommendation plus the
+  rungs the user accepted, and `--all` is refused on this path. Presence is
+  never assumed — complete files are skipped and counted, stubs are replaced,
+  absent files are sized — and a model whose recipe resolves a file the pinned
+  manifest cannot fetch is reported as un-fetchable instead of silently
+  skipped.
+- **The dashboard Fit card shows the plan**: `/fit` now carries an `onboard`
+  block (`download_bytes`, rungs, placement, message), `GET /onboard` returns
+  the full plan, and `POST /onboard/download` runs exactly it. The card renders
+  "This run would download N GiB" and a `Download N GiB` button, with a toggle
+  for the fallback rungs.
+- **Offload is labelled where it is shown**: fit-view recommendations now carry
+  `placement` (`kind`, `n_cpu_moe`, `ram_requirement`, label), so an
+  expert-offload row states the system RAM it needs instead of only failing
+  later.
+
 ## Unreleased — a missing engine binary waits, it does not fail
 
 - **`waiting-runtime` row status**: the catalog campaign resolves each
