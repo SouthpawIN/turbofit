@@ -15,6 +15,17 @@ from typing import Any, Iterable, Mapping, Sequence
 
 _HASH = re.compile(r"^sha256:[0-9a-f]{64}$")
 REQUIRED_BENCHMARKS = ("deep-swe", "agentic-pair")
+
+# Suites beyond the two TurboFit runs today. Names and intent mirror Nous Research's
+# Hermes Index, which averages pass@1 across four suites run inside Hermes Agent:
+# Hermes Bench, TerminalBench 4, TerminalBench Science and SkillsBench.
+EXTENDED_BENCHMARKS = (
+    "hermes-bench",
+    "terminal-bench-4",
+    "terminal-bench-science",
+    "skills-bench",
+)
+ALL_BENCHMARKS = REQUIRED_BENCHMARKS + EXTENDED_BENCHMARKS
 INTELLIGENCE_RECIPE_PROTOCOL = "turbofit.intelligence-recipe/v2"
 DEEPSWE_RUNNER_PROTOCOL = "turbofit.deepswe-pier/v7"
 AGENTIC_PAIR_PROTOCOL = "turbofit.agentic-production-pair/v1"
@@ -95,7 +106,7 @@ class ConfigurationIntelligence:
 
 
 def validate_measurement(item: BenchmarkMeasurement) -> None:
-    if item.name not in REQUIRED_BENCHMARKS:
+    if item.name not in ALL_BENCHMARKS:
         raise ValueError(f"unsupported benchmark: {item.name}")
     if not item.revision.strip():
         raise ValueError("benchmark revision is required")
@@ -193,3 +204,23 @@ def from_mapping(value: Mapping[str, object]) -> ConfigurationIntelligence:
     )
     validate_configuration(result)
     return result
+
+
+def combined_score(item: ConfigurationIntelligence) -> float:
+    """Equal-weight mean pass@1 across every suite that actually ran.
+
+    Hermes Index averages four suites. TurboFit runs two of them today, so this
+    averages over what was measured and reports how many suites stand behind the
+    number rather than silently dividing by six and understating the model.
+    """
+    validate_configuration(item)
+    measured = [float(m.score) for m in item.measurements if m.name in ALL_BENCHMARKS]
+    if not measured:
+        raise ValueError("no benchmark measurements to combine")
+    return round(100.0 * sum(measured) / len(measured), 6)
+
+
+def suite_coverage(item: ConfigurationIntelligence) -> dict[str, bool]:
+    """Which suites back a configuration's score — 'measured N of M'."""
+    seen = {m.name for m in item.measurements}
+    return {name: name in seen for name in ALL_BENCHMARKS}
