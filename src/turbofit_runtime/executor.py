@@ -16,7 +16,12 @@ from typing import Callable, Protocol
 from .campaign import RawBenchmark
 from .gpu import GPUClearEvent
 from .hardware import HardwareFingerprint, probe_hardware
-from .recipes import RecipeBook, ResolvedComponent, ResolvedRecipe
+from .recipes import (
+    RecipeBook,
+    ResolvedComponent,
+    ResolvedRecipe,
+    UnknownRecipeError,
+)
 from .schema import MatrixRow
 
 
@@ -191,7 +196,14 @@ class LocalPairExecutor:
         acquire = getattr(self.backend, "acquire_campaign_lease", None)
         if acquire is not None:
             acquire()
-        self.reconcile_ports(self.recipes.resolve(item))
+        try:
+            recipe = self.recipes.resolve(item)
+        except UnknownRecipeError:
+            # Catalog matrix rows carry display names ('LFM3 Omni 2B Q4_K_M')
+            # that do not address a recipe family; the catalog adapter resolves
+            # the real configuration and reconciles those ports itself.
+            return
+        self.reconcile_ports(recipe)
 
     def reconcile_ports(self, recipe: ResolvedRecipe) -> None:
         """Make each component's pinned port launchable before the GPU gate.

@@ -277,3 +277,20 @@ def test_prepare_reconciles_ports_before_the_gpu_clear_gate(tmp_path: Path) -> N
 
     assert backend.claims == [("aux", 11610), ("main", 11605)]
     assert backend.actions == []
+
+
+def test_prepare_tolerates_matrix_display_names(tmp_path: Path) -> None:
+    """Catalog display names do not address recipes; prepare must not raise."""
+    backend = ClaimingBackend()
+    executor = LocalPairExecutor(
+        recipes=RecipeBook.load(
+            ROOT / "references/model-recipes.json", platform_name="linux"
+        ),
+        backend=backend,
+        result_dir=tmp_path,
+        physical_hardware_probe=fake_physical_hardware,
+    )
+
+    executor.prepare(row("LFM3 Omni 2B Q4_K_M", "auto", 65_536))
+
+    assert backend.claims == []
