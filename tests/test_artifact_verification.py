@@ -282,6 +282,30 @@ def test_expand_artifact_pins_size_and_hash_per_shard() -> None:
     assert all(r["sha256"] in {s.sha256 for s in sharded_listing().values()} for r in rows)
 
 
+def test_expand_artifact_keeps_an_unlisted_shard_as_an_unpinned_row() -> None:
+    siblings = sharded_listing()
+    del siblings["Qwen3.8-27B-GSQ-RCO-IQ3_S-00003-of-00004.gguf"]
+    row = {
+        "destination": "Qwen3.8-27B-GSQ-RCO/Qwen3.8-27B-GSQ-RCO-IQ3_S.gguf",
+        "families": ["qwen3-8-27b-gsq-rco-iq3s"],
+        "repo_id": "ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF",
+        "revision": "d" * 40,
+        "path": "Qwen3.8-27B-GSQ-RCO-IQ3_S.gguf",
+        "sha256": "0" * 64,
+        "size_bytes": 4_000_000_000,
+    }
+
+    rows = expand_artifact(row, siblings)
+
+    assert len(rows) == 4
+    # Probed first, and carries no metadata borrowed from a different shard.
+    assert rows[0]["path"] == "Qwen3.8-27B-GSQ-RCO-IQ3_S-00003-of-00004.gguf"
+    assert rows[0]["unlisted_shard"] is True
+    assert rows[0]["size_bytes"] is None
+    assert "sha256" not in rows[0]
+    assert all(r["size_bytes"] and r["sha256"] for r in rows[1:])
+
+
 def test_expand_rows_materializes_every_shard_offline(tmp_path: Path) -> None:
     module = load_script()
     prefix = "MiniMax-M3-UD-Q4_K_M"
@@ -428,17 +452,22 @@ def test_artifact_tree_reads_hf_siblings_offline() -> None:
     assert listing["8-bit/config.json"] == SiblingInfo("8-bit/config.json", 42, "f" * 64)
 
 
-def test_check_artifact_existence_local_mode_flags_stubs(tmp_path: Path) -> None:
-    if "check_artifact_existence_under_test" not in __import__("sys").modules:
+def load_check_module():
+    name = "check_artifact_existence_under_test"
+    if name not in __import__("sys").modules:
         loader = SourceFileLoader(
-            "check_artifact_existence_under_test", str(ROOT / "tools/check-artifact-existence")
+            name, str(ROOT / "tools/check-artifact-existence")
         )
         spec = importlib.util.spec_from_loader(loader.name, loader)
         assert spec and spec.loader
         module = importlib.util.module_from_spec(spec)
-        __import__("sys").modules[loader.name] = module
+        __import__("sys").modules[name] = module
         spec.loader.exec_module(module)
-    module = __import__("sys").modules["check_artifact_existence_under_test"]
+    return __import__("sys").modules[name]
+
+
+def test_check_artifact_existence_local_mode_flags_stubs(tmp_path: Path) -> None:
+    module = load_check_module()
     metadata = b'{"hidden_size": 5120}'
     rows = [
         {"destination": "Real/model.gguf", "size_bytes": 2 * artifacts.MIN_WEIGHT_BYTES,
@@ -457,3 +486,37 @@ def test_check_artifact_existence_local_mode_flags_stubs(tmp_path: Path) -> None
     assert [row["destination"] for row in findings] == ["Real/model.gguf"]
     assert findings[0]["status"].startswith("stub")
     assert findings[0]["expected_bytes"] == 2 * artifacts.MIN_WEIGHT_BYTES
+
+
+def test_check_artifact_existence_local_flags_a_partial_shard_set(tmp_path: Path) -> None:
+    """One shard of six on disk is incomplete, not a complete artifact."""
+    module = load_check_module()
+    prefix = "DeepSeek-IQ1_M"
+    rows = [
+        {
+            "destination": f"Deep/{prefix}-00001-of-00006.gguf",
+            "size_bytes": 5_780_704,
+            "path": f"{prefix}-00001-of-00006.gguf",
+        }
+    ]
+    (tmp_path / "Deep").mkdir()
+    first = tmp_path / "Deep" / f"{prefix}-00001-of-00006.gguf"
+    first.write_bytes(b"w" * 5_780_704)
+
+    findings = module.local_check(rows, tmp_path)
+
+    assert len(findings) == 1
+    finding = findings[0]
+    assert finding["status"] == "incomplete-shard-set"
+    assert finding["destination"] == "Deep/" + prefix
+    assert len(finding["missing"]) == 5
+    assert all("of-00006.gguf" in name for name in finding["missing"])
+    assert "1 of 6 shards" in finding["detail"]
+
+    # Materializing every sibling clears the finding: unknown shard sizes fall
+    # back to the weights floor, which a real shard passes.
+    for index in range(2, 7):
+        (tmp_path / "Deep" / f"{prefix}-{index:05d}-of-00006.gguf").write_bytes(
+            b"w" * artifacts.MIN_WEIGHT_BYTES
+        )
+    assert module.local_check(rows, tmp_path) == []

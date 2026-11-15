@@ -180,3 +180,285 @@ def test_destination_rejects_symlink_outside_blob_store(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="symlink escapes blob store"):
         module.safe_destination(root, "model.gguf")
+
+
+# ---------------------------------------------------------------------------
+# 2. Missing shards are work items; families fail independently
+# ---------------------------------------------------------------------------
+
+REVISION = "a" * 40
+MIN = 1024 * 1024
+
+
+def shard_payload(index: int) -> bytes:
+    body = f"shard-{index}".encode()
+    return (body * ((MIN // len(body)) + 2))[: MIN + index * 512]
+
+
+class FakeTree:
+    """Offline stand-in for ArtifactTree; raises when configured to."""
+
+    def __init__(self, listing):
+        self.listing = listing
+        self.calls: list[tuple[str, str | None]] = []
+
+    def siblings(self, repo_id, revision=None):
+        self.calls.append((repo_id, revision))
+        if isinstance(self.listing, Exception):
+            raise self.listing
+        return self.listing
+
+
+def sharded_row(prefix: str, destination_dir: str = "Sharded", families=("sharded",)) -> dict:
+    return {
+        "destination": f"{destination_dir}/{prefix}.gguf",
+        "families": list(families),
+        "repo_id": "owner/sharded",
+        "revision": REVISION,
+        "path": f"{prefix}.gguf",
+        "sha256": "0" * 64,
+        "size_bytes": 4,
+    }
+
+
+def sharded_listing(prefix: str, count: int, omit: tuple[int, ...] = (), cache: Path | None = None):
+    from turbofit_runtime.artifacts import SiblingInfo
+
+    listing = {}
+    for index in range(1, count + 1):
+        if index in omit:
+            continue
+        name = f"{prefix}-{index:05d}-of-{count:05d}.gguf"
+        payload = shard_payload(index)
+        if cache is not None:
+            (cache / name).write_bytes(payload)
+        listing[name] = SiblingInfo(
+            name, size_bytes=len(payload), sha256=hashlib.sha256(payload).hexdigest()
+        )
+    return listing
+
+
+def test_missing_sibling_becomes_a_download_item(tmp_path: Path) -> None:
+    """A shard the listing omits is still fetched, not turned into an exception.
+
+    Upstream listings can be stale; only the fetch proves a shard is gone.
+    """
+    module = load_script()
+    prefix = "Tiny-Set"
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    # The listing omits shard 3, but the file is really available upstream.
+    listing = sharded_listing(prefix, 4, omit=(3,), cache=cache)
+    (cache / f"{prefix}-00003-of-00004.gguf").write_bytes(shard_payload(3))
+
+    rows = module.expand_rows([sharded_row(prefix)], tree=FakeTree(listing))
+
+    assert len(rows) == 4
+    assert rows[0]["path"] == f"{prefix}-00003-of-00004.gguf"
+    assert rows[0]["unlisted_shard"] is True
+    assert rows[0]["size_bytes"] is None
+    assert "sha256" not in rows[0]
+
+    summary = module.download_families(
+        [sharded_row(prefix)],
+        root=tmp_path / "models",
+        tree=FakeTree(listing),
+        download_fn=lambda *, filename, **_: str(cache / filename),
+        err=__import__("io").StringIO(),
+    )
+
+    assert summary["families_failed"] == 0
+    landed = tmp_path / "models" / "Sharded"
+    assert sorted(p.name for p in landed.iterdir()) == [
+        f"{prefix}-{index:05d}-of-00004.gguf" for index in range(1, 5)
+    ]
+    assert (landed / f"{prefix}-00003-of-00004.gguf").read_bytes() == shard_payload(3)
+
+
+def test_unlisted_shard_that_cannot_be_fetched_fails_its_family_with_reason(tmp_path: Path) -> None:
+    module = load_script()
+    prefix = "Gone-Set"
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    listing = sharded_listing(prefix, 3, omit=(3,), cache=cache)
+
+    def download(*, repo_id, revision, filename):
+        if filename.endswith("00003-of-00003.gguf"):
+            raise RuntimeError("404 Client Error: Entry Not Found for url: ...")
+        return str(cache / filename)
+
+    summary = module.download_families(
+        [sharded_row(prefix)],
+        root=tmp_path / "models",
+        tree=FakeTree(listing),
+        download_fn=download,
+        err=__import__("io").StringIO(),
+    )
+
+    record = summary["failed"]["sharded"]
+    assert "404" in record["reason"] and "Entry Not Found" in record["reason"]
+    assert record["failed_destination"].endswith(f"{prefix}-00003-of-00003.gguf")
+    # Shards 1 and 2 were never fetched because the miss was probed first.
+    assert not (tmp_path / "models" / "Sharded" / f"{prefix}-00001-of-00003.gguf").exists()
+
+
+def test_one_failing_family_does_not_stop_the_others(tmp_path: Path) -> None:
+    module = load_script()
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    good = cache / "good.gguf"
+    good.write_bytes(PINNED)
+    gated = cache / "gated.gguf"
+    gated.write_bytes(PINNED)
+    rows = [
+        {
+            "destination": "Good/good.gguf",
+            "families": ["good"],
+            "repo_id": "owner/good",
+            "revision": REVISION,
+            "path": "good.gguf",
+            "sha256": hashlib.sha256(PINNED).hexdigest(),
+            "size_bytes": len(PINNED),
+        },
+        {
+            "destination": "Gated/gated.gguf",
+            "families": ["gated"],
+            "repo_id": "owner/gated",
+            "revision": REVISION,
+            "path": "gated.gguf",
+            "sha256": hashlib.sha256(PINNED).hexdigest(),
+            "size_bytes": len(PINNED),
+        },
+    ]
+
+    def download(*, repo_id, revision, filename):
+        if repo_id == "owner/gated":
+            raise RuntimeError("401 Client Error: Repository requires authentication")
+        return str(cache / filename)
+
+    log = __import__("io").StringIO()
+    summary = module.download_families(
+        rows, root=tmp_path / "models", expand_shards=False, download_fn=download, err=log
+    )
+
+    assert summary["families"] == 2
+    assert summary["families_ok"] == 1
+    assert summary["families_failed"] == 1
+    # "gated" sorts first, so this also proves the later family still ran.
+    assert (tmp_path / "models/Good/good.gguf").read_bytes() == PINNED
+    assert not (tmp_path / "models/Gated/gated.gguf").exists()
+    assert "401" in summary["failed"]["gated"]["reason"]
+    assert summary["failed"]["gated"]["missing_bytes"] == len(PINNED)
+    assert "1 families failed: gated" in log.getvalue()
+    assert "summary: 2 families, 1 ok, 1 failed" in log.getvalue()
+
+
+def test_complete_sets_are_not_downloaded_again(tmp_path: Path) -> None:
+    module = load_script()
+    root = tmp_path / "models"
+    target = root / "Done/model.gguf"
+    target.parent.mkdir(parents=True)
+    target.write_bytes(PINNED)
+    row = {
+        "destination": "Done/model.gguf",
+        "families": ["done"],
+        "repo_id": "owner/done",
+        "revision": REVISION,
+        "path": "model.gguf",
+        "sha256": hashlib.sha256(PINNED).hexdigest(),
+        "size_bytes": len(PINNED),
+    }
+
+    def download(**_):
+        raise AssertionError("a complete artifact must not be fetched again")
+
+    summary = module.download_families(
+        [row], root=root, expand_shards=False, download_fn=download,
+        err=__import__("io").StringIO(),
+    )
+
+    assert summary["families_failed"] == 0
+    assert summary["artifacts_fetched"] == 0
+
+
+def test_cli_attempts_every_family_and_exits_nonzero_with_summary(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    module = load_script()
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    listing = sharded_listing("Broken", 2, omit=(2,), cache=cache)
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(__import__("json").dumps({
+        "schema": "turbofit.artifact-manifest/v1",
+        "artifacts": [
+            sharded_row("Broken", "Broken", ("broken",)),
+            {
+                "destination": "Fine/fine.gguf",
+                "families": ["fine"],
+                "repo_id": "owner/fine",
+                "revision": REVISION,
+                "path": "fine.gguf",
+                "sha256": hashlib.sha256(PINNED).hexdigest(),
+                "size_bytes": len(PINNED),
+            },
+        ],
+    }), encoding="utf-8")
+    (cache / "fine.gguf").write_bytes(PINNED)
+
+    monkeypatch.setattr(module, "ArtifactTree", lambda: FakeTree(listing))
+    monkeypatch.setattr(module, "hf_download", lambda **kwargs: str(cache / kwargs["filename"]))
+
+    code = module.main(["--all", "--manifest", str(manifest), "--model-root", str(tmp_path / "models")])
+
+    captured = capsys.readouterr()
+    assert code == 1
+    assert "1 families failed: broken" in captured.err
+    assert "broken: FAILED" in captured.err
+    assert "fine: ok" in captured.err
+    assert (tmp_path / "models/Fine/fine.gguf").read_bytes() == PINNED
+    payload = __import__("json").loads(captured.out)
+    assert set(payload["failed"]) == {"broken"}
+
+
+def test_list_still_works_without_a_download(capsys) -> None:
+    module = load_script()
+    assert module.main(["--list"]) == 0
+    rows = __import__("json").loads(capsys.readouterr().out)
+    manifest = __import__("json").loads((ROOT / "references/artifact-manifest.json").read_text())
+    assert len(rows) == len(manifest["artifacts"])
+
+
+def test_complete_artifact_symlinked_outside_the_blob_store_is_left_alone(tmp_path: Path) -> None:
+    """Archived models live behind symlinks to another volume; verifying is fine.
+
+    Rewriting through such a link would be wrong (the archive is untouched by
+    unlinking the link), but a hash-matching file needs no write at all.
+    """
+    module = load_script()
+    root = tmp_path / "storage/models"
+    archive = tmp_path / "archive"
+    archive.mkdir(parents=True)
+    archived = archive / "model.gguf"
+    archived.write_bytes(PINNED)
+    link = root / "family/model.gguf"
+    link.parent.mkdir(parents=True)
+    link.symlink_to(archived)
+    row = {
+        "destination": "family/model.gguf",
+        "families": ["archived"],
+        "repo_id": "owner/archived",
+        "revision": REVISION,
+        "path": "model.gguf",
+        "sha256": hashlib.sha256(PINNED).hexdigest(),
+        "size_bytes": len(PINNED),
+    }
+
+    def download(**_):
+        raise AssertionError("an archived complete artifact must not be re-fetched")
+
+    result = module.install_artifact(row, root=root, download_fn=download)
+
+    assert result["downloaded"] is False
+    assert link.is_symlink()
+    assert archived.read_bytes() == PINNED
