@@ -32,3 +32,5 @@
 .tf-route small { color: var(--color-muted-foreground); }
 .tf-footnote { margin: 0; color: var(--color-muted-foreground); font-size: .75rem; text-align: center; }
 @media (max-width: 760px) { .tf-hero { flex-direction: column; } .tf-hero-status { justify-content: flex-start; } .tf-grid, .tf-two { grid-template-columns: 1fr; } .tf-span-2 { grid-column: span 1; } .tf-route { grid-template-columns: 6.5rem 1fr; } .tf-route small { grid-column: 2; } }
+
+.tf-onboard { display: grid; gap: .5rem; padding-top: .75rem; border-top: 1px solid var(--color-border); margin-top: .25rem; }

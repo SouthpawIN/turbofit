@@ -154,7 +154,12 @@ def _path_entry(
     }
 
 
-def _component_artifacts(component: Any, model_root: Path) -> list[dict[str, Any]]:
+def component_artifacts(component: Any, model_root: Path) -> list[dict[str, Any]]:
+    """Artifact rows for one resolved component, in the campaign's vocabulary.
+
+    Public so first-run onboarding asks the *same* question ("is this file
+    installed?") that the fit view and the campaign ask.
+    """
     role = str(getattr(component, "role", "") or "main")
     rows = [
         _path_entry(role=f"{role}:model", path=str(getattr(component, "model_path", "") or ""), model_root=model_root),
@@ -335,10 +340,10 @@ def _tier_entry(
     engine = _engine_state(main_component, flags, binary_installed)
     aux_engine = dict(engine) if shared else _engine_state(aux_component, flags, binary_installed)
 
-    artifacts = _component_artifacts(main_component, model_root)
+    artifacts = component_artifacts(main_component, model_root)
     aux_artifacts: list[dict[str, Any]] = []
     if not shared:
-        aux_artifacts = _component_artifacts(aux_component, model_root)
+        aux_artifacts = component_artifacts(aux_component, model_root)
         artifacts.extend(aux_artifacts)
     missing = _missing(artifacts)
 
@@ -364,6 +369,23 @@ def _tier_entry(
     else:
         status = STATUS_READY
     blocker = engine if not engine["usable"] else aux_engine
+
+    # Offload is a placement, not a footnote: a row that only runs because a
+    # chunk of its experts live in system RAM must say so, with the RAM it
+    # needs, everywhere it is shown.
+    offload_reason = str(getattr(main_component, "offload_reason", "") or "")
+    n_cpu_moe = int(getattr(main_component, "n_cpu_moe", 0) or 0)
+    placement = "offload" if n_cpu_moe > 0 else "gpu"
+    placement_block = {
+        "kind": placement,
+        "n_cpu_moe": n_cpu_moe,
+        "ram_requirement": offload_reason if placement == "offload" else "",
+        "label": (
+            f"offload · {offload_reason}"
+            if placement == "offload"
+            else f"fits entirely in the {tier_gb} GB memory band"
+        ),
+    }
 
     families = [
         str(component.alias or component.family)
@@ -395,6 +417,7 @@ def _tier_entry(
             "level": recommended.get("level"),
             "recorded_at": recommended.get("recorded_at"),
             "engine": engine,
+            "placement": placement_block,
             "auxiliary": {
                 "id": MAPLE_AUX_ID,
                 "source": "shared-main" if shared else "pinned",
@@ -487,11 +510,24 @@ def build_fit_view(
     }
 
 
-def load_fit_view(root: str | Path, *, tier_gb: int | None = None) -> dict[str, Any]:
+def load_fit_view(
+    root: str | Path,
+    *,
+    tier_gb: int | None = None,
+    flags: frozenset[str] | None = None,
+    probe_flags: bool = True,
+    binary_installed: Callable[[str], bool] | None = None,
+    recipe_book: Any = None,
+) -> dict[str, Any]:
     """Build the view from the committed references under *root*.
 
     The dashboard is one caller, but the same four files answer the question for
     any host, so the wiring lives here rather than in the HTTP layer.
+
+    ``flags``, ``probe_flags``, ``binary_installed`` and ``recipe_book`` are
+    injection points for offline callers (first-run planning, tests): without
+    them every caller that needed a pinned CPU flag set had to re-assemble the
+    view by hand and could drift from the dashboard's answer.
     """
     from .model_catalog import ModelCatalog
     from .recipes import RecipeBook
@@ -507,8 +543,11 @@ def load_fit_view(root: str | Path, *, tier_gb: int | None = None) -> dict[str, 
             names.setdefault(item.family, item.name)
     return build_fit_view(
         leaderboard=leaderboard,
-        recipe_book=RecipeBook.load(base / "model-recipes.json"),
+        recipe_book=recipe_book or RecipeBook.load(base / "model-recipes.json"),
         configurations=configurations,
+        flags=flags,
+        probe_flags=probe_flags,
+        binary_installed=binary_installed,
         tier_gb=tier_gb,
         model_names=names,
     )
@@ -524,6 +563,7 @@ __all__ = [
     "STATUS_UNMEASURED",
     "STATUS_UNRESOLVABLE",
     "build_fit_view",
+    "component_artifacts",
     "engine_label",
     "load_fit_view",
 ]

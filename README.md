@@ -69,6 +69,28 @@ scripts/turbofit-controller --once     # one bounded tick
 curl -s http://127.0.0.1:8091/v1/models
 ```
 
+## First run — scan, recommend, download that
+
+TurboFit does not download the catalog. It scans the machine, recommends one
+model for its capacity band, and fetches only that (plus any fallback-chain rung
+you accept):
+
+```bash
+scripts/turbofit-onboard                        # dry run: what it would fetch, with sizes
+scripts/turbofit-onboard --download             # fetch exactly that
+scripts/turbofit-onboard --download --include-fallback 1   # ...plus the first chain rung
+```
+
+The dry run prints the recommended configuration, each artifact with its size,
+which ones are already verified on disk, the optional fallback rungs with their
+own sizes, and the total. There is no `--all`: this path never fetches the whole
+library. The dashboard's **Fit** card shows the same plan and a
+`Download N GiB` button that runs it.
+
+When a capacity band has no measurement yet, the plan says "no measurements
+yet" and offers the first fallback-chain rung that fits this machine, labelled
+`portable-fit` rather than presented as a benchmarked winner.
+
 ## What it does at runtime
 
 | Dial | Meaning |

@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+"""First run: scan this machine, recommend one model, fetch only that.
+
+The default is a dry run: it prints what would be downloaded, with byte sizes,
+and touches nothing. ``--download`` performs exactly that same list.
+
+There is deliberately no ``--all``. Fetching the whole artifact catalog is not
+what a first run means, so asking for it here is refused with the two choices
+that do exist: the recommendation (default) or the fallback rungs you name.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.onboard import (  # noqa: E402
+    PLAN_BLOCKED,
+    PLAN_UNMEASURED,
+    FallbackPolicyError,
+    build_plan,
+    execute_plan,
+    parse_fallback_policy,
+    render_plan,
+)
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--download",
+        action="store_true",
+        help="fetch the planned artifacts (default: show the plan and stop)",
+    )
+    parser.add_argument(
+        "--include-fallback",
+        default="none",
+        metavar="N|all|none",
+        help="add fallback-chain rungs N..1, all of them, or none (default: none)",
+    )
+    parser.add_argument("--tier", type=int, default=None, help="treat this machine as this GB tier")
+    parser.add_argument("--ram-gb", type=float, default=None, help="RAM budget for offload placement")
+    parser.add_argument("--model-root", type=Path, default=None, help="where weights live")
+    parser.add_argument("--root", type=Path, default=ROOT, help="repository root with references/")
+    parser.add_argument("--json", action="store_true", help="print the plan as JSON")
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="refused: this command never downloads the whole library",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = _parser()
+    args = parser.parse_args(argv)
+    if args.all:
+        parser.error(
+            "turbofit-onboard never downloads the whole library. It downloads the "
+            "recommended model plus the fallback rungs you accept; use "
+            "--include-fallback N (or all) for the rungs."
+        )
+    try:
+        policy = parse_fallback_policy(args.include_fallback)
+    except FallbackPolicyError as exc:
+        parser.error(str(exc))
+    ram_bytes = int(args.ram_gb * 2**30) if args.ram_gb else None
+    plan = build_plan(
+        args.root,
+        tier_gb=args.tier,
+        ram_bytes=ram_bytes,
+        include_fallback=policy,
+        model_root=args.model_root,
+    )
+    if not args.download:
+        if args.json:
+            print(json.dumps(plan, indent=2))
+        else:
+            print(render_plan(plan))
+        return 2 if plan["status"] in {PLAN_BLOCKED, PLAN_UNMEASURED} else 0
+
+    result = execute_plan(plan, model_root=args.model_root)
+    if args.json:
+        print(json.dumps(result, indent=2))
+    else:
+        print(render_plan(plan))
+        print()
+        print(result["message"])
+        if result.get("failed"):
+            for family, record in result["failed"].items():
+                print(f"  {family}: {record.get('reason')}", file=sys.stderr)
+        for row in result.get("verification") or []:
+            if not row["present"]:
+                print(f"  still incomplete: {row['destination']} ({row['reason']})", file=sys.stderr)
+    return 0 if result["ok"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -266,11 +266,70 @@ async def get_leaderboard() -> dict[str, Any]:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
+ONBOARD_URL = "/api/plugins/turbofit/onboard"
+ONBOARD_DOWNLOAD_URL = "/api/plugins/turbofit/onboard/download"
+
+
 def _fit_rows(tier_gb: int | None = None) -> dict[str, Any]:
     """What to run on this machine, and what is missing to run it."""
     from turbofit_runtime.fit_view import load_fit_view
 
-    return load_fit_view(PLUGIN_ROOT, tier_gb=tier_gb)
+    payload = load_fit_view(PLUGIN_ROOT, tier_gb=tier_gb)
+    # The fit card's job is to say "this is what you will download, N GiB" and
+    # let the user start it, so the first-run plan travels with the answer.
+    try:
+        payload["onboard"] = _onboard_summary(tier_gb=tier_gb)
+    except Exception as exc:  # a plan failure must not hide the fit answer
+        payload["onboard"] = {
+            "ok": False,
+            "status": "unavailable",
+            "download_bytes": 0,
+            "message": f"the first-run download plan could not be built ({type(exc).__name__}: {exc}).",
+            "url": ONBOARD_URL,
+            "download_url": ONBOARD_DOWNLOAD_URL,
+        }
+    return payload
+
+
+def _onboard_plan(include_fallback: str | int = "none", tier_gb: int | None = None) -> dict[str, Any]:
+    from turbofit_runtime.onboard import build_plan
+
+    return build_plan(PLUGIN_ROOT, include_fallback=include_fallback, tier_gb=tier_gb)
+
+
+def _onboard_summary(*, tier_gb: int | None = None) -> dict[str, Any]:
+    """The compact form of the plan the fit card renders."""
+    plan = _onboard_plan("none", tier_gb)
+    recommendation = plan.get("recommendation") or {}
+    fallback = plan.get("fallback") or {}
+    return {
+        "ok": bool(plan.get("ok")),
+        "status": plan.get("status"),
+        "tier_gb": (plan.get("tier") or {}).get("hardware_tier_gb"),
+        "measured": (plan.get("tier") or {}).get("measured"),
+        "download_bytes": int((plan.get("total") or {}).get("download_bytes") or 0),
+        "download_gib": float((plan.get("total") or {}).get("download_gib") or 0.0),
+        "artifacts_to_download": int((plan.get("total") or {}).get("artifacts_to_download") or 0),
+        "artifacts_present": int((plan.get("total") or {}).get("artifacts_present") or 0),
+        "main": recommendation.get("main"),
+        "main_family": recommendation.get("main_family"),
+        "placement": recommendation.get("placement"),
+        "rungs": [
+            {
+                "index": rung.get("index"),
+                "model": rung.get("model"),
+                "download_bytes": int(rung.get("incremental_bytes") or 0),
+                "evidence": rung.get("evidence"),
+                "selectable": bool(rung.get("selectable")),
+            }
+            for rung in fallback.get("rungs") or []
+            if rung.get("selectable")
+        ],
+        "message": plan.get("message"),
+        "next": plan.get("next") or [],
+        "url": ONBOARD_URL,
+        "download_url": ONBOARD_DOWNLOAD_URL,
+    }
 
 
 @router.get("/fit")
@@ -279,6 +338,46 @@ async def get_fit(tier: int | None = None) -> dict[str, Any]:
         raise HTTPException(status_code=422, detail="tier must be a GB value from 1 to 4096")
     try:
         return await asyncio.to_thread(_fit_rows, tier)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.get("/onboard")
+async def get_onboard(include_fallback: str = "none", tier: int | None = None) -> dict[str, Any]:
+    """The first-run plan: scan, recommend, and the exact bytes it would fetch."""
+    from turbofit_runtime.onboard import FallbackPolicyError, parse_fallback_policy
+
+    if tier is not None and not 1 <= tier <= 4096:
+        raise HTTPException(status_code=422, detail="tier must be a GB value from 1 to 4096")
+    try:
+        parse_fallback_policy(include_fallback)
+    except FallbackPolicyError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    try:
+        return await asyncio.to_thread(_onboard_plan, include_fallback, tier)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.post("/onboard/download")
+async def post_onboard_download(body: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Fetch exactly the plan the user was shown -- nothing else."""
+    from turbofit_runtime.onboard import FallbackPolicyError, execute_plan, parse_fallback_policy
+
+    payload = body or {}
+    include_fallback = payload.get("include_fallback", "none")
+    tier = payload.get("tier")
+    if tier is not None and (isinstance(tier, bool) or not isinstance(tier, int) or not 1 <= tier <= 4096):
+        raise HTTPException(status_code=422, detail="tier must be a GB value from 1 to 4096")
+    if not isinstance(include_fallback, (str, int)) or isinstance(include_fallback, bool):
+        raise HTTPException(status_code=422, detail="include_fallback must be none, all, or a rung number")
+    try:
+        parse_fallback_policy(include_fallback)
+    except FallbackPolicyError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    try:
+        plan = await asyncio.to_thread(_onboard_plan, include_fallback, tier)
+        return await asyncio.to_thread(execute_plan, plan)
     except Exception as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
