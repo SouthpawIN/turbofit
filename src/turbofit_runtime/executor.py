@@ -301,6 +301,9 @@ class LocalPairExecutor:
         failure_traceback = ""
         physical_hardware: dict = {}
         try:
+            # An engine the offload planner refused must never be started; the
+            # refusal carries the planner's arithmetic into the failure record.
+            recipe.assert_launchable()
             physical_hardware = self.physical_hardware_probe()
             validate_physical_hardware(physical_hardware)
             self._current_physical_fingerprint = str(physical_hardware["fingerprint_sha256"])

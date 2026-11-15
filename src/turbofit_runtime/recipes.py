@@ -170,8 +170,15 @@ class ResolvedComponent:
     #: Runtime flavor ("mainline", "prism", "strata", "vllm", "ik"); the engine
     #: identity a fit check needs before a load is attempted.
     engine: str = ""
+    #: Expert layers held in RAM, from the recipe or the offload planner.
     n_cpu_moe: int | None = None
+    #: Why this value was chosen, in the planner's own words.
     offload_reason: str = ""
+    #: True when the planner measured the model and it cannot fit this host.
+    #: Resolution still succeeds (a report must be able to describe the row),
+    #: but no engine may be started for it.
+    offload_infeasible: bool = False
+
 
 @dataclass(frozen=True)
 class ResolvedRecipe:
@@ -185,18 +192,38 @@ class ResolvedRecipe:
     aux_context: int = 0
     aux_residency: dict | None = None
 
+    def infeasible_components(self) -> tuple[ResolvedComponent, ...]:
+        return tuple(item for item in self.components if item.offload_infeasible)
+
+    def assert_launchable(self) -> None:
+        """Refuse to start an engine the offload planner already declared doomed.
+
+        Resolution deliberately succeeds for such a row so status/dry-run can
+        report it; this is the one place that turns it back into a hard error,
+        and only when a launch is actually being attempted.
+        """
+        for component in self.infeasible_components():
+            raise ExpertOffloadInfeasible(
+                component.family,
+                component.offload_reason,
+            )
+
 
 class ExpertOffloadInfeasible(ValueError):
     """A measured model fits neither VRAM nor VRAM+RAM on this host.
 
     Carries the planner's own explanation (what did not fit and by how much) so
     the error a user sees is the arithmetic, not a bare "failed to load".
+
+    Raising this is a *launch* decision. Composition and reporting describe the
+    row instead, via `ResolvedComponent.offload_infeasible`.
     """
 
-    def __init__(self, family: str, decision: ModelOffloadDecision) -> None:
+    def __init__(self, family: str, reason: str, *, decision: ModelOffloadDecision | None = None) -> None:
         self.family = family
+        self.reason = reason
         self.decision = decision
-        super().__init__(f"{family}: {decision.plan.reason}")
+        super().__init__(f"{family}: {reason}")
 
 
 def host_free_vram_bytes(
@@ -382,8 +409,12 @@ class RecipeBook:
 
         Returns None when the host capacity or the artifact cannot be measured:
         a checkpoint that has not been downloaded yet is a planning state, not
-        an OOM risk, so resolution must not fail over it. A model that *is*
-        measurable but cannot fit raises, carrying the planner's reason.
+        an OOM risk, so resolution must not fail over it.
+
+        An infeasible decision is returned, not raised: it is a property of the
+        row (this host cannot hold this model) that status and dry-run must be
+        able to report. Only a launch refuses it — see
+        `ResolvedRecipe.assert_launchable`.
         """
         vram_bytes = self.vram_probe() if self.vram_probe is not None else host_free_vram_bytes(
             hardware=self.hardware
@@ -409,8 +440,6 @@ class RecipeBook:
             )
         except (GGUFFormatError, OSError):
             return None
-        if not decision.plan.feasible:
-            raise ExpertOffloadInfeasible(family, decision)
         return decision
 
     def _component(
@@ -604,6 +633,7 @@ class RecipeBook:
             command.extend(["--main-gpu", str(context_override["main_gpu"])])
         n_cpu_moe = context_override.get("n_cpu_moe", spec.get("n_cpu_moe"))
         offload_reason = "explicit recipe value" if n_cpu_moe is not None else ""
+        offload_infeasible = False
         auto_cpu_moe = context_override.get("auto_cpu_moe", spec.get("auto_cpu_moe", False))
         if isinstance(auto_cpu_moe, str):
             auto_cpu_moe = auto_cpu_moe.strip().lower() in {"on", "true", "1", "yes"}
@@ -617,16 +647,22 @@ class RecipeBook:
             if runtime_flavor in LLAMA_FLAVORS and self.backend_name != "cpu":
                 decision = self._auto_offload_decision(family, model, spec)
                 if decision is not None:
-                    n_cpu_moe = decision.plan.n_cpu_moe
                     offload_reason = decision.plan.reason
-                    devices = len([item for item in gpu.split(",") if item])
-                    if n_cpu_moe and decision.footprint is not None and devices > 1:
-                        # Later layers keep their experts on the GPU, so an even
-                        # layer split would overload the last card.
-                        split = plan_tensor_split(decision.footprint, n_cpu_moe=n_cpu_moe,
-                                                  device_count=devices)
-                        if split and "--tensor-split" not in command:
-                            command.extend(["--tensor-split", split])
+                    if not decision.plan.feasible:
+                        # The planner's refusal is a row status, not an
+                        # exception: the row is described here and a launch is
+                        # refused later, with this same reason.
+                        offload_infeasible = True
+                    else:
+                        n_cpu_moe = decision.plan.n_cpu_moe
+                        devices = len([item for item in gpu.split(",") if item])
+                        if n_cpu_moe and decision.footprint is not None and devices > 1:
+                            # Later layers keep their experts on the GPU, so an even
+                            # layer split would overload the last card.
+                            split = plan_tensor_split(decision.footprint, n_cpu_moe=n_cpu_moe,
+                                                      device_count=devices)
+                            if split and "--tensor-split" not in command:
+                                command.extend(["--tensor-split", split])
         if n_cpu_moe:
             command.extend(["--n-cpu-moe", str(n_cpu_moe)])
         if runtime_flavor != "strata" and context_override.get("cpu_moe", spec.get("cpu_moe")) is True:
@@ -729,7 +765,9 @@ class RecipeBook:
             gpu=gpu, port=port, command=tuple(command),
             model_path=model, projector_path=projector, context=context,
             draft_path=draft, engine=runtime_flavor,
-            n_cpu_moe=n_cpu_moe, offload_reason=offload_reason,        )
+            n_cpu_moe=n_cpu_moe, offload_reason=offload_reason,
+            offload_infeasible=offload_infeasible,
+        )
 
     def resolve_component(
         self,

@@ -29,7 +29,12 @@ from .artifacts import (
     parse_shard,
     shard_names,
 )
-from .recipes import ResolvedComponent, ResolvedRecipe, resolve_native_backend
+from .recipes import (
+    ExpertOffloadInfeasible,
+    ResolvedComponent,
+    ResolvedRecipe,
+    resolve_native_backend,
+)
 from .runtime_backends import llama_environment
 
 
@@ -460,6 +465,10 @@ class CampaignBackend:
         return env
 
     def start(self, component: ResolvedComponent) -> dict[str, Any]:
+        if getattr(component, "offload_infeasible", False):
+            # Defense in depth: no launch path may start an engine whose
+            # measured weights do not fit this host.
+            raise ExpertOffloadInfeasible(component.family, component.offload_reason)
         self._suspend_production()
         try:
             self._wait_port_reusable(component.port)

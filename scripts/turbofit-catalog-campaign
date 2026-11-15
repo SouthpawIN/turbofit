@@ -27,6 +27,7 @@ from turbofit_runtime.executor import LocalPairExecutor
 from turbofit_runtime.gpu import GPUClearGate
 from turbofit_runtime.hardware import probe_hardware
 from turbofit_runtime.model_catalog import ModelCatalog
+from turbofit_runtime.offload_gate import memory_deferred_rows
 from turbofit_runtime.recipes import RecipeBook
 from turbofit_runtime.registry import ProfileRegistry
 from turbofit_runtime.schema import MatrixRow, load_matrix
@@ -133,8 +134,39 @@ def artifact_waiting_rows(recipes: RecipeBook | None = None) -> dict[str, object
 
 
 def build_runner() -> CampaignRunner:
+    return build_environment()[0]
+
+
+def _capacity_probe(variable: str):
+    """Plan against a declared capacity, for provisioning and reproduction.
+
+    Unset means "measure this host". Used for 'what would it take?' questions
+    and for reproducing a smaller machine's verdict without owning one.
+    """
+    value = os.environ.get(variable)
+    if not value:
+        return None
+    try:
+        mb = int(value)
+    except ValueError as exc:
+        raise ValueError(f"{variable} must be an integer number of MiB") from exc
+    return lambda: mb * 1024 * 1024
+
+
+def build_environment():
+    """Build the runner and every per-row verdict once, from one recipe book.
+
+    Resolution is per row: a model the offload planner refuses is a
+    ``waiting-memory`` row, and a row whose weights are missing is a
+    ``waiting-download`` row. Neither can abort building the index.
+    """
     catalog, configurations = canonical()
-    recipes = RecipeBook.load(RECIPES, hardware=probe_hardware())
+    recipes = RecipeBook.load(
+        RECIPES,
+        hardware=probe_hardware(),
+        vram_probe=_capacity_probe("TURBOFIT_OFFLOAD_VRAM_MB"),
+        ram_probe=_capacity_probe("TURBOFIT_OFFLOAD_RAM_MB"),
+    )
     backend = CampaignBackend(
         gateway_script=ROOT / "scripts/turbofit-gateway.py",
         result_dir=RESULTS,
@@ -142,8 +174,9 @@ def build_runner() -> CampaignRunner:
     )
     local = LocalPairExecutor(recipes=recipes, backend=backend, result_dir=RESULTS)
     configuration_index = build_configuration_index(configurations, catalog)
-    deferred_row_ids, _ = deferred_rows(configurations, catalog)
+    deferred_row_ids, policy = deferred_rows(configurations, catalog)
     waiting = waiting_download_rows(configuration_index, recipes)
+    memory = memory_deferred_rows(configuration_index, recipes)
     executor = CatalogExecutorAdapter(local, configuration_index)
     publisher = EvidencePublisher(matrix_path=MATRIX, checklist_path=WIKI, evidence_dir=EVIDENCE)
     publisher.ensure_checklist()
@@ -156,7 +189,7 @@ def build_runner() -> CampaignRunner:
         configuration_index,
         excluded_main_ids=archived_ids,
     )
-    return CampaignRunner(
+    runner = CampaignRunner(
         matrix_path=MATRIX,
         state_path=STATE,
         executor=executor,
@@ -167,13 +200,16 @@ def build_runner() -> CampaignRunner:
         waiting_download_rows={
             row_id: item.reason for row_id, item in waiting.items()
         },
+        waiting_memory_rows={
+            row_id: item.reason for row_id, item in memory.items()
+        },
     )
+    return runner, waiting, memory, deferred_row_ids, policy
 
 
 def status() -> int:
-    catalog, configurations = canonical()
+    runner, waiting, memory, deferred_row_ids, policy = build_environment()
     matrix = load_matrix(MATRIX)
-    runner = build_runner()
     try:
         campaign = json.loads(STATE.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
@@ -186,12 +222,16 @@ def status() -> int:
     }
     pending_ids = {row.id for row in runner.pending_rows()}
     unresolved_ids = {row.id for row in runner.unresolved_rows()}
-    deferred_ids, policy = deferred_rows(configurations, catalog)
-    waiting = artifact_waiting_rows()
+    deferred_ids = deferred_row_ids
     current = {}
     for row in matrix.rows:
         record = attempts.get(row.id) or {}
-        if record.get("recipe_sha256") == runner.executor.recipe_sha256(row):
+        try:
+            current_sha = runner.executor.recipe_sha256(row)
+        except (ValueError, OSError):
+            # One unresolvable row must not sink the whole report.
+            continue
+        if record.get("recipe_sha256") == current_sha:
             current[row.id] = record
     current_success = sum(
         row_id not in pending_ids and item.get("status") == "success"
@@ -217,12 +257,25 @@ def status() -> int:
             "retry_waiting": len(unresolved_ids - pending_ids),
             "deferred": len(deferred_ids),
             "waiting_download": len(waiting),
+            "waiting_memory": len(memory),
             "resolved": len(
                 {row.id for row in matrix.rows}
                 - unresolved_ids
                 - deferred_ids
                 - set(waiting)
+                - set(memory)
             ),
+        },
+        "waiting_memory": {
+            "rows": len(memory),
+            "reason": (
+                "these models were measured and do not fit this host's VRAM plus "
+                "usable RAM; the offload planner's refusal is quoted per row"
+            ),
+            "detail": [
+                item.to_dict()
+                for item in sorted(memory.values(), key=lambda entry: entry.row_id)
+            ],
         },
         "waiting_download": {
             "rows": len(waiting),

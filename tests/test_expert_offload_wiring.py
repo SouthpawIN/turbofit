@@ -104,24 +104,53 @@ def test_offload_scales_with_available_vram():
     assert tight > roomy
 
 
-def test_infeasible_plan_raises_with_the_planners_reason():
+def test_infeasible_plan_is_a_row_status_not_a_composition_error():
     # 560 GiB of experts cannot live in 64 GiB of RAM.
     hopeless = footprint(600, 560, 60)
-    with pytest.raises(ExpertOffloadInfeasible) as raised:
-        component(book({"auto_cpu_moe": True}, ram=64 * GIB, fp=hopeless))
+    book_ = book({"auto_cpu_moe": True}, ram=64 * GIB, fp=hopeless)
+    comp = component(book_)
 
+    # Composition must still describe the row instead of aborting the caller.
+    assert comp.offload_infeasible is True
+    assert comp.n_cpu_moe is None
+    assert "--n-cpu-moe" not in comp.command
+    assert "RAM" in comp.offload_reason
+    assert "GiB" in comp.offload_reason
+
+    # A launch, and only a launch, refuses it with that same reason verbatim.
+    recipe = book_.resolve_named("row", "Test MoE", "auto", 65_536)
+    with pytest.raises(ExpertOffloadInfeasible) as raised:
+        recipe.assert_launchable()
+    assert raised.value.reason == comp.offload_reason
     assert "RAM" in str(raised.value)
     assert "GiB" in str(raised.value)
-    assert raised.value.decision.plan.feasible is False
 
 
 def test_non_expert_weights_too_big_for_vram_explains_itself():
     attention_heavy = footprint(80, 40, 40)
-    with pytest.raises(ExpertOffloadInfeasible) as raised:
-        component(book({"auto_cpu_moe": True}, vram=16 * GIB, ram=256 * GIB,
-                       fp=attention_heavy))
+    book_ = book({"auto_cpu_moe": True}, vram=16 * GIB, ram=256 * GIB,
+                 fp=attention_heavy)
+    comp = component(book_)
 
+    assert comp.offload_infeasible is True
+    assert "non-expert" in comp.offload_reason
+    with pytest.raises(ExpertOffloadInfeasible) as raised:
+        book_.resolve_named("row", "Test MoE", "auto", 65_536).assert_launchable()
     assert "non-expert" in str(raised.value)
+
+
+def test_feasible_row_is_launchable_and_infeasible_row_is_not():
+    """The two sides of the decision, one host description each."""
+    big = footprint(180, 150, 60)
+    feasible = book({"auto_cpu_moe": True}, fp=big)
+    feasible.resolve_named("row", "Test MoE", "auto", 65_536).assert_launchable()
+
+    hopeless = footprint(600, 560, 60)
+    refused = book({"auto_cpu_moe": True}, ram=64 * GIB, fp=hopeless)
+    recipe = refused.resolve_named("row", "Test MoE", "auto", 65_536)
+    assert recipe.infeasible_components()
+    with pytest.raises(ExpertOffloadInfeasible):
+        recipe.assert_launchable()
 
 
 def test_explicit_recipe_value_wins_and_skips_measurement():
@@ -287,3 +316,21 @@ def test_model_that_fits_gets_no_tensor_split():
 
     assert comp.n_cpu_moe == 0
     assert "--tensor-split" not in comp.command
+
+
+def test_launch_backend_refuses_an_infeasible_component(tmp_path):
+    """No engine may be started for a row the planner refused."""
+    from turbofit_runtime.backend import CampaignBackend
+
+    hopeless = footprint(600, 560, 60)
+    comp = component(book({"auto_cpu_moe": True}, ram=64 * GIB, fp=hopeless))
+    backend = CampaignBackend(
+        gateway_script=tmp_path / "gateway.py",
+        result_dir=tmp_path,
+        runtime_state=tmp_path / "runtime.json",
+    )
+
+    with pytest.raises(ExpertOffloadInfeasible) as raised:
+        backend.start(comp)
+    assert raised.value.reason == comp.offload_reason
+    assert backend._handles == []
