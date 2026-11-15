@@ -243,6 +243,18 @@ Start the local endpoint with `/turbofit serve` (background: `scripts/turbofit-g
 - A model you name explicitly is **never** silently answered by a hosted API — you get a retryable `503` naming it. Substitution is legal only for `auto`/`active`, and only when `TURBOFIT_ALLOW_API=true`.
 - Plain HTTP is honoured only on loopback and Tailscale addresses; anything else needs HTTPS.
 
+## The garage
+
+TurboFit is a shop, not a list. Each model is a car with its own state of tune; the ladder decides which one leaves the bay.
+
+![TURBOFIT — THE GARAGE. Sovthpaw at work among four differently-tuned machines, with the Sovthpaw pet watching from the tool chest.](assets/promo/01-garage.png)
+
+**TURBOFIT — THE GARAGE** · Sovthpaw mid-diagnosis, four machines in different states of tune, the Sovthpaw pet on the tool chest.
+
+![TURBOFIT — PLATE STUDY. The same scene composed with clear space for typeset titles.](assets/promo/02-garage-plate.png)
+
+**TURBOFIT — PLATE STUDY** · The composition used for titles: no lettering is baked into the art, so a caption can never contradict the ladder.
+
 ## Built on Hermes' own runtime
 
 TurboFit is a plugin *on top of* Hermes, not a parallel stack. Hermes already ships a managed llama.cpp runtime — PM-pinned engines, one supervised router-mode server, a context ladder with growth, a hardware budget with physics checks, MTP launch flags, idle unload. Those are adopted rather than re-implemented:
