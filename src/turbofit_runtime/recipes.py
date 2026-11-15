@@ -132,11 +132,97 @@ def resolve_native_backend(
     return "cpu"
 
 
-def resolve_native_binary(binary: str | Path, *, platform_name: str | None = None) -> str:
+#: Pinned runtime revisions, used to pick the right install directory when a
+#: manifest names a runtime by bare name or by an older revision.
+RUNTIMES_MANIFEST = Path(__file__).resolve().parents[2] / "references" / "native-runtimes.json"
+_REVISION_DIR = re.compile(r"^(?P<name>.+)-(?P<revision>[0-9a-f]{7,40})$")
+
+
+def _pinned_runtime_revisions(manifest_path: str | Path | None = None) -> dict[str, str]:
+    """Map runtime id -> pinned git revision from the native runtime manifest."""
+    target = Path(manifest_path) if manifest_path is not None else RUNTIMES_MANIFEST
+    try:
+        raw: Any = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(raw, Mapping):
+        return {}
+    pinned: dict[str, str] = {}
+    for entry in raw.get("runtimes") or ():
+        if not isinstance(entry, Mapping):
+            continue
+        runtime_id, revision = entry.get("id"), entry.get("revision")
+        if isinstance(runtime_id, str) and runtime_id and isinstance(revision, str) and revision:
+            pinned[runtime_id] = revision
+    return pinned
+
+
+def _runtime_directory_candidates(
+    path: Path, *, manifest_path: str | Path | None = None
+) -> list[Path]:
+    """Ordered install directories to try for ``path`` under ``runtimes/``.
+
+    The native installer writes ``runtimes/<name>-<revision>/`` while manifests
+    and older docs name ``runtimes/<name>/``. Both layouts must resolve, and the
+    directory matching the pinned revision wins over a stale one so a leftover
+    checkout of another revision is never executed.
+    """
+    parts = path.parts
+    try:
+        anchor = len(parts) - 1 - parts[::-1].index("runtimes")
+    except ValueError:
+        return [path]
+    if anchor + 1 >= len(parts):
+        return [path]
+    root = Path(*parts[: anchor + 1])
+    segment = parts[anchor + 1]
+    tail = parts[anchor + 2 :]
+    match = _REVISION_DIR.match(segment)
+    name = match.group("name") if match else segment
+    pinned_revisions = _pinned_runtime_revisions(manifest_path)
+    pinned = pinned_revisions.get(name)
+    if pinned is None:
+        # Directory names drop flavor prefixes the manifest keeps: the pinned
+        # "mainline-llama.cpp" checkout lives in runtimes/llama.cpp-<rev>/.
+        matches = {
+            revision
+            for runtime_id, revision in pinned_revisions.items()
+            if runtime_id.endswith(f"-{name}")
+        }
+        pinned = matches.pop() if len(matches) == 1 else None
+
+    segments: list[str] = []
+    if pinned:
+        segments.append(f"{name}-{pinned}")
+    if segment not in segments:
+        segments.append(segment)
+    if name not in segments:
+        segments.append(name)
+    siblings: list[str] = []
+    try:
+        for child in root.iterdir():
+            child_match = _REVISION_DIR.match(child.name)
+            if child.is_dir() and child_match and child_match.group("name") == name:
+                siblings.append(child.name)
+    except OSError:
+        siblings = []
+    segments.extend(item for item in sorted(siblings) if item not in segments)
+    return [root / item / Path(*tail) if tail else root / item for item in segments]
+
+
+def resolve_native_binary(
+    binary: str | Path,
+    *,
+    platform_name: str | None = None,
+    manifest_path: str | Path | None = None,
+) -> str:
     """Resolve a manifest binary to the layout produced by the native builder."""
     path = Path(str(binary)).expanduser()
     host = str(platform_name or sys.platform).lower()
     if not host.startswith("win"):
+        for candidate in _runtime_directory_candidates(path, manifest_path=manifest_path):
+            if candidate.is_file():
+                return str(candidate)
         return str(path)
     if path.suffix.lower() == ".exe":
         return str(path)

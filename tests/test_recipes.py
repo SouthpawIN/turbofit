@@ -482,3 +482,70 @@ def test_vllm_flavor_rejects_a_gguf_file(tmp_path) -> None:
     path.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="vllm flavor"):
         RecipeBook.load(path, platform_name="linux").resolve(row("Inkling Test", "auto", 65_536))
+
+
+def _runtime_layout(tmp_path: Path, directories: dict[str, str]) -> Path:
+    root = tmp_path / "runtimes"
+    for directory, body in directories.items():
+        binary = root / directory / "build-cuda" / "bin" / "llama-server"
+        binary.parent.mkdir(parents=True)
+        binary.write_text(body)
+    return root
+
+
+def test_bare_runtime_name_resolves_to_the_revision_suffixed_install(tmp_path: Path) -> None:
+    """The installer writes `<name>-<sha>`; manifests may name the bare `<name>`."""
+    root = _runtime_layout(tmp_path, {"prism-llama.cpp-9ca265a5": "pinned"})
+
+    resolved = resolve_native_binary(
+        root / "prism-llama.cpp" / "build-cuda" / "bin" / "llama-server",
+        platform_name="linux",
+        manifest_path=tmp_path / "absent.json",
+    )
+
+    assert Path(resolved) == root / "prism-llama.cpp-9ca265a5" / "build-cuda" / "bin" / "llama-server"
+
+
+def test_pinned_revision_wins_over_a_stale_sibling_install(tmp_path: Path) -> None:
+    root = _runtime_layout(
+        tmp_path, {"prism-llama.cpp-aaaaaaaa": "stale", "prism-llama.cpp-bbbbbbbb": "pinned"}
+    )
+    manifest = tmp_path / "native-runtimes.json"
+    manifest.write_text(json.dumps({"schema": "turbofit.native-runtimes/v1", "runtimes": [
+        {"id": "prism-llama.cpp", "revision": "bbbbbbbb"}
+    ]}))
+
+    resolved = resolve_native_binary(
+        root / "prism-llama.cpp-aaaaaaaa" / "build-cuda" / "bin" / "llama-server",
+        platform_name="linux",
+        manifest_path=manifest,
+    )
+
+    assert Path(resolved) == root / "prism-llama.cpp-bbbbbbbb" / "build-cuda" / "bin" / "llama-server"
+
+
+def test_manifest_flavor_prefix_matches_the_bare_checkout_name(tmp_path: Path) -> None:
+    """`mainline-llama.cpp` is installed as `runtimes/llama.cpp-<sha>/`."""
+    root = _runtime_layout(
+        tmp_path, {"llama.cpp-cccccccc": "mainline", "llama.cpp-dddddddd": "old"}
+    )
+    manifest = tmp_path / "native-runtimes.json"
+    manifest.write_text(json.dumps({"schema": "turbofit.native-runtimes/v1", "runtimes": [
+        {"id": "mainline-llama.cpp", "revision": "cccccccc"}
+    ]}))
+
+    resolved = resolve_native_binary(
+        root / "llama.cpp" / "build-cuda" / "bin" / "llama-server",
+        platform_name="linux",
+        manifest_path=manifest,
+    )
+
+    assert Path(resolved) == root / "llama.cpp-cccccccc" / "build-cuda" / "bin" / "llama-server"
+
+
+def test_absent_runtime_install_keeps_the_requested_path_for_the_error(tmp_path: Path) -> None:
+    requested = tmp_path / "runtimes" / "prism-llama.cpp" / "build-cuda" / "bin" / "llama-server"
+
+    assert resolve_native_binary(
+        requested, platform_name="linux", manifest_path=tmp_path / "absent.json"
+    ) == str(requested)

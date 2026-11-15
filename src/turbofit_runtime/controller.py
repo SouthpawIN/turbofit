@@ -239,6 +239,28 @@ def load_controller_state(path: str | Path, *, now: float | None = None) -> Cont
         if not math.isfinite(stamp):
             raise ValueError(f"controller {key} must be finite")
         adaptive_values[key] = min(max(0.0, stamp), clock + MAX_PERSISTED_WAIT_S)
+    # Dwell timers are the same monotonic clock and cannot survive a reboot: a
+    # stamp later than this boot's uptime can only come from the previous one.
+    # The dwell they measured is unknowable now, so restart it instead of
+    # failing every tick forever with "surplus_since cannot be later than now".
+    for key in ("deficit_since", "surplus_since"):
+        stamp = adaptive_values.get(key)
+        if stamp is None:
+            continue
+        if isinstance(stamp, bool) or not isinstance(stamp, (int, float)) or not math.isfinite(stamp):
+            raise ValueError(f"controller {key} must be a number")
+        if stamp > clock:
+            adaptive_values[key] = None
+    adaptive_values["failure_times"] = tuple(
+        value
+        for value in adaptive_values["failure_times"]
+        if not (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(value)
+            and value > clock
+        )
+    )
     state = ControllerState(
         selection_mode=SelectionMode(raw["selection_mode"]),
         profile_id=raw["profile_id"],

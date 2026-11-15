@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
+import sys
 from typing import Callable, Protocol, cast
 
 from .controller import (
@@ -16,7 +18,7 @@ from .hardware import HardwareFingerprint
 from .pressure import PressureSnapshot
 from .reconciler import ReconcilerState, RuntimeBackend, transition
 from .routes import RuntimeResolutions, build_route_state, publish_route_state
-from .selection import ProfileCatalog, load_selection
+from .selection import ProfileCatalog, load_or_create_selection
 
 BackendFactory = Callable[[object, ReconcilerState], RuntimeBackend]
 
@@ -57,7 +59,17 @@ class RuntimeService:
         selection_path: str | Path,
         hardware: HardwareFingerprint,
     ) -> AdaptiveController:
-        selection = load_selection(selection_path)
+        selection, created = load_or_create_selection(selection_path, self.catalog, hardware)
+        if created:
+            print(
+                json.dumps(
+                    {"selection": "created-default", "path": str(selection_path),
+                     "profile_id": selection["profile_id"], "mode": selection["mode"]},
+                    sort_keys=True,
+                ),
+                file=sys.stderr,
+                flush=True,
+            )
         choice = self.catalog.select(hardware, requested=selection["requested"])
         if choice.profile.id != selection["profile_id"]:
             raise ValueError("persisted automatic selection is stale for current physical hardware")

@@ -87,6 +87,31 @@ def load_selection(path: str | Path) -> dict[str, Any]:
     return dict(raw)
 
 
+def load_or_create_selection(
+    path: str | Path,
+    catalog: "ProfileCatalog",
+    hardware: HardwareFingerprint,
+) -> tuple[dict[str, Any], bool]:
+    """Return the persisted selection, persisting a default one on first run.
+
+    A first run has no record at all. Synthesis is chosen over idling because
+    the controller can only serve a profile it has selected: treating absence
+    as "no selection yet" would leave a fresh install permanently unable to
+    serve, which reads as an operational failure forever. The synthesised
+    record is the same automatic choice ``turbofit-runtime set auto`` writes,
+    so a later explicit ``set`` simply overwrites it.
+
+    Returns ``(selection, created)``. Raises only when no profile fits the
+    hardware, which is a real failure rather than an unconfigured machine.
+    """
+    try:
+        return load_selection(path), False
+    except FileNotFoundError:
+        choice = catalog.select(hardware, requested="auto")
+        save_selection(path, choice)
+        return load_selection(path), True
+
+
 class ProfileCatalog:
     """Immutable catalog that applies one safety contract to auto and manual choices."""
 
