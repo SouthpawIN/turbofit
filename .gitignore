@@ -32,7 +32,7 @@ references/results/tier-campaign/
 references/results/*-logs/
 
 # Generated promotional working files; release artwork lives under assets/.
-promo/
+/promo/
 src/turbofit.egg-info/
 uv.lock
 
