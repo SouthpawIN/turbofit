@@ -98,6 +98,7 @@ class CampaignRunner:
         deferred_row_ids: frozenset[str] | None = None,
         waiting_download_rows: Mapping[str, str] | None = None,
         waiting_memory_rows: Mapping[str, str] | None = None,
+        waiting_runtime_rows: Mapping[str, str] | None = None,
     ) -> None:
         self.matrix_path = matrix_path
         self.state_path = state_path
@@ -113,6 +114,9 @@ class CampaignRunner:
         # Rows the offload planner measured as too large for this host. Their
         # reason is the planner's own arithmetic; they are never attempted.
         self.waiting_memory_rows = dict(waiting_memory_rows or {})
+        # Rows whose recipe names an engine binary this host does not have:
+        # a prerequisite the user installs, not a property of the model.
+        self.waiting_runtime_rows = dict(waiting_runtime_rows or {})
 
     def _load_state(self) -> dict:
         try:
@@ -149,6 +153,7 @@ class CampaignRunner:
                 row.id in self.deferred_row_ids
                 or row.id in self.waiting_download_rows
                 or row.id in self.waiting_memory_rows
+                or row.id in self.waiting_runtime_rows
             ):
                 continue
             record = state["rows"].get(row.id) or {}
@@ -189,6 +194,7 @@ class CampaignRunner:
                 row.id in self.deferred_row_ids
                 or row.id in self.waiting_download_rows
                 or row.id in self.waiting_memory_rows
+                or row.id in self.waiting_runtime_rows
             ):
                 continue
             record = state["rows"].get(row.id) or {}
@@ -339,6 +345,11 @@ class CampaignRunner:
             # Same rule for a model this host cannot hold: report the planner's
             # arithmetic instead of launching an engine that must OOM.
             return CampaignOutcome(row_id=row.id, status="waiting-memory", error=too_big)
+        absent = self.waiting_runtime_rows.get(row.id)
+        if absent is not None:
+            # Same rule for an engine binary that is not installed: a missing
+            # prerequisite is not a model failure, so no GPU clear and no launch.
+            return CampaignOutcome(row_id=row.id, status="waiting-runtime", error=absent)
         before: GPUClearEvent | None = None
         after: GPUClearEvent | None = None
         raw: RawBenchmark | None = None

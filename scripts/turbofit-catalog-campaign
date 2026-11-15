@@ -30,6 +30,7 @@ from turbofit_runtime.model_catalog import ModelCatalog
 from turbofit_runtime.offload_gate import memory_deferred_rows
 from turbofit_runtime.recipes import RecipeBook
 from turbofit_runtime.registry import ProfileRegistry
+from turbofit_runtime.runtime_gate import INSTALL_HINT, waiting_runtime_rows
 from turbofit_runtime.schema import MatrixRow, load_matrix
 from turbofit_runtime.tier_tournament import candidate_ids_for_tier, load_tournaments
 
@@ -157,8 +158,10 @@ def build_environment():
     """Build the runner and every per-row verdict once, from one recipe book.
 
     Resolution is per row: a model the offload planner refuses is a
-    ``waiting-memory`` row, and a row whose weights are missing is a
-    ``waiting-download`` row. Neither can abort building the index.
+    ``waiting-memory`` row, a row whose weights are missing is a
+    ``waiting-download`` row, and a row whose recipe names an uninstalled
+    engine binary is a ``waiting-runtime`` row. None can abort building the
+    index.
     """
     catalog, configurations = canonical()
     recipes = RecipeBook.load(
@@ -175,8 +178,24 @@ def build_environment():
     local = LocalPairExecutor(recipes=recipes, backend=backend, result_dir=RESULTS)
     configuration_index = build_configuration_index(configurations, catalog)
     deferred_row_ids, policy = deferred_rows(configurations, catalog)
-    waiting = waiting_download_rows(configuration_index, recipes)
-    memory = memory_deferred_rows(configuration_index, recipes)
+    # One verdict per row, so the status counts partition the matrix: a
+    # deferred row (policy or CPU capability) is already not runnable and is
+    # reported once as deferred, not also as waiting for weights or a runtime.
+    waiting = {
+        row_id: item
+        for row_id, item in waiting_download_rows(configuration_index, recipes).items()
+        if row_id not in deferred_row_ids
+    }
+    memory = {
+        row_id: item
+        for row_id, item in memory_deferred_rows(configuration_index, recipes).items()
+        if row_id not in deferred_row_ids
+    }
+    runtime = waiting_runtime_rows(
+        configuration_index,
+        recipes,
+        skip=deferred_row_ids | set(waiting) | set(memory),
+    )
     executor = CatalogExecutorAdapter(local, configuration_index)
     publisher = EvidencePublisher(matrix_path=MATRIX, checklist_path=WIKI, evidence_dir=EVIDENCE)
     publisher.ensure_checklist()
@@ -203,12 +222,15 @@ def build_environment():
         waiting_memory_rows={
             row_id: item.reason for row_id, item in memory.items()
         },
+        waiting_runtime_rows={
+            row_id: item.reason for row_id, item in runtime.items()
+        },
     )
-    return runner, waiting, memory, deferred_row_ids, policy
+    return runner, waiting, memory, runtime, deferred_row_ids, policy
 
 
 def status() -> int:
-    runner, waiting, memory, deferred_row_ids, policy = build_environment()
+    runner, waiting, memory, runtime, deferred_row_ids, policy = build_environment()
     matrix = load_matrix(MATRIX)
     try:
         campaign = json.loads(STATE.read_text(encoding="utf-8"))
@@ -258,12 +280,14 @@ def status() -> int:
             "deferred": len(deferred_ids),
             "waiting_download": len(waiting),
             "waiting_memory": len(memory),
+            "waiting_runtime": len(runtime),
             "resolved": len(
                 {row.id for row in matrix.rows}
                 - unresolved_ids
                 - deferred_ids
                 - set(waiting)
                 - set(memory)
+                - set(runtime)
             ),
         },
         "waiting_memory": {
@@ -286,6 +310,20 @@ def status() -> int:
                 for item in sorted(waiting.values(), key=lambda entry: entry.row_id)[:20]
             ],
             "truncated": max(0, len(waiting) - 20),
+        },
+        "waiting_runtime": {
+            "rows": len(runtime),
+            "reason": (
+                "the recipe's engine binary is not installed on this host; the row "
+                "is not attempted until the runtime is built (a prerequisite, not "
+                "a model failure)"
+            ),
+            "install_hint": INSTALL_HINT,
+            "detail": [
+                item.to_dict()
+                for item in sorted(runtime.values(), key=lambda entry: entry.row_id)[:20]
+            ],
+            "truncated": max(0, len(runtime) - 20),
         },
         "policy": {
             "deferred": len(deferred_ids),

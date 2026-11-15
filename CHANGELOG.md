@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased — a missing engine binary waits, it does not fail
+
+- **`waiting-runtime` row status**: the catalog campaign resolves each
+  recipe's engine binary before selecting a row. If the build is not installed
+  (`~/.local/share/turbofit/runtimes/<engine>/build-<backend>/bin/…` missing,
+  or a bare command absent from `PATH`), the row is recorded as
+  `waiting-runtime` with the binary path and the install hint, excluded from
+  `pending`/`runnable`, and counted next to `waiting_download` and
+  `waiting_memory` in `scripts/turbofit-catalog-campaign status`, so a
+  one-command prerequisite is no longer reported as a model failure.
+  `pending + resolved + deferred + waiting_download + waiting_memory +
+  waiting_runtime` still equals all active rows. The launch-time
+  `engine binary not found` error is unchanged.
+
 ## Unreleased — downloads fetch every shard and survive a bad family
 
 - **Missing shards are downloaded, not fatal**: `scripts/download-artifacts`
