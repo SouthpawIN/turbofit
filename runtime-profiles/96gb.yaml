@@ -1,6 +1,6 @@
 schema: turbofit.runtime/v1
 id: hardware-96gb
-revision: 4
+revision: 5
 hardware:
   class_vram_gb: 96
   min_devices: 4
@@ -9,7 +9,7 @@ hardware:
   accelerator: llama.cpp-local
   topology: 4x24
 policy:
-  recommendation: evidence-gated
+  recommendation: api-only-unproven-local
   external_gpu_priority: absolute
   contraction_dwell_s: 5
   expansion_dwell_s: 120
@@ -21,25 +21,12 @@ roles:
   main: active:main
   auxiliary: active:aux
   fallback: active:main
+# Production authority only; displaced proposals are archived in
+# research/runtime-catalog-proposals.json (not selectable runtime evidence).
 rungs:
-# Unleashed UD-Q3_K_XL rungs per the Fit List (24 GB+ shared memory class).
-# Evidence: references/successful-runtime-profiles.json key
-# qwen-3-8-27b-unleashed-ud-q3-k-xl-auto-262k (37.99 tok/s baseline,
-# gpu_peak_mb[1] = 19391 -> required_mb_per_card 19391).
-# Retired Bonsai rungs were never re-validated as the 96 GB default after
-# Bonsai's retirement in v2.4.
-- id: local-unleashed-q3kxl-262144
-  context: 262144
-  aux_mode: shared-main
-  evidence: sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f
-  main_manifest: sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b
-- id: local-unleashed-q3kxl-131072
+- id: api
   context: 131072
-  aux_mode: shared-main
-  evidence: sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f
-  main_manifest: sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b
-- id: local-unleashed-q3kxl-65536
-  context: 65536
-  aux_mode: shared-main
-  evidence: sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f
-  main_manifest: sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b
+  aux_mode: api
+  evidence: sha256:4bad0f35baf5a3e310f6efd4393fc595222bddf85140fee4bda856b327612cfd
+  main_api_policy: api:auto
+  aux_api_policy: api:auto

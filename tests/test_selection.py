@@ -122,6 +122,15 @@ def test_all_required_tiers_select_exact_topology_and_300_plus_caps_at_300(
     assert choice.profile.id == expected
 
 
+def test_exact_unpromoted_tier_does_not_inherit_lower_tier_local_promotion() -> None:
+    profiles = ProfileCatalog((profile(8, "1x8", local=True), profile(16, "1x16", local=False)))
+
+    choice = profiles.select(hardware(16384))
+
+    assert choice.profile.id == "hardware-16gb"
+    assert choice.profile.rungs[0].aux_mode.value == "api"
+
+
 def test_auto_uses_api_only_lower_class_for_unmeasured_topology() -> None:
     choice = catalog().select(hardware(12288), requested="auto")
 

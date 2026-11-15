@@ -14,26 +14,19 @@ policy:
   external_gpu_priority: absolute
   flap_failure_limit: 3
   flap_window_s: 300
-  recommendation: quality-first
-revision: 1
+  recommendation: api-only-unproven-local
+revision: 2
 roles:
   auxiliary: active:aux
   fallback: active:main
   main: active:main
+# Production authority only; displaced proposals are archived in
+# research/runtime-catalog-proposals.json (not selectable runtime evidence).
 rungs:
-- aux_mode: shared-main
-  context: 262144
-  evidence: sha256:0000000000000000000000000000000000000000000000000000000000000000
-  id: local-ornith-262k
-  main_manifest: sha256:0000000000000000000000000000000000000000000000000000000000000000
-- aux_mode: shared-main
-  context: 262144
-  evidence: sha256:0000000000000000000000000000000000000000000000000000000000000000
-  id: local-maple-262k
-  main_manifest: sha256:0000000000000000000000000000000000000000000000000000000000000000
-- aux_mode: shared-main
+- id: api
   context: 131072
-  evidence: sha256:0000000000000000000000000000000000000000000000000000000000000000
-  id: local-maple-131k
-  main_manifest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  aux_mode: api
+  evidence: sha256:86f2cf0296ad328a4b83f312c67b28e1e0373a3fec6f46d0af7bf8a065f25381
+  main_api_policy: api:auto
+  aux_api_policy: api:auto
 schema: turbofit.runtime/v1

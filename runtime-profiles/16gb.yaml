@@ -1,6 +1,6 @@
 schema: turbofit.runtime/v1
 id: hardware-16gb
-revision: 4
+revision: 5
 hardware:
   class_vram_gb: 16
   min_devices: 1
@@ -9,7 +9,7 @@ hardware:
   accelerator: llama.cpp-local
   topology: 1x16
 policy:
-  recommendation: evidence-gated
+  recommendation: api-only-unproven-local
   external_gpu_priority: absolute
   contraction_dwell_s: 5
   expansion_dwell_s: 120
@@ -21,23 +21,12 @@ roles:
   main: active:main
   auxiliary: active:aux
   fallback: active:main
+# Production authority only; displaced proposals are archived in
+# research/runtime-catalog-proposals.json (not selectable runtime evidence).
 rungs:
-# Tiel Coder UD-IQ3_XXS rungs per the Fit List (16 GB shared memory class).
-# Evidence: pending — Tiel Coder lanes benchmarked, promotion pending.
-# Retired Bonsai rungs were never re-validated as the 16 GB default after
-# Bonsai's retirement in v2.4.
-- id: local-tielcoder-iq3xxs-131072
+- id: api
   context: 131072
-  aux_mode: shared-main
-  evidence: pending
-  main_manifest: pending
-- id: local-tielcoder-iq3xxs-65536
-  context: 65536
-  aux_mode: shared-main
-  evidence: pending
-  main_manifest: pending
-- id: local-tielcoder-iq3xxs-32768
-  context: 32768
-  aux_mode: shared-main
-  evidence: pending
-  main_manifest: pending
+  aux_mode: api
+  evidence: sha256:9724ef51d5e8faa284b0e5dc3759b84ebbbd74c2c15a7b41cd98aa65f02bcf47
+  main_api_policy: api:auto
+  aux_api_policy: api:auto

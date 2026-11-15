@@ -1,0 +1,1323 @@
+{
+  "profiles": {
+    "128gb.yaml": {
+      "hardware": {
+        "accelerator": "nvidia-cuda",
+        "class_vram_gb": 128,
+        "compute_capability_min": "8.6",
+        "min_devices": 2,
+        "per_device_min_gb": 64,
+        "topology": "2x64",
+        "total_vram_gb": 128
+      },
+      "id": "hardware-128gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "quality-first"
+      },
+      "revision": 1,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 1048576,
+          "evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "id": "local-unleashed-q3kx-1m",
+          "main_manifest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "id": "local-unleashed-q3kx-262k",
+          "main_manifest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "id": "local-unleashed-q3kx-128k",
+          "main_manifest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "16gb.yaml": {
+      "hardware": {
+        "accelerator": "llama.cpp-local",
+        "class_vram_gb": 16,
+        "min_devices": 1,
+        "per_device_min_gb": 16,
+        "topology": "1x16",
+        "total_vram_gb": 16
+      },
+      "id": "hardware-16gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "evidence-gated"
+      },
+      "revision": 4,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "pending",
+          "id": "local-tielcoder-iq3xxs-131072",
+          "main_manifest": "pending"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "pending",
+          "id": "local-tielcoder-iq3xxs-65536",
+          "main_manifest": "pending"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 32768,
+          "evidence": "pending",
+          "id": "local-tielcoder-iq3xxs-32768",
+          "main_manifest": "pending"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "192gb.yaml": {
+      "hardware": {
+        "accelerator": "llama.cpp-local",
+        "class_vram_gb": 192,
+        "min_devices": 4,
+        "per_device_min_gb": 48,
+        "topology": "4x48",
+        "total_vram_gb": 192
+      },
+      "id": "hardware-192gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "evidence-gated"
+      },
+      "revision": 4,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-262144",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-131072",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-65536",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "200gb.yaml": {
+      "hardware": {
+        "accelerator": "llama.cpp-local",
+        "class_vram_gb": 200,
+        "min_devices": 2,
+        "per_device_min_gb": 100,
+        "topology": "2x100",
+        "total_vram_gb": 200
+      },
+      "id": "hardware-200gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "evidence-gated"
+      },
+      "revision": 3,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
+          "id": "local-bonsai-262144",
+          "main_manifest": "sha256:6456085521bfd9d8846c0f7e581611d56b2fe108e31c02af2dfdf56dea474e1c"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
+          "id": "local-bonsai-131072",
+          "main_manifest": "sha256:2a98f797ac991a686c4749ef6a02298fa1993eea1c9e5e4320eafee426e6e383"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
+          "id": "local-bonsai-65536",
+          "main_manifest": "sha256:da9ed9fb1b17f6423f759a783a150051b51d5555c7dea09f87c6effb3dac35a2"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "24gb.yaml": {
+      "hardware": {
+        "accelerator": "llama.cpp-local",
+        "class_vram_gb": 24,
+        "min_devices": 1,
+        "per_device_min_gb": 24,
+        "topology": "1x24",
+        "total_vram_gb": 24
+      },
+      "id": "hardware-24gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "evidence-gated"
+      },
+      "revision": 4,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-262144",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-131072",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-65536",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "256gb.yaml": {
+      "hardware": {
+        "accelerator": "llama.cpp-local",
+        "class_vram_gb": 256,
+        "min_devices": 8,
+        "per_device_min_gb": 32,
+        "topology": "8x32",
+        "total_vram_gb": 256
+      },
+      "id": "hardware-256gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "evidence-gated"
+      },
+      "revision": 4,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-262144",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-131072",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-65536",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "300gb.yaml": {
+      "hardware": {
+        "accelerator": "llama.cpp-local",
+        "class_vram_gb": 300,
+        "min_devices": 3,
+        "per_device_min_gb": 100,
+        "topology": "3x100",
+        "total_vram_gb": 300
+      },
+      "id": "hardware-300gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "evidence-gated"
+      },
+      "revision": 3,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
+          "id": "local-bonsai-262144",
+          "main_manifest": "sha256:6456085521bfd9d8846c0f7e581611d56b2fe108e31c02af2dfdf56dea474e1c"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
+          "id": "local-bonsai-131072",
+          "main_manifest": "sha256:2a98f797ac991a686c4749ef6a02298fa1993eea1c9e5e4320eafee426e6e383"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
+          "id": "local-bonsai-65536",
+          "main_manifest": "sha256:da9ed9fb1b17f6423f759a783a150051b51d5555c7dea09f87c6effb3dac35a2"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "32gb.yaml": {
+      "hardware": {
+        "accelerator": "llama.cpp-local",
+        "class_vram_gb": 32,
+        "min_devices": 1,
+        "per_device_min_gb": 32,
+        "topology": "1x32",
+        "total_vram_gb": 32
+      },
+      "id": "hardware-32gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "evidence-gated"
+      },
+      "revision": 4,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-262144",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-131072",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-65536",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "384gb.yaml": {
+      "hardware": {
+        "accelerator": "llama.cpp-local",
+        "class_vram_gb": 384,
+        "min_devices": 8,
+        "per_device_min_gb": 48,
+        "topology": "8x48",
+        "total_vram_gb": 384
+      },
+      "id": "hardware-384gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "evidence-gated"
+      },
+      "revision": 4,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-262144",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-131072",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-65536",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "48gb.yaml": {
+      "hardware": {
+        "accelerator": "llama.cpp-local",
+        "class_vram_gb": 48,
+        "min_devices": 2,
+        "per_device_min_gb": 24,
+        "topology": "2x24",
+        "total_vram_gb": 48
+      },
+      "id": "hardware-48gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "evidence-gated"
+      },
+      "revision": 5,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "id": "local-unleashed-q3kx-262k",
+          "main_manifest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "id": "local-unleashed-q3kx-128k",
+          "main_manifest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "id": "local-unleashed-q3kx-65k",
+          "main_manifest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
+          "id": "local-bonsai-262144",
+          "main_manifest": "sha256:6456085521bfd9d8846c0f7e581611d56b2fe108e31c02af2dfdf56dea474e1c"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
+          "id": "local-bonsai-131072",
+          "main_manifest": "sha256:2a98f797ac991a686c4749ef6a02298fa1993eea1c9e5e4320eafee426e6e383"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
+          "id": "local-bonsai-65536",
+          "main_manifest": "sha256:da9ed9fb1b17f6423f759a783a150051b51d5555c7dea09f87c6effb3dac35a2"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "64gb.yaml": {
+      "hardware": {
+        "accelerator": "llama.cpp-local",
+        "class_vram_gb": 64,
+        "min_devices": 2,
+        "per_device_min_gb": 32,
+        "topology": "2x32",
+        "total_vram_gb": 64
+      },
+      "id": "hardware-64gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "evidence-gated"
+      },
+      "revision": 4,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-262144",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-131072",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-65536",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "8gb.yaml": {
+      "hardware": {
+        "accelerator": "llama.cpp-local",
+        "class_vram_gb": 8,
+        "min_devices": 1,
+        "per_device_min_gb": 8,
+        "topology": "1x8",
+        "total_vram_gb": 8
+      },
+      "id": "hardware-8gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "evidence-gated"
+      },
+      "revision": 4,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:1c23b7acc299b7693e4e50175b7a3d01252f3cdf3c2cbc25e21f1de09b04116d",
+          "id": "local-maple-131072",
+          "main_manifest": "sha256:09d219202562dbd17722dc8e3273527a021182ab7f892c2a06aac459a8f3a090"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "sha256:1c23b7acc299b7693e4e50175b7a3d01252f3cdf3c2cbc25e21f1de09b04116d",
+          "id": "local-maple-65536",
+          "main_manifest": "sha256:09d219202562dbd17722dc8e3273527a021182ab7f892c2a06aac459a8f3a090"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "96gb.yaml": {
+      "hardware": {
+        "accelerator": "llama.cpp-local",
+        "class_vram_gb": 96,
+        "min_devices": 4,
+        "per_device_min_gb": 24,
+        "topology": "4x24",
+        "total_vram_gb": 96
+      },
+      "id": "hardware-96gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "evidence-gated"
+      },
+      "revision": 4,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-262144",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-131072",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+          "id": "local-unleashed-q3kxl-65536",
+          "main_manifest": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "apple-16gb.yaml": {
+      "hardware": {
+        "accelerator": "apple-metal",
+        "class_vram_gb": 16,
+        "min_devices": 1,
+        "per_device_min_gb": 16,
+        "topology": "1x16",
+        "total_vram_gb": 16
+      },
+      "id": "apple-16gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "quality-first"
+      },
+      "revision": 1,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "id": "local-ornith-131k",
+          "main_manifest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "id": "local-maple-131k",
+          "main_manifest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 65536,
+          "evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "id": "local-maple-65k",
+          "main_manifest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    },
+    "apple-32gb.yaml": {
+      "hardware": {
+        "accelerator": "apple-metal",
+        "class_vram_gb": 32,
+        "min_devices": 1,
+        "per_device_min_gb": 32,
+        "topology": "1x32",
+        "total_vram_gb": 32
+      },
+      "id": "apple-32gb",
+      "policy": {
+        "contraction_dwell_s": 5,
+        "cooldown_s": 30,
+        "expansion_dwell_s": 120,
+        "expansion_margin_gb_per_card": 0.5,
+        "external_gpu_priority": "absolute",
+        "flap_failure_limit": 3,
+        "flap_window_s": 300,
+        "recommendation": "quality-first"
+      },
+      "revision": 1,
+      "roles": {
+        "auxiliary": "active:aux",
+        "fallback": "active:main",
+        "main": "active:main"
+      },
+      "rungs": [
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "id": "local-ornith-262k",
+          "main_manifest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 262144,
+          "evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "id": "local-maple-262k",
+          "main_manifest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "aux_mode": "shared-main",
+          "context": 131072,
+          "evidence": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "id": "local-maple-131k",
+          "main_manifest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "schema": "turbofit.runtime/v1"
+    }
+  },
+  "reason": "Preserve displaced proposals and retired rungs without promoting pending, zero-hash, wrong-topology, or stale-recipe records.",
+  "requirements": {
+    "hardware-16gb": [
+      {
+        "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
+        "required_mb_per_card": [
+          11093
+        ],
+        "rung_id": "local-bonsai-262144"
+      },
+      {
+        "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
+        "required_mb_per_card": [
+          8149
+        ],
+        "rung_id": "local-bonsai-131072"
+      },
+      {
+        "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
+        "required_mb_per_card": [
+          6677
+        ],
+        "rung_id": "local-bonsai-65536"
+      }
+    ],
+    "hardware-200gb": [
+      {
+        "evidence": "sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853",
+        "required_mb_per_card": [
+          8149,
+          21554
+        ],
+        "rung_id": "local-dedicated-131072"
+      },
+      {
+        "evidence": "sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba",
+        "required_mb_per_card": [
+          0,
+          21554
+        ],
+        "rung_id": "local-grm-131072"
+      },
+      {
+        "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
+        "required_mb_per_card": [
+          0,
+          11093
+        ],
+        "rung_id": "local-bonsai-262144"
+      },
+      {
+        "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
+        "required_mb_per_card": [
+          0,
+          8149
+        ],
+        "rung_id": "local-bonsai-131072"
+      },
+      {
+        "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
+        "required_mb_per_card": [
+          0,
+          6677
+        ],
+        "rung_id": "local-bonsai-65536"
+      }
+    ],
+    "hardware-24gb": [
+      {
+        "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+        "required_mb_per_card": [
+          19391
+        ],
+        "rung_id": "local-unleashed-q3kxl-262144"
+      },
+      {
+        "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+        "required_mb_per_card": [
+          19391
+        ],
+        "rung_id": "local-unleashed-q3kxl-131072"
+      },
+      {
+        "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
+        "required_mb_per_card": [
+          19391
+        ],
+        "rung_id": "local-unleashed-q3kxl-65536"
+      }
+    ],
+    "hardware-300gb": [
+      {
+        "evidence": "sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853",
+        "required_mb_per_card": [
+          8149,
+          0,
+          21554
+        ],
+        "rung_id": "local-dedicated-131072"
+      },
+      {
+        "evidence": "sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba",
+        "required_mb_per_card": [
+          0,
+          0,
+          21554
+        ],
+        "rung_id": "local-grm-131072"
+      },
+      {
+        "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
+        "required_mb_per_card": [
+          0,
+          0,
+          11093
+        ],
+        "rung_id": "local-bonsai-262144"
+      },
+      {
+        "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
+        "required_mb_per_card": [
+          0,
+          0,
+          8149
+        ],
+        "rung_id": "local-bonsai-131072"
+      },
+      {
+        "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
+        "required_mb_per_card": [
+          0,
+          0,
+          6677
+        ],
+        "rung_id": "local-bonsai-65536"
+      }
+    ],
+    "hardware-48gb": [
+      {
+        "evidence": "sha256:3eb4d3db1691716c56ebded71ce55f5c2416920fee8718c2eb58761f2bb36677",
+        "required_mb_per_card": [
+          20500,
+          22500
+        ],
+        "rung_id": "local-grm-262144"
+      },
+      {
+        "evidence": "sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba",
+        "required_mb_per_card": [
+          0,
+          21554
+        ],
+        "rung_id": "local-grm-131072"
+      },
+      {
+        "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
+        "required_mb_per_card": [
+          0,
+          11093
+        ],
+        "rung_id": "local-bonsai-262144"
+      },
+      {
+        "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
+        "required_mb_per_card": [
+          0,
+          8149
+        ],
+        "rung_id": "local-bonsai-131072"
+      },
+      {
+        "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
+        "required_mb_per_card": [
+          0,
+          6677
+        ],
+        "rung_id": "local-bonsai-65536"
+      }
+    ],
+    "hardware-64gb": [
+      {
+        "evidence": "sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853",
+        "required_mb_per_card": [
+          8149,
+          21554
+        ],
+        "rung_id": "local-dedicated-131072"
+      },
+      {
+        "evidence": "sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba",
+        "required_mb_per_card": [
+          0,
+          21554
+        ],
+        "rung_id": "local-grm-131072"
+      },
+      {
+        "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
+        "required_mb_per_card": [
+          0,
+          11093
+        ],
+        "rung_id": "local-bonsai-262144"
+      },
+      {
+        "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
+        "required_mb_per_card": [
+          0,
+          8149
+        ],
+        "rung_id": "local-bonsai-131072"
+      },
+      {
+        "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
+        "required_mb_per_card": [
+          0,
+          6677
+        ],
+        "rung_id": "local-bonsai-65536"
+      }
+    ],
+    "hardware-8gb": [
+      {
+        "evidence": "sha256:1c23b7acc299b7693e4e50175b7a3d01252f3cdf3c2cbc25e21f1de09b04116d",
+        "required_mb_per_card": [
+          6115
+        ],
+        "rung_id": "local-maple-131072"
+      },
+      {
+        "evidence": "sha256:1c23b7acc299b7693e4e50175b7a3d01252f3cdf3c2cbc25e21f1de09b04116d",
+        "required_mb_per_card": [
+          5497
+        ],
+        "rung_id": "local-maple-65536"
+      }
+    ],
+    "hardware-96gb": [
+      {
+        "evidence": "sha256:36edf00d7850ba83578ef1b6f4fc25eeb73b4c2ae8a325f34a7b7ed8bf18a853",
+        "required_mb_per_card": [
+          8149,
+          0,
+          0,
+          21554
+        ],
+        "rung_id": "local-dedicated-131072"
+      },
+      {
+        "evidence": "sha256:216dcad6b59a8b9c2f661530c73cc1e534e266ebc0f29ae042b594d7874fefba",
+        "required_mb_per_card": [
+          0,
+          0,
+          0,
+          21554
+        ],
+        "rung_id": "local-grm-131072"
+      },
+      {
+        "evidence": "sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87",
+        "required_mb_per_card": [
+          0,
+          0,
+          0,
+          11093
+        ],
+        "rung_id": "local-bonsai-262144"
+      },
+      {
+        "evidence": "sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5",
+        "required_mb_per_card": [
+          0,
+          0,
+          0,
+          8149
+        ],
+        "rung_id": "local-bonsai-131072"
+      },
+      {
+        "evidence": "sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591",
+        "required_mb_per_card": [
+          0,
+          0,
+          0,
+          6677
+        ],
+        "rung_id": "local-bonsai-65536"
+      }
+    ]
+  },
+  "resolutions": {
+    "hardware-16gb": {
+      "local-bonsai-131072": {
+        "main": {
+          "expected_vram_mb": 8149,
+          "family": "bonsai-27b",
+          "gpu": "0",
+          "model_tag": "bonsai-27b-1bit-128k-main",
+          "port": 8092
+        }
+      },
+      "local-bonsai-262144": {
+        "main": {
+          "expected_vram_mb": 11093,
+          "family": "bonsai-27b",
+          "gpu": "0",
+          "model_tag": "bonsai-27b-1bit-262k-main",
+          "port": 8092
+        }
+      },
+      "local-bonsai-65536": {
+        "main": {
+          "expected_vram_mb": 6677,
+          "family": "bonsai-27b",
+          "gpu": "0",
+          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
+        }
+      }
+    },
+    "hardware-200gb": {
+      "local-bonsai-131072": {
+        "main": {
+          "expected_vram_mb": 8149,
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-128k-main",
+          "port": 8092
+        }
+      },
+      "local-bonsai-262144": {
+        "main": {
+          "expected_vram_mb": 11093,
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-262k-main",
+          "port": 8092
+        }
+      },
+      "local-bonsai-65536": {
+        "main": {
+          "expected_vram_mb": 6677,
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
+        }
+      }
+    },
+    "hardware-24gb": {
+      "local-unleashed-q3kxl-131072": {
+        "main": {
+          "expected_vram_mb": 19391,
+          "family": "Qwen 3.8 27B Unleashed",
+          "gpu": "0",
+          "model_tag": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+          "port": 11606
+        }
+      },
+      "local-unleashed-q3kxl-262144": {
+        "main": {
+          "expected_vram_mb": 19391,
+          "family": "Qwen 3.8 27B Unleashed",
+          "gpu": "0",
+          "model_tag": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+          "port": 11606
+        }
+      },
+      "local-unleashed-q3kxl-65536": {
+        "main": {
+          "expected_vram_mb": 19391,
+          "family": "Qwen 3.8 27B Unleashed",
+          "gpu": "0",
+          "model_tag": "qwen3-8-27b-unleashed-ud-q3-k-xl",
+          "port": 11606
+        }
+      }
+    },
+    "hardware-300gb": {
+      "local-bonsai-131072": {
+        "main": {
+          "expected_vram_mb": 8149,
+          "family": "bonsai-27b",
+          "gpu": "2",
+          "model_tag": "bonsai-27b-1bit-128k-main",
+          "port": 8092
+        }
+      },
+      "local-bonsai-262144": {
+        "main": {
+          "expected_vram_mb": 11093,
+          "family": "bonsai-27b",
+          "gpu": "2",
+          "model_tag": "bonsai-27b-1bit-262k-main",
+          "port": 8092
+        }
+      },
+      "local-bonsai-65536": {
+        "main": {
+          "expected_vram_mb": 6677,
+          "family": "bonsai-27b",
+          "gpu": "2",
+          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
+        }
+      }
+    },
+    "hardware-48gb": {
+      "local-unleashed-q3kx-128k": {
+        "aux": {
+          "expected_vram_mb": 0,
+          "family": "qwen38-27b-unleashed",
+          "gpu": "0",
+          "model_tag": "qwen38-27b-unleashed-q3kx-128k-aux",
+          "port": 8092
+        },
+        "main": {
+          "expected_vram_mb": 16000,
+          "family": "qwen38-27b-unleashed",
+          "gpu": "0",
+          "model_tag": "qwen38-27b-unleashed-q3kx-128k-main",
+          "port": 8092
+        }
+      },
+      "local-unleashed-q3kx-262k": {
+        "aux": {
+          "expected_vram_mb": 0,
+          "family": "qwen38-27b-unleashed",
+          "gpu": "0",
+          "model_tag": "qwen38-27b-unleashed-q3kx-262k-aux",
+          "port": 8092
+        },
+        "main": {
+          "expected_vram_mb": 17500,
+          "family": "qwen38-27b-unleashed",
+          "gpu": "0",
+          "model_tag": "qwen38-27b-unleashed-q3kx-262k-main",
+          "port": 8092
+        }
+      },
+      "local-unleashed-q3kx-65k": {
+        "aux": {
+          "expected_vram_mb": 0,
+          "family": "qwen38-27b-unleashed",
+          "gpu": "0",
+          "model_tag": "qwen38-27b-unleashed-q3kx-65k-aux",
+          "port": 8092
+        },
+        "main": {
+          "expected_vram_mb": 15000,
+          "family": "qwen38-27b-unleashed",
+          "gpu": "0",
+          "model_tag": "qwen38-27b-unleashed-q3kx-65k-main",
+          "port": 8092
+        }
+      }
+    },
+    "hardware-64gb": {
+      "local-bonsai-131072": {
+        "main": {
+          "expected_vram_mb": 8149,
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-128k-main",
+          "port": 8092
+        }
+      },
+      "local-bonsai-262144": {
+        "main": {
+          "expected_vram_mb": 11093,
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-262k-main",
+          "port": 8092
+        }
+      },
+      "local-bonsai-65536": {
+        "main": {
+          "expected_vram_mb": 6677,
+          "family": "bonsai-27b",
+          "gpu": "1",
+          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
+        }
+      }
+    },
+    "hardware-8gb": {
+      "local-maple-131072": {
+        "main": {
+          "expected_vram_mb": 6115,
+          "family": "maple-preview-tq2",
+          "gpu": "0",
+          "model_tag": "maple-preview-tq2-128k-main",
+          "port": 8092
+        }
+      },
+      "local-maple-65536": {
+        "main": {
+          "expected_vram_mb": 5497,
+          "family": "maple-preview-tq2",
+          "gpu": "0",
+          "model_tag": "maple-preview-tq2-64k-main",
+          "port": 8092
+        }
+      }
+    },
+    "hardware-96gb": {
+      "local-bonsai-131072": {
+        "main": {
+          "expected_vram_mb": 8149,
+          "family": "bonsai-27b",
+          "gpu": "3",
+          "model_tag": "bonsai-27b-1bit-128k-main",
+          "port": 8092
+        }
+      },
+      "local-bonsai-262144": {
+        "main": {
+          "expected_vram_mb": 11093,
+          "family": "bonsai-27b",
+          "gpu": "3",
+          "model_tag": "bonsai-27b-1bit-262k-main",
+          "port": 8092
+        }
+      },
+      "local-bonsai-65536": {
+        "main": {
+          "expected_vram_mb": 6677,
+          "family": "bonsai-27b",
+          "gpu": "3",
+          "model_tag": "bonsai-27b-1bit-64k-main",
+          "port": 8092
+        }
+      }
+    }
+  },
+  "schema": "turbofit.catalog-drift-archive/v1",
+  "source_revision": "f4e439d",
+  "status": "research-only-not-production-authority"
+}

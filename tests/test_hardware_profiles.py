@@ -19,7 +19,7 @@ TOPOLOGIES = {
     48: "2x24",
     64: "2x32",
     96: "4x24",
-    128: "4x32",
+    128: "2x64",
     192: "4x48",
     256: "8x32",
     384: "8x48",
@@ -52,19 +52,26 @@ def test_all_hardware_classes_are_valid_profiles() -> None:
         profile = load_yaml_profile(ROOT / "runtime-profiles" / f"{class_gb}gb.yaml")
         assert profile.id == f"hardware-{class_gb}gb"
         assert profile.hardware.class_vram_gb == class_gb
-        assert profile.hardware.accelerator == "llama.cpp-local"
+        assert profile.hardware.accelerator == ("nvidia-cuda" if class_gb == 128 else "llama.cpp-local")
         assert profile.hardware.topology == TOPOLOGIES[class_gb]
-        assert all(rung.aux_mode.value != "api" for rung in profile.rungs)
-        assert all(rung.main_api_policy is None for rung in profile.rungs)
-        assert all(rung.aux_api_policy is None for rung in profile.rungs)
+        for rung in profile.rungs:
+            if rung.aux_mode.value == "api":
+                assert rung.main_api_policy == rung.aux_api_policy == "api:auto"
+            else:
+                assert rung.main_api_policy is None
+                assert rung.aux_api_policy is None
 
 
-def test_every_hardware_class_publishes_a_local_recommendation_ladder() -> None:
+def test_only_promoted_hardware_classes_publish_local_recommendation_ladders() -> None:
     for class_gb in CLASSES:
         profile = load_yaml_profile(ROOT / "runtime-profiles" / f"{class_gb}gb.yaml")
         assert profile.rungs
-        assert all(rung.aux_mode.value in {"shared-main", "dedicated"} for rung in profile.rungs)
-        assert profile.policy.recommendation == "evidence-gated"
+        if class_gb in {8, 48}:
+            assert profile.rungs[0].aux_mode.value == "shared-main"
+            assert profile.policy.recommendation == "evidence-gated"
+        else:
+            assert all(rung.aux_mode.value == "api" for rung in profile.rungs)
+            assert profile.policy.recommendation == "api-only-unproven-local"
 
 
 def test_every_resolved_role_matches_its_rung_context() -> None:
@@ -76,6 +83,8 @@ def test_every_resolved_role_matches_its_rung_context() -> None:
     for class_gb in CLASSES:
         profile = load_yaml_profile(ROOT / "runtime-profiles" / f"{class_gb}gb.yaml")
         for rung in profile.rungs:
+            if rung.aux_mode.value == "api":
+                continue
             for role, target in resolutions[profile.id][rung.id].items():
                 component = recipes.resolve_component(
                     target["family"], role=role, context=rung.context,

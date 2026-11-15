@@ -15,40 +15,23 @@ policy:
   flap_failure_limit: 3
   flap_window_s: 300
   recommendation: evidence-gated
-revision: 5
+revision: 6
 roles:
   auxiliary: active:aux
   fallback: active:main
   main: active:main
+# Production authority only; displaced proposals are archived in
+# research/runtime-catalog-proposals.json (not selectable runtime evidence).
 rungs:
-- aux_mode: shared-main
+- id: local-unleashed-q3kxl-262144
   context: 262144
-  evidence: sha256:0000000000000000000000000000000000000000000000000000000000000000
-  id: local-unleashed-q3kx-262k
-  main_manifest: sha256:0000000000000000000000000000000000000000000000000000000000000000
-- aux_mode: shared-main
+  aux_mode: shared-main
+  evidence: sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f
+  main_manifest: sha256:73e4e065cc2b192c883bd50b47dacd45d3a8a735735be3084e236c86380f8b9c
+- id: api
   context: 131072
-  evidence: sha256:0000000000000000000000000000000000000000000000000000000000000000
-  id: local-unleashed-q3kx-128k
-  main_manifest: sha256:0000000000000000000000000000000000000000000000000000000000000000
-- aux_mode: shared-main
-  context: 65536
-  evidence: sha256:0000000000000000000000000000000000000000000000000000000000000000
-  id: local-unleashed-q3kx-65k
-  main_manifest: sha256:0000000000000000000000000000000000000000000000000000000000000000
-- aux_mode: shared-main
-  context: 262144
-  evidence: sha256:0291f8d25ffe4ab8dde8e32a6b16cb064ce2a5eeea45689f072062b436cf3f87
-  id: local-bonsai-262144
-  main_manifest: sha256:6456085521bfd9d8846c0f7e581611d56b2fe108e31c02af2dfdf56dea474e1c
-- aux_mode: shared-main
-  context: 131072
-  evidence: sha256:1920a09b85c2d41617715ecac18cc2b54e13103441474cc58677ed07b7ade1e5
-  id: local-bonsai-131072
-  main_manifest: sha256:2a98f797ac991a686c4749ef6a02298fa1993eea1c9e5e4320eafee426e6e383
-- aux_mode: shared-main
-  context: 65536
-  evidence: sha256:d91a843d1673b8bfd8ec67f89383c757201bb6990a0ad9dadfdd080ffc8f3591
-  id: local-bonsai-65536
-  main_manifest: sha256:da9ed9fb1b17f6423f759a783a150051b51d5555c7dea09f87c6effb3dac35a2
+  aux_mode: api
+  evidence: sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f
+  main_api_policy: api:auto
+  aux_api_policy: api:auto
 schema: turbofit.runtime/v1

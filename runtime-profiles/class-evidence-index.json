@@ -1,4 +1,25 @@
 {
+  "sha256:11e6d9800f33a57dee891be0d3e616981a01b9ddc12467e7b0629b6fe6ab0446": {
+    "profiles": [
+      "hardware-256gb"
+    ],
+    "source": "runtime-profiles/class-status/11e6d9800f33a57dee891be0d3e616981a01b9ddc12467e7b0629b6fe6ab0446.json",
+    "status": "unproven-local"
+  },
+  "sha256:1c23b7acc299b7693e4e50175b7a3d01252f3cdf3c2cbc25e21f1de09b04116d": {
+    "profiles": [
+      "hardware-8gb"
+    ],
+    "source": "references/results/maple-preview-small-device-evidence.json",
+    "status": "auto-promoted"
+  },
+  "sha256:1ee2d17461e6650bd7c395ed6fd1fc95a9bfdf30e692dec21ed176750e0e45ca": {
+    "profiles": [
+      "hardware-200gb"
+    ],
+    "source": "runtime-profiles/class-status/1ee2d17461e6650bd7c395ed6fd1fc95a9bfdf30e692dec21ed176750e0e45ca.json",
+    "status": "unproven-local"
+  },
   "sha256:24ac15e11138eb9bd1441a6e0846f2e6742e38aff696b7060eb5d6b81faf2b0d": {
     "profiles": [
       "hardware-96gb"
@@ -27,6 +48,20 @@
     "source": "references/results/hardware-tier-winner-48gb.json",
     "status": "validated-native-tournament"
   },
+  "sha256:496bc4989ef54913968f2e73d653ce252786b81b91c8d7c43d0243ad72103a39": {
+    "profiles": [
+      "hardware-128gb"
+    ],
+    "source": "runtime-profiles/class-status/496bc4989ef54913968f2e73d653ce252786b81b91c8d7c43d0243ad72103a39.json",
+    "status": "unproven-local"
+  },
+  "sha256:4bad0f35baf5a3e310f6efd4393fc595222bddf85140fee4bda856b327612cfd": {
+    "profiles": [
+      "hardware-96gb"
+    ],
+    "source": "runtime-profiles/class-status/4bad0f35baf5a3e310f6efd4393fc595222bddf85140fee4bda856b327612cfd.json",
+    "status": "unproven-local"
+  },
   "sha256:5cc6da74575061f4dd85e43e95ebcc69162771e6fa74f5554de08a2d7ba65c63": {
     "profiles": [
       "hardware-200gb"
@@ -39,6 +74,29 @@
       "hardware-8gb"
     ],
     "source": "runtime-profiles/class-status/696c7b5957e4dfd144acbf846d4a5e652c4b8de180590d95c20823b939a37f64.json",
+    "status": "unproven-local"
+  },
+  "sha256:86f2cf0296ad328a4b83f312c67b28e1e0373a3fec6f46d0af7bf8a065f25381": {
+    "profiles": [
+      "apple-32gb",
+      "hardware-32gb"
+    ],
+    "source": "runtime-profiles/class-status/86f2cf0296ad328a4b83f312c67b28e1e0373a3fec6f46d0af7bf8a065f25381.json",
+    "status": "unproven-local"
+  },
+  "sha256:87e91c419eddb8da192475e5bbdd3cf1200fd224726486c524f2241b36c23369": {
+    "profiles": [
+      "hardware-384gb"
+    ],
+    "source": "runtime-profiles/class-status/87e91c419eddb8da192475e5bbdd3cf1200fd224726486c524f2241b36c23369.json",
+    "status": "unproven-local"
+  },
+  "sha256:9724ef51d5e8faa284b0e5dc3759b84ebbbd74c2c15a7b41cd98aa65f02bcf47": {
+    "profiles": [
+      "apple-16gb",
+      "hardware-16gb"
+    ],
+    "source": "runtime-profiles/class-status/9724ef51d5e8faa284b0e5dc3759b84ebbbd74c2c15a7b41cd98aa65f02bcf47.json",
     "status": "unproven-local"
   },
   "sha256:a3dc4c8527b717a1f82029e514e880aea4391996b60d659f406c71fc1f0e11a9": {
@@ -62,18 +120,32 @@
     "source": "references/results/hardware-tier-winner-48gb-qwen38-unleashed-20260823.json",
     "status": "validated-native-tournament"
   },
+  "sha256:b413ac4f53a5addbc72cc0562ab91170be20c279035f56a3ab34e3cdd122384b": {
+    "profiles": [
+      "hardware-192gb"
+    ],
+    "source": "runtime-profiles/class-status/b413ac4f53a5addbc72cc0562ab91170be20c279035f56a3ab34e3cdd122384b.json",
+    "status": "unproven-local"
+  },
+  "sha256:d46d82181bd500f73bb4ebf792be1fa4a4e900df76d30991680132c3747feb69": {
+    "profiles": [
+      "hardware-24gb"
+    ],
+    "source": "runtime-profiles/class-status/d46d82181bd500f73bb4ebf792be1fa4a4e900df76d30991680132c3747feb69.json",
+    "status": "unproven-local"
+  },
+  "sha256:ec4809c2c9533dc51152eae4b03c98829e7ce3a4ec062718a19eb0bc7a643c97": {
+    "profiles": [
+      "hardware-300gb"
+    ],
+    "source": "runtime-profiles/class-status/ec4809c2c9533dc51152eae4b03c98829e7ce3a4ec062718a19eb0bc7a643c97.json",
+    "status": "unproven-local"
+  },
   "sha256:ee78b9da9b3a984c62232ec08a928cd294948f4471e665be9a04d3a1e17e685f": {
     "profiles": [
       "hardware-300gb"
     ],
     "source": "runtime-profiles/class-status/ee78b9da9b3a984c62232ec08a928cd294948f4471e665be9a04d3a1e17e685f.json",
     "status": "unproven-local"
-  },
-  "sha256:1c23b7acc299b7693e4e50175b7a3d01252f3cdf3c2cbc25e21f1de09b04116d": {
-    "profiles": [
-      "hardware-8gb"
-    ],
-    "source": "references/results/maple-preview-small-device-evidence.json",
-    "status": "auto-promoted"
   }
 }

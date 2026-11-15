@@ -189,11 +189,12 @@ class ProfileCatalog:
         return any(rung.aux_mode is not AuxMode.API for rung in profile.rungs)
 
     @staticmethod
-    def _auto_rank(profile: Turbofile) -> tuple[bool, bool, float, str]:
+    def _auto_rank(profile: Turbofile) -> tuple[bool, float, bool, str]:
         canonical = profile.id == f"hardware-{int(profile.hardware.class_vram_gb)}gb"
         return (
             canonical,
-            ProfileCatalog._has_local_rung(profile),
+            # A smaller tier's promotion is not authority for an unproven larger tier.
             profile.hardware.class_vram_gb,
+            ProfileCatalog._has_local_rung(profile),
             profile.id,
         )

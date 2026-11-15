@@ -138,34 +138,30 @@ def canonical_memory(profile) -> tuple[int, ...]:
         (102400, 102400, 102400),
     ],
 )
-def test_every_hardware_class_starts_on_a_local_floor(memory) -> None:
+def test_every_hardware_class_starts_on_its_authorized_safety_floor(memory) -> None:
     controller = make_controller("auto", memory)
     result = controller.tick(pressure(*memory), now=500)
     assert result.transitioned is False
     assert result.state.adaptive.current_index == len(controller.profile.rungs) - 1
-    assert result.state.reconciler.main_target.startswith("local:")
-    assert all(rung.aux_mode.value != "api" for rung in controller.profile.rungs)
+    floor = controller.profile.rungs[-1]
+    assert result.state.reconciler.main_target == ("api:auto" if floor.aux_mode.value == "api" else f"local:{floor.id}")
+    if controller.profile.id not in {"hardware-8gb", "hardware-48gb"}:
+        assert all(rung.aux_mode.value == "api" for rung in controller.profile.rungs)
 
 
-@pytest.mark.parametrize("memory", [(24576,), (24576, 24576)])
+@pytest.mark.parametrize("memory", [(8192,), (24576, 24576)])
 def test_local_auto_contracts_under_pressure_and_heals_after_stable_headroom(memory) -> None:
     controller = make_controller("auto", memory)
     clear = pressure(*memory)
-    pressured = pressure(*(10000 for _ in memory))
+    pressured = pressure(*(5800 if len(memory) == 1 else 10000 for _ in memory))
 
     now = heal_to_ceiling(controller, clear)
     assert controller.state.adaptive.current_index == 0
     controller.tick(pressured, now=now)
     result = controller.tick(pressured, now=now + 5)
-    if controller.profile.id == "hardware-24gb":
-        # Unleashed UD-Q3_K_XL rungs share one evidence-bound memory
-        # requirement, so the 24GB profile has no smaller memory rung to
-        # contract into; the controller holds until live re-fit lands.
-        assert result.state.adaptive.current_index == 0
-    else:
-        assert result.state.adaptive.current_index > 0
-        heal_to_ceiling(controller, clear, now + 36)
-        assert controller.state.adaptive.current_index == 0
+    assert result.state.adaptive.current_index > 0
+    heal_to_ceiling(controller, clear, now + 36)
+    assert controller.state.adaptive.current_index == 0
 
 
 @pytest.mark.parametrize("profile_id", sorted(RESOLUTIONS))
@@ -174,18 +170,12 @@ def test_every_offered_manual_local_combination_uses_the_same_contract_and_heal_
     memory = canonical_memory(item)
     controller = make_controller(profile_id, memory)
     clear = pressure(*memory)
-    pressured = pressure(*(7000 for _ in memory))
+    pressured = pressure(*(5800 if len(memory) == 1 else 7000 for _ in memory))
 
     now = heal_to_ceiling(controller, clear)
     assert controller.state.adaptive.current_index == 0
     controller.tick(pressured, now=now)
     result = controller.tick(pressured, now=now + 5)
-    if len(item.rungs) == 1 or item.id == "hardware-24gb":
-        # hardware-24gb: Unleashed rungs share one evidence-bound memory
-        # requirement, so there is no smaller memory rung to contract into.
-        assert result.transitioned is False
-        assert result.state.adaptive.current_index == 0
-    else:
-        assert result.state.adaptive.current_index == len(item.rungs) - 1
-        heal_to_ceiling(controller, clear, now + 36)
-        assert controller.state.adaptive.current_index == 0
+    assert result.state.adaptive.current_index == len(item.rungs) - 1
+    heal_to_ceiling(controller, clear, now + 36)
+    assert controller.state.adaptive.current_index == 0

@@ -59,7 +59,7 @@ def service(tmp_path: Path):
     ), backends
 
 
-def test_fresh_auto_selection_acquires_and_verifies_local_floor_before_publication(tmp_path: Path) -> None:
+def test_fresh_unpromoted_selection_verifies_api_safety_before_publication(tmp_path: Path) -> None:
     runtime, backends = service(tmp_path)
     choice = runtime.catalog.select(hardware(24576), requested="auto")
     selection_path = tmp_path / "selection.json"
@@ -69,41 +69,38 @@ def test_fresh_auto_selection_acquires_and_verifies_local_floor_before_publicati
 
     floor = len(choice.profile.rungs) - 1
     assert controller.state.adaptive.current_index == floor
-    assert backends[0].events[0] == ("local", "local-unleashed-q3kxl-65536")
+    assert backends[0].events[0] == ("api", "api:auto", "api:auto")
     route = json.loads((tmp_path / "routes.json").read_text())
-    assert route["rung_id"] == "local-unleashed-q3kxl-65536"
-    assert route["routes"]["main"]["kind"] == "local"
-    assert route["routes"]["aux"]["kind"] == "shared-main"
+    assert route["rung_id"] == "api"
+    assert route["routes"]["main"]["kind"] == "api-policy"
+    assert route["routes"]["aux"]["kind"] == "api-policy"
 
 
 def test_service_persists_healing_and_contraction_state(tmp_path: Path) -> None:
     runtime, backends = service(tmp_path)
-    choice = runtime.catalog.select(hardware(24576), requested="auto")
+    choice = runtime.catalog.select(hardware(24576, 24576), requested="auto")
     selection_path = tmp_path / "selection.json"
     save_selection(selection_path, choice)
-    runtime.synchronize(selection_path, hardware(24576))
+    runtime.synchronize(selection_path, hardware(24576, 24576))
 
     now = 0
     while runtime.controller is not None and runtime.controller.state.adaptive.current_index > 0:
-        runtime.tick(pressure(24576), now=now)
+        runtime.tick(pressure(24576, 24576), now=now)
         now += 120
-        healed = runtime.tick(pressure(24576), now=now)
+        healed = runtime.tick(pressure(24576, 24576), now=now)
         assert healed.transitioned is True
         now += 31
     assert runtime.controller is not None
     assert runtime.controller.state.adaptive.current_index == 0
 
-    runtime.tick(pressure(7000), now=now)
-    contracted = runtime.tick(pressure(7000), now=now + 5)
-    # With the fixed profile (Unleashed rungs) AND live-refit, contraction at
-    # low pressure re-fits via the fit function; the stale-Bonsai refusal path
-    # no longer exists. Current rung holds until re-fit selects the tier.
-    assert contracted.state.adaptive.current_index == 0
-    assert ("publish", 0) in backends[-1].events
+    runtime.tick(pressure(7000, 7000), now=now)
+    contracted = runtime.tick(pressure(7000, 7000), now=now + 5)
+    assert contracted.state.adaptive.current_index == 1
+    assert ("publish", 1) in backends[-1].events
 
     restarted, _ = service(tmp_path)
-    restored = restarted.synchronize(selection_path, hardware(24576))
-    assert restored.state.adaptive.current_index == 0
+    restored = restarted.synchronize(selection_path, hardware(24576, 24576))
+    assert restored.state.adaptive.current_index == 1
 
 
 def test_legacy_state_resets_managed_models_before_bootstrapping_new_revision(
@@ -125,5 +122,5 @@ def test_legacy_state_resets_managed_models_before_bootstrapping_new_revision(
     controller = restarted.synchronize(selection_path, hardware(24576))
 
     assert backends[0].events == ["reset"]
-    assert backends[1].events[0] == ("local", "local-unleashed-q3kxl-65536")
+    assert backends[1].events[0] == ("api", "api:auto", "api:auto")
     assert controller.state.profile_revision == choice.profile.revision

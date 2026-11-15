@@ -14,7 +14,7 @@ ROOT = Path(__file__).parents[1]
 
 
 def backend(tmp_path: Path) -> NativeRuntimeBackend:
-    profile = load_yaml_profile(ROOT / "runtime-profiles/24gb.yaml")
+    profile = load_yaml_profile(ROOT / "runtime-profiles/48gb.yaml")
     return NativeRuntimeBackend(
         profile=profile,
         resolutions=load_runtime_resolutions(ROOT / "runtime-profiles/runtime-resolutions.json"),
@@ -35,11 +35,11 @@ def test_native_resolution_compiles_loopback_process_with_alias(tmp_path: Path) 
 
     command = list(component.command)
     assert component.kind == "process"
-    assert component.port == 11606
+    assert component.port == 11605
     assert command[command.index("--host") + 1] == "127.0.0.1"
     assert command[command.index("--alias") + 1] == "qwen3-8-27b-unleashed-ud-q3-k-xl"
     assert "--jinja" in command
-    assert component.gpu == "0"
+    assert component.gpu == "1"
 
 
 def test_native_backend_refuses_unowned_process_escalation(tmp_path: Path) -> None:
@@ -61,5 +61,5 @@ def test_runtime_resolution_pins_native_family_gpu_and_port(tmp_path: Path) -> N
     item = runtime._roles("local-unleashed-q3kxl-262144")["main"]
 
     assert item["family"] == "Qwen 3.8 27B Unleashed"
-    assert item["gpu"] == "0"
-    assert item["port"] == 11606
+    assert item["gpu"] == "1"
+    assert item["port"] == 11605

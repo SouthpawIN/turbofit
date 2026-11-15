@@ -54,7 +54,7 @@ def test_generated_views_are_deterministic_and_bidirectionally_linked(tmp_path: 
     assert "Generated Adaptive Recommendations" in readme
     assert "main-aux-inference-checklist.md" in readme
     assert "README.md" in checklist
-    assert "| 24 GB | `1x24` | evidence-gated |" in readme
+    assert "| 24 GB | `1x24` | api-only-unproven-local |" in readme
     assert "| 48 GB | `2x24` | evidence-gated |" in readme
 
 
