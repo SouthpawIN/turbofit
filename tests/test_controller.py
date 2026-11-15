@@ -434,3 +434,38 @@ def test_failed_rollback_is_fatal_and_never_claimed_as_restored() -> None:
 
     with pytest.raises(RollbackFailedError, match="rollback verification failed"):
         controller.tick(pressure(24576), now=120)
+
+
+def test_dwell_stamps_from_a_previous_boot_are_dropped_not_fatal(tmp_path) -> None:
+    """A reboot must not wedge the controller on last boot's monotonic stamps.
+
+    ``surplus_since``/``deficit_since``/``failure_times`` come from the same
+    monotonic clock as ``cooldown_until``; after a restart they sit later than
+    the current uptime and ``reconcile`` refuses them. Persisted hysteresis is
+    unknowable across a boot, so the dwell restarts instead of failing forever.
+    """
+    import json
+
+    controller, _ = controller_for(catalog(), "auto", (24576,))
+    controller.tick(pressure(24576), now=0)
+    path = tmp_path / "controller.json"
+    save_controller_state(path, controller.state)
+    raw = json.loads(path.read_text())
+    raw["adaptive"]["surplus_since"] = 9_223_591.0
+    raw["adaptive"]["deficit_since"] = 9_223_592.0
+    raw["adaptive"]["failure_times"] = [9_223_593.0]
+    path.write_text(json.dumps(raw))
+
+    state = load_controller_state(path, now=100.0)
+
+    assert state.adaptive.surplus_since is None
+    assert state.adaptive.deficit_since is None
+    assert state.adaptive.failure_times == ()
+    # The restored state is usable by the policy, which is the actual failure.
+    result = controller.__class__(
+        profile=controller.profile,
+        requirements=controller.requirements,
+        backend=controller.backend,
+        state=state,
+    ).tick(pressure(24576), now=100.0)
+    assert result.state.adaptive.current_index == state.adaptive.current_index

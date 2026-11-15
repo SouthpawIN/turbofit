@@ -127,3 +127,48 @@ def test_legacy_state_resets_managed_models_before_bootstrapping_new_revision(
     assert backends[0].events == ["reset"]
     assert backends[1].events[0] == ("local", "local-gsq-rco-iq3s-65536")
     assert controller.state.profile_revision == choice.profile.revision
+
+
+def test_first_run_without_a_selection_record_synthesises_and_persists_auto(
+    tmp_path: Path, capsys
+) -> None:
+    """A fresh install has no selection file: that is a supported state."""
+    runtime, backends = service(tmp_path)
+    selection_path = tmp_path / "selection.json"
+    assert not selection_path.exists()
+
+    controller = runtime.synchronize(selection_path, hardware(24576))
+
+    persisted = json.loads(selection_path.read_text())
+    expected = runtime.catalog.select(hardware(24576), requested="auto")
+    assert persisted["mode"] == "auto"
+    assert persisted["requested"] == "auto"
+    assert persisted["profile_id"] == expected.profile.id
+    assert controller.state.profile_id == expected.profile.id
+    # First run serves immediately instead of degrading on a missing file.
+    assert backends[0].events[0][0] == "local"
+    assert "created-default" in capsys.readouterr().err
+
+
+def test_second_run_reuses_the_synthesised_selection(tmp_path: Path) -> None:
+    runtime, _ = service(tmp_path)
+    selection_path = tmp_path / "selection.json"
+    runtime.synchronize(selection_path, hardware(24576))
+    first = selection_path.read_text()
+
+    restarted, _ = service(tmp_path)
+    restarted.synchronize(selection_path, hardware(24576))
+
+    assert selection_path.read_text() == first
+
+
+def test_corrupt_selection_record_is_still_an_error(tmp_path: Path) -> None:
+    """Only absence is a first run; a damaged record must not be papered over."""
+    import pytest
+
+    runtime, _ = service(tmp_path)
+    selection_path = tmp_path / "selection.json"
+    selection_path.write_text('{"schema": "turbofit.selection/v1"}')
+
+    with pytest.raises(ValueError):
+        runtime.synchronize(selection_path, hardware(24576))
