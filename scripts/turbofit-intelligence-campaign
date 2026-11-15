@@ -11,7 +11,7 @@ import sys
 import threading
 import time
 import traceback
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from statistics import median
@@ -38,7 +38,7 @@ from turbofit_runtime.intelligence_campaign import (
     refresh_runtime_status, retry_failed, select_turbofit_list_candidates, summary,
 )
 from turbofit_runtime.model_catalog import ModelCatalog
-from turbofit_runtime.recipes import RecipeBook
+from turbofit_runtime.recipes import RecipeBook, ResolvedRecipe
 from turbofit_runtime.schema import MatrixRow
 
 CONFIGURATIONS = ROOT / "references/configuration-matrix.json"
@@ -75,6 +75,36 @@ def release_docker_gateway_rule(port: int, owned: bool) -> None:
     subprocess.run(
         ["sudo", "-n", "iptables", "-D", *rule], capture_output=True, text=True, check=False,
     )
+
+
+def route_mismatch_message(recipe: ResolvedRecipe, route: dict[str, Any]) -> str:
+    """Explain a published route that does not match the recipe the row declares.
+
+    The old message dumped the whole status payload, which made a dead aux
+    engine look like a routing bug. Name which role diverged, what the gateway
+    actually served, and why the substitution happened.
+    """
+    status = route.get("status") or {}
+    lines = [f"production route mismatch for {recipe.profile_name}:"]
+    for role, expected in (("main", recipe.main_alias), ("aux", recipe.aux_alias)):
+        served = route.get(role)
+        detail = status.get(role) or {}
+        if served == expected:
+            continue
+        lines.append(
+            f"  {role}: recipe declares {expected!r} but the gateway routes to {served!r} "
+            f"(state={detail.get('state')!r}, port={detail.get('port')}, mode={detail.get('mode')})"
+        )
+        if str(served or "").startswith("auto:"):
+            expected_model = recipe.aux_alias if role == "aux" else recipe.main_alias
+            lines.append(
+                f"  the gateway replaced the declared {role} model with the shared-main "
+                f"fallback {served!r}: the {role} engine for {expected_model!r} was not "
+                f"answering on its port when the route was published"
+            )
+        if detail.get("error"):
+            lines.append(f"  gateway says: {detail['error']}")
+    return "\n".join(lines)
 
 
 class RSSPeakSampler:
@@ -281,16 +311,49 @@ def benchmark_run(run: dict[str, Any], catalog: ModelCatalog, recipes: RecipeBoo
     firewall_rule_owned = False
     try:
         firewall_rule_owned = acquire_docker_gateway_rule(GATEWAY_PORT)
+        claimed = []
+        reserved: set[int] = set()
         for component in recipe.components:
-            handle = backend.start(component)
-            started.append((component, handle))
-            handles[component.role] = handle
+            # A port left behind by an earlier (possibly killed) run must not
+            # fail this one: reclaim it when the campaign can prove ownership,
+            # otherwise move the component to the next free port.  Without this
+            # a stray engine turns into "port 11605 did not become reusable".
+            effective = backend.claim_port(component, reserved=reserved)
+            reserved.add(int(effective.port))
+            claimed.append(effective)
+            handle = backend.start(effective)
+            started.append((effective, handle))
+            handles[effective.role] = handle
+        recipe = replace(recipe, components=tuple(claimed))
         checks = {component.role: backend.wait_ready(component, handle) for component, handle in started}
         rss_sampler = RSSPeakSampler([int(handle["pid"]) for _, handle in started if handle.get("pid")])
         rss_sampler.start()
+        # Readiness is a snapshot.  Name an engine that died between readiness
+        # and route publication instead of letting the gateway substitute main.
+        for component, handle in started:
+            backend.assert_alive(component, handle)
         route = backend.route(recipe, handles)
         if route.get("main") != recipe.main_alias or route.get("aux") != recipe.aux_alias:
-            raise RuntimeError(f"production route mismatch: {route}")
+            raise RuntimeError(route_mismatch_message(recipe, route))
+        # Record the published route immediately: a later benchmark failure (a
+        # missing harness, a docker timeout) must not erase the evidence of which
+        # pair actually ran.
+        atomic_json(attempt_dir / "route.json", {
+            "schema": "turbofit.intelligence-route/v1",
+            "configuration_id": run["configuration_id"],
+            "level": run["level"],
+            "production_recipe_sha256": recipe_sha,
+            "main": route.get("main"),
+            "aux": route.get("aux"),
+            "aux_mode": recipe.aux_mode,
+            "components": [
+                {"role": component.role, "alias": component.alias, "port": component.port}
+                for component, _ in started
+            ],
+            "checks": checks,
+            "status": route.get("status"),
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
+        })
         deepswe_paths = []
         parameters = run["parameters"]
         dataset = DEEPSWE_ROOT / "deep-swe-435ee89ec2f2e2289f33b0da4f992f0b7b7266b9" / "tasks"

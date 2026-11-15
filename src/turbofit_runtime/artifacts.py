@@ -24,6 +24,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Iterable, Mapping
@@ -455,6 +456,96 @@ def likely_cause(state: FileState) -> str:
     return "the file is the right size, so the failure is more likely a tokenizer, architecture or projector mismatch"
 
 
+SIGNAL_NAMES = {
+    1: "SIGHUP", 2: "SIGINT", 3: "SIGQUIT", 6: "SIGABRT", 7: "SIGBUS",
+    8: "SIGFPE", 9: "SIGKILL", 11: "SIGSEGV", 13: "SIGPIPE", 15: "SIGTERM",
+}
+
+
+def signal_name(exit_code: int) -> str:
+    """Human name for a negative ``Popen`` return code (``-9`` -> ``SIGKILL``)."""
+    number = abs(int(exit_code))
+    return SIGNAL_NAMES.get(number, f"signal {number}")
+
+
+def kernel_oom_killed(pid: int | None, *, lines: int = 400) -> bool:
+    """Best-effort: did the kernel OOM killer name *pid* recently?
+
+    Only a best effort: it needs a readable kernel log. A ``False`` answer means
+    "no evidence of an OOM kill", never "the host had enough memory".
+    """
+    if not pid:
+        return False
+    commands = (
+        ["journalctl", "-k", "-n", str(lines), "--no-pager", "-o", "cat"],
+        ["dmesg"],
+    )
+    marker = f"killed process {pid}"
+    for command in commands:
+        try:
+            completed = subprocess.run(
+                command, capture_output=True, text=True, timeout=5, check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            continue
+        blob = (completed.stdout or "") + (completed.stderr or "")
+        if marker in blob.lower():
+            return True
+    return False
+
+
+def describe_signal_exit(
+    *,
+    role: str,
+    model: str,
+    exit_code: int,
+    log_path: str | Path | None = None,
+    pid: int | None = None,
+    log_tail_lines: Iterable[str] | None = None,
+) -> str:
+    """Explain a *killed* engine, which is not a load failure.
+
+    A negative exit code means the engine was terminated by a signal. Saying
+    "failed to load model (exit code -9)" blames the weights for a process that
+    something else killed, and the operator then re-downloads a complete model.
+    This names the signal, decides whether the kernel OOM killer sent it, and
+    otherwise says plainly that SIGKILL is external by definition.
+    """
+    name = signal_name(exit_code)
+    number = abs(int(exit_code))
+    tail = list(log_tail_lines if log_tail_lines is not None else log_tail(log_path))
+    if number == 9:
+        if kernel_oom_killed(pid):
+            cause = (
+                "the Linux OOM killer sent SIGKILL because the host ran out of "
+                "system RAM; the engine never got a chance to fail on its own"
+            )
+        else:
+            cause = (
+                "no OOM-killer record names this pid, and an engine cannot SIGKILL "
+                "itself, so an external process sent the signal: an operator or agent "
+                "`pkill -9 -f llama-server`, a concurrent campaign reclaiming these "
+                "ports, or a supervisor timeout/cleanup. GPU exhaustion does not look "
+                "like this: it aborts with a CUDA out-of-memory error (SIGABRT or exit 1)"
+            )
+    elif number == 6:
+        cause = (
+            "the engine aborted (SIGABRT), which is what a CUDA/ggml assertion such as "
+            "out-of-memory does after it prints the failing allocation"
+        )
+    elif number == 11:
+        cause = "the engine dereferenced invalid memory (SIGSEGV)"
+    else:
+        cause = f"the engine was terminated by {name} (signal {number})"
+    message = (
+        f"{role} engine for model {model} was killed by {name} (signal {number})"
+        f"{f' (pid {pid})' if pid else ''}; this is not a model load failure: {cause}."
+    )
+    if tail:
+        message += f" Engine log {log_path} (last {len(tail)} lines):\n" + "\n".join(tail)
+    return message
+
+
 def describe_load_failure(
     *,
     role: str,
@@ -465,13 +556,22 @@ def describe_load_failure(
     missing_shards: Iterable[str] | None = None,
     log_tail_lines: Iterable[str] | None = None,
     exit_code: int | None = None,
+    pid: int | None = None,
 ) -> str:
     """Build the operator-facing message for an engine load exit.
 
     Names the model, the file and actual versus expected size, then quotes the
     engine's own last log lines. It never guesses a cause that the log already
     answers: a complete file plus a working engine is not a tokenizer mismatch.
+    A negative exit code is a signal death, delegated to
+    :func:`describe_signal_exit` so a killed process is never reported as a bad
+    model file.
     """
+    if exit_code is not None and int(exit_code) < 0:
+        return describe_signal_exit(
+            role=role, model=model, exit_code=int(exit_code), log_path=log_path,
+            pid=pid, log_tail_lines=log_tail_lines,
+        )
     identity = f"{role} failed to load model {model or '<unknown>'}"
     tail = list(log_tail_lines if log_tail_lines is not None else log_tail(log_path))
     exit_note = f" (exit code {exit_code})" if exit_code is not None else ""

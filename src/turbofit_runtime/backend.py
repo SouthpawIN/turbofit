@@ -5,6 +5,7 @@ import copy
 import json
 import os
 import platform
+import re
 import shutil
 import signal
 import socket
@@ -22,6 +23,7 @@ from .hardware import _nvidia_compatibility_library_dir
 from .gpu import probe_gpus
 from .artifacts import (
     describe_load_failure,
+    describe_signal_exit,
     expected_size_for_model_root,
     inspect_file,
     is_weight_path,
@@ -560,6 +562,7 @@ class CampaignBackend:
             log_path=handle.get("log"),
             missing_shards=missing,
             exit_code=exit_code,
+            pid=handle.get("pid"),
         )
 
     #: Lines of engine log quoted when a readiness failure is reported.
@@ -685,6 +688,19 @@ class CampaignBackend:
                     }
                 if loaded:
                     tail = log_tail(handle.get("log"), limit=self.LOG_TAIL_LINES)
+                    if exit_code is not None and int(exit_code) < 0:
+                        raise RuntimeError(
+                            describe_signal_exit(
+                                role=component.role,
+                                model=component.family or component.alias,
+                                exit_code=int(exit_code),
+                                log_path=handle.get("log"),
+                                pid=handle.get("pid"),
+                                log_tail_lines=tail,
+                            )
+                            + f"\nThe engine had already answered readiness on port "
+                            f"{component.port} before it was killed, so the weights loaded."
+                        )
                     raise RuntimeError(
                         f"{component.role} exited with code {exit_code} on port {component.port} "
                         f"after loading the model but before readiness completed; the weights are "
@@ -697,6 +713,124 @@ class CampaignBackend:
             f"{component.role} failed readiness on {component.port} after "
             f"{self.READY_TIMEOUT_S}s: {last}"
         )
+
+    def assert_alive(self, component: ResolvedComponent, handle: dict[str, Any]) -> None:
+        """Fail loudly when an engine dies *after* it was ready.
+
+        Readiness is a snapshot: the aux engine can answer and then be killed
+        while a 20 GB main model loads. Without this check the next symptom is a
+        route that silently substitutes the main model, which reads like a
+        routing bug instead of the dead process it is.
+        """
+        process = handle.get("process")
+        exit_code = process.poll() if process is not None else None
+        if exit_code is None:
+            return
+        tail = log_tail(handle.get("log"), limit=self.LOG_TAIL_LINES)
+        if int(exit_code) < 0:
+            raise RuntimeError(
+                describe_signal_exit(
+                    role=component.role,
+                    model=component.family or component.alias,
+                    exit_code=int(exit_code),
+                    log_path=handle.get("log"),
+                    pid=handle.get("pid"),
+                    log_tail_lines=tail,
+                )
+                + f"\nThe engine had already answered readiness on port {component.port} "
+                "and died before the route was published, so the weights are not at fault."
+            )
+        raise RuntimeError(
+            f"{component.role} engine for {component.family or component.alias} exited with "
+            f"code {exit_code} on port {component.port} after answering readiness; the route "
+            f"cannot be published. Engine log {handle.get('log')} (last {len(tail)} lines):\n"
+            + "\n".join(tail)
+        )
+
+    def _campaign_gateway_candidates(self) -> list[tuple[int, str]]:
+        """Orphaned campaign gateways that serve *this* state file and port.
+
+        Ownership is provable from the process environment: only a gateway the
+        campaign itself spawned carries ``TURBOFIT_CAMPAIGN_GATEWAY`` plus this
+        exact ``TURBOFIT_RUNTIME_STATE`` and port. A production gateway, whatever
+        it is, never matches.
+        """
+        found: list[tuple[int, str]] = []
+        try:
+            entries = list(Path("/proc").iterdir())
+        except OSError:
+            return found
+        for entry in entries:
+            if not entry.name.isdigit():
+                continue
+            try:
+                argv = [part.decode(errors="replace") for part in (entry / "cmdline").read_bytes().split(b"\0") if part]
+                raw_env = (entry / "environ").read_bytes().decode(errors="replace")
+            except OSError:
+                continue
+            if not argv or "turbofit-gateway.py" not in " ".join(argv):
+                continue
+            env = dict(item.split("=", 1) for item in raw_env.split("\0") if "=" in item)
+            if env.get("TURBOFIT_CAMPAIGN_GATEWAY", "").lower() not in {"1", "true", "yes", "on"}:
+                continue
+            if env.get("TURBOFIT_RUNTIME_STATE") != str(self.runtime_state):
+                continue
+            if env.get("TURBOFIT_GATEWAY_PORT") != str(self.gateway_port):
+                continue
+            found.append((int(entry.name), " ".join(argv)))
+        return found
+
+    def _reclaim_campaign_gateway(self) -> None:
+        """Stop a campaign gateway left behind by an interrupted attempt.
+
+        A gateway from a killed run keeps answering ``/status`` on the pinned
+        port. The new gateway then dies with EADDRINUSE and the runner happily
+        reads the *stale* process's route, which is how a run can report a pair
+        it never started.
+        """
+        if not self._port_open(self.gateway_port):
+            return
+        for pid, command in self._campaign_gateway_candidates():
+            print(
+                f"campaign: reclaiming gateway port {self.gateway_port} from pid {pid} "
+                f"left behind by an earlier attempt",
+                file=sys.stderr, flush=True,
+            )
+            try:
+                os.killpg(pid, signal.SIGTERM)
+            except (ProcessLookupError, OSError):
+                try:
+                    os.kill(pid, signal.SIGTERM)
+                except (ProcessLookupError, OSError):
+                    continue
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline and self._port_open(self.gateway_port):
+                time.sleep(0.2)
+            if self._port_open(self.gateway_port):
+                try:
+                    os.kill(pid, signal.SIGKILL)
+                except (ProcessLookupError, OSError):
+                    pass
+                time.sleep(0.5)
+
+    def _listening_gateway_owner(self) -> tuple[int, str] | None:
+        """``(pid, cmdline)`` of whatever listens on the gateway port, best effort."""
+        try:
+            completed = subprocess.run(
+                ["ss", "-ltnp", f"sport = :{self.gateway_port}"],
+                capture_output=True, text=True, timeout=5, check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+        match = re.search(r"pid=(\d+)", completed.stdout or "")
+        if not match:
+            return None
+        pid = int(match.group(1))
+        try:
+            command = (Path(f"/proc/{pid}/cmdline").read_bytes().replace(b"\0", b" ").decode(errors="replace")).strip()
+        except OSError:
+            command = ""
+        return pid, command
 
     def route(self, recipe: ResolvedRecipe, handles: dict[str, Any]) -> dict:
         components = []
@@ -728,6 +862,7 @@ class CampaignBackend:
             "TURBOFIT_CAMPAIGN_GATEWAY": "true",
             "TURBOFIT_BACKEND_TIMEOUT": "3600",
         })
+        self._reclaim_campaign_gateway()
         log_path = self.result_dir / "campaign-gateway.log"
         log = log_path.open("w")
         self._gateway = subprocess.Popen(["python3", str(self.gateway_script)], env=env, stdout=log, stderr=subprocess.STDOUT, text=True, start_new_session=True)
@@ -735,6 +870,19 @@ class CampaignBackend:
         deadline = time.monotonic() + 90
         last = {}
         while time.monotonic() < deadline:
+            if self._gateway.poll() is not None:
+                # Our own gateway is gone.  Never accept a route from whatever
+                # else answers on this port: a stale campaign gateway keeps its
+                # own resolved/cached aux and would publish a route for a pair
+                # this run never started.
+                code = self._gateway.returncode
+                owner = self._listening_gateway_owner()
+                raise RuntimeError(
+                    f"campaign gateway exited (code {code}) on port {self.gateway_port}"
+                    + (f": the port is owned by pid {owner[0]} {owner[1]!r}" if owner else "")
+                    + f"; log={log_path} (last {self.LOG_TAIL_LINES} lines):\n"
+                    + "\n".join(log_tail(log_path, limit=self.LOG_TAIL_LINES))
+                )
             code, status, _ = self._request_json(f"http://127.0.0.1:{self.gateway_port}/status", timeout=5)
             last = status
             if code == 200:
