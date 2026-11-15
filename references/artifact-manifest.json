@@ -145,7 +145,7 @@
     "minimax-m3-q4"
    ],
    "repo_id": "unsloth/MiniMax-M3-GGUF",
-   "revision": "main",
+   "revision": "abdce34b5ab2e7dd9260130415c01a1f25561210",
    "path": "UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf",
    "sha256": "f03033e381869877d82521a6a32da7e25bb4522e2779594fbec182068693fb1c",
    "size_bytes": 904848768
