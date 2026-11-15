@@ -1,0 +1,91 @@
+# Strata 0.1.56 serving Qwen3.8-Flash-Next IQ3_S on one 96 GB card.
+# Reproduced 2026-11-14: 414.6 tok/s decode, 1524 prefill, 197 ms TTFT,
+# canonical reasoning-v1 prompt, verified on localmaxxing.com
+# (run cmwh3v8ey025fmi01dyj94u4y). Evidence:
+# research/localmaxxing-strata-rtx-pro-6000-20261115.json
+
+schema: turbofit.runtime-profile/v1
+id: strata-qwen38-flash-next-iq3s-1x96
+class_vram_gb: 96
+topology: 1x96
+status: verified-external
+engine: strata
+engine_version: 0.1.56
+
+model:
+  repo: ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF
+  quantization: IQ3_S
+  served_as: qwen3.8-flash-next
+  max_context: 262144
+
+hardware_minimum:
+  gpu:
+    name: NVIDIA RTX PRO 6000 Blackwell
+    vram_gb: 96
+    count: 1
+  ram_gb: 64
+  os: linux
+
+# Engine arguments. Paths are relative to a model directory you place
+# yourself; everything else is transferable as-is.
+args:
+  - --pack: "<model-dir>/Strata-data/packs/iq3_s"
+  - --native: "<model-dir>/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf"
+  - --ple-gguf: "<model-dir>/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf"
+  - --expert-profile: "<model-dir>/Strata/data/expert-profile.bin"
+  - --expert-cache: auto
+  - --prefill: "8192"
+  - --spec: "6"
+  - --spec-min-p: "0.5"
+  - --mtp: "<model-dir>/Strata-data/mtp/rt"
+  - --max-context: "262144"
+  - --kv: int8
+  - --vision
+  - --vram-reserve-mib: "1900"
+  - --control-vector-scaled: "<model-dir>/Huihui-Qwen3.8-Flash-Next-refusal-direction-r.gguf:1.0"
+  - --control-vector-layer-range: "4"
+  - "44"
+  - --cvec-mode: project
+  - --cvec-dir: per-layer
+  - --pool-workers: "12"
+  - --pcie-frac: "0"
+  - --no-prefill-borrow
+  - --ple-io: ram
+  - --kv-resident: "262144"
+  - --conversation-cache-mib: "4096"
+  - --draft: dflash2
+  - --draft-model: "<model-dir>/Strata-data/dflash2/qwen3.8-flash-next-dflash2.q8.pack"
+
+# Engine environment. All optional; they tune batching and checkpoint
+# pooling. The profile works without them, these are what the verified
+# runs used.
+env:
+  STRATA_BATCH_ATTN_ROWS: "1"
+  STRATA_BATCH_DECODE_SHARE: "0.4"
+  STRATA_BATCH_GDN_GROUPS: "1"
+  STRATA_BATCH_SELF_COMMIT: "1"
+  STRATA_CKPT_POOL: "1"
+  STRATA_CKPT_POOL_READY: "4"
+  STRATA_GDN_CONVL2: "2"
+  STRATA_GDN_TC: "1"
+  STRATA_OWNED_PRICE: exact
+  STRATA_PF_FUSED: "1"
+  STRATA_QSA_SLOTS: "1"
+  STRATA_SLOT_CKPT_MOVE: "1"
+  STRATA_SLOT_COPY_BATCHSYNC: "1"
+  STRATA_SLOT_COPY_DIRECT: "1"
+
+# Optional. The control vector softens refusals; drop the three --control
+# and --cvec args if you don't want it.
+optional:
+  control_vector:
+    source: "https://huggingface.co/Huihui-qwen/all-MiniLM-L6-v2"
+    note: refusal-direction r vector, applied at strength 1.0, layers 4-44
+
+notes:
+  - The drafter (dflash2 pack) is what holds 262K-context follow-up turns at
+    sub-second TTFT; acceptance was 72% on the canonical prompt. Decode gain
+    on short prompts is near zero, the win is long agentic sessions.
+  - --kv-resident 262144 plus --conversation-cache-mib 4096 is the parked-KV
+    setup behind the 99.95% prompt-token reuse in the sweep.
+  - --ple-io ram keeps expert layers in system RAM; 64 GB RAM is the floor.

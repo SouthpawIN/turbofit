@@ -1,0 +1,104 @@
+{
+  "schema": "turbofit.external-speed-evidence/v1",
+  "source": {
+    "name": "localmaxxing.com",
+    "url": "https://www.localmaxxing.com/en/models/Qwen/Qwen3.8-Flash-Next",
+    "generated_at": "2026-11-15T01:05:00Z",
+    "artifact_identity": "sha256:run-cmwh3v8ey025fmi01dyj94u4y"
+  },
+  "note": "External leaderboard evidence only. Turbofit promotes local runtime profiles only after reproducible local runs pass their gates.",
+  "runs": [
+    {
+      "run_id": "cmwh3v8ey025fmi01dyj94u4y",
+      "run_url": "https://www.localmaxxing.com/en/speed-tests/cmwh3v8ey025fmi01dyj94u4y",
+      "submitted_by": "Lewfkrad",
+      "verified": true,
+      "rank_on_model": 1,
+      "model_total_runs": 806,
+      "model": "Qwen/Qwen3.8-Flash-Next",
+      "artifact_repo": "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF",
+      "quantization": "IQ3_S",
+      "engine": "strata",
+      "engine_version": "0.1.56",
+      "speculative": {
+        "method": "DFlash2",
+        "draft_model": "qwen3.8-flash-next-dflash2.q8.pack",
+        "num_tokens": 6,
+        "acceptance_rate": 0.7212,
+        "draft_tokens": 271,
+        "accepted_tokens": 195
+      },
+      "hardware": {
+        "gpu_name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+        "gpu_count": 1,
+        "vram_gb": 95.6,
+        "cpu": "Intel Core Ultra 9 285K",
+        "ram_gb": 64,
+        "os": "Ubuntu 24.04.5",
+        "topology": "1x96"
+      },
+      "metrics": {
+        "throughput_tps": 414.6,
+        "prefill_tps": 1524.0,
+        "ttft_ms": 197.51,
+        "prompt_tokens": 304,
+        "output_tokens": 256,
+        "iterations": 3,
+        "samples_tps": [419.7, 403.6, 414.6]
+      },
+      "prompt": "canonical reasoning-v1 (sha256:9000edaadb16fc77ab78b39917245a03d4d7585c3ba770cb045a47a0e0683445)"
+    },
+    {
+      "run_id": "cmwh3ubp5025cmi01ftfoeso4",
+      "run_url": "https://www.localmaxxing.com/en/speed-tests/cmwh3ubp5025cmi01ftfoeso4",
+      "submitted_by": "Lewfkrad",
+      "verified": true,
+      "rank_on_model": 2,
+      "model": "Qwen/Qwen3.8-Flash-Next",
+      "artifact_repo": "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF",
+      "quantization": "IQ3_S",
+      "engine": "strata",
+      "engine_version": "0.1.56",
+      "speculative": null,
+      "hardware": {
+        "gpu_name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+        "gpu_count": 1,
+        "vram_gb": 95.6,
+        "cpu": "Intel Core Ultra 9 285K",
+        "ram_gb": 64,
+        "os": "Ubuntu 24.04.5",
+        "topology": "1x96"
+      },
+      "metrics": {
+        "throughput_tps": 413.4,
+        "prefill_tps": 1578.9,
+        "ttft_ms": 192.54,
+        "prompt_tokens": 304,
+        "output_tokens": 256,
+        "iterations": 3,
+        "samples_tps": [415.8, 405.7, 413.4]
+      },
+      "prompt": "canonical reasoning-v1 (sha256:9000edaadb16fc77ab78b39917245a03d4d7585c3ba770cb045a47a0e0683445)"
+    }
+  ],
+  "kv_cache_sweep": {
+    "method": "lmx two-step remote probe; reuse classified only from timed-request usage counters",
+    "points": [
+      {"context": 10000, "cached_tokens": 10041, "prompt_tokens": 10060, "uncached_tokens": 19, "ttft_ms": 110.0},
+      {"context": 20000, "cached_tokens": 20041, "prompt_tokens": 20060, "uncached_tokens": 19, "ttft_ms": 315.5},
+      {"context": 40000, "cached_tokens": 40041, "prompt_tokens": 40060, "uncached_tokens": 19, "ttft_ms": 208.7},
+      {"context": 80000, "cached_tokens": 80041, "prompt_tokens": 80060, "uncached_tokens": 19, "ttft_ms": 473.5}
+    ],
+    "reuse_ratio": 0.9995
+  },
+  "comparison": {
+    "next_strata_iq3s_single_or_multi": 161.1,
+    "same_card_other_engines": {
+      "vllm_nvfp4_median": 160.5,
+      "sglang_nvfp4": 156.6,
+      "vllm_fp8_median": 125.4
+    }
+  },
+  "report_url": "https://www.localmaxxing.com/en/models/Qwen/Qwen3.8-Flash-Next/reports/cmwh4ldbr0264mi016zsfwx3s",
+  "reproduction_repo": "https://github.com/lEWFkRAD/qwen38-rtx-pro-6000"
+}
