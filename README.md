@@ -255,6 +255,23 @@ What TurboFit adds, because Hermes has no equivalent: external pressure sensing,
 
 Strata gets the same treatment — `scripts/turbofit-strata` prints the plan the engine will be launched with, from the 0.2.10 rules (8 GB cards start at 128K, DFlash2 by default, the all-cards split engine when two sm 8.6 cards have the RAM).
 
+<!-- turbofit:generated:hermes-index:begin -->
+
+## Intelligence — what actually runs, and how fast
+
+The **Hermes Index** is the mean pass@1 across the four suites Hermes Agent runs — Hermes Bench, TerminalBench 4, TerminalBench Science and SkillsBench — reported with the cost of a task. Local inference has no dollar cost, so the cost column is **seconds per task** at a 1,000-token task, and the suite column always reads *measured / total*: a partial run is never a full index.
+
+| Model | Tier | Context | Aux | Index | Suites | tok/s | s/task @1k | Measurement |
+|---|---|---|---|---|---|---|---|---|
+| `qwen3-8-27b-gsq-rco-iq3s` UD-Q3_K_XL | 48 GB | 262,144 | shared-main · `auto:qwen3-8-27b-gsq-rco-iq3s` | 46.9 | 2/4 | 39.39 | 25.39 | screening |
+| — | 8 GB, 16 GB, 24 GB, 64 GB, 96 GB, 200 GB, 300 GB | — | — | **no measurements yet** | 0/4 | — | — | — |
+
+`deep-swe` and `agentic-pair` are the interim suites TurboFit can run today; the other two Hermes Index suites are not wired yet, so no row above is a complete index. `s/task @1k` is `1,000 ÷ tok/s`. The `no measurements yet` row lists every tier the campaign has not reached — those tiers stay visible instead of being dropped.
+
+Source: `references/intelligence-scores.json`; regenerate with `tools/turbofit-intel-leaderboard`. Do not hand-edit between the markers.
+
+<!-- turbofit:generated:hermes-index:end -->
+
 ## Keeping it current
 
 ```bash

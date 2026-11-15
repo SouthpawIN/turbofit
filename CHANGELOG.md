@@ -14,6 +14,11 @@
   benchmark row is attributed to a model that never ran.
 - **`scripts/download-artifacts`**: imports the HuggingFace client lazily, so the
   module loads (and tests run) without the network client installed.
+- **README**: a generated Hermes-Index table (`src/turbofit_runtime/intelligence_readme.py`)
+  now shows every measured configuration per memory tier — interim suite mean as
+  `index`, `suites measured / total`, tok/s, and `s/task @1k` in place of a dollar
+  cost. Unmeasured tiers stay listed as `no measurements yet`. `tools/sync-wiki-readme.sh`
+  re-renders it after the wiki copy, so the table survives a README sync.
 
 ## 2.4.1 — pressure yield, external-unit rungs, naming
 
