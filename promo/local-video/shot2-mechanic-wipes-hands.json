@@ -1,0 +1,19 @@
+{
+  "bytes": 264390,
+  "fps": 8,
+  "frames": 16,
+  "generation_seconds": 26.883,
+  "guidance_scale": 7.5,
+  "height": 384,
+  "load_seconds": 18.519,
+  "model_root": "/root/Models/storage/diffusers/meinamix-v11",
+  "motion_adapter": "/root/Models/storage/diffusers/animatediff-motion-adapter-v1-5-3",
+  "negative_prompt": "text, watermark, deformed, extra limbs, photorealistic, blurry, lowres, static",
+  "output": "/root/turbofit-promo/local-video/shot2-mechanic-wipes-hands.mp4",
+  "peak_vram_mb": 5645.8,
+  "prompt": "1990s anime garage interior at dusk, medium shot. The same young woman mechanic in a teal work jacket wipes her hands with a rag beside a red sports car, two more cars behind her. Warm lamp light, orange sunset through the door, cel shaded, hand painted background, bold ink lines, retro anime",
+  "schema": "turbofit.local-video-generation/v1",
+  "seed": 9907,
+  "steps": 25,
+  "width": 640
+}

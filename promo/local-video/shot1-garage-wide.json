@@ -1,0 +1,19 @@
+{
+  "bytes": 156209,
+  "fps": 8,
+  "frames": 16,
+  "generation_seconds": 25.118,
+  "guidance_scale": 7.5,
+  "height": 384,
+  "load_seconds": 24.758,
+  "model_root": "/root/Models/storage/diffusers/meinamix-v11",
+  "motion_adapter": "/root/Models/storage/diffusers/animatediff-motion-adapter-v1-5-3",
+  "negative_prompt": "text, watermark, deformed, extra limbs, photorealistic, blurry, lowres, static",
+  "output": "/root/turbofit-promo/local-video/shot1-garage-wide.mp4",
+  "peak_vram_mb": 5645.8,
+  "prompt": "1990s anime garage interior at dusk, wide shot. A young woman mechanic in a teal work jacket walks past three sports cars raised on jack stands. Open roller door, orange sunset light and dust motes, cel shaded, hand painted backgrounds, bold ink lines, film grain, retro anime aesthetic",
+  "schema": "turbofit.local-video-generation/v1",
+  "seed": 4111,
+  "steps": 25,
+  "width": 640
+}

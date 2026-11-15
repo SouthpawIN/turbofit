@@ -1244,15 +1244,81 @@ def hardware_tier_snapshot() -> dict[str, Any]:
     return build_tier_report(PLUGIN_ROOT, probe_hardware())
 
 
+def _multimodal_models_root(config: Mapping[str, Any] | None) -> Path:
+    """Where local media weights live; overridable through the Turbofit config."""
+    turbofit = config.get("turbofit") if isinstance(config, Mapping) else None
+    multimodal = turbofit.get("multimodal") if isinstance(turbofit, Mapping) else None
+    configured = multimodal.get("models_root") if isinstance(multimodal, Mapping) else None
+    if isinstance(configured, str) and configured:
+        return Path(configured).expanduser()
+    return Path.home() / "Models" / "storage"
+
+
+def probe_multimodal_runtimes(
+    catalog,
+    models_root: str | Path,
+) -> dict[str, dict[str, Any]]:
+    """Probe every local runtime the catalog references, with its pinned weights."""
+    from turbofit_runtime import media_pipeline as mp
+
+    states: dict[str, dict[str, Any]] = {}
+    for model in catalog.models:
+        if model.runtime in mp.DELEGATED_RUNTIMES:
+            continue
+        weights = mp.catalog_component_paths(model, models_root)
+        state = mp.probe_runtime(
+            model.runtime,
+            weights=weights,
+            download_command=mp.catalog_download_command(model, models_root),
+        ).as_dict()
+        previous = states.get(model.runtime)
+        # A runtime shared by several entries is usable if any entry's weights are.
+        if previous is None or (state["ready"] and not previous["ready"]):
+            states[model.runtime] = state
+    return states
+
+
+HERMES_PROVIDER_KEYS = {"image": "image_gen", "video": "video_gen"}
+
+
+def apply_hermes_provider_status(
+    payload: dict[str, Any], config: Mapping[str, Any] | None
+) -> dict[str, Any]:
+    """Downgrade builtin Hermes media rows whose provider section is not configured.
+
+    ``hermes`` is a delegated runtime, so Turbofit cannot probe it directly.  The
+    config it is handed is the only evidence available: without a provider
+    section the option must not be advertised as ready.
+    """
+    config = config if isinstance(config, Mapping) else {}
+    for modality, key in HERMES_PROVIDER_KEYS.items():
+        provider = config.get(key)
+        configured = isinstance(provider, Mapping) and any(
+            value for value in provider.values()
+        )
+        for row in payload.get("modalities", {}).get(modality, []):
+            if row.get("runtime") != "hermes" or configured:
+                continue
+            row["action"] = "install-adapter"
+            row["blocked_by"] = "waiting-config"
+            row["fix_command"] = f"set {key} in the Hermes config to a working provider"
+    return payload
+
+
 def multimodal_snapshot(config: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    """Return hardware-fit multimodal options plus the user's selections."""
+    """Return hardware-fit multimodal options, runtime readiness and the user's selections."""
     from turbofit_runtime.hardware import probe_hardware
     from turbofit_runtime.multimodal import MultimodalCatalog, recommend_multimodal
 
+    catalog = MultimodalCatalog.load(MULTIMODAL_CATALOG)
+    runtimes = probe_multimodal_runtimes(catalog, _multimodal_models_root(config))
     payload = recommend_multimodal(
         hardware=probe_hardware(),
-        catalog=MultimodalCatalog.load(MULTIMODAL_CATALOG),
+        catalog=catalog,
+        runtimes=runtimes,
     )
+    payload["runtimes"] = runtimes
+    apply_hermes_provider_status(payload, config)
     selected: dict[str, Any] = {}
     if isinstance(config, Mapping):
         turbofit = config.get("turbofit")

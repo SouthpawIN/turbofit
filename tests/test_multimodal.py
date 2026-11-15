@@ -8,6 +8,7 @@ import pytest
 from turbofit_runtime.hardware import AcceleratorDevice, HardwareFingerprint
 from turbofit_runtime.multimodal import (
     MultimodalCatalog,
+    MultimodalModel,
     configure_multimodal,
     recommend_multimodal,
 )
@@ -63,7 +64,9 @@ def test_multimodal_recommendations_use_total_usable_memory() -> None:
     assert result["total_usable_memory_mb"] == (310000 - 8192) + 24576
     assert by_id["minimax-h3"]["fit"] is True
     assert by_id["minimax-h3"]["accelerator_fit"] is True
-    assert by_id["minimax-h3"]["action"] == "run-turbofit-local"
+    # H3 stays a candidate: no weights and no verified generation receipt exist,
+    # so memory fit alone must not advertise it as runnable.
+    assert by_id["minimax-h3"]["action"] == "install-adapter"
     assert by_id["acestep-1-5-4b"]["recommended_fit"] is True
 
 
@@ -111,3 +114,52 @@ def test_configure_multimodal_rejects_wrong_modality() -> None:
     catalog = MultimodalCatalog.load(CATALOG)
     with pytest.raises(ValueError, match="does not support"):
         configure_multimodal({}, selections={"image": "acestep-1-5-2b"}, catalog=catalog)
+
+
+def test_animatediff_entry_is_pinned_with_components() -> None:
+    catalog = MultimodalCatalog.load(CATALOG)
+    model = catalog.by_id("animatediff-sd15-motion")
+
+    assert model.runtime == "animatediff"
+    assert model.integration == "turbofit-local"
+    roles = {role for role, _, _ in model.components}
+    assert {"base", "motion-adapter"} <= roles
+    for _, source, revision in model.components:
+        assert source.startswith("https://huggingface.co/")
+        assert len(revision) == 40
+
+
+def test_component_with_unpinned_revision_is_rejected() -> None:
+    with pytest.raises(ValueError, match="pinned Hugging Face source"):
+        MultimodalModel.from_mapping({
+            "id": "bad-components",
+            "name": "Bad",
+            "modalities": ["video"],
+            "source": "https://huggingface.co/org/model",
+            "revision": "a" * 40,
+            "runtime": "animatediff",
+            "minimum_memory_mb": 1024,
+            "recommended_memory_mb": 2048,
+            "platforms": ["linux"],
+            "integration": "turbofit-local",
+            "components": [
+                {"role": "base", "source": "https://huggingface.co/org/model", "revision": "main"},
+            ],
+        })
+
+
+def test_unprobed_runtime_cannot_claim_use_now_when_probe_says_missing() -> None:
+    catalog = MultimodalCatalog.load(CATALOG)
+    probed = {
+        "hermes": {"status": "waiting-runtime", "ready": False,
+                   "command": "turbofit-configure-multimodal"},
+    }
+
+    result = recommend_multimodal(
+        hardware=hardware(ram_mb=310000, device_mb=24576), catalog=catalog, runtimes=probed
+    )
+    video = {row["id"]: row for row in result["modalities"]["video"]}
+
+    assert video["hermes-video"]["action"] == "install-adapter"
+    assert video["hermes-video"]["blocked_by"] == "waiting-runtime"
+    assert video["hermes-video"]["fix_command"] == "turbofit-configure-multimodal"

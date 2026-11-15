@@ -53,7 +53,7 @@
     "linux",
     "windows"
    ],
-   "integration": "turbofit-local-int8-offload"
+   "integration": "candidate"
   },
   {
    "id": "hermes-music",
@@ -288,6 +288,41 @@
     "windows"
    ],
    "integration": "candidate"
+  },
+  {
+   "id": "animatediff-sd15-motion",
+   "name": "AnimateDiff v1.5 motion adapter (SD1.5 anime base)",
+   "modalities": [
+    "video"
+   ],
+   "source": "https://huggingface.co/guoyww/animatediff-motion-adapter-v1-5-3",
+   "revision": "2e8139b1d1269fd8a21deb96ad19455e187692eb",
+   "runtime": "animatediff",
+   "minimum_memory_mb": 8192,
+   "recommended_memory_mb": 12288,
+   "minimum_accelerator_memory_mb": 6144,
+   "platforms": [
+    "linux",
+    "windows"
+   ],
+   "integration": "turbofit-local",
+   "components": [
+    {
+     "role": "base",
+     "source": "https://huggingface.co/Meina/MeinaMix_V11",
+     "revision": "2db85a2712983313dfe3e251f81e0023d775ee0a"
+    },
+    {
+     "role": "motion-adapter",
+     "source": "https://huggingface.co/guoyww/animatediff-motion-adapter-v1-5-3",
+     "revision": "2e8139b1d1269fd8a21deb96ad19455e187692eb"
+    },
+    {
+     "role": "lightning-optional",
+     "source": "https://huggingface.co/ByteDance/AnimateDiff-Lightning",
+     "revision": "027c893eec01df7330f5d4b733bc9485ee02e8b2"
+    }
+   ]
   }
  ]
 }
