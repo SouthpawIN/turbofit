@@ -10,6 +10,12 @@ KV_cache ≈ 2-4 GB at 262K context (q8_0 KV)
 Comfortable: model_size + 2 GB ≤ tier_size
 ```
 
+That is the **full-GPU** rule. A MoE model that exceeds the band is still
+placeable when the host has the RAM for its experts: placement is two-dimensional
+(VRAM band and system RAM budget), and those models are listed as
+`offload_candidates` with the exact RAM they need rather than mixed in with the
+full-GPU rungs. See `docs/tier-placement.md`.
+
 ## The TurboFit List — 5 models, ordered by capability
 
 | # | Model | Type | Params | Optimal Quant | Size | AIME26 | GPQA-D | DeepSWE | LCBv6 | TB4.0 |

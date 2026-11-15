@@ -9,13 +9,41 @@ from typing import Any
 import yaml
 
 from .executor import production_recipe_sha256
+from .experts import available_ram_bytes
 from .hardware import HardwareFingerprint
 from .intelligence import canonical_intelligence_recipe
 from .recommend import vram_reporting_tolerance_mb
 from .recipes import RecipeBook
 from .schema import MatrixRow
+from .tier_fit import (
+    DEFAULT_RAM_GIB,
+    RAM_GIB_ENV,
+    RAM_RESERVE_BYTES,
+    default_ram_gib,
+    ram_budget_bytes,
+)
 
 TIERS = (8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384)
+
+
+def _ram_budget(hardware: HardwareFingerprint, ram_bytes: int | None) -> tuple[int, str]:
+    """The RAM budget this report places offload options against.
+
+    Host first (``MemAvailable`` — what an engine can actually take), then the
+    fingerprint's installed figure, then the documented default. An explicit
+    ``ram_bytes`` wins so the committed artefact can state its assumption.
+    """
+    if ram_bytes is not None:
+        if ram_bytes <= 0:
+            raise ValueError("ram_bytes must be positive")
+        return int(ram_bytes), "explicit"
+    host = available_ram_bytes()
+    if host:
+        return host, "host-memavailable"
+    installed = int(getattr(hardware, "system_ram_mb", 0) or 0)
+    if installed > 0:
+        return installed * 1024, "host-installed"
+    return ram_budget_bytes(default_ram_gib()), "documented-default"
 
 
 def _artifact_bytes(manifest: dict[str, Any], model_ids: tuple[str, ...]) -> int:
@@ -113,8 +141,81 @@ def _exact_physical_topology(hardware: HardwareFingerprint, constraint: dict[str
     return sum(device.memory_total_mb >= minimum_mb for device in hardware.devices) >= required_devices
 
 
-def build_tier_report(root: str | Path, hardware: HardwareFingerprint) -> dict[str, Any]:
+def _offload_row(
+    entry: dict[str, Any],
+    *,
+    configuration: dict[str, Any],
+    main: dict[str, Any],
+    auxiliary: dict[str, Any] | None,
+    constraint: dict[str, Any],
+    artifact_bytes: int,
+) -> dict[str, Any]:
+    """One row for a model that only fits this tier with experts in RAM."""
+    artifact_gib = artifact_bytes / (1024 ** 3)
+    return {
+        "configuration_id": entry["configuration_id"],
+        "placement": "offload",
+        "main": {
+            "id": main["id"], "name": main["name"],
+            "quantization": main["quantization"],
+            "runtime_features": main["runtime_features"],
+        },
+        "auxiliary": {
+            "id": "auto", "name": "Route auxiliary tasks to main",
+            "quantization": "route-to-main", "runtime_features": [],
+        } if auxiliary is None else {
+            "id": auxiliary["id"], "name": auxiliary["name"],
+            "quantization": auxiliary["quantization"],
+            "runtime_features": auxiliary["runtime_features"],
+        },
+        "context": int(configuration["context"]),
+        "artifact_storage_bytes": artifact_bytes,
+        "accelerator_requirement": {
+            "aggregate_gb": constraint["total_vram_gb"],
+            "device_count": constraint["min_devices"],
+            "per_device_min_gb": constraint["per_device_min_gb"],
+            "topology": constraint["topology"],
+            "backend": constraint["accelerator"],
+        },
+        "host_memory_requirement": {
+            "declared_minimum_gb": constraint.get("system_ram_gb"),
+            "inferred_artifact_load_floor_gb": math.ceil(artifact_gib + 8),
+            "inferred_recommended_gb": math.ceil(artifact_gib * 1.25 + 16),
+            "physically_measured_peak_gb": None,
+            "status": "declared" if constraint.get("system_ram_gb") is not None else "inferred-until-rss-telemetry",
+            "formula": "artifact GiB + 8 GiB floor; artifact GiB × 1.25 + 16 GiB recommended",
+        },
+        "expert_offload": {
+            "n_cpu_moe": int(entry["n_cpu_moe"]),
+            "expert_layers": int(entry["expert_layers"]),
+            "ram_gib": float(entry["ram_gib"]),
+            "vram_gib": float(entry["vram_gib"]),
+            "total_gib": float(entry["total_gib"]),
+            "evidence": entry["evidence"],
+            "reason": entry["reason"],
+            "engine_flag": "--n-cpu-moe",
+        },
+        "fit": {
+            "inferred": True,
+            "physically_demonstrated": False,
+            "placement": "offload",
+            "evidence": None,
+            "hardware_fingerprint": None,
+        },
+        "intelligence_score": None,
+        "intelligence_level": None,
+        "measured_tps": None,
+        "balanced_score": None,
+    }
+
+
+def build_tier_report(
+    root: str | Path,
+    hardware: HardwareFingerprint,
+    ram_bytes: int | None = None,
+) -> dict[str, Any]:
     root = Path(root)
+    ram_bytes, ram_source = _ram_budget(hardware, ram_bytes)
     configurations = json.loads((root / "references/configuration-matrix.json").read_text(encoding="utf-8"))
     catalog = json.loads((root / "references/model-catalog.json").read_text(encoding="utf-8"))
     tournaments = json.loads((root / "references/hardware-tier-tournaments.json").read_text(encoding="utf-8"))
@@ -233,6 +334,7 @@ def build_tier_report(root: str | Path, hardware: HardwareFingerprint) -> dict[s
                 "fit": {
                     "inferred": True,
                     "physically_demonstrated": physical,
+                    "placement": "gpu",
                     "evidence": winner["evidence"] if physical else None,
                     "hardware_fingerprint": winner["hardware_fingerprint"] if physical else None,
                 },
@@ -242,6 +344,21 @@ def build_tier_report(root: str | Path, hardware: HardwareFingerprint) -> dict[s
                 "balanced_score": balanced_value,
             })
         measured = next((item for item in candidate_rows if item["fit"]["physically_demonstrated"]), None)
+        offload_rows = []
+        for entry in tournament.get("offload_candidates") or []:
+            configuration = configurations_by_id[entry["configuration_id"]]
+            main = models[configuration["main"]]
+            auxiliary = None if configuration["auxiliary"] == "auto" else models[configuration["auxiliary"]]
+            offload_rows.append(_offload_row(
+                entry,
+                configuration=configuration,
+                main=main,
+                auxiliary=auxiliary,
+                constraint=constraint,
+                artifact_bytes=_artifact_bytes(
+                    manifest, (main["id"], configuration["auxiliary"]),
+                ),
+            ))
         smart = sorted(
             (item for item in candidate_rows if item["intelligence_score"] is not None),
             key=lambda item: (item["intelligence_score"], item["measured_tps"] or 0), reverse=True,
@@ -266,9 +383,17 @@ def build_tier_report(root: str | Path, hardware: HardwareFingerprint) -> dict[s
                 "balanced": balanced[0] if balanced else None,
             },
             "candidates": candidate_rows,
+            "offload_candidates": offload_rows,
         })
     return {
         "schema": "turbofit.hardware-tier-report/v1",
+        "ram_budget": {
+            "gib": round(ram_bytes / 1024 ** 3, 2),
+            "source": ram_source,
+            "reserve_gib": round(RAM_RESERVE_BYTES / 1024 ** 3, 2),
+            "default_gib": DEFAULT_RAM_GIB,
+            "override": f"--ram-gb on this script, or {RAM_GIB_ENV} for every caller",
+        },
         "current_hardware": {
             "os": hardware.os,
             "architecture": hardware.architecture,

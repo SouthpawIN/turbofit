@@ -17,6 +17,30 @@
 - **`check-artifact-existence --local`** now judges shard sets by filename, so
   one shard of six on disk is reported as `incomplete-shard-set` rather than
   complete because the pinned row matched.
+## Unreleased — tier placement is VRAM *and* system RAM
+
+- **Placement is two-dimensional.** A catalog main no longer has to fit the
+  tier's VRAM band to be offered: if it is MoE and its measured expert bytes fit
+  alongside the band in a stated RAM budget, it is published as an
+  **offload option** (`placement: "offload"`) with the GiB in RAM, the GiB left
+  on the GPU and the `--n-cpu-moe N/L` it needs. Full-GPU and offloaded
+  configurations are separate lists (`candidates` vs `offload_candidates`), so
+  "runs entirely on the GPU" can never be confused with "runs with 67 GiB of
+  experts in RAM". The arithmetic is `experts.plan_expert_offload` — the same
+  function the launcher uses — not a second fit model.
+- **RAM is a stated assumption, not a machine.** The committed tournaments and
+  report carry `ram_assumption`/`ram_budget` (default **128 GiB of available
+  system RAM**), overridable per run with `--ram-gb` or globally with
+  `TURBOFIT_RAM_GIB`; `scripts/turbofit-hardware-tiers` with no flag reads the
+  host's real `MemAvailable`. No personal RAM figure is committed.
+- **Expert bytes are measured.** `scripts/generate-model-footprints
+  --measure-experts` reads each pinned MoE artifact's GGUF header over HTTP
+  Range (no weights downloaded) and records `expert_bytes`/`expert_layers`
+  against the pinned revision; 29 of 30 MoE mains are measured, Inkling 2 Small
+  is unmeasured (repo unavailable) and is therefore never advertised as
+  offloadable. DeepSeek V4.1 Flash 1017, GLM 5.3 Flash (XS/S24/M/L) and Qwen 3.8
+  Flash Next become placeable at 48 GB and below for the first time.
+  See `docs/tier-placement.md`.
 
 ## Unreleased — expert offload measured per host
 
