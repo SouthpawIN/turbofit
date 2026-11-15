@@ -930,11 +930,14 @@ def served_model_ids(port):
     }
 
 
-def runtime_override(role):
+def runtime_override(role, *, include_down=False):
     """Resolve an explicitly activated evidence-backed runtime before catalog roles.
 
     This lets a model serve as main in one profile and auxiliary in another
-    without mutating the global catalog between swaps.
+    without mutating the global catalog between swaps. With ``include_down`` a
+    declared-but-unreachable component is returned with ``state == "down"``
+    instead of ``None``, so callers can tell "nothing declared" apart from
+    "declared and missing".
     """
     try:
         with open(RUNTIME_STATE, encoding="utf-8-sig") as f:
@@ -962,7 +965,7 @@ def runtime_override(role):
         return None
     port = int(component.get("port") or 0)
     state_name = backend_state(port, alias)
-    if state_name == "down":
+    if state_name == "down" and not include_down:
         return None
     result = {
         "alias": alias,
@@ -1418,6 +1421,20 @@ def resolve_aux():
     override = runtime_override("aux")
     if override:
         return override
+    declared = runtime_override("aux", include_down=True)
+    if declared is not None and declared.get("mode") == "dedicated":
+        # The active runtime *declares* a dedicated auxiliary (a campaign recipe
+        # with a real aux model).  Reusing main here would fabricate an
+        # `auto:<main>` route, which is a different benchmark: report the
+        # declared auxiliary as down and let the caller name the dead engine.
+        declared["declared"] = True
+        declared["error"] = (
+            f"declared auxiliary {declared.get('alias')!r} is not answering on "
+            f"port {declared.get('port')}"
+        )
+        _cache["aux"] = declared
+        _cache["ts"] = time.time()
+        return declared
     now = time.time()
     if _cache["aux"] and now - _cache["ts"] < CACHE_TTL:
         return _cache["aux"]

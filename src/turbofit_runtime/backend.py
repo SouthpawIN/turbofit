@@ -22,6 +22,7 @@ from .hardware import _nvidia_compatibility_library_dir
 from .gpu import probe_gpus
 from .artifacts import (
     describe_load_failure,
+    describe_signal_exit,
     expected_size_for_model_root,
     inspect_file,
     is_weight_path,
@@ -560,6 +561,7 @@ class CampaignBackend:
             log_path=handle.get("log"),
             missing_shards=missing,
             exit_code=exit_code,
+            pid=handle.get("pid"),
         )
 
     #: Lines of engine log quoted when a readiness failure is reported.
@@ -685,6 +687,19 @@ class CampaignBackend:
                     }
                 if loaded:
                     tail = log_tail(handle.get("log"), limit=self.LOG_TAIL_LINES)
+                    if exit_code is not None and int(exit_code) < 0:
+                        raise RuntimeError(
+                            describe_signal_exit(
+                                role=component.role,
+                                model=component.family or component.alias,
+                                exit_code=int(exit_code),
+                                log_path=handle.get("log"),
+                                pid=handle.get("pid"),
+                                log_tail_lines=tail,
+                            )
+                            + f"\nThe engine had already answered readiness on port "
+                            f"{component.port} before it was killed, so the weights loaded."
+                        )
                     raise RuntimeError(
                         f"{component.role} exited with code {exit_code} on port {component.port} "
                         f"after loading the model but before readiness completed; the weights are "
@@ -696,6 +711,39 @@ class CampaignBackend:
         raise RuntimeError(
             f"{component.role} failed readiness on {component.port} after "
             f"{self.READY_TIMEOUT_S}s: {last}"
+        )
+
+    def assert_alive(self, component: ResolvedComponent, handle: dict[str, Any]) -> None:
+        """Fail loudly when an engine dies *after* it was ready.
+
+        Readiness is a snapshot: the aux engine can answer and then be killed
+        while a 20 GB main model loads. Without this check the next symptom is a
+        route that silently substitutes the main model, which reads like a
+        routing bug instead of the dead process it is.
+        """
+        process = handle.get("process")
+        exit_code = process.poll() if process is not None else None
+        if exit_code is None:
+            return
+        tail = log_tail(handle.get("log"), limit=self.LOG_TAIL_LINES)
+        if int(exit_code) < 0:
+            raise RuntimeError(
+                describe_signal_exit(
+                    role=component.role,
+                    model=component.family or component.alias,
+                    exit_code=int(exit_code),
+                    log_path=handle.get("log"),
+                    pid=handle.get("pid"),
+                    log_tail_lines=tail,
+                )
+                + f"\nThe engine had already answered readiness on port {component.port} "
+                "and died before the route was published, so the weights are not at fault."
+            )
+        raise RuntimeError(
+            f"{component.role} engine for {component.family or component.alias} exited with "
+            f"code {exit_code} on port {component.port} after answering readiness; the route "
+            f"cannot be published. Engine log {handle.get('log')} (last {len(tail)} lines):\n"
+            + "\n".join(tail)
         )
 
     def route(self, recipe: ResolvedRecipe, handles: dict[str, Any]) -> dict:
