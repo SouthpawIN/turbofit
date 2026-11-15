@@ -1,0 +1,154 @@
+#!/usr/bin/env python3
+"""Generate a local promo clip sequence with the AnimateDiff runtime.
+
+Reads a prompt manifest, renders one 16-frame shot per clip through
+``turbofit_runtime.animatediff_worker`` and assembles the shots into a single
+mp4 with ffmpeg.  Every step goes through ``turbofit_runtime.media_pipeline``,
+so a missing engine or missing weights fails with the exact fix command instead
+of an ImportError deep inside diffusers.
+
+    scripts/generate-local-video \
+        --manifest promo/local-video/prompts.json \
+        --output-dir promo/local-video/out
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from turbofit_runtime import media_pipeline as mp  # noqa: E402
+from turbofit_runtime.multimodal import MultimodalCatalog  # noqa: E402
+
+CATALOG = ROOT / "references" / "multimodal-models.json"
+SCHEMA = "turbofit.local-video-prompts/v1"
+MODEL_ID = "animatediff-sd15-motion"
+
+
+def load_manifest(path: Path) -> dict:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    required = {"schema", "width", "height", "frames", "steps", "fps", "clips"}
+    missing = required - payload.keys()
+    if missing:
+        raise ValueError(f"video manifest is missing {sorted(missing)}")
+    if payload["schema"] != SCHEMA:
+        raise ValueError(f"video manifest schema must be {SCHEMA}, got {payload['schema']}")
+    if payload["frames"] % 16:
+        raise ValueError("frames must be a positive multiple of 16 (one AnimateDiff context)")
+    for label in ("width", "height"):
+        if payload[label] % 8:
+            raise ValueError(f"{label} must be a multiple of 8")
+    if not payload["clips"]:
+        raise ValueError("video manifest has no clips")
+    ids = [clip["id"] for clip in payload["clips"]]
+    if len(ids) != len(set(ids)):
+        raise ValueError("clip ids must be unique")
+    for clip in payload["clips"]:
+        if not str(clip.get("prompt", "")).strip():
+            raise ValueError(f"clip {clip.get('id')} has an empty prompt")
+    return payload
+
+
+def resolve_models(manifest: dict, catalog: MultimodalCatalog) -> tuple[Path, Path]:
+    models_root = Path(manifest.get("models_root", "~/Models/storage/diffusers")).expanduser()
+    model = catalog.by_id(manifest.get("model", MODEL_ID))
+    paths = {
+        role: path
+        for (role, _, _), path in zip(model.components, mp.catalog_component_paths(model, models_root))
+    }
+    base = Path(manifest["base_path"]).expanduser() if manifest.get("base_path") else paths.get("base")
+    motion = (
+        Path(manifest["motion_adapter_path"]).expanduser()
+        if manifest.get("motion_adapter_path")
+        else paths.get("motion-adapter")
+    )
+    if base is None or motion is None:
+        raise ValueError(f"{model.id} must declare base and motion-adapter components")
+    return base, motion
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--manifest", type=Path, required=True)
+    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--clip", action="append", default=[])
+    parser.add_argument("--transition-seconds", type=float, default=0.5)
+    parser.add_argument("--python", default=sys.executable)
+    args = parser.parse_args(argv)
+
+    manifest = load_manifest(args.manifest)
+    catalog = MultimodalCatalog.load(CATALOG)
+    model = catalog.by_id(manifest.get("model", MODEL_ID))
+    base, motion = resolve_models(manifest, catalog)
+
+    required = (base, motion)
+    status = mp.require_runtime(
+        model.runtime,
+        weights=required,
+        download_command=mp.catalog_download_command(model, manifest.get("models_root", "~/Models/storage/diffusers")),
+    )
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    selected = [clip for clip in manifest["clips"] if not args.clip or clip["id"] in set(args.clip)]
+    if not selected:
+        raise SystemExit("no clips matched --clip")
+
+    shots: list[Path] = []
+    results = []
+    for clip in selected:
+        started = time.monotonic()
+        job = mp.VideoJob(
+            prompt=clip["prompt"],
+            output=args.output_dir / f"{clip['id']}.mp4",
+            model_root=base,
+            motion_adapter=motion,
+            frames=int(manifest["frames"]),
+            width=int(manifest["width"]),
+            height=int(manifest["height"]),
+            steps=int(manifest.get("steps", 25)),
+            guidance_scale=float(manifest.get("guidance_scale", 7.5)),
+            fps=int(manifest["fps"]),
+            seed=int(clip.get("seed", 0)),
+            negative_prompt=str(manifest.get("negative_prompt", "")),
+        )
+        output = mp.run_video(job, python=args.python)
+        shots.append(output)
+        results.append({
+            "id": clip["id"],
+            "prompt": clip["prompt"],
+            "seed": job.seed,
+            "output": str(output),
+            "bytes": output.stat().st_size,
+            "wall_seconds": round(time.monotonic() - started, 2),
+        })
+        print(json.dumps(results[-1], indent=2), flush=True)
+
+    final = args.output_dir / f"{manifest.get('name', 'turbofit-clip')}.mp4"
+    mp.assemble_shots(
+        shots, final, fps=int(manifest["fps"]), transition_seconds=args.transition_seconds
+    )
+    evidence = mp.evidence(
+        model.runtime,
+        status,
+        generated_at=datetime.now(timezone.utc).isoformat(),
+        model=model.id,
+        model_root=str(base),
+        motion_adapter=str(motion),
+        components=[{"role": r, "source": s, "revision": v} for r, s, v in model.components],
+        output=str(final),
+        bytes=final.stat().st_size,
+        clips=results,
+    )
+    path = mp.write_evidence(args.output_dir / "generation-evidence.json", evidence)
+    print(json.dumps({"output": str(final), "bytes": final.stat().st_size, "evidence": str(path)}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

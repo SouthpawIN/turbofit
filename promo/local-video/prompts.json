@@ -1,0 +1,27 @@
+{
+ "schema": "turbofit.local-video-prompts/v1",
+ "name": "turbofit-garage-promo",
+ "model": "animatediff-sd15-motion",
+ "models_root": "~/Models/storage/diffusers",
+ "base_path": "~/Models/storage/diffusers/meinamix-v11",
+ "motion_adapter_path": "~/Models/storage/diffusers/animatediff-motion-adapter-v1-5-3",
+ "width": 640,
+ "height": 384,
+ "frames": 16,
+ "steps": 25,
+ "guidance_scale": 7.5,
+ "fps": 8,
+ "negative_prompt": "text, watermark, deformed, extra limbs, photorealistic, blurry, lowres, static",
+ "clips": [
+  {
+   "id": "shot1-garage-wide",
+   "seed": 4111,
+   "prompt": "1990s anime garage interior at dusk, wide shot. A young woman mechanic in a teal work jacket walks past three sports cars raised on jack stands. Open roller door, orange sunset light and dust motes, cel shaded, hand painted backgrounds, bold ink lines, film grain, retro anime aesthetic"
+  },
+  {
+   "id": "shot2-mechanic-wipes-hands",
+   "seed": 9907,
+   "prompt": "1990s anime garage interior at dusk, medium shot. The same young woman mechanic in a teal work jacket wipes her hands with a rag beside a red sports car, two more cars behind her. Warm lamp light, orange sunset through the door, cel shaded, hand painted background, bold ink lines, retro anime"
+  }
+ ]
+}

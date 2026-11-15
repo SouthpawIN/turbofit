@@ -13,7 +13,8 @@ from .hardware import HardwareFingerprint
 
 SCHEMA = "turbofit.multimodal-catalog/v1"
 MODALITIES = ("image", "video", "music", "tts", "stt")
-INTEGRATIONS = {"builtin", "hermes-tool", "turbofit-local-int8-offload", "candidate"}
+INTEGRATIONS = {"builtin", "hermes-tool", "turbofit-local", "turbofit-local-int8-offload", "candidate"}
+ADAPTER_ACTIONS = "install-adapter"
 
 
 @dataclass(frozen=True)
@@ -29,6 +30,7 @@ class MultimodalModel:
     minimum_accelerator_memory_mb: int
     platforms: tuple[str, ...]
     integration: str
+    components: tuple[tuple[str, str, str], ...] = ()
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> "MultimodalModel":
@@ -36,9 +38,13 @@ class MultimodalModel:
             "id", "name", "modalities", "source", "revision", "runtime",
             "minimum_memory_mb", "recommended_memory_mb", "platforms", "integration",
         }
-        optional = {"minimum_accelerator_memory_mb"}
+        optional = {"minimum_accelerator_memory_mb", "components"}
         if not required <= set(value) or not set(value) <= required | optional:
             raise ValueError("multimodal model fields do not match schema")
+        components = tuple(
+            (str(item["role"]), str(item["source"]), str(item["revision"]))
+            for item in value.get("components", ())
+        )
         item = cls(
             id=str(value["id"]),
             name=str(value["name"]),
@@ -51,6 +57,7 @@ class MultimodalModel:
             minimum_accelerator_memory_mb=value.get("minimum_accelerator_memory_mb", 0),
             platforms=tuple(value["platforms"]),
             integration=str(value["integration"]),
+            components=components,
         )
         item.validate()
         return item
@@ -77,6 +84,13 @@ class MultimodalModel:
             raise ValueError(f"model {self.id} has invalid platform support")
         if self.integration not in INTEGRATIONS:
             raise ValueError(f"model {self.id} has invalid integration")
+        seen_roles: set[str] = set()
+        for role, source, revision in self.components:
+            if not role or role in seen_roles:
+                raise ValueError(f"model {self.id} has an empty or duplicate component role")
+            seen_roles.add(role)
+            if not (source.startswith("https://huggingface.co/") and re.fullmatch(r"[0-9a-f]{40}", revision)):
+                raise ValueError(f"model {self.id} component {role} must be a pinned Hugging Face source")
 
 
 @dataclass(frozen=True)
@@ -113,12 +127,67 @@ def _platform_name(hardware: HardwareFingerprint) -> str:
     return "linux" if "linux" in name else name
 
 
+def _as_mapping(state: Any) -> Mapping[str, Any] | None:
+    if state is None:
+        return None
+    if isinstance(state, Mapping):
+        return state
+    as_dict = getattr(state, "as_dict", None)
+    if callable(as_dict):
+        return as_dict()
+    raise TypeError(f"runtime state must be a mapping or expose as_dict(), got {type(state).__name__}")
+
+
+def _action(
+    item: MultimodalModel,
+    *,
+    fit: bool,
+    platform_supported: bool,
+    accelerator_fit: bool,
+    runtime_state: Mapping[str, Any] | None,
+) -> tuple[str, str]:
+    """Return (action, blocked_by).
+
+    Memory fit alone never makes a local runtime usable: when the caller probes
+    the declared runtime and it is not ready, the honest answer is "install the
+    adapter", not "run it now".
+    """
+    if not fit:
+        if not platform_supported:
+            return "unsupported-platform", "platform"
+        if not accelerator_fit:
+            return "insufficient-accelerator-memory", "accelerator"
+        return "insufficient-memory", "memory"
+
+    if runtime_state is not None:
+        state = str(runtime_state.get("status", ""))
+        if state not in {"ready", "delegated"}:
+            return ADAPTER_ACTIONS, state or "runtime"
+        if item.integration == "builtin" and state != "delegated" and item.runtime != "hermes":
+            return ADAPTER_ACTIONS, state
+
+    if item.integration == "builtin":
+        return "use-now", ""
+    if item.integration == "hermes-tool":
+        return "enable-hermes-tool", ""
+    if item.integration in {"turbofit-local", "turbofit-local-int8-offload"}:
+        return "run-turbofit-local", ""
+    return ADAPTER_ACTIONS, "adapter"
+
+
 def recommend_multimodal(
     *,
     hardware: HardwareFingerprint,
     catalog: MultimodalCatalog,
+    runtimes: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Rank every modality against physical total usable memory and OS support."""
+    """Rank every modality against physical memory, OS support and runtime readiness.
+
+    ``runtimes`` maps a runtime name to a probe result (see
+    :func:`turbofit_runtime.media_pipeline.probe_runtime`).  When supplied
+    entries whose engine or weights are missing are reported as
+    ``install-adapter`` with a ``blocked_by`` reason and the fix command.
+    """
     usable = hardware.total_usable_memory_mb
     platform = _platform_name(hardware)
     modalities: dict[str, list[dict[str, Any]]] = {name: [] for name in MODALITIES}
@@ -127,17 +196,19 @@ def recommend_multimodal(
         accelerator_fit = hardware.total_vram_mb >= item.minimum_accelerator_memory_mb
         fit = platform_supported and usable >= item.minimum_memory_mb and accelerator_fit
         recommended_fit = fit and usable >= item.recommended_memory_mb
-        action = "use-now" if item.integration == "builtin" and fit else (
-            "enable-hermes-tool" if item.integration == "hermes-tool" and fit else (
-                "run-turbofit-local" if item.integration == "turbofit-local-int8-offload" and fit else (
-                    "install-adapter" if fit else (
-                        "unsupported-platform" if not platform_supported else (
-                            "insufficient-accelerator-memory" if not accelerator_fit else "insufficient-memory"
-                        )
-                    )
-                )
-            )
+        runtime_state = None
+        if runtimes is not None:
+            runtime_state = runtimes.get(item.runtime)
+        state_map = _as_mapping(runtime_state)
+        action, blocked_by = _action(
+            item,
+            fit=fit,
+            platform_supported=platform_supported,
+            accelerator_fit=accelerator_fit,
+            runtime_state=state_map,
         )
+        status = None if state_map is None else str(state_map.get("status", ""))
+        command = "" if state_map is None else str(state_map.get("command", ""))
         payload = {
             "id": item.id,
             "name": item.name,
@@ -145,6 +216,10 @@ def recommend_multimodal(
             "revision": item.revision,
             "runtime": item.runtime,
             "integration": item.integration,
+            "components": [
+                {"role": role, "source": source, "revision": revision}
+                for role, source, revision in item.components
+            ],
             "minimum_memory_mb": item.minimum_memory_mb,
             "recommended_memory_mb": item.recommended_memory_mb,
             "minimum_accelerator_memory_mb": item.minimum_accelerator_memory_mb,
@@ -153,6 +228,10 @@ def recommend_multimodal(
             "fit": fit,
             "recommended_fit": recommended_fit,
             "action": action,
+            "blocked_by": blocked_by,
+            "runtime_status": status,
+            "runtime_ready": None if state_map is None else bool(state_map.get("ready")),
+            "fix_command": command,
         }
         for modality in item.modalities:
             modalities[modality].append(dict(payload))

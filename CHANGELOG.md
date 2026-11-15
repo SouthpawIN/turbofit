@@ -13,6 +13,29 @@
   `pending + resolved + deferred + waiting_download + waiting_memory +
   waiting_runtime` still equals all active rows. The launch-time
   `engine binary not found` error is unchanged.
+## Unreleased — the local video pipeline actually runs
+
+- **`animatediff` runtime with a real receipt**: `turbofit_runtime.media_pipeline`
+  declares every catalog runtime, probes it (`waiting-runtime`,
+  `waiting-download`, `waiting-memory`, `ready`) and builds the exact
+  invocation; `turbofit_runtime.animatediff_worker` is the only module that
+  imports torch and runs as a subprocess. `scripts/generate-local-video` renders
+  a prompt manifest into shots and assembles them with ffmpeg. First verified
+  output: `promo/local-video/`, two 16-frame shots, 640x384, 3.5 s, 5.6 GB peak
+  VRAM, 1 min 50 s wall clock on one RTX 3090.
+- **A missing engine or missing weights is an actionable error, not an
+  `ImportError`**: the raised `MediaRuntimeError` names the runtime, the status
+  and the `uv pip install` / pinned `hf download` line that fixes it. A worker
+  that exits 0 without writing its output is reported as a failure instead of a
+  silent no-op.
+- **`recommend_multimodal` can no longer overclaim**: it accepts probed runtime
+  states and downgrades any entry whose engine or weights are absent to
+  `install-adapter` with `blocked_by` and `fix_command`. `minimax-h3` is now a
+  `candidate` (its 498 GB weights were never materialized and no clip was ever
+  produced) instead of advertising `run-turbofit-local` on memory fit alone.
+- **Catalog entries can pin multiple components** (`components: [{role, source,
+  revision}]`), so a video model that needs a base plus a motion adapter is
+  reproducible rather than half-specified.
 
 ## Unreleased — downloads fetch every shard and survive a bad family
 
