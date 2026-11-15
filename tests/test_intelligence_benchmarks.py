@@ -52,10 +52,14 @@ def test_intelligence_recipe_hash_binds_benchmark_protocols() -> None:
     )
     assert digest.startswith("sha256:")
     assert payload["intelligence_recipe_protocol"] == INTELLIGENCE_RECIPE_PROTOCOL
-    assert payload["benchmark_protocols"]["deep-swe"] == DEEPSWE_RUNNER_PROTOCOL
+    assert set(payload["benchmark_protocols"]) == {
+        "hermes-bench", "terminal-bench-4", "terminal-bench-science", "skills-bench",
+    }
+    assert payload["retired_harnesses"]["deep-swe"] == DEEPSWE_RUNNER_PROTOCOL
 
 
 def configuration(identifier: str, *, deep: float, agent: float, tps: float) -> ConfigurationIntelligence:
+    """Two measured Hermes suites: ``deep`` -> terminal-bench-4, ``agent`` -> skills-bench."""
     return ConfigurationIntelligence(
         configuration_id=identifier,
         hardware_tier_gb=48,
@@ -65,7 +69,7 @@ def configuration(identifier: str, *, deep: float, agent: float, tps: float) -> 
         quantizations=("Q4_K_M", "Q4_K_M"),
         production_recipe_sha256=SHA,
         throughput_tps=tps,
-        measurements=(measurement("deep-swe", deep), measurement("agentic-pair", agent)),
+        measurements=(measurement("terminal-bench-4", deep), measurement("skills-bench", agent)),
     )
 
 
@@ -73,7 +77,7 @@ def test_intelligence_score_is_equal_weight_arithmetic_mean_of_real_suites() -> 
     item = configuration("pair-a", deep=0.25, agent=0.81, tps=20)
 
     assert intelligence_score(item) == pytest.approx(53.0)
-    assert item.coverage == "complete"
+    assert item.coverage == "partial"  # two of the four Hermes suites measured
 
 
 def test_one_real_zero_suite_does_not_erase_other_measured_capability() -> None:
@@ -99,7 +103,7 @@ def test_refresh_score_payload_rebuilds_stale_zero_composites_from_raw_suite_cou
     assert refreshed["benchmark_level"] == "screening"
 
 
-def test_intelligence_score_refuses_missing_required_suite() -> None:
+def test_intelligence_score_refuses_missing_hermes_suite() -> None:
     item = ConfigurationIntelligence(
         configuration_id="pair-a",
         hardware_tier_gb=48,
@@ -109,15 +113,36 @@ def test_intelligence_score_refuses_missing_required_suite() -> None:
         quantizations=("Q4",),
         production_recipe_sha256=SHA,
         throughput_tps=10,
-        measurements=(measurement("deep-swe", 0.5),),
+        measurements=(),
     )
 
     with pytest.raises(ValueError, match="missing required benchmark"):
         intelligence_score(item)
 
 
+def test_retired_deepswe_measurement_cannot_back_an_index() -> None:
+    """The retired pair is kept as a harness, never as a score."""
+    retired = measurement("deep-swe", 0.81)
+
+    with pytest.raises(ValueError, match="retired"):
+        validate_measurement(retired)
+
+    with pytest.raises(ValueError, match="retired"):
+        ConfigurationIntelligence(
+            configuration_id="legacy--auto--262k",
+            hardware_tier_gb=48,
+            main="main",
+            auxiliary="auto",
+            context=262_144,
+            quantizations=("Q4",),
+            production_recipe_sha256=SHA,
+            throughput_tps=39.0,
+            measurements=(retired, measurement("agentic-pair", 0.9)),
+        ).intelligence
+
+
 def test_measurement_requires_hash_bound_raw_result_and_consistent_counts() -> None:
-    invalid = measurement("deep-swe", 0.5)
+    invalid = measurement("terminal-bench-4", 0.5)
     invalid = BenchmarkMeasurement(**{**invalid.__dict__, "tasks_passed": 6})
     with pytest.raises(ValueError, match="score does not match"):
         validate_measurement(invalid)

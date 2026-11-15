@@ -52,7 +52,7 @@ def test_intelligence_campaign_expands_every_configuration_into_reproducible_lev
     state = build_state(matrix())
 
     assert len(state["runs"]) == 2 * len(LEVELS)
-    assert state["runs"]["a--auto--64k::screening"]["parameters"]["deepswe_tasks"] == 1
+    assert state["runs"]["a--auto--64k::screening"]["parameters"]["suite_tasks"]["terminal-bench-4"] == 1
     assert {run["level"] for run in state["runs"].values()} == set(LEVELS)
     assert all(
         run["status"] == ("waiting-runtime" if run["level"] == "screening" else f"waiting-{LEVELS[LEVELS.index(run['level']) - 1]}")
@@ -180,7 +180,7 @@ def test_deferred_configuration_remains_accounted_and_can_be_reopened() -> None:
 def test_reconcile_state_preserves_retained_runs_and_adds_replacement_rows() -> None:
     state = build_state(matrix())
     state["runs"]["a--auto--64k::screening"]["status"] = "success"
-    state["runs"]["a--auto--64k::screening"]["parameters"]["deepswe_tasks"] = 99
+    state["runs"]["a--auto--64k::screening"]["parameters"]["suite_tasks"]["terminal-bench-4"] = 99
     replacement = {
         "rows": [
             {"id": "a--auto--64k", "main": "a", "auxiliary": "auto", "context": 65536},
@@ -191,6 +191,6 @@ def test_reconcile_state_preserves_retained_runs_and_adds_replacement_rows() -> 
     reconciled = reconcile_state(state, replacement)
 
     assert reconciled["runs"]["a--auto--64k::screening"]["status"] == "success"
-    assert reconciled["runs"]["a--auto--64k::screening"]["parameters"]["deepswe_tasks"] == 1
+    assert reconciled["runs"]["a--auto--64k::screening"]["parameters"]["suite_tasks"]["terminal-bench-4"] == 1
     assert reconciled["runs"]["qwen--auto--64k::screening"]["status"] == "waiting-runtime"
     assert not any(key.startswith("b--aux--128k::") for key in reconciled["runs"])

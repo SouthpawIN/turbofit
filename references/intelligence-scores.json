@@ -1,20 +1,26 @@
 {
-  "generated_at": "2026-08-23T05:38:26.524467+00:00",
-  "records": [
+  "schema": "turbofit.intelligence-scores/v1",
+  "generated_at": "2026-11-15T15:20:00+00:00",
+  "index_suites": [
+    "hermes-bench",
+    "terminal-bench-4",
+    "terminal-bench-science",
+    "skills-bench"
+  ],
+  "retired_benchmarks": [
+    "deep-swe",
+    "agentic-pair"
+  ],
+  "records": [],
+  "archived": [
     {
-      "aux_mode": "shared-main",
-      "auxiliary": "auto:qwen3-8-27b-gsq-rco-iq3s",
-      "balanced_score": 58.77821,
-      "benchmark_level": "screening",
-      "catalog_auxiliary": "auto",
-      "catalog_main": "qwen3-8-27b-gsq-rco-iq3s",
       "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--auto--262k",
-      "context": 262144,
-      "hardware_tier_gb": 48,
-      "host_process_rss_peak_mb": 9405.19140625,
-      "intelligence_score": 46.875,
-      "main": "qwen3-8-27b-gsq-rco-iq3s",
-      "measurements": [
+      "status": "superseded",
+      "superseded_at": "2026-11-15T15:20:00+00:00",
+      "superseded_because": "Scored under the retired definition: intelligence_score 46.875 was the mean of deep-swe (0/1 tasks) and agentic-pair (15/16 decisions). Neither suite contributes to the Hermes Index, which is the four suites Hermes Agent runs (hermes-bench, terminal-bench-4, terminal-bench-science, skills-bench). The record also routes on an `auto` auxiliary that no longer exists in production. Retained for provenance; it may not be republished as an index.",
+      "previous_intelligence_score": 46.875,
+      "previous_balanced_score": 58.77821,
+      "previous_measurements": [
         {
           "name": "deep-swe",
           "raw_result": "/tmp/turbofit_benchmark_repair/references/results/intelligence-campaign/qwen3-8-27b-gsq-rco-iq3s--auto--262k/screening/attempts/20260823T053113.248993Z/raw-aggregate.json",
@@ -34,19 +40,23 @@
           "tasks_total": 16
         }
       ],
+      "schema": "turbofit.configuration-intelligence/v1",
+      "recorded_at": "2026-08-23T05:38:24.951167+00:00",
       "production_recipe_sha256": "sha256:2175ca09445736c9b74867bce5a7e7eee1c594245af5e2aa4da1a1510435b1e3",
+      "throughput_tps": 39.39215795117914,
+      "host_process_rss_peak_mb": 9405.19140625,
+      "hardware_tier_gb": 48,
+      "context": 262144,
+      "main": "qwen3-8-27b-gsq-rco-iq3s",
+      "auxiliary": "auto:qwen3-8-27b-gsq-rco-iq3s",
+      "aux_mode": "shared-main",
+      "catalog_main": "qwen3-8-27b-gsq-rco-iq3s",
+      "catalog_auxiliary": "auto",
+      "benchmark_level": "screening",
       "quantizations": [
         "UD-Q3_K_XL",
         "route-to-main"
-      ],
-      "recorded_at": "2026-08-23T05:38:24.951167+00:00",
-      "schema": "turbofit.configuration-intelligence/v1",
-      "throughput_tps": 39.39215795117914
+      ]
     }
-  ],
-  "required_benchmarks": [
-    "deep-swe",
-    "agentic-pair"
-  ],
-  "schema": "turbofit.intelligence-scores/v1"
+  ]
 }

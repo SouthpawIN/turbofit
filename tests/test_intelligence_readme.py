@@ -49,8 +49,8 @@ def _record(**overrides):
         "hardware_tier_gb": 48,
         "intelligence_score": 75.0,
         "measurements": [
-            {"name": "deep-swe", "score": 0.5, "tasks_passed": 1, "tasks_total": 2},
-            {"name": "agentic-pair", "score": 1.0, "tasks_passed": 16, "tasks_total": 16},
+            {"name": "terminal-bench-4", "score": 0.5, "tasks_passed": 1, "tasks_total": 2},
+            {"name": "skills-bench", "score": 1.0, "tasks_passed": 16, "tasks_total": 16},
         ],
         "quantizations": ["UD-Q4_K_M", "route-to-main"],
         "recorded_at": "2026-08-23T05:38:24.951167+00:00",
@@ -67,7 +67,7 @@ def _repo(tmp_path: Path, records, tiers=(8, 48, 96)) -> Path:
             {
                 "schema": SCORES_SCHEMA,
                 "records": records,
-                "required_benchmarks": ["deep-swe", "agentic-pair"],
+                "index_suites": list(HERMES_INDEX_SUITES),
             }
         ),
         encoding="utf-8",

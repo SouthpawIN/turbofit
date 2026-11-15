@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run durable DeepSWE + agentic-pair intelligence benchmarks on production recipes."""
+"""Run durable Hermes Index benchmarks (four suites) on production recipes."""
 from __future__ import annotations
 
 import argparse
@@ -14,7 +14,6 @@ import traceback
 from dataclasses import asdict, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from statistics import median
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,16 +21,19 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from turbofit_runtime.agentic_pair_benchmark import AgenticSuite, run_suite
 from turbofit_runtime.backend import CampaignBackend
 from turbofit_runtime.catalog_campaign import build_configuration_index
 from turbofit_runtime.executor import (
     capture_physical_hardware, physical_evidence_current, production_recipe_sha256,
 )
 from turbofit_runtime.hardware import probe_hardware
+from turbofit_runtime.hermes_suites import (
+    HERMES_INDEX_SUITES, availability, measurement_from_evidence, probe_throughput, summarize_job,
+)
 from turbofit_runtime.intelligence import (
-    BenchmarkMeasurement, ConfigurationIntelligence, canonical_intelligence_recipe,
-    intelligence_score, refresh_score_payload,
+    BenchmarkMeasurement, ConfigurationIntelligence, HERMES_INDEX_SUITES,
+    RETIRED_BENCHMARKS, canonical_intelligence_recipe, intelligence_score,
+    refresh_score_payload, suite_coverage_summary,
 )
 from turbofit_runtime.intelligence_campaign import (
     apply_deferred_configurations, build_state, complete_run, mark_running, next_ready_run, reconcile_state, recover_interrupted, reclaim_environmental_failures,
@@ -50,9 +52,7 @@ RESULTS = ROOT / "references/results/intelligence-campaign"
 SCORES = ROOT / "references/intelligence-scores.json"
 POLICY = ROOT / "references/catalog-campaign-policy.json"
 TOURNAMENTS = ROOT / "references/hardware-tier-tournaments.json"
-AGENTIC_SUITE = ROOT / "references/benchmarks/agentic-pair-v1.json"
-DEEPSWE = ROOT / "scripts/turbofit-deepswe"
-DEEPSWE_ROOT = Path.home() / ".local/share/turbofit/benchmarks"
+HERMES_SUITE = ROOT / "scripts/turbofit-hermes-suite"
 GATEWAY_PORT = 18092
 
 
@@ -225,60 +225,46 @@ def hardware_tier_gb() -> int:
     return max(tier for tier in (8, 16, 24, 48, 64, 96, 200, 300) if tier <= max(capacity, 8))
 
 
-def _deepswe_aggregate(paths: list[Path]) -> tuple[BenchmarkMeasurement, dict[str, Any]]:
-    payloads = [json.loads(path.read_text(encoding="utf-8")) for path in paths]
-    invalid = [item for item in payloads if item.get("status") != "measured" or item["summary"].get("infrastructure_failures", 0)]
-    if invalid:
-        raise RuntimeError(f"refusing {len(invalid)} invalid DeepSWE result set(s)")
-    total = sum(item["summary"]["tasks_total"] for item in payloads)
-    passed = sum(item["summary"]["tasks_passed"] for item in payloads)
-    aggregate = {
-        "schema": "turbofit.deepswe-aggregate/v1",
-        "suite_revision": payloads[0]["suite"]["revision"],
-        "tasks_total": total,
-        "tasks_passed": passed,
-        "score": passed / total,
-        "runs": [{"path": str(path), "evidence_sha256": payload["evidence_sha256"]} for path, payload in zip(paths, payloads, strict=True)],
-    }
-    return BenchmarkMeasurement(
-        name="deep-swe", revision=payloads[0]["suite"]["revision"], score=passed / total,
-        tasks_total=total, tasks_passed=passed, raw_result="", raw_result_sha256="",
-    ), aggregate
+def _run_index_suites(
+    *, attempt_dir: Path, run: dict[str, Any], recipe_sha: str, base_url: str,
+) -> tuple[list[BenchmarkMeasurement], dict[str, Any], dict[str, Any], float]:
+    """Run every runnable Hermes Index suite and read back its pass@1.
 
-
-def _agentic_aggregate(paths: list[Path]) -> tuple[BenchmarkMeasurement, dict[str, Any], float]:
-    payloads = [json.loads(path.read_text(encoding="utf-8")) for path in paths]
-    case_total = sum(item["summary"]["tasks_total"] for item in payloads)
-    aux_passed = sum(round(item["summary"]["aux_tool_accuracy"] * item["summary"]["tasks_total"]) for item in payloads)
-    main_passed = sum(round(item["summary"]["main_synthesis_accuracy"] * item["summary"]["tasks_total"]) for item in payloads)
-    decisions_total = 2 * case_total
-    decisions_passed = aux_passed + main_passed
-    speeds = []
-    for payload in payloads:
-        for case in payload["cases"]:
-            for timings in (case.get("aux_timings") or {}, case.get("main_timings") or {}):
-                speed = timings.get("predicted_per_second")
-                if isinstance(speed, (int, float)) and speed > 0:
-                    speeds.append(float(speed))
-    if not speeds:
-        raise RuntimeError("agentic benchmark returned no measured decode throughput")
-    aggregate = {
-        "schema": "turbofit.agentic-pair-aggregate/v1",
-        "suite_revision": payloads[0]["suite"]["revision"],
-        "tasks_total": case_total,
-        "aux_passed": aux_passed,
-        "main_passed": main_passed,
-        "decisions_total": decisions_total,
-        "decisions_passed": decisions_passed,
-        "score": decisions_passed / decisions_total,
-        "median_decode_tps": median(speeds),
-        "runs": [{"path": str(path), "evidence_sha256": payload["evidence_sha256"]} for path, payload in zip(paths, payloads, strict=True)],
-    }
-    return BenchmarkMeasurement(
-        name="agentic-pair", revision=payloads[0]["suite"]["revision"],
-        score=decisions_passed / decisions_total, tasks_total=decisions_total,
-        tasks_passed=decisions_passed, raw_result="", raw_result_sha256="",
-    ), aggregate, float(median(speeds))
+    Unavailable suites are recorded with their reason and the command that would
+    fix them, never as a zero. A suite that runs but produces infrastructure
+    failures raises, so the level fails instead of scoring a broken endpoint.
+    """
+    parameters = run["parameters"]
+    report = availability()
+    measurements: list[BenchmarkMeasurement] = []
+    evidence: dict[str, Any] = {}
+    unavailable: dict[str, Any] = {}
+    for name in HERMES_INDEX_SUITES:
+        state = report["suites"][name]
+        if state["status"] != "runnable":
+            unavailable[name] = {"status": "unavailable", "reason": state["reason"], "fix": state["fix"]}
+            continue
+        tasks = int(parameters["suite_tasks"].get(name, 1))
+        jobs = attempt_dir / "suites" / name
+        output = attempt_dir / "suites" / f"{name}.json"
+        command = [
+            str(HERMES_SUITE), "run", "--suite", name, "--model", "auto",
+            "--base-url", base_url, "--n-tasks", str(tasks), "--n-concurrent", "1",
+            "--jobs-dir", str(jobs),
+        ]
+        subprocess.run(command, check=True)
+        payload = summarize_job(
+            suite=name, jobs_dir=jobs, configuration_id=run["configuration_id"],
+            production_recipe_sha256=recipe_sha, output=output,
+        )
+        measurements.append(measurement_from_evidence(payload, raw_result=str(output)))
+        evidence[name] = payload["summary"]
+    if not measurements:
+        raise RuntimeError(
+            "no Hermes Index suite could run: " + ", ".join(sorted(unavailable))
+        )
+    throughput = probe_throughput(base_url=base_url, model="auto")
+    return measurements, evidence, unavailable, throughput
 
 
 def benchmark_run(run: dict[str, Any], catalog: ModelCatalog, recipes: RecipeBook) -> Path:
@@ -354,51 +340,27 @@ def benchmark_run(run: dict[str, Any], catalog: ModelCatalog, recipes: RecipeBoo
             "status": route.get("status"),
             "recorded_at": datetime.now(timezone.utc).isoformat(),
         })
-        deepswe_paths = []
-        parameters = run["parameters"]
-        dataset = DEEPSWE_ROOT / "deep-swe-435ee89ec2f2e2289f33b0da4f992f0b7b7266b9" / "tasks"
-        if not dataset.is_dir():
-            subprocess.run([str(DEEPSWE), "prepare", "--root", str(DEEPSWE_ROOT)], check=True)
-        for repetition in range(parameters["deepswe_repetitions"]):
-            jobs = attempt_dir / f"deepswe-jobs-{repetition}"
-            output = attempt_dir / f"deepswe-{repetition}.json"
-            command = [
-                str(DEEPSWE), "run", "--dataset", str(dataset), "--model", "auto",
-                "--base-url", f"http://127.0.0.1:{GATEWAY_PORT}/main/v1",
-                "--jobs-dir", str(jobs), "--n-tasks", str(parameters["deepswe_tasks"]),
-                "--agent-step-limit", str({"screening": 16, "promotion": 80, "release": 120}[run["level"]]),
-                "--max-output-tokens", str(1024 if run["level"] == "screening" else 4096),
-                "--sample-seed", str(repetition), "--configuration-id", run["configuration_id"],
-                "--production-recipe-sha256", recipe_sha, "--summary-output", str(output),
-            ]
-            subprocess.run(command, check=True)
-            deepswe_paths.append(output)
-        suite = AgenticSuite.load(AGENTIC_SUITE)
-        agentic_paths = []
-        for repetition in range(parameters["agentic_repetitions"]):
-            output = attempt_dir / f"agentic-pair-{repetition}.json"
-            run_suite(
-                suite=suite, gateway_base_url=f"http://127.0.0.1:{GATEWAY_PORT}",
-                configuration_id=run["configuration_id"], main_model="auto", auxiliary_model="auto",
-                production_recipe_sha256=recipe_sha, output_path=output,
-            )
-            agentic_paths.append(output)
-        deep_measurement, deep_aggregate = _deepswe_aggregate(deepswe_paths)
-        agent_measurement, agent_aggregate, throughput = _agentic_aggregate(agentic_paths)
+        measurements, suite_evidence, unavailable, throughput = _run_index_suites(
+            attempt_dir=attempt_dir, run=run, recipe_sha=recipe_sha,
+            base_url=f"http://127.0.0.1:{GATEWAY_PORT}/main/v1",
+        )
         aggregate_path = attempt_dir / "raw-aggregate.json"
         aggregate = {
-            "schema": "turbofit.intelligence-raw-aggregate/v1",
+            "schema": "turbofit.intelligence-raw-aggregate/v2",
             "configuration_id": run["configuration_id"], "level": run["level"],
             "production_recipe_sha256": recipe_sha, "checks": checks, "route": route,
-            "deep_swe": deep_aggregate, "agentic_pair": agent_aggregate,
+            "suites": suite_evidence,
+            "unavailable_suites": unavailable,
             "gpu_peak_mb": backend.peak_gpu_mb(),
             "host_process_rss_peak_mb": rss_sampler.peak_mb,
-            "docker_gateway_firewall": "temporary INPUT br+ tcp/18092 ACCEPT",
+            "docker_gateway_firewall": f"temporary INPUT br+ tcp/{GATEWAY_PORT} ACCEPT",
         }
         atomic_json(aggregate_path, aggregate)
         aggregate_sha = "sha256:" + hashlib.sha256(aggregate_path.read_bytes()).hexdigest()
-        deep_measurement = BenchmarkMeasurement(**{**asdict(deep_measurement), "raw_result": str(aggregate_path), "raw_result_sha256": aggregate_sha})
-        agent_measurement = BenchmarkMeasurement(**{**asdict(agent_measurement), "raw_result": str(aggregate_path), "raw_result_sha256": aggregate_sha})
+        measurements = tuple(
+            BenchmarkMeasurement(**{**asdict(item), "raw_result": str(aggregate_path), "raw_result_sha256": aggregate_sha})
+            for item in measurements
+        )
         by_model = {item.id: item for item in catalog.models}
         quantizations = [by_model[configuration["main"]].quantization]
         quantizations.append("route-to-main" if configuration["auxiliary"] == "auto" else by_model[configuration["auxiliary"]].quantization)
@@ -406,7 +368,7 @@ def benchmark_run(run: dict[str, Any], catalog: ModelCatalog, recipes: RecipeBoo
             configuration_id=run["configuration_id"], hardware_tier_gb=hardware_tier_gb(),
             main=recipe.main_alias, auxiliary=recipe.aux_alias, context=int(configuration["context"]),
             quantizations=tuple(quantizations), production_recipe_sha256=recipe_sha,
-            throughput_tps=throughput, measurements=(deep_measurement, agent_measurement),
+            throughput_tps=throughput, measurements=measurements,
         )
         payload = {
             "schema": "turbofit.configuration-intelligence/v1",
@@ -419,6 +381,10 @@ def benchmark_run(run: dict[str, Any], catalog: ModelCatalog, recipes: RecipeBoo
             "aux_mode": "shared-main" if configuration["auxiliary"] == "auto" else "dedicated",
             "recorded_at": datetime.now(timezone.utc).isoformat(),
             "host_process_rss_peak_mb": rss_sampler.peak_mb,
+            "combined_score": intelligence_score(record),
+            "suite_coverage": suite_coverage_summary(record),
+            "index_suites": list(suite_coverage_summary(record)["measured_suites"]),
+            "unavailable_suites": unavailable,
         }
         output = result_dir / "intelligence.json"
         atomic_json(output, payload)
@@ -477,7 +443,8 @@ def rebuild_scores(state: dict[str, Any] | None = None) -> int:
     atomic_json(SCORES, {
         "schema": "turbofit.intelligence-scores/v1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "required_benchmarks": ["deep-swe", "agentic-pair"],
+        "index_suites": list(HERMES_INDEX_SUITES),
+        "retired_benchmarks": list(RETIRED_BENCHMARKS),
         "records": sorted(by_configuration.values(), key=lambda item: str(item["configuration_id"])),
     })
     return refreshed_count

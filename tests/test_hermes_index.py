@@ -1,7 +1,7 @@
 from turbofit_runtime.hermes_index import build_table, index_row, render_markdown
 
 
-def rec(cid, intel, tps, suites=("deep-swe", "agentic-pair"), ts="2026-11-14T00:00:00Z"):
+def rec(cid, intel, tps, suites=("terminal-bench-4", "skills-bench"), ts="2026-11-14T00:00:00Z"):
     return {"configuration_id": cid, "main": cid.split("--")[0], "hardware_tier_gb": 48,
             "context": 65536, "auxiliary": "maple-preview-tq2", "intelligence_score": intel,
             "throughput_tps": tps, "recorded_at": ts, "benchmark_level": "screening", "suites": list(suites)}
@@ -15,14 +15,14 @@ def test_seconds_per_task_replaces_dollars():
 
 def test_suite_coverage_is_reported_not_assumed():
     row = index_row(rec("a", 46.9, 20.0))
-    assert row["suites_measured"] == 2 and row["suites_total"] == 6
+    assert row["suites_measured"] == 2 and row["suites_total"] == 4
 
 
 def test_table_sorts_by_index_and_renders():
     table = build_table([rec("slow", 30.0, 5.0), rec("fast", 70.0, 40.0)])
     assert [r["configuration"] for r in table["rows"]] == ["fast", "slow"]
     md = render_markdown(table)
-    assert "| fast | 48 GB | 65536 |" in md and "2/6" in md
+    assert "| fast | 48 GB | 65536 |" in md and "2/4" in md
 
 
 def test_empty_is_safe():

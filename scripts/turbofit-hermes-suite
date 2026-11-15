@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+"""Prepare, run and score one Hermes Index suite against a local endpoint.
+
+    turbofit-hermes-suite availability
+    turbofit-hermes-suite prepare  --suite terminal-bench-4
+    turbofit-hermes-suite run      --suite terminal-bench-4 --model qwen3-8-27b \\
+        --base-url http://127.0.0.1:8092/v1 --n-tasks 3 --jobs-dir evidence/tb4
+    turbofit-hermes-suite summarize --suite terminal-bench-4 --jobs-dir evidence/tb4 \\
+        --configuration-id qwen3-8-27b--none--64k \\
+        --production-recipe-sha256 sha256:... --output evidence/tb4.json
+
+Every suite is pinned by harness version and dataset revision; see
+``turbofit_runtime.hermes_suites``. ``hermes-bench`` reports ``unavailable:
+nous-internal`` and never produces a number.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+PROJECT_SRC = Path(__file__).resolve().parents[1] / "src"
+if str(PROJECT_SRC) not in sys.path:
+    sys.path.insert(0, str(PROJECT_SRC))
+
+from turbofit_runtime.hermes_suites import (  # noqa: E402
+    DEFAULT_ROOT,
+    SKILLSBENCH_DATASET,
+    SKILLSBENCH_REVISION,
+    availability,
+    harbor_command,
+    install_harness,
+    measurement_from_evidence,
+    render_index_block,
+    index_block,
+    require_runnable,
+    runner,
+    skillsbench_command,
+    summarize_job,
+)
+
+
+def prepare(suite: str, root: Path) -> dict:
+    definition = require_runnable(suite)
+    root.mkdir(parents=True, exist_ok=True)
+    install = install_harness(suite)
+    if definition.harness == "harbor":
+        cache = root / "harbor-cache"
+        cache.mkdir(parents=True, exist_ok=True)
+        fetched = subprocess.run(
+            ["harbor", "download", definition.dataset, "--cache"],
+            check=True, capture_output=True, text=True,
+        )
+        import re
+        match = re.search(r"(\d+)\s+task\(s\)", fetched.stdout + fetched.stderr)
+        tasks = None
+        task_count = int(match.group(1)) if match else None
+    else:
+        dataset = root / f"skillsbench-{SKILLSBENCH_REVISION[:12]}"
+        if not (dataset / ".git").is_dir():
+            subprocess.run(
+                ["git", "clone", "--filter=blob:none",
+                 "https://github.com/benchflow-ai/skillsbench.git", str(dataset)],
+                check=True,
+            )
+        subprocess.run(["git", "-C", str(dataset), "fetch", "origin", SKILLSBENCH_REVISION], check=True)
+        subprocess.run(["git", "-C", str(dataset), "checkout", "--detach", SKILLSBENCH_REVISION], check=True)
+        head = subprocess.run(
+            ["git", "-C", str(dataset), "rev-parse", "HEAD"],
+            check=True, capture_output=True, text=True,
+        ).stdout.strip()
+        if head != SKILLSBENCH_REVISION:
+            raise RuntimeError(f"skillsbench checkout is {head}, pinned revision is {SKILLSBENCH_REVISION}")
+        tasks = dataset / "tasks"
+        fetched = None
+        task_count = None
+    task_dirs = sorted(p.name for p in tasks.iterdir() if p.is_dir()) if tasks is not None else None
+    if task_count is None and task_dirs:
+        task_count = len(task_dirs)
+    return {
+        "status": "ready",
+        "suite": suite,
+        "harness": definition.harness,
+        "harness_version": definition.harness_version,
+        "dataset": definition.dataset,
+        "revision": definition.revision,
+        "install": install,
+        "tasks": tasks and str(tasks),
+        "tasks_total": task_count,
+        "fetch_exit": getattr(fetched, "returncode", None),
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("action", choices=("availability", "prepare", "run", "summarize", "block"))
+    parser.add_argument("--suite", choices=tuple(availability()["suites"]))
+    parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
+    parser.add_argument("--model", default="auto")
+    parser.add_argument("--base-url", default="http://127.0.0.1:8092/v1")
+    parser.add_argument("--jobs-dir", type=Path, default=Path("references/results/hermes-index"))
+    parser.add_argument("--n-tasks", type=int, default=3)
+    parser.add_argument("--n-concurrent", type=int, default=1)
+    parser.add_argument("--include", action="append", default=[])
+    parser.add_argument("--agent", default=None, help="override the suite's harness-native agent")
+    parser.add_argument("--dataset", default=SKILLSBENCH_DATASET)
+    parser.add_argument("--tasks-dir", type=Path)
+    parser.add_argument("--configuration-id")
+    parser.add_argument("--production-recipe-sha256")
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--evidence", type=Path, action="append", default=[])
+    parser.add_argument("--hardware-tier-gb", type=int, default=48)
+    parser.add_argument("--context", type=int, default=65_536)
+    parser.add_argument("--tokens-per-second", type=float)
+    args = parser.parse_args()
+
+    if args.action == "availability":
+        print(json.dumps(availability(), indent=2))
+        return 0
+
+    if not args.suite:
+        parser.error("--suite is required")
+    definition = runner(args.suite)
+
+    if args.action == "prepare":
+        print(json.dumps(prepare(args.suite, args.root), indent=2))
+        return 0
+
+    if args.action == "summarize":
+        if not args.configuration_id or not args.production_recipe_sha256:
+            parser.error("summarize requires --configuration-id and --production-recipe-sha256")
+        evidence = summarize_job(
+            suite=args.suite,
+            jobs_dir=args.jobs_dir,
+            configuration_id=args.configuration_id,
+            production_recipe_sha256=args.production_recipe_sha256,
+            output=args.output,
+        )
+        print(json.dumps(evidence, indent=2))
+        return 0
+
+    if args.action == "block":
+        if not args.evidence:
+            parser.error("block requires at least one --evidence file")
+        measurements = []
+        speeds = []
+        for path in args.evidence:
+            payload = json.loads(Path(path).read_text(encoding="utf-8"))
+            measurements.append(measurement_from_evidence(payload, raw_result=str(path)))
+            if payload["summary"].get("tokens_per_second"):
+                speeds.append(float(payload["summary"]["tokens_per_second"]))
+        block = index_block(
+            model=args.model,
+            configuration=args.configuration_id or args.model,
+            hardware_tier_gb=args.hardware_tier_gb,
+            context=args.context,
+            measurements=measurements,
+            tokens_per_second=args.tokens_per_second or (sum(speeds) / len(speeds) if speeds else None),
+        )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(json.dumps(block, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(render_index_block(block))
+        return 0
+
+    # run
+    if definition.harness == "harbor":
+        command, environment = harbor_command(
+            suite=args.suite,
+            model=args.model,
+            base_url=args.base_url,
+            jobs_dir=args.jobs_dir,
+            n_tasks=args.n_tasks,
+            include=args.include,
+            agent=args.agent,
+            n_concurrent=args.n_concurrent,
+        )
+    else:
+        command, environment = skillsbench_command(
+            model=args.model,
+            base_url=args.base_url,
+            jobs_dir=args.jobs_dir,
+            tasks_dir=args.tasks_dir,
+            dataset=args.dataset,
+            include=args.include,
+            agent=args.agent,
+            n_concurrent=args.n_concurrent,
+        )
+    print(json.dumps({"command": command, "endpoint": environment["OPENAI_BASE_URL"]}, indent=2))
+    return subprocess.run(command, env=environment, check=False).returncode
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

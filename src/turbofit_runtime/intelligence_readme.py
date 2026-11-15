@@ -3,8 +3,8 @@
 The Hermes Index is Nous Research's definition of model intelligence: the mean
 pass@1 across four suites run inside Hermes Agent (Hermes Bench, TerminalBench 4,
 TerminalBench Science, SkillsBench), reported together with the cost of a task.
-TurboFit adopts that definition, and ``deep-swe`` + ``agentic-pair`` are the
-interim pair it can run locally today.
+TurboFit adopts that definition and nothing else: a row is published only when at
+least one of those four suites was actually measured.
 
 Two consequences shape this renderer:
 
@@ -31,15 +31,17 @@ GENERATED_BEGIN = "<!-- turbofit:generated:hermes-index:begin -->"
 GENERATED_END = "<!-- turbofit:generated:hermes-index:end -->"
 DEFAULT_ANCHOR = "## Keeping it current"
 
-#: The four suites that make up a complete Hermes Index.
+#: The four suites that make up a complete Hermes Index. These names match
+#: ``turbofit_runtime.intelligence.HERMES_INDEX_SUITES`` exactly so a record can
+#: be checked against either renderer.
 HERMES_INDEX_SUITES = (
     "hermes-bench",
-    "terminalbench-4",
-    "terminalbench-science",
-    "skillsbench",
+    "terminal-bench-4",
+    "terminal-bench-science",
+    "skills-bench",
 )
-#: The interim suites TurboFit can run today (names as stored in the scores file).
-INTERIM_SUITES = ("deep-swe", "agentic-pair")
+#: Retired suites. They may exist in archived evidence, never in a live row.
+RETIRED_SUITES = ("deep-swe", "agentic-pair")
 #: 32K is below spec: a measurement at a smaller window is never published.
 MIN_CONTEXT = 65536
 #: Local inference has no dollar cost; time per 1,000-token task replaces it.
@@ -64,6 +66,16 @@ def load_scores(path: Path) -> dict[str, Any]:
             raise ValueError("intelligence record must be an object")
         if not str(record.get("configuration_id") or "").strip():
             raise ValueError("intelligence record has no configuration_id")
+        names = {str(m.get("name")) for m in record.get("measurements") or [] if isinstance(m, dict)}
+        stale = sorted(names & set(RETIRED_SUITES))
+        if stale:
+            raise ValueError(
+                f"record {record.get('configuration_id')!r} carries retired suite(s) "
+                f"{', '.join(stale)}: the index is the four Hermes suites only"
+            )
+    archived = payload.get("archived") or []
+    if not isinstance(archived, list):
+        raise ValueError("intelligence scores has a non-list 'archived' block")
     return payload
 
 
@@ -97,11 +109,12 @@ def _aux(record: Mapping[str, Any]) -> str:
     return f"{mode} · `{auxiliary}`"
 
 
-def _suites(record: Mapping[str, Any]) -> tuple[int, int, str]:
-    """Measured suite count, total, and the measured suite names."""
-    names = [str(m.get("name")) for m in record.get("measurements") or [] if m.get("name")]
-    measured = len(set(names))
-    return measured, len(HERMES_INDEX_SUITES), ", ".join(sorted(set(names))) or "none"
+def _suites(record: Mapping[str, Any]) -> tuple[int, int, str, tuple[str, ...]]:
+    """Measured Hermes-suite count, total, names, and any retired suites seen."""
+    raw = [str(m.get("name")) for m in record.get("measurements") or [] if m.get("name")]
+    retired = tuple(sorted({name for name in raw if name in RETIRED_SUITES}))
+    names = sorted({name for name in raw if name in HERMES_INDEX_SUITES})
+    return len(names), len(HERMES_INDEX_SUITES), ", ".join(names) or "none", retired
 
 
 def _finite(value: Any) -> float | None:
@@ -120,9 +133,12 @@ def _row(record: Mapping[str, Any]) -> dict[str, Any]:
             f"record {record.get('configuration_id')!r} has context {context!r}; "
             f"the published floor is {MIN_CONTEXT}"
         )
-    measured, total, names = _suites(record)
+    measured, total, names, retired = _suites(record)
     tps = _finite(record.get("throughput_tps"))
-    index = _finite(record.get("intelligence_score"))
+    # An index exists only if a Hermes suite was measured. A record that carries
+    # only retired suites (a legacy DeepSWE row) renders as "no measurements
+    # yet" instead of republishing its old composite.
+    index = _finite(record.get("intelligence_score")) if measured else None
     return {
         "configuration_id": record.get("configuration_id"),
         "model": str(record.get("main") or record.get("configuration_id")),
@@ -135,6 +151,7 @@ def _row(record: Mapping[str, Any]) -> dict[str, Any]:
         "suites_total": total,
         "suites": f"{measured}/{total}",
         "suite_names": names,
+        "retired_suites": retired,
         "tps": tps,
         "seconds_per_task": (TOKENS_PER_TASK / tps) if tps else None,
         "level": str(record.get("benchmark_level") or "—"),
@@ -142,7 +159,11 @@ def _row(record: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def build_rows(scores: Mapping[str, Any]) -> list[dict[str, Any]]:
-    """One row per measured configuration, newest measurement per configuration."""
+    """One row per measured configuration, newest measurement per configuration.
+
+    A record with no Hermes-suite measurement has no index and therefore no row:
+    it is reported through the tier lines as ``no measurements yet``.
+    """
     newest: dict[str, Mapping[str, Any]] = {}
     for record in scores.get("records") or []:
         identifier = str(record.get("configuration_id"))
@@ -152,6 +173,7 @@ def build_rows(scores: Mapping[str, Any]) -> list[dict[str, Any]]:
         ):
             newest[identifier] = record
     rows = [_row(record) for record in newest.values()]
+    rows = [row for row in rows if row["suites_measured"] > 0]
     rows.sort(key=lambda r: (r["tier"], -(r["index"] or -1.0), r["configuration_id"]))
     return rows
 
@@ -211,13 +233,23 @@ def render_section(scores: Mapping[str, Any], tiers: Sequence[int]) -> str:
         )
     lines.append("")
     lines.append(
-        "`deep-swe` and `agentic-pair` are the interim suites TurboFit can run today; "
-        "the other two Hermes Index suites are not wired yet, so no row above is a "
-        "complete index. `s/task @1k` is `1,000 ÷ tok/s`. The `no measurements yet` row "
-        "lists every tier the campaign has not reached — those tiers stay visible "
+        "A suite that cannot be run here is reported as **unavailable** with its reason rather "
+        "than as a zero, so `suites` shows exactly how much of the index a row carries. "
+        "Hermes Bench is run by Nous and is not publicly reproducible; TerminalBench 4, "
+        "TerminalBench Science and SkillsBench are wired through their own harnesses against a "
+        "TurboFit-served local endpoint. `s/task @1k` is `1,000 ÷ tok/s`. The `no measurements "
+        "yet` row lists every tier the campaign has not reached — those tiers stay visible "
         "instead of being dropped."
     )
     lines.append("")
+    archived = [item for item in scores.get("archived") or [] if isinstance(item, Mapping)]
+    if archived:
+        ids = ", ".join(f"`{item.get('configuration_id')}`" for item in archived)
+        lines.append(
+            f"Superseded and not published: {ids} — scored under the retired "
+            "`deep-swe`/`agentic-pair` definition, which no longer contributes to any index."
+        )
+        lines.append("")
     lines.append(
         "Source: `references/intelligence-scores.json`; regenerate with "
         "`tools/turbofit-intel-leaderboard`. Do not hand-edit between the markers."
