@@ -12,6 +12,7 @@ from .executor import production_recipe_sha256
 from .experts import available_ram_bytes
 from .hardware import HardwareFingerprint
 from .intelligence import canonical_intelligence_recipe
+from .quant_policy import classify_entry, default_admits
 from .recommend import vram_reporting_tolerance_mb
 from .recipes import RecipeBook
 from .schema import MatrixRow
@@ -304,8 +305,12 @@ def build_tier_report(
                 speed_fraction = min(float(throughput_value) / 50.0, 1.0)
                 if intelligence_fraction > 0 and speed_fraction > 0:
                     balanced_value = 200.0 * intelligence_fraction * speed_fraction / (intelligence_fraction + speed_fraction)
+            quant = classify_entry(main)
+            _admitted, quant_reason = default_admits(main, fits_fully_in_vram=True)
             candidate_rows.append({
                 "configuration_id": identifier,
+                "quant_class": quant.quant_class,
+                "quant_reason": None if quant.is_allowed else quant_reason,
                 "main": {
                     "id": main["id"], "name": main["name"],
                     "quantization": main["quantization"],

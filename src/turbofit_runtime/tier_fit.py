@@ -21,11 +21,13 @@ from __future__ import annotations
 import json
 import os
 import re
+
 from dataclasses import asdict, dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Iterable, Mapping
 
 from .experts import plan_expert_offload
+from .quant_policy import ALLOWED, classify_entry, default_admits, entry_quantization
 
 FOOTPRINTS_SCHEMA = "turbofit.model-footprints/v1"
 AUXILIARY_ID = "maple-preview-tq2"
@@ -391,6 +393,8 @@ def fitting_contexts(
     ]
 
 
+
+
 def _configuration_ids(configurations: Mapping[str, Any]) -> set[str]:
     rows = configurations.get("rows")
     if not isinstance(rows, list):
@@ -451,24 +455,146 @@ def select_placements(
     return [placement for _c, _w, _id, items in grouped for placement in items]
 
 
-def select_candidates(
+@dataclass(frozen=True)
+class TierSelection:
+    """One tier's tournament candidacy, with the quant-policy audit trail.
+
+    ``candidates`` are the configuration ids the campaign may rank: full-GPU
+    placements only, after the quantization policy.  ``exceptions`` records
+    every admitted above-Q4 candidate and *why* it was admitted (Q8/full
+    precision that fits, or a catalog-recorded justification), so the tournament
+    file states the reason rather than implying it.  ``excluded`` records mains
+    that fit the band but are held out by the Q4 ceiling, so a family
+    disappearing from a tier is visible.
+
+    ``offload`` holds the offloaded placements (``Placement.as_dict()``) that
+    passed the same policy; they are never mixed into ``candidates``.
+    """
+
+    candidates: tuple[str, ...]
+    exceptions: tuple[dict[str, Any], ...]
+    excluded: tuple[dict[str, Any], ...]
+    offload: tuple[dict[str, Any], ...] = ()
+
+
+def _quant_record(model: Mapping[str, Any]) -> tuple[str, str, str]:
+    verdict = classify_entry(model)
+    return entry_quantization(model), verdict.quant_class, verdict.token or entry_quantization(model)
+
+
+def _quant_audit(
+    catalog: Mapping[str, Any],
+    placements: list[Placement],
+) -> tuple[dict[str, bool], list[dict[str, Any]], list[dict[str, Any]]]:
+    """Apply the Q4 ceiling to every main placeable in this band.
+
+    Returns ``(admitted_by_main, exceptions, excluded)``.  ``admitted_by_main``
+    gates both the full-GPU and the offload list, so an above-ceiling build
+    cannot slip in by being too large for the card.  A Q8/full-precision build
+    counts as fitting fully in VRAM only when the band places it entirely on
+    the GPU; an offload-only Q8 build needs an accuracy-tier mark or a recorded
+    justification like any other exception.
+
+    Quant width is never a ranking signal: admission is the only thing this
+    looks at, and low quants are admitted unconditionally.
+    """
+    by_main: dict[str, list[Placement]] = {}
+    for item in placements:
+        by_main.setdefault(item.main, []).append(item)
+    admitted: dict[str, bool] = {}
+    exceptions: list[dict[str, Any]] = []
+    excluded: list[dict[str, Any]] = []
+    for model in catalog.get("models") or []:
+        if "main" not in (model.get("roles") or []):
+            continue
+        model_id = str(model["id"])
+        items = by_main.get(model_id)
+        if not items:
+            continue
+        quantization, quant_class, token = _quant_record(model)
+        fits_gpu = any(item.placement == "gpu" for item in items)
+        admitted_flag, reason = default_admits(model, fits_fully_in_vram=fits_gpu)
+        admitted[model_id] = admitted_flag
+        if not admitted_flag:
+            excluded.append({
+                "main": model_id,
+                "family": str(model.get("family") or ""),
+                "quantization": quantization,
+                "quant_class": quant_class,
+                "quant_token": token,
+                "reason": reason,
+                "contexts": sorted({item.context for item in items}),
+            })
+            continue
+        if quant_class != ALLOWED:
+            exceptions.append({
+                "main": model_id,
+                "quantization": quantization,
+                "quant_class": quant_class,
+                "quant_token": token,
+                "reason": reason,
+            })
+    return (
+        admitted,
+        sorted(exceptions, key=lambda item: item["main"]),
+        sorted(excluded, key=lambda item: item["main"]),
+    )
+
+
+def plan_candidates(
     catalog: Mapping[str, Any],
     configurations: Mapping[str, Any],
     footprints: Mapping[str, Any],
     vram_gb: int,
     ram_bytes: int | None = None,
-) -> list[str]:
-    """Catalog mains that run *entirely on the GPU* at this band.
+    *,
+    measured: bool = True,
+) -> TierSelection:
+    """Every placeable catalog main at Maple aux, after the quantization policy.
 
-    RAM is accepted for signature compatibility but never promotes a model into
-    this list: an offloaded configuration is a different placement and is
-    returned by :func:`select_offload_candidates`.
+    A main at or below the Q4 class is admitted as before.  A Q8/full-precision
+    main is admitted only when it fits the band, and the reason is recorded.  A
+    Q5/Q6 main is admitted only when its catalog entry carries a
+    ``quantization_justification``; otherwise it is listed as excluded.
+
+    ``candidates`` are full-GPU placements only; offloaded placements ride in
+    ``offload`` and are returned separately by
+    :func:`select_offload_candidates`.  RAM is accepted for signature
+    compatibility: it never promotes a model into the full-GPU list.
     """
     placements = select_placements(
         catalog, configurations, footprints, vram_gb,
         ram_budget_bytes(default_ram_gib()) if ram_bytes is None else ram_bytes,
+        measured=measured,
     )
-    return [item.configuration_id for item in placements if item.placement == "gpu"]
+    admitted, exceptions, excluded = _quant_audit(catalog, placements)
+    return TierSelection(
+        candidates=tuple(
+            item.configuration_id
+            for item in placements
+            if item.placement == "gpu" and admitted.get(item.main, True)
+        ),
+        exceptions=tuple(exceptions),
+        excluded=tuple(excluded),
+        offload=tuple(
+            item.as_dict() for item in placements
+            if item.placement == "offload" and admitted.get(item.main, True)
+        ),
+    )
+
+
+def select_candidates(
+    catalog: Mapping[str, Any],
+    configurations: Mapping[str, Any],
+    footprints: Mapping[str, Any],
+    vram_gb: int,
+) -> list[str]:
+    """Catalog mains that run *entirely on the GPU* at this band.
+
+    An offloaded configuration is a different placement and is returned by
+    :func:`select_offload_candidates`.
+    """
+    return list(plan_candidates(catalog, configurations, footprints, vram_gb).candidates)
 
 
 def select_offload_candidates(
@@ -478,11 +604,19 @@ def select_offload_candidates(
     vram_gb: int,
     ram_bytes: int,
 ) -> list[dict[str, Any]]:
-    """Catalog mains that only fit this band with experts in system RAM."""
+    """Catalog mains that only fit this band with experts in system RAM.
+
+    The same quantization policy applies: a Q5/Q6 build needs a recorded
+    justification to appear here too.
+    """
     placements = select_placements(
         catalog, configurations, footprints, vram_gb, ram_bytes,
     )
-    return [item.as_dict() for item in placements if item.placement == "offload"]
+    admitted, _exceptions, _excluded = _quant_audit(catalog, placements)
+    return [
+        item.as_dict() for item in placements
+        if item.placement == "offload" and admitted.get(item.main, True)
+    ]
 
 
 def unmeasured_moe_mains(

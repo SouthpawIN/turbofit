@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+from turbofit_runtime.quant_policy import default_admits
 from turbofit_runtime.tier_fit import (
     AUXILIARY_ID,
     DEFAULT_RAM_GIB,
@@ -227,14 +228,29 @@ def test_committed_tournaments_match_the_stated_ram_assumption() -> None:
 
     by_tier = {item["vram_gb"]: item for item in tournaments["tiers"]}
     assert tuple(by_tier) == TIERS
+    models = {item["id"]: item for item in catalog["models"]}
     for vram_gb in TIERS:
         placements = select_placements(catalog, configurations, footprints, vram_gb, ram_bytes)
+
+        def admitted(placement) -> bool:
+            # The Q4 ceiling gates both placements: an above-ceiling build needs a
+            # recorded justification before it may appear in either list.
+            fits_gpu = any(
+                other.placement == "gpu" and other.main == placement.main
+                for other in placements
+            )
+            return default_admits(models[placement.main], fits_fully_in_vram=fits_gpu)[0]
+
         assert by_tier[vram_gb]["candidates"] == [
-            item.configuration_id for item in placements if item.placement == "gpu"
+            item.configuration_id for item in placements
+            if item.placement == "gpu" and admitted(item)
         ]
         assert [
             entry["configuration_id"] for entry in by_tier[vram_gb]["offload_candidates"]
-        ] == [item.configuration_id for item in placements if item.placement == "offload"]
+        ] == [
+            item.configuration_id for item in placements
+            if item.placement == "offload" and admitted(item)
+        ]
         assert not set(by_tier[vram_gb]["candidates"]) & set(offload_candidate_ids(
             {"tiers": [by_tier[vram_gb]]}
         ))

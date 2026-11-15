@@ -39,39 +39,6 @@
       ],
       "offload_candidates": [
         {
-          "configuration_id": "flint-40a2-5b-mix24g--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 27.37,
-          "vram_gib": 6.09,
-          "ram_gib": 21.27,
-          "n_cpu_moe": 40,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "40/47 expert layers in RAM (21.3 GiB), 6.1 GiB in VRAM"
-        },
-        {
-          "configuration_id": "flint-40a2-5b-mix24g--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 28.37,
-          "vram_gib": 6.03,
-          "ram_gib": 22.34,
-          "n_cpu_moe": 42,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "42/47 expert layers in RAM (22.3 GiB), 6.0 GiB in VRAM"
-        },
-        {
-          "configuration_id": "flint-40a2-5b-mix24g--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 30.37,
-          "vram_gib": 6.44,
-          "ram_gib": 23.93,
-          "n_cpu_moe": 45,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "45/47 expert layers in RAM (23.9 GiB), 6.4 GiB in VRAM"
-        },
-        {
           "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl--maple-preview-tq2--64k",
           "placement": "offload",
           "total_gib": 21.61,
@@ -138,39 +105,6 @@
           "reason": "39/41 expert layers in RAM (17.7 GiB), 6.5 GiB in VRAM"
         },
         {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 20.46,
-          "vram_gib": 6.38,
-          "ram_gib": 14.08,
-          "n_cpu_moe": 33,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "33/40 expert layers in RAM (14.1 GiB), 6.4 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 21.46,
-          "vram_gib": 6.1,
-          "ram_gib": 15.36,
-          "n_cpu_moe": 36,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "36/40 expert layers in RAM (15.4 GiB), 6.1 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 23.46,
-          "vram_gib": 6.39,
-          "ram_gib": 17.07,
-          "n_cpu_moe": 40,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "40/40 expert layers in RAM (17.1 GiB), 6.4 GiB in VRAM"
-        },
-        {
           "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q8-k-xl--maple-preview-tq2--64k",
           "placement": "offload",
           "total_gib": 17.51,
@@ -202,39 +136,6 @@
           "expert_layers": 40,
           "evidence": "measured-expert-footprint",
           "reason": "40/40 expert layers in RAM (14.1 GiB), 6.4 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 16.69,
-          "vram_gib": 6.38,
-          "ram_gib": 10.31,
-          "n_cpu_moe": 31,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "31/40 expert layers in RAM (10.3 GiB), 6.4 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 17.69,
-          "vram_gib": 6.38,
-          "ram_gib": 11.3,
-          "n_cpu_moe": 34,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "34/40 expert layers in RAM (11.3 GiB), 6.4 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 19.69,
-          "vram_gib": 6.39,
-          "ram_gib": 13.3,
-          "n_cpu_moe": 40,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "40/40 expert layers in RAM (13.3 GiB), 6.4 GiB in VRAM"
         },
         {
           "configuration_id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs--maple-preview-tq2--64k",
@@ -413,6 +314,48 @@
           "reason": "38/40 expert layers in RAM (15.1 GiB), 6.4 GiB in VRAM"
         }
       ],
+      "quant_exceptions": [],
+      "quant_excluded": [
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q4_K_S",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q3_K_XL",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q6",
+          "reason": "Q6 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "flint-40a2-5b-mix24g",
+          "family": "Flint 40A2.5B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        }
+      ],
       "winner": null
     },
     {
@@ -529,39 +472,6 @@
           "expert_layers": 47,
           "evidence": "measured-expert-footprint",
           "reason": "47/47 expert layers in RAM (63.9 GiB), 10.1 GiB in VRAM"
-        },
-        {
-          "configuration_id": "flint-40a2-5b-mix24g--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 27.37,
-          "vram_gib": 10.35,
-          "ram_gib": 17.02,
-          "n_cpu_moe": 32,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "32/47 expert layers in RAM (17.0 GiB), 10.3 GiB in VRAM"
-        },
-        {
-          "configuration_id": "flint-40a2-5b-mix24g--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 28.37,
-          "vram_gib": 10.29,
-          "ram_gib": 18.08,
-          "n_cpu_moe": 34,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "34/47 expert layers in RAM (18.1 GiB), 10.3 GiB in VRAM"
-        },
-        {
-          "configuration_id": "flint-40a2-5b-mix24g--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 30.37,
-          "vram_gib": 10.16,
-          "ram_gib": 20.21,
-          "n_cpu_moe": 38,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "38/47 expert layers in RAM (20.2 GiB), 10.2 GiB in VRAM"
         },
         {
           "configuration_id": "qwen3-6-35b-a3b-q4--maple-preview-tq2--64k",
@@ -696,39 +606,6 @@
           "reason": "30/41 expert layers in RAM (13.6 GiB), 10.6 GiB in VRAM"
         },
         {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 20.46,
-          "vram_gib": 10.22,
-          "ram_gib": 10.24,
-          "n_cpu_moe": 24,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "24/40 expert layers in RAM (10.2 GiB), 10.2 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 21.46,
-          "vram_gib": 10.36,
-          "ram_gib": 11.09,
-          "n_cpu_moe": 26,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "26/40 expert layers in RAM (11.1 GiB), 10.4 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 23.46,
-          "vram_gib": 10.23,
-          "ram_gib": 13.23,
-          "n_cpu_moe": 31,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "31/40 expert layers in RAM (13.2 GiB), 10.2 GiB in VRAM"
-        },
-        {
           "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q8-k-xl--maple-preview-tq2--64k",
           "placement": "offload",
           "total_gib": 17.51,
@@ -760,39 +637,6 @@
           "expert_layers": 40,
           "evidence": "measured-expert-footprint",
           "reason": "29/40 expert layers in RAM (10.2 GiB), 10.3 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 16.69,
-          "vram_gib": 10.37,
-          "ram_gib": 6.32,
-          "n_cpu_moe": 19,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "19/40 expert layers in RAM (6.3 GiB), 10.4 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 17.69,
-          "vram_gib": 10.37,
-          "ram_gib": 7.31,
-          "n_cpu_moe": 22,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "22/40 expert layers in RAM (7.3 GiB), 10.4 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 19.69,
-          "vram_gib": 10.38,
-          "ram_gib": 9.31,
-          "n_cpu_moe": 28,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "28/40 expert layers in RAM (9.3 GiB), 10.4 GiB in VRAM"
         },
         {
           "configuration_id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs--maple-preview-tq2--64k",
@@ -1004,6 +848,48 @@
           "reason": "28/40 expert layers in RAM (11.1 GiB), 10.4 GiB in VRAM"
         }
       ],
+      "quant_exceptions": [],
+      "quant_excluded": [
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q4_K_S",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q3_K_XL",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q6",
+          "reason": "Q6 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "flint-40a2-5b-mix24g",
+          "family": "Flint 40A2.5B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        }
+      ],
       "winner": null
     },
     {
@@ -1143,39 +1029,6 @@
           "reason": "44/47 expert layers in RAM (59.9 GiB), 14.2 GiB in VRAM"
         },
         {
-          "configuration_id": "flint-40a2-5b-mix24g--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 27.37,
-          "vram_gib": 14.6,
-          "ram_gib": 12.76,
-          "n_cpu_moe": 24,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "24/47 expert layers in RAM (12.8 GiB), 14.6 GiB in VRAM"
-        },
-        {
-          "configuration_id": "flint-40a2-5b-mix24g--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 28.37,
-          "vram_gib": 14.54,
-          "ram_gib": 13.83,
-          "n_cpu_moe": 26,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "26/47 expert layers in RAM (13.8 GiB), 14.5 GiB in VRAM"
-        },
-        {
-          "configuration_id": "flint-40a2-5b-mix24g--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 30.37,
-          "vram_gib": 14.41,
-          "ram_gib": 15.96,
-          "n_cpu_moe": 30,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "30/47 expert layers in RAM (16.0 GiB), 14.4 GiB in VRAM"
-        },
-        {
           "configuration_id": "qwen3-6-35b-a3b-q4--maple-preview-tq2--64k",
           "placement": "offload",
           "total_gib": 22.94,
@@ -1308,39 +1161,6 @@
           "reason": "22/41 expert layers in RAM (10.0 GiB), 14.2 GiB in VRAM"
         },
         {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 20.46,
-          "vram_gib": 14.48,
-          "ram_gib": 5.97,
-          "n_cpu_moe": 14,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "14/40 expert layers in RAM (6.0 GiB), 14.5 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 21.46,
-          "vram_gib": 14.63,
-          "ram_gib": 6.83,
-          "n_cpu_moe": 16,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "16/40 expert layers in RAM (6.8 GiB), 14.6 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 23.46,
-          "vram_gib": 14.5,
-          "ram_gib": 8.96,
-          "n_cpu_moe": 21,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "21/40 expert layers in RAM (9.0 GiB), 14.5 GiB in VRAM"
-        },
-        {
           "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q8-k-xl--maple-preview-tq2--64k",
           "placement": "offload",
           "total_gib": 17.51,
@@ -1372,39 +1192,6 @@
           "expert_layers": 40,
           "evidence": "measured-expert-footprint",
           "reason": "17/40 expert layers in RAM (6.0 GiB), 14.5 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 16.69,
-          "vram_gib": 14.36,
-          "ram_gib": 2.33,
-          "n_cpu_moe": 7,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "7/40 expert layers in RAM (2.3 GiB), 14.4 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 17.69,
-          "vram_gib": 14.36,
-          "ram_gib": 3.32,
-          "n_cpu_moe": 10,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "10/40 expert layers in RAM (3.3 GiB), 14.4 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 19.69,
-          "vram_gib": 14.37,
-          "ram_gib": 5.32,
-          "n_cpu_moe": 16,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "16/40 expert layers in RAM (5.3 GiB), 14.4 GiB in VRAM"
         },
         {
           "configuration_id": "glm-5-3-flash-maya-m--maple-preview-tq2--64k",
@@ -1561,6 +1348,48 @@
           "reason": "5/38 expert layers in RAM (1.7 GiB), 14.6 GiB in VRAM"
         }
       ],
+      "quant_exceptions": [],
+      "quant_excluded": [
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q4_K_S",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q3_K_XL",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q6",
+          "reason": "Q6 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "flint-40a2-5b-mix24g",
+          "family": "Flint 40A2.5B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        }
+      ],
       "winner": null
     },
     {
@@ -1615,18 +1444,12 @@
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--262k",
-        "arete-27b-q5--maple-preview-tq2--64k",
-        "arete-27b-q5--maple-preview-tq2--128k",
-        "arete-27b-q5--maple-preview-tq2--262k",
         "qwen3-8-27b-gsq-rco-iq3xxs--maple-preview-tq2--64k",
         "qwen3-8-27b-gsq-rco-iq3xxs--maple-preview-tq2--128k",
         "qwen3-8-27b-gsq-rco-iq3xxs--maple-preview-tq2--262k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--64k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--262k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--64k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--262k",
@@ -1648,9 +1471,6 @@
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--64k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--128k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--262k",
         "qwen3-8-27b-unleashed--maple-preview-tq2--64k",
         "qwen3-8-27b-unleashed--maple-preview-tq2--128k",
         "qwen3-8-27b-unleashed--maple-preview-tq2--262k",
@@ -1782,50 +1602,6 @@
           "reason": "36/40 expert layers in RAM (96.0 GiB), 20.4 GiB in VRAM"
         },
         {
-          "configuration_id": "flint-40a2-5b-mix24g--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 27.37,
-          "vram_gib": 22.58,
-          "ram_gib": 4.79,
-          "n_cpu_moe": 9,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "9/47 expert layers in RAM (4.8 GiB), 22.6 GiB in VRAM"
-        },
-        {
-          "configuration_id": "flint-40a2-5b-mix24g--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 28.37,
-          "vram_gib": 22.52,
-          "ram_gib": 5.85,
-          "n_cpu_moe": 11,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "11/47 expert layers in RAM (5.9 GiB), 22.5 GiB in VRAM"
-        },
-        {
-          "configuration_id": "flint-40a2-5b-mix24g--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 30.37,
-          "vram_gib": 22.39,
-          "ram_gib": 7.98,
-          "n_cpu_moe": 15,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "15/47 expert layers in RAM (8.0 GiB), 22.4 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--1m",
-          "placement": "offload",
-          "total_gib": 35.46,
-          "vram_gib": 22.66,
-          "ram_gib": 12.8,
-          "n_cpu_moe": 30,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "30/40 expert layers in RAM (12.8 GiB), 22.7 GiB in VRAM"
-        },
-        {
           "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q8-k-xl--maple-preview-tq2--1m",
           "placement": "offload",
           "total_gib": 32.51,
@@ -1835,17 +1611,6 @@
           "expert_layers": 40,
           "evidence": "measured-expert-footprint",
           "reason": "28/40 expert layers in RAM (9.9 GiB), 22.6 GiB in VRAM"
-        },
-        {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--1m",
-          "placement": "offload",
-          "total_gib": 31.69,
-          "vram_gib": 22.71,
-          "ram_gib": 8.98,
-          "n_cpu_moe": 27,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "27/40 expert layers in RAM (9.0 GiB), 22.7 GiB in VRAM"
         },
         {
           "configuration_id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs--maple-preview-tq2--1m",
@@ -2002,6 +1767,63 @@
           "reason": "4/47 expert layers in RAM (1.8 GiB), 22.7 GiB in VRAM"
         }
       ],
+      "quant_exceptions": [],
+      "quant_excluded": [
+        {
+          "main": "arete-27b-q5",
+          "family": "Arete 27B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q4_K_S",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q3_K_XL",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q6",
+          "reason": "Q6 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "flint-40a2-5b-mix24g",
+          "family": "Flint 40A2.5B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        }
+      ],
       "winner": null
     },
     {
@@ -2013,10 +1835,6 @@
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--128k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--262k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--1m",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--64k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--128k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--262k",
@@ -2099,9 +1917,6 @@
         "qwen3-8-27b-q8--maple-preview-tq2--64k",
         "qwen3-8-27b-q8--maple-preview-tq2--128k",
         "qwen3-8-27b-q8--maple-preview-tq2--262k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--64k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--128k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--262k",
         "qwen3-8-27b-gsq-rco-iq3s--maple-preview-tq2--64k",
         "qwen3-8-27b-gsq-rco-iq3s--maple-preview-tq2--128k",
         "qwen3-8-27b-gsq-rco-iq3s--maple-preview-tq2--262k",
@@ -2117,18 +1932,12 @@
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--262k",
-        "arete-27b-q5--maple-preview-tq2--64k",
-        "arete-27b-q5--maple-preview-tq2--128k",
-        "arete-27b-q5--maple-preview-tq2--262k",
         "qwen3-8-27b-gsq-rco-iq3xxs--maple-preview-tq2--64k",
         "qwen3-8-27b-gsq-rco-iq3xxs--maple-preview-tq2--128k",
         "qwen3-8-27b-gsq-rco-iq3xxs--maple-preview-tq2--262k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--64k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--262k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--64k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--262k",
@@ -2262,17 +2071,6 @@
           "reason": "13/40 expert layers in RAM (5.9 GiB), 30.7 GiB in VRAM"
         },
         {
-          "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--1m",
-          "placement": "offload",
-          "total_gib": 35.46,
-          "vram_gib": 30.76,
-          "ram_gib": 4.69,
-          "n_cpu_moe": 11,
-          "expert_layers": 40,
-          "evidence": "measured-expert-footprint",
-          "reason": "11/40 expert layers in RAM (4.7 GiB), 30.8 GiB in VRAM"
-        },
-        {
           "configuration_id": "cyber-tiel-coder-35b-a3b-ud-q8-k-xl--maple-preview-tq2--1m",
           "placement": "offload",
           "total_gib": 32.51,
@@ -2372,6 +2170,85 @@
           "reason": "28/43 expert layers in RAM (40.9 GiB), 30.6 GiB in VRAM"
         }
       ],
+      "quant_exceptions": [
+        {
+          "main": "arete-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "qwen3-8-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "qwen3-8-27b-q8-mtp",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        }
+      ],
+      "quant_excluded": [
+        {
+          "main": "arete-27b-q5",
+          "family": "Arete 27B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q4_K_S",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q3_K_XL",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q6",
+          "reason": "Q6 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "flint-40a2-5b-mix24g",
+          "family": "Flint 40A2.5B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        }
+      ],
       "winner": null
     },
     {
@@ -2403,10 +2280,6 @@
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--262k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--1m",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--64k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--262k",
@@ -2427,10 +2300,6 @@
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--128k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--262k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--1m",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--64k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--128k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--262k",
@@ -2510,9 +2379,6 @@
         "arete-27b-q8--maple-preview-tq2--64k",
         "arete-27b-q8--maple-preview-tq2--128k",
         "arete-27b-q8--maple-preview-tq2--262k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--64k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--128k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--262k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--262k",
@@ -2522,9 +2388,6 @@
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--262k",
-        "arete-27b-q5--maple-preview-tq2--64k",
-        "arete-27b-q5--maple-preview-tq2--128k",
-        "arete-27b-q5--maple-preview-tq2--262k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--64k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--128k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--262k",
@@ -2820,6 +2683,85 @@
           "reason": "17/43 expert layers in RAM (24.8 GiB), 46.6 GiB in VRAM"
         }
       ],
+      "quant_exceptions": [
+        {
+          "main": "arete-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "qwen3-8-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "qwen3-8-27b-q8-mtp",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        }
+      ],
+      "quant_excluded": [
+        {
+          "main": "arete-27b-q5",
+          "family": "Arete 27B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q4_K_S",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q3_K_XL",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q6",
+          "reason": "Q6 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "flint-40a2-5b-mix24g",
+          "family": "Flint 40A2.5B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        }
+      ],
       "winner": null
     },
     {
@@ -2851,10 +2793,6 @@
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--262k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--1m",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--64k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--262k",
@@ -2875,10 +2813,6 @@
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--128k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--262k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--1m",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--64k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--128k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--262k",
@@ -3012,9 +2946,6 @@
         "arete-27b-q8--maple-preview-tq2--64k",
         "arete-27b-q8--maple-preview-tq2--128k",
         "arete-27b-q8--maple-preview-tq2--262k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--64k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--128k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--262k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--262k",
@@ -3024,9 +2955,6 @@
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--262k",
-        "arete-27b-q5--maple-preview-tq2--64k",
-        "arete-27b-q5--maple-preview-tq2--128k",
-        "arete-27b-q5--maple-preview-tq2--262k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--64k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--128k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--262k",
@@ -3101,39 +3029,6 @@
           "expert_layers": 47,
           "evidence": "measured-expert-footprint",
           "reason": "17/47 expert layers in RAM (23.1 GiB), 62.9 GiB in VRAM"
-        },
-        {
-          "configuration_id": "darwin-180b-rsi-strata--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 126.24,
-          "vram_gib": 62.42,
-          "ram_gib": 63.82,
-          "n_cpu_moe": 43,
-          "expert_layers": 48,
-          "evidence": "measured-expert-footprint",
-          "reason": "43/48 expert layers in RAM (63.8 GiB), 62.4 GiB in VRAM"
-        },
-        {
-          "configuration_id": "darwin-180b-rsi-strata--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 127.24,
-          "vram_gib": 61.94,
-          "ram_gib": 65.3,
-          "n_cpu_moe": 44,
-          "expert_layers": 48,
-          "evidence": "measured-expert-footprint",
-          "reason": "44/48 expert layers in RAM (65.3 GiB), 61.9 GiB in VRAM"
-        },
-        {
-          "configuration_id": "darwin-180b-rsi-strata--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 129.24,
-          "vram_gib": 62.45,
-          "ram_gib": 66.79,
-          "n_cpu_moe": 45,
-          "expert_layers": 48,
-          "evidence": "measured-expert-footprint",
-          "reason": "45/48 expert layers in RAM (66.8 GiB), 62.5 GiB in VRAM"
         },
         {
           "configuration_id": "deepseek-v4-1-flash-1017-iq1m--maple-preview-tq2--64k",
@@ -3345,6 +3240,224 @@
           "reason": "7/48 expert layers in RAM (4.8 GiB), 62.5 GiB in VRAM"
         }
       ],
+      "quant_exceptions": [
+        {
+          "main": "arete-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "bonsai-27b-fp16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-bf16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-dspark",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "qwen3-8-27b-bf16",
+          "quantization": "BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "BF16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (BF16)"
+        },
+        {
+          "main": "qwen3-8-27b-bf16-mtp",
+          "quantization": "BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "BF16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (BF16)"
+        },
+        {
+          "main": "qwen3-8-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "qwen3-8-27b-q8-mtp",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "ternary-bonsai-2-27b-f16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-dspark",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        }
+      ],
+      "quant_excluded": [
+        {
+          "main": "arete-27b-q5",
+          "family": "Arete 27B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q4_K_S",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q3_K_XL",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q6",
+          "reason": "Q6 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "darwin-180b-rsi-strata",
+          "family": "Darwin 180B RSI",
+          "quantization": "MQ-Q5-SSD-PLE-BF16",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "flint-40a2-5b-mix24g",
+          "family": "Flint 40A2.5B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        }
+      ],
       "winner": null
     },
     {
@@ -3452,10 +3565,6 @@
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--262k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--1m",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--64k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--262k",
@@ -3476,10 +3585,6 @@
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--128k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--262k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--1m",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--64k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--128k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--262k",
@@ -3568,9 +3673,6 @@
         "arete-27b-q8--maple-preview-tq2--64k",
         "arete-27b-q8--maple-preview-tq2--128k",
         "arete-27b-q8--maple-preview-tq2--262k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--64k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--128k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--262k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--262k",
@@ -3580,9 +3682,6 @@
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--262k",
-        "arete-27b-q5--maple-preview-tq2--64k",
-        "arete-27b-q5--maple-preview-tq2--128k",
-        "arete-27b-q5--maple-preview-tq2--262k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--64k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--128k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--262k",
@@ -3618,50 +3717,6 @@
       ],
       "offload_candidates": [
         {
-          "configuration_id": "darwin-180b-rsi-strata--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 126.24,
-          "vram_gib": 95.07,
-          "ram_gib": 31.17,
-          "n_cpu_moe": 21,
-          "expert_layers": 48,
-          "evidence": "measured-expert-footprint",
-          "reason": "21/48 expert layers in RAM (31.2 GiB), 95.1 GiB in VRAM"
-        },
-        {
-          "configuration_id": "darwin-180b-rsi-strata--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 127.24,
-          "vram_gib": 94.59,
-          "ram_gib": 32.65,
-          "n_cpu_moe": 22,
-          "expert_layers": 48,
-          "evidence": "measured-expert-footprint",
-          "reason": "22/48 expert layers in RAM (32.7 GiB), 94.6 GiB in VRAM"
-        },
-        {
-          "configuration_id": "darwin-180b-rsi-strata--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 129.24,
-          "vram_gib": 95.1,
-          "ram_gib": 34.14,
-          "n_cpu_moe": 23,
-          "expert_layers": 48,
-          "evidence": "measured-expert-footprint",
-          "reason": "23/48 expert layers in RAM (34.1 GiB), 95.1 GiB in VRAM"
-        },
-        {
-          "configuration_id": "darwin-180b-rsi-strata--maple-preview-tq2--1m",
-          "placement": "offload",
-          "total_gib": 141.24,
-          "vram_gib": 95.23,
-          "ram_gib": 46.01,
-          "n_cpu_moe": 31,
-          "expert_layers": 48,
-          "evidence": "measured-expert-footprint",
-          "reason": "31/48 expert layers in RAM (46.0 GiB), 95.2 GiB in VRAM"
-        },
-        {
           "configuration_id": "deepseek-v4-1-flash-1017-iq1m--maple-preview-tq2--64k",
           "placement": "offload",
           "total_gib": 113.43,
@@ -3693,28 +3748,6 @@
           "expert_layers": 40,
           "evidence": "measured-expert-footprint",
           "reason": "8/40 expert layers in RAM (21.3 GiB), 95.1 GiB in VRAM"
-        },
-        {
-          "configuration_id": "laguna-s2-1-fp16--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 220.05,
-          "vram_gib": 94.05,
-          "ram_gib": 126.0,
-          "n_cpu_moe": 28,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "28/47 expert layers in RAM (126.0 GiB), 94.0 GiB in VRAM"
-        },
-        {
-          "configuration_id": "laguna-s2-1-fp16--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 221.05,
-          "vram_gib": 95.05,
-          "ram_gib": 126.0,
-          "n_cpu_moe": 28,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "28/47 expert layers in RAM (126.0 GiB), 95.0 GiB in VRAM"
         },
         {
           "configuration_id": "glm-5-3-flash-maya-l--maple-preview-tq2--64k",
@@ -3759,6 +3792,237 @@
           "expert_layers": 43,
           "evidence": "measured-expert-footprint",
           "reason": "7/43 expert layers in RAM (16.4 GiB), 94.7 GiB in VRAM"
+        }
+      ],
+      "quant_exceptions": [
+        {
+          "main": "arete-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "bonsai-27b-fp16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-bf16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-dspark",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "qwen3-8-27b-bf16",
+          "quantization": "BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "BF16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (BF16)"
+        },
+        {
+          "main": "qwen3-8-27b-bf16-mtp",
+          "quantization": "BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "BF16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (BF16)"
+        },
+        {
+          "main": "qwen3-8-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "qwen3-8-27b-q8-mtp",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "ternary-bonsai-2-27b-f16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-dspark",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        }
+      ],
+      "quant_excluded": [
+        {
+          "main": "arete-27b-q5",
+          "family": "Arete 27B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q4_K_S",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q3_K_XL",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q6",
+          "reason": "Q6 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "darwin-180b-rsi-strata",
+          "family": "Darwin 180B RSI",
+          "quantization": "MQ-Q5-SSD-PLE-BF16",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "flint-40a2-5b-mix24g",
+          "family": "Flint 40A2.5B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "laguna-s2-1-fp16",
+          "family": "Laguna S2.1",
+          "quantization": "FP16/BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "FP16",
+          "reason": "FP16 offered without a fitting-band or accuracy justification",
+          "contexts": [
+            65536,
+            131072
+          ]
         }
       ],
       "winner": null
@@ -3868,10 +4132,6 @@
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--262k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--1m",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--64k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--262k",
@@ -3892,10 +4152,6 @@
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--128k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--262k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--1m",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--64k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--128k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--262k",
@@ -3972,9 +4228,6 @@
         "bonsai-27b-compact-vision-q8--maple-preview-tq2--128k",
         "bonsai-27b-compact-vision-q8--maple-preview-tq2--262k",
         "bonsai-27b-compact-vision-q8--maple-preview-tq2--1m",
-        "darwin-180b-rsi-strata--maple-preview-tq2--64k",
-        "darwin-180b-rsi-strata--maple-preview-tq2--128k",
-        "darwin-180b-rsi-strata--maple-preview-tq2--262k",
         "deepseek-v4-1-flash-1017-iq1m--maple-preview-tq2--64k",
         "deepseek-v4-1-flash-1017-iq1m--maple-preview-tq2--128k",
         "deepseek-v4-1-flash-1017-iq1m--maple-preview-tq2--262k",
@@ -3990,9 +4243,6 @@
         "arete-27b-q8--maple-preview-tq2--64k",
         "arete-27b-q8--maple-preview-tq2--128k",
         "arete-27b-q8--maple-preview-tq2--262k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--64k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--128k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--262k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--262k",
@@ -4002,9 +4252,6 @@
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--262k",
-        "arete-27b-q5--maple-preview-tq2--64k",
-        "arete-27b-q5--maple-preview-tq2--128k",
-        "arete-27b-q5--maple-preview-tq2--262k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--64k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--128k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--262k",
@@ -4041,50 +4288,6 @@
         "lfm3-omni-2b-q4--maple-preview-tq2--64k"
       ],
       "offload_candidates": [
-        {
-          "configuration_id": "laguna-s2-1-fp16--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 220.05,
-          "vram_gib": 125.55,
-          "ram_gib": 94.5,
-          "n_cpu_moe": 21,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "21/47 expert layers in RAM (94.5 GiB), 125.5 GiB in VRAM"
-        },
-        {
-          "configuration_id": "laguna-s2-1-fp16--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 221.05,
-          "vram_gib": 126.55,
-          "ram_gib": 94.5,
-          "n_cpu_moe": 21,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "21/47 expert layers in RAM (94.5 GiB), 126.5 GiB in VRAM"
-        },
-        {
-          "configuration_id": "laguna-s2-1-fp16--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 223.05,
-          "vram_gib": 124.05,
-          "ram_gib": 99.0,
-          "n_cpu_moe": 22,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "22/47 expert layers in RAM (99.0 GiB), 124.0 GiB in VRAM"
-        },
-        {
-          "configuration_id": "laguna-s2-1-fp16--maple-preview-tq2--1m",
-          "placement": "offload",
-          "total_gib": 235.05,
-          "vram_gib": 127.05,
-          "ram_gib": 108.0,
-          "n_cpu_moe": 24,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "24/47 expert layers in RAM (108.0 GiB), 127.0 GiB in VRAM"
-        },
         {
           "configuration_id": "minimax-m3-q4--maple-preview-tq2--64k",
           "placement": "offload",
@@ -4152,17 +4355,6 @@
           "reason": "40/76 expert layers in RAM (121.1 GiB), 127.4 GiB in VRAM"
         },
         {
-          "configuration_id": "darwin-180b-rsi-strata--maple-preview-tq2--1m",
-          "placement": "offload",
-          "total_gib": 141.24,
-          "vram_gib": 126.4,
-          "ram_gib": 14.84,
-          "n_cpu_moe": 10,
-          "expert_layers": 48,
-          "evidence": "measured-expert-footprint",
-          "reason": "10/48 expert layers in RAM (14.8 GiB), 126.4 GiB in VRAM"
-        },
-        {
           "configuration_id": "glm-5-3-flash-maya-l--maple-preview-tq2--64k",
           "placement": "offload",
           "total_gib": 147.63,
@@ -4185,6 +4377,239 @@
           "reason": "7/43 expert layers in RAM (22.5 GiB), 126.1 GiB in VRAM"
         }
       ],
+      "quant_exceptions": [
+        {
+          "main": "arete-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "bonsai-27b-fp16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-bf16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-dspark",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "qwen3-8-27b-bf16",
+          "quantization": "BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "BF16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (BF16)"
+        },
+        {
+          "main": "qwen3-8-27b-bf16-mtp",
+          "quantization": "BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "BF16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (BF16)"
+        },
+        {
+          "main": "qwen3-8-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "qwen3-8-27b-q8-mtp",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "ternary-bonsai-2-27b-f16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-dspark",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        }
+      ],
+      "quant_excluded": [
+        {
+          "main": "arete-27b-q5",
+          "family": "Arete 27B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q4_K_S",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q3_K_XL",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q6",
+          "reason": "Q6 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "darwin-180b-rsi-strata",
+          "family": "Darwin 180B RSI",
+          "quantization": "MQ-Q5-SSD-PLE-BF16",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "flint-40a2-5b-mix24g",
+          "family": "Flint 40A2.5B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "laguna-s2-1-fp16",
+          "family": "Laguna S2.1",
+          "quantization": "FP16/BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "FP16",
+          "reason": "FP16 offered without a fitting-band or accuracy justification",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        }
+      ],
       "winner": null
     },
     {
@@ -4192,10 +4617,6 @@
       "vram_gb": 192,
       "physical_evidence_required": true,
       "candidates": [
-        "darwin-180b-rsi-strata--maple-preview-tq2--64k",
-        "darwin-180b-rsi-strata--maple-preview-tq2--128k",
-        "darwin-180b-rsi-strata--maple-preview-tq2--262k",
-        "darwin-180b-rsi-strata--maple-preview-tq2--1m",
         "laguna-s2-1-q4--maple-preview-tq2--64k",
         "laguna-s2-1-q4--maple-preview-tq2--128k",
         "laguna-s2-1-q4--maple-preview-tq2--262k",
@@ -4296,10 +4717,6 @@
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--262k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--1m",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--64k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--262k",
@@ -4320,10 +4737,6 @@
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--128k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--262k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--1m",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--64k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--128k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--262k",
@@ -4415,9 +4828,6 @@
         "arete-27b-q8--maple-preview-tq2--64k",
         "arete-27b-q8--maple-preview-tq2--128k",
         "arete-27b-q8--maple-preview-tq2--262k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--64k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--128k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--262k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--262k",
@@ -4427,9 +4837,6 @@
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--262k",
-        "arete-27b-q5--maple-preview-tq2--64k",
-        "arete-27b-q5--maple-preview-tq2--128k",
-        "arete-27b-q5--maple-preview-tq2--262k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--64k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--128k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--262k",
@@ -4555,50 +4962,239 @@
           "expert_layers": 76,
           "evidence": "measured-expert-footprint",
           "reason": "23/76 expert layers in RAM (69.7 GiB), 190.8 GiB in VRAM"
+        }
+      ],
+      "quant_exceptions": [
+        {
+          "main": "arete-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
         },
         {
-          "configuration_id": "laguna-s2-1-fp16--maple-preview-tq2--64k",
-          "placement": "offload",
-          "total_gib": 220.05,
-          "vram_gib": 188.55,
-          "ram_gib": 31.5,
-          "n_cpu_moe": 7,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "7/47 expert layers in RAM (31.5 GiB), 188.5 GiB in VRAM"
+          "main": "bonsai-27b-fp16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
         },
         {
-          "configuration_id": "laguna-s2-1-fp16--maple-preview-tq2--128k",
-          "placement": "offload",
-          "total_gib": 221.05,
-          "vram_gib": 189.55,
-          "ram_gib": 31.5,
-          "n_cpu_moe": 7,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "7/47 expert layers in RAM (31.5 GiB), 189.5 GiB in VRAM"
+          "main": "bonsai-27b-fp16-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
         },
         {
-          "configuration_id": "laguna-s2-1-fp16--maple-preview-tq2--262k",
-          "placement": "offload",
-          "total_gib": 223.05,
-          "vram_gib": 191.55,
-          "ram_gib": 31.5,
-          "n_cpu_moe": 7,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "7/47 expert layers in RAM (31.5 GiB), 191.5 GiB in VRAM"
+          "main": "bonsai-27b-fp16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
         },
         {
-          "configuration_id": "laguna-s2-1-fp16--maple-preview-tq2--1m",
-          "placement": "offload",
-          "total_gib": 235.05,
-          "vram_gib": 190.05,
-          "ram_gib": 45.0,
-          "n_cpu_moe": 10,
-          "expert_layers": 47,
-          "evidence": "measured-expert-footprint",
-          "reason": "10/47 expert layers in RAM (45.0 GiB), 190.0 GiB in VRAM"
+          "main": "bonsai-27b-fp16-vision-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-bf16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-dspark",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "qwen3-8-27b-bf16",
+          "quantization": "BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "BF16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (BF16)"
+        },
+        {
+          "main": "qwen3-8-27b-bf16-mtp",
+          "quantization": "BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "BF16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (BF16)"
+        },
+        {
+          "main": "qwen3-8-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "qwen3-8-27b-q8-mtp",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "ternary-bonsai-2-27b-f16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-dspark",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        }
+      ],
+      "quant_excluded": [
+        {
+          "main": "arete-27b-q5",
+          "family": "Arete 27B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q4_K_S",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q3_K_XL",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q6",
+          "reason": "Q6 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "darwin-180b-rsi-strata",
+          "family": "Darwin 180B RSI",
+          "quantization": "MQ-Q5-SSD-PLE-BF16",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "flint-40a2-5b-mix24g",
+          "family": "Flint 40A2.5B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "laguna-s2-1-fp16",
+          "family": "Laguna S2.1",
+          "quantization": "FP16/BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "FP16",
+          "reason": "FP16 offered without a fitting-band or accuracy justification",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
         }
       ],
       "winner": null
@@ -4612,10 +5208,6 @@
         "laguna-s2-1-fp16--maple-preview-tq2--128k",
         "laguna-s2-1-fp16--maple-preview-tq2--262k",
         "laguna-s2-1-fp16--maple-preview-tq2--1m",
-        "darwin-180b-rsi-strata--maple-preview-tq2--64k",
-        "darwin-180b-rsi-strata--maple-preview-tq2--128k",
-        "darwin-180b-rsi-strata--maple-preview-tq2--262k",
-        "darwin-180b-rsi-strata--maple-preview-tq2--1m",
         "laguna-s2-1-q4--maple-preview-tq2--64k",
         "laguna-s2-1-q4--maple-preview-tq2--128k",
         "laguna-s2-1-q4--maple-preview-tq2--262k",
@@ -4716,10 +5308,6 @@
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--262k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--1m",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--64k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--262k",
@@ -4740,10 +5328,6 @@
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--128k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--262k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--1m",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--64k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--128k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--262k",
@@ -4841,9 +5425,6 @@
         "arete-27b-q8--maple-preview-tq2--64k",
         "arete-27b-q8--maple-preview-tq2--128k",
         "arete-27b-q8--maple-preview-tq2--262k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--64k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--128k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--262k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--262k",
@@ -4853,9 +5434,6 @@
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--262k",
-        "arete-27b-q5--maple-preview-tq2--64k",
-        "arete-27b-q5--maple-preview-tq2--128k",
-        "arete-27b-q5--maple-preview-tq2--262k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--64k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--128k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--262k",
@@ -4917,6 +5495,232 @@
           "reason": "2/76 expert layers in RAM (6.1 GiB), 254.4 GiB in VRAM"
         }
       ],
+      "quant_exceptions": [
+        {
+          "main": "arete-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "bonsai-27b-fp16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-bf16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-dspark",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "laguna-s2-1-fp16",
+          "quantization": "FP16/BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "FP16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (FP16)"
+        },
+        {
+          "main": "qwen3-8-27b-bf16",
+          "quantization": "BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "BF16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (BF16)"
+        },
+        {
+          "main": "qwen3-8-27b-bf16-mtp",
+          "quantization": "BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "BF16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (BF16)"
+        },
+        {
+          "main": "qwen3-8-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "qwen3-8-27b-q8-mtp",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "ternary-bonsai-2-27b-f16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-dspark",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        }
+      ],
+      "quant_excluded": [
+        {
+          "main": "arete-27b-q5",
+          "family": "Arete 27B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q4_K_S",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q3_K_XL",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q6",
+          "reason": "Q6 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "darwin-180b-rsi-strata",
+          "family": "Darwin 180B RSI",
+          "quantization": "MQ-Q5-SSD-PLE-BF16",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "flint-40a2-5b-mix24g",
+          "family": "Flint 40A2.5B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        }
+      ],
       "winner": null
     },
     {
@@ -4940,10 +5744,6 @@
         "laguna-s2-1-fp16--maple-preview-tq2--128k",
         "laguna-s2-1-fp16--maple-preview-tq2--262k",
         "laguna-s2-1-fp16--maple-preview-tq2--1m",
-        "darwin-180b-rsi-strata--maple-preview-tq2--64k",
-        "darwin-180b-rsi-strata--maple-preview-tq2--128k",
-        "darwin-180b-rsi-strata--maple-preview-tq2--262k",
-        "darwin-180b-rsi-strata--maple-preview-tq2--1m",
         "laguna-s2-1-q4--maple-preview-tq2--64k",
         "laguna-s2-1-q4--maple-preview-tq2--128k",
         "laguna-s2-1-q4--maple-preview-tq2--262k",
@@ -5044,10 +5844,6 @@
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--262k",
         "qwen3-8-27b-q4-mtp--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q5-k-xl--maple-preview-tq2--1m",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--64k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--128k",
         "qwen3-8-27b-q4-dflash2--maple-preview-tq2--262k",
@@ -5068,10 +5864,6 @@
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--128k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--262k",
         "qwen3-8-27b-gsq-rco-iq2xs--maple-preview-tq2--1m",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--64k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--128k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--262k",
-        "cyber-tiel-coder-35b-a3b-ud-q6-k-xl--maple-preview-tq2--1m",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--64k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--128k",
         "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16--maple-preview-tq2--262k",
@@ -5163,9 +5955,6 @@
         "arete-27b-q8--maple-preview-tq2--64k",
         "arete-27b-q8--maple-preview-tq2--128k",
         "arete-27b-q8--maple-preview-tq2--262k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--64k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--128k",
-        "flint-40a2-5b-mix24g--maple-preview-tq2--262k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-q4--maple-preview-tq2--262k",
@@ -5175,9 +5964,6 @@
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--64k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--128k",
         "qwen3-6-35b-a3b-abliterated--maple-preview-tq2--262k",
-        "arete-27b-q5--maple-preview-tq2--64k",
-        "arete-27b-q5--maple-preview-tq2--128k",
-        "arete-27b-q5--maple-preview-tq2--262k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--64k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--128k",
         "nanbeige-33b-iq4xs--maple-preview-tq2--262k",
@@ -5216,6 +6002,239 @@
         "lfm3-omni-2b-q4--maple-preview-tq2--64k"
       ],
       "offload_candidates": [],
+      "quant_exceptions": [
+        {
+          "main": "arete-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "bonsai-27b-fp16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-bf16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-dspark",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "bonsai-27b-fp16-vision-q8-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "inkling-2-small",
+          "quantization": "bf16",
+          "quant_class": "allowed-exception",
+          "quant_token": "BF16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (BF16)"
+        },
+        {
+          "main": "laguna-s2-1-fp16",
+          "quantization": "FP16/BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "FP16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (FP16)"
+        },
+        {
+          "main": "qwen3-8-27b-bf16",
+          "quantization": "BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "BF16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (BF16)"
+        },
+        {
+          "main": "qwen3-8-27b-bf16-mtp",
+          "quantization": "BF16",
+          "quant_class": "allowed-exception",
+          "quant_token": "BF16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (BF16)"
+        },
+        {
+          "main": "qwen3-8-27b-q8",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "qwen3-8-27b-q8-mtp",
+          "quantization": "Q8_0",
+          "quant_class": "allowed-exception",
+          "quant_token": "Q8_0",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (Q8_0)"
+        },
+        {
+          "main": "ternary-bonsai-2-27b-f16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-dspark-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-bf16",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        },
+        {
+          "main": "ternary-bonsai-27b-fp16-vision-dspark",
+          "quantization": "F16",
+          "quant_class": "allowed-exception",
+          "quant_token": "F16",
+          "reason": "fits-fully-in-vram: weights + KV fit fully in the tier's memory (F16)"
+        }
+      ],
+      "quant_excluded": [
+        {
+          "main": "arete-27b-q5",
+          "family": "Arete 27B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q5-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q4_K_S",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "cyber-tiel-coder-35b-a3b-ud-q6-k-xl",
+          "family": "Cyber-Tiel Coder 35B-A3B",
+          "quantization": "UD-Q3_K_XL",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q6",
+          "reason": "Q6 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "darwin-180b-rsi-strata",
+          "family": "Darwin 180B RSI",
+          "quantization": "MQ-Q5-SSD-PLE-BF16",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5",
+          "reason": "Q5 is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144,
+            1048576
+          ]
+        },
+        {
+          "main": "flint-40a2-5b-mix24g",
+          "family": "Flint 40A2.5B",
+          "quantization": "Q5_K_M",
+          "quant_class": "excluded-by-default",
+          "quant_token": "Q5_K_M",
+          "reason": "Q5_K_M is above the Q4 ceiling (quantization_justification required)",
+          "contexts": [
+            65536,
+            131072,
+            262144
+          ]
+        }
+      ],
       "winner": null
     }
   ]

@@ -239,7 +239,7 @@ def tiered_profile(expansion_mode: str = "conservative") -> Turbofile:
             "main_manifest": DIGEST_A,
         },
         {
-            "id": "cyber-tiel-q6-k-xl-48gb-262k",
+            "id": "cyber-tiel-q4-k-xl-24gb-262k",
             "context": 262144,
             "aux_mode": "shared-main",
             "evidence": "sha256:" + "2" * 64,
@@ -423,7 +423,7 @@ def test_direct_expansion_mode_refits_straight_to_best_fit() -> None:
     plan = reconcile(state.state, tiered_snapshot(50176), item, now=20)
 
     assert plan.action is ActionKind.ACTIVATE
-    # Direct mode jumps straight to the best tier that fits (48GB Cyber-Tiel Q6).
+    # Direct mode jumps straight to the best tier that fits (48GB Cyber-Tiel Q4_K_XL).
     assert plan.target_index == 1
     assert plan.state.pending_index == 1
 
@@ -436,12 +436,13 @@ def test_direct_expansion_still_requires_margin_and_dwell() -> None:
     assert before_dwell.action is ActionKind.NONE
 
     tight = reconcile(
-        AdaptiveState(current_index=3), tiered_snapshot(36024), item, now=0
+        AdaptiveState(current_index=3), tiered_snapshot(35500), item, now=0
     )
-    plan = reconcile(tight.state, tiered_snapshot(36024), item, now=20)
-    # From the Maple rung with 15500 MB usable, minus the 1 GB margin the
-    # best direct fit is still the Maple tier itself (no better tier fits),
-    # so no expansion happens.
+    plan = reconcile(tight.state, tiered_snapshot(35500), item, now=20)
+    # 34.7 GB usable is inside the 24-63 GB Cyber-Tiel tier, but after the
+    # 1 GB expansion margin the 35 GB rung no longer fits, so no expansion
+    # happens. (The tier now spans 24-63 GB: the Q4 ceiling means more memory
+    # buys context headroom, not a wider quant.)
     assert plan.action is ActionKind.NONE
     assert plan.state.surplus_since is None
 

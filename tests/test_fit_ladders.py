@@ -35,9 +35,9 @@ def test_unified_list_is_moe_only_never_dense() -> None:
     u = unified_ladder()
     # no dense model anywhere on the CPU list
     assert all(r.class_ == "moe" for r in u), f"dense leaked onto unified: {_models(u)}"
-    # MoE stand-ins: Maple -> Cyber-Tiel (x4 quant rungs) -> Flash Next
+    # MoE stand-ins: Maple -> Cyber-Tiel (IQ3_XXS, then Q4_K_XL ceiling) -> Flash Next
     assert u[0].model == "Maple Preview"
-    assert all(r.model == "Cyber-Tiel Coder" for r in u[1:5])
+    assert all(r.model == "Cyber-Tiel Coder" for r in u[1:3])
     assert u[-1].model == FLASH_NEXT
 
 

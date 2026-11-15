@@ -5,6 +5,7 @@ from pathlib import Path
 
 from turbofit_runtime.catalog_campaign import (
     build_campaign_matrix,
+    quant_policy_rows,
     CatalogExecutorAdapter,
     CatalogRegistryAdapter,
 )
@@ -15,19 +16,41 @@ from turbofit_runtime.schema import load_matrix
 ROOT = Path(__file__).parents[1]
 
 
-def test_catalog_campaign_materializes_all_canonical_configurations(tmp_path: Path) -> None:
+def test_catalog_campaign_materializes_canonical_rows_under_the_quant_ceiling(
+    tmp_path: Path,
+) -> None:
     catalog = ModelCatalog.load(ROOT / "references" / "model-catalog.json")
     configurations = json.loads((ROOT / "references" / "configuration-matrix.json").read_text())
     output = tmp_path / "campaign.json"
+    excluded, exceptions = quant_policy_rows(configurations, catalog)
 
     build_campaign_matrix(configurations, catalog, output)
     matrix = load_matrix(output)
 
-    assert len(matrix.rows) == 290
-    assert len({row.id for row in matrix.rows}) == 290
+    # 290 canonical rows minus the rows whose main is above the Q4 ceiling
+    # without a recorded justification; the catalog rows themselves stay put.
+    assert len(configurations["rows"]) == 290
+    assert len(matrix.rows) == 290 - len(excluded) == 272
+    assert len({row.id for row in matrix.rows}) == len(matrix.rows)
     assert {row.context for row in matrix.rows} == set(catalog.contexts)
     assert any("GSQ-RCO" in row.main for row in matrix.rows)
     assert any("Qwen 3.8 27B" in row.main for row in matrix.rows)
+    # Q5/Q6 rows are not campaign rows by default and are reported with a reason.
+    assert excluded, "the policy must exclude at least the Q5 builds"
+    assert all(record["reason"] for record in excluded.values())
+    assert not any("Q5" in row.main or "Q6" in row.main for row in matrix.rows)
+    # Q8/full-precision rows remain measurable, with the exception reason recorded.
+    assert any(record["reason"].startswith("accuracy-tier") for record in exceptions.values())
+
+
+def test_catalog_campaign_can_still_materialize_every_row_explicitly(tmp_path: Path) -> None:
+    catalog = ModelCatalog.load(ROOT / "references" / "model-catalog.json")
+    configurations = json.loads((ROOT / "references" / "configuration-matrix.json").read_text())
+    output = tmp_path / "campaign-all.json"
+
+    build_campaign_matrix(configurations, catalog, output, enforce_quant_policy=False)
+
+    assert len(load_matrix(output).rows) == 290
 
 
 def test_catalog_executor_uses_original_configuration_payload() -> None:

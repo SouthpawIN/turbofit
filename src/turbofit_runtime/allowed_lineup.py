@@ -132,16 +132,16 @@ def speed_main_for_vram_gb(vram_gb: float) -> str:
         return "maple-preview-tq2"
     if vram_gb < 24:
         return "cyber-tiel-coder-35b-a3b-ud-iq3-xxs"
-    if vram_gb < 48:
-        return "cyber-tiel-coder-35b-a3b-ud-q4-k-xl"
-    return "cyber-tiel-coder-35b-a3b-ud-q5-k-xl"
+    # Above Q4 is not a default answer at any tier: more VRAM does not buy a
+    # wider quant, it buys context headroom (see quant_policy).
+    return "cyber-tiel-coder-35b-a3b-ud-q4-k-xl"
 
 
 def speed_family_rank(alias: str) -> int:
     token = normalize(alias)
-    if "ud-q5-k-xl" in token:
-        return 50
-    if "ud-q4-k-xl" in token:
+    # Q5_K_XL and Q4_K_XL share one rank: quant width is a ceiling, not a
+    # scoring axis, so a wider build never outranks a narrower one.
+    if "ud-q5-k-xl" in token or "ud-q4-k-xl" in token:
         return 45
     if token.startswith("cyber-tiel-coder"):
         return 40
@@ -359,9 +359,9 @@ def check_local_options(
         options.append(
             {
                 "role": "main",
-                "alias": "arete-27b-q5",
+                "alias": "arete-27b-q4",
                 "engine": "llama.cpp",
-                "why": "Arete 27B Q5_K_M (~19 GiB) at 262K context: the dense quality pick.",
+                "why": "Arete 27B Q4_K_M (~16 GiB) at 262K context: the dense quality pick.",
             }
         )
         options.append(

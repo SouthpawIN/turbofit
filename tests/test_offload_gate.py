@@ -177,7 +177,12 @@ def test_status_completes_when_the_catalog_contains_an_infeasible_model(
     assert campaign.status() == 0
 
     report = json.loads(capsys.readouterr().out)
-    assert report["matrix"]["total"] == 290
+    # 290 canonical rows, minus the rows above the Q4 quant ceiling that carry
+    # no recorded justification (Q5/Q6 mains: Arete Q5, Flint Q5, Cyber-Tiel
+    # Q5/Q6 aliases, Darwin MQ-Q5).
+    assert report["matrix"]["total"] == 272
+    assert report["quant_policy"]["excluded_rows"] == 18
+    assert report["quant_policy"]["ceiling"] == "Q4"
     assert report["current_recipe"]["waiting_memory"] >= 1
     assert report["waiting_memory"]["rows"] == report["current_recipe"]["waiting_memory"]
     detail = report["waiting_memory"]["detail"]

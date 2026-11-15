@@ -251,7 +251,15 @@ def test_status_counts_reconcile_with_all_three_waiting_verdicts(
         assert deferred_id not in {
             item["row_id"] for item in report["waiting_download"]["detail"]
         }
-    assert current["deferred"] == len(deferred)
+    # The matrix excludes rows held out by the Q4 ceiling, so the deferred
+    # count that reconciles with it is matrix-scoped; the held-out rows are
+    # reported in their own quant_policy block with a reason.
+    matrix_ids = {row.id for row in matrix.rows}
+    assert current["deferred"] == len(set(deferred) & matrix_ids)
+    assert report["quant_policy"]["ceiling"] == "Q4"
+    assert report["quant_policy"]["excluded_rows"] == len(
+        campaign.quant_policy_rows(configurations, catalog)[0]
+    )
     assert (
         current["pending"] + current["resolved"] + current["deferred"]
         + current["waiting_download"] + current["waiting_memory"]

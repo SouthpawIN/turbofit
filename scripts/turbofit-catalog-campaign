@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import os
 import sys
 from pathlib import Path
@@ -22,6 +21,7 @@ from turbofit_runtime.catalog_campaign import (
     CatalogRegistryAdapter,
     build_campaign_matrix,
     build_configuration_index,
+    quant_policy_rows,
 )
 from turbofit_runtime.evidence import EvidencePublisher
 from turbofit_runtime.executor import LocalPairExecutor
@@ -78,26 +78,10 @@ def deferred_rows(configurations: dict, catalog: ModelCatalog) -> tuple[frozense
         if row.get("main") in deferred_models or row.get("auxiliary") in deferred_models
     }
     rows |= capability_deferred_rows(configuration_index)
-    rows |= quant_ceiling_rows(configuration_index)
+    # Rows held out by the Q4 ceiling are deferred with their policy reason, so
+    # `pending + resolved + deferred + waiting_*` still reconciles with the matrix.
+    rows |= set(quant_policy_rows(configurations, catalog)[0])
     return frozenset(rows), policy
-
-
-QUANT_ABOVE_CEILING = re.compile(r"(?i)(?:^|[-_])q[5-7](?:[-_][a-z0-9]+)*$")
-
-
-def quant_ceiling_rows(configuration_index: dict) -> set[str]:
-    """Rows whose weight quant is above the Q4 ceiling.
-
-    Q4 is a CEILING: nothing above it is a default candidate. Q2/Q3 stay fully
-    eligible. An explicit catalog justification is the only way back in, and that
-    is enforced by the quant policy module once it lands; this guard keeps the
-    campaign from burning GPU time on Q5/Q6 rows in the meantime.
-    """
-    return {
-        row_id
-        for row_id, row in configuration_index.items()
-        if QUANT_ABOVE_CEILING.search(str(row.get("main") or ""))
-    }
 
 
 def capability_deferred_rows(configuration_index: dict) -> set[str]:
@@ -262,9 +246,16 @@ def status() -> int:
         for row_id, value in (campaign.get("rows") or {}).items()
         if row_id in valid_ids
     }
+    excluded_by_quant, quant_exceptions = quant_policy_rows(
+        json.loads(CONFIGURATIONS.read_text(encoding="utf-8")),
+        ModelCatalog.load(CATALOG),
+    )
     pending_ids = {row.id for row in runner.pending_rows()}
     unresolved_ids = {row.id for row in runner.unresolved_rows()}
-    deferred_ids = deferred_row_ids
+    # Counts reconcile against the matrix, which excludes rows held out by the
+    # quant ceiling; those are reported in the `quant_policy` block instead.
+    matrix_ids = {row.id for row in matrix.rows}
+    deferred_ids = set(deferred_row_ids) & matrix_ids
     current = {}
     for row in matrix.rows:
         record = attempts.get(row.id) or {}
@@ -345,6 +336,20 @@ def status() -> int:
             ],
             "truncated": max(0, len(runtime) - 20),
         },
+        "quant_policy": {
+            "ceiling": "Q4",
+            "excluded_rows": len(excluded_by_quant),
+            "exception_rows": len(quant_exceptions),
+            "reason": (
+                "rows whose main is above the Q4 class are not campaign rows unless the "
+                "catalog entry records a quantization_justification"
+            ),
+            "detail": [
+                {"row_id": row_id, **record}
+                for row_id, record in sorted(excluded_by_quant.items())[:10]
+            ],
+            "truncated": max(0, len(excluded_by_quant) - 10),
+        },
         "policy": {
             "deferred": len(deferred_ids),
             "reason": policy.get("reason"),
@@ -404,7 +409,7 @@ def run_list_candidate() -> int:
     runner = build_runner()
     pending = {row.id: row for row in runner.pending_rows()}
     catalog, configurations = canonical()
-    tournaments = load_tournaments(TOURNAMENTS, configurations)
+    tournaments = load_tournaments(TOURNAMENTS, configurations, CATALOG)
     raw_ids = candidate_ids_for_tier(tournaments, current_hardware_tier())
     by_model = {item.id: item for item in catalog.models}
     by_raw = {item["id"]: item for item in configurations["rows"]}

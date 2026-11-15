@@ -57,7 +57,7 @@ def test_gsq_rco_bands() -> None:
     assert speed_main_for_vram_gb(8) == "maple-preview-tq2"
     assert speed_main_for_vram_gb(16) == "cyber-tiel-coder-35b-a3b-ud-iq3-xxs"
     assert speed_main_for_vram_gb(24) == "cyber-tiel-coder-35b-a3b-ud-q4-k-xl"
-    assert speed_main_for_vram_gb(48) == "cyber-tiel-coder-35b-a3b-ud-q5-k-xl"
+    assert speed_main_for_vram_gb(48) == "cyber-tiel-coder-35b-a3b-ud-q4-k-xl"
     assert speed_family_rank("cyber-tiel-coder-35b-a3b-ud-q4-k-xl") > speed_family_rank("qwen3-8-27b-gsq-rco-iq3s")
     options = check_local_options(vram_gb=24, host_ram_gb=64)
     aliases = [item["alias"] for item in options if item["role"] == "main"]
@@ -139,7 +139,8 @@ def test_arete_is_offered_from_twelve_gb_up() -> None:
     assert "arete-27b-q3" not in eight, "q3 weights do not fit an 8-11 GB card"
     assert "arete-27b-q3" in twelve
     assert "arete-27b-q4" in sixteen
-    assert "arete-27b-q5" in twentyfour
+    assert "arete-27b-q4" in twentyfour
+    assert "arete-27b-q5" not in twentyfour, "Q5 is above the default ceiling"
     assert "arete-27b-q8" in sixtyfour
     for alias in ("arete-27b-q3", "arete-27b-q4", "arete-27b-q5", "arete-27b-q8"):
         assert is_allowed_main(alias), f"{alias} must survive filter_aliases"
