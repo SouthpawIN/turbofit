@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 96" width="420" height="96" role="img" aria-label="TurboFit wordmark">
+  <rect width="420" height="96" fill="none"/>
+  <text x="0" y="66" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" font-size="62" font-weight="800" letter-spacing="-2" fill="#1B1B1B">TURB</text>
+  <g transform="translate(182 14)">
+    <circle cx="34" cy="34" r="30" fill="none" stroke="#1B1B1B" stroke-width="3.6"/>
+    <path d="M34 8 A26 26 0 0 1 56.5 21" fill="none" stroke="#7FD4E8" stroke-width="3.6"/>
+    <g stroke="#1B1B1B" stroke-width="1.5">
+      <line x1="34" y1="5" x2="34" y2="10.5"/>
+      <line x1="59" y1="20" x2="54.4" y2="22.7"/>
+      <line x1="63" y1="34" x2="57.5" y2="34"/>
+      <line x1="59" y1="48" x2="54.4" y2="45.3"/>
+      <line x1="34" y1="63" x2="34" y2="57.5"/>
+      <line x1="9" y1="48" x2="13.6" y2="45.3"/>
+      <line x1="5" y1="34" x2="10.5" y2="34"/>
+      <line x1="9" y1="20" x2="13.6" y2="22.7"/>
+    </g>
+    <g transform="rotate(58 34 34)">
+      <line x1="34" y1="34" x2="34" y2="12" stroke="#E03A2F" stroke-width="2.2"/>
+    </g>
+    <circle cx="34" cy="34" r="4" fill="#1B1B1B"/>
+    <circle cx="34" cy="34" r="1.5" fill="#F2EDE4"/>
+  </g>
+  <text x="250" y="66" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" font-size="62" font-weight="800" letter-spacing="-2" fill="#1B1B1B">FIT</text>
+  <text x="1" y="88" font-family="SFMono-Regular,Menlo,Consolas,monospace" font-size="10" letter-spacing="4" fill="#1B1B1B">ANALOG SOUL · DIGITAL MIND</text>
+</svg>

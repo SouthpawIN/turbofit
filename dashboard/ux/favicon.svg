@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="TurboFit">
+  <rect width="64" height="64" fill="#F2EDE4"/>
+  <rect x="1" y="1" width="62" height="62" fill="none" stroke="#1B1B1B" stroke-width="2"/>
+  <circle cx="32" cy="32" r="22" fill="none" stroke="#1B1B1B" stroke-width="3"/>
+  <path d="M32 13.5 A18.5 18.5 0 0 1 48.1 22.7" fill="none" stroke="#7FD4E8" stroke-width="3"/>
+  <g stroke="#1B1B1B" stroke-width="1.3">
+    <line x1="32" y1="12" x2="32" y2="16.5"/>
+    <line x1="49.5" y1="22.5" x2="45.8" y2="24.8"/>
+    <line x1="51.5" y1="32" x2="47" y2="32"/>
+    <line x1="32" y1="51.5" x2="32" y2="47"/>
+    <line x1="12.5" y1="41.5" x2="16.2" y2="39.2"/>
+    <line x1="10.5" y1="32" x2="15" y2="32"/>
+    <line x1="12.5" y1="22.5" x2="16.2" y2="24.8"/>
+  </g>
+  <g transform="rotate(52 32 32)">
+    <line x1="32" y1="32" x2="32" y2="17" stroke="#E03A2F" stroke-width="2"/>
+  </g>
+  <circle cx="32" cy="32" r="3" fill="#1B1B1B"/>
+  <circle cx="32" cy="32" r="1.1" fill="#F2EDE4"/>
+  <text x="32" y="56" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="7" font-weight="700" letter-spacing="1.4" fill="#1B1B1B">TF·91</text>
+</svg>

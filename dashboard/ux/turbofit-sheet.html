@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TURBOFIT — Character Sheet (UX prototype)</title>
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<style>
+  /* ------------------------------------------------------------------
+     TURBOFIT SHEET — design tokens.
+     Four inks only. Red is reserved for needles, redlines, and critical
+     absences. Nothing here is a gradient used as decoration.
+     ------------------------------------------------------------------ */
+  :root{
+    --ink:#1B1B1B;
+    --cream:#F2EDE4;
+    --paper:#F8F4EB;
+    --cyan:#7FD4E8;
+    --red:#E03A2F;
+    --ink-70:rgba(27,27,27,.70);
+    --ink-45:rgba(27,27,27,.45);
+    --ink-18:rgba(27,27,27,.18);
+    --rule:2px solid var(--ink);
+    --hair:1px solid var(--ink);
+    --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    --mono:"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+    --jp:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--cream);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:13px;
+    line-height:1.45;
+    padding:22px 18px 40px;
+  }
+  button,input,select,textarea{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  /* ----- sheet frame ------------------------------------------------ */
+  .sheet{
+    position:relative;
+    max-width:1340px;
+    margin:0 auto;
+    background:var(--cream);
+    border:var(--rule);
+    padding:0 30px 0;
+  }
+  .sheet::before,.sheet::after{ /* registration marks */
+    content:"";position:absolute;top:-9px;width:16px;height:16px;
+    border-top:var(--rule);border-left:var(--rule);
+  }
+  .sheet::before{left:-9px}
+  .sheet::after{right:-9px;transform:scaleX(-1)}
+  .sheet-foot-mark{
+    position:absolute;bottom:-9px;left:-9px;width:16px;height:16px;
+    border-bottom:var(--rule);border-left:var(--rule);
+  }
+
+  /* ----- micro typography ------------------------------------------- */
+  .kicker{
+    font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-70);
+  }
+  .jp{font-family:var(--jp);font-size:10px;letter-spacing:.08em;color:var(--ink-70);font-weight:400}
+  .panel-head{
+    display:flex;align-items:baseline;gap:10px;
+    border-bottom:var(--rule);padding:9px 12px 7px;
+  }
+  .panel-head .num{
+    font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+    border:var(--hair);padding:1px 4px;
+  }
+  .panel-head h2{
+    font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  }
+  .panel-head .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+
+  /* ----- header ----------------------------------------------------- */
+  .head{
+    display:grid;grid-template-columns:1fr auto;gap:24px;
+    padding:20px 0 14px;border-bottom:var(--rule);align-items:end;
+  }
+  .wordmark{
+    display:flex;align-items:center;gap:.02em;
+    font-size:68px;line-height:.86;font-weight:800;letter-spacing:-.035em;
+    text-transform:uppercase;user-select:none;
+  }
+  .wordmark .tach{width:64px;height:64px;margin:0 2px 2px;flex:0 0 auto}
+  .motto{
+    margin-top:10px;font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+    text-transform:uppercase;
+  }
+  .motto span{display:block;color:var(--ink-70)}
+  .motto span+span{margin-top:2px}
+  .head-meta{min-width:300px}
+  .meta-row{
+    display:flex;align-items:baseline;gap:8px;
+    font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .meta-row+.meta-row{margin-top:4px}
+  .meta-row dt{color:var(--ink)}
+  .meta-row .lead{flex:1;border-bottom:1px dotted var(--ink-45);transform:translateY(-3px)}
+  .meta-row dd{font-weight:700}
+  .stamps{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .stamp{
+    display:inline-flex;align-items:center;gap:5px;
+    border:var(--hair);padding:2px 6px;
+    font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .stamp .dot{width:6px;height:6px;background:var(--ink);display:inline-block}
+  .stamp[data-on="0"]{color:var(--ink-70);border-style:dashed}
+  .stamp[data-on="0"] .dot{background:transparent;border:1px solid var(--ink-70)}
+
+  /* ----- configuration selector ------------------------------------- */
+  .configs{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:var(--rule)}
+  .config{
+    text-align:left;background:transparent;border:0;border-right:var(--rule);
+    padding:10px 12px 11px;cursor:pointer;display:grid;
+    grid-template-columns:auto 1fr auto;gap:10px;align-items:center;min-height:62px;
+  }
+  .config:last-child{border-right:0}
+  .config:hover{background:rgba(127,212,232,.20)}
+  .config[aria-pressed="true"]{background:var(--ink);color:var(--cream)}
+  .config .key{
+    font-family:var(--mono);font-size:20px;font-weight:700;line-height:1;
+    border:var(--hair);padding:2px 6px 1px;
+  }
+  .config[aria-pressed="true"] .key{border-color:var(--cream)}
+  .config .name{display:block;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.25}
+  .config .sub{font-family:var(--mono);font-size:9px;letter-spacing:.08em;margin-top:3px;color:var(--ink-70)}
+  .config[aria-pressed="true"] .sub{color:rgba(242,237,228,.72)}
+  .config .prov{
+    font-family:var(--mono);font-size:8px;letter-spacing:.1em;
+    border:var(--hair);padding:1px 4px;white-space:nowrap;
+  }
+  .config[aria-pressed="true"] .prov{border-color:var(--cream)}
+
+  /* ----- row A: bio + hero ------------------------------------------ */
+  .row-a{display:grid;grid-template-columns:minmax(0,470px) minmax(0,1fr);border-bottom:var(--rule)}
+  .bio{border-right:var(--rule);display:flex;flex-direction:column}
+  .bio-body{padding:12px 12px 14px}
+  .spec{display:flex;align-items:baseline;gap:6px;padding:3.5px 0;border-bottom:1px dotted var(--ink-18)}
+  .spec:last-of-type{border-bottom:0}
+  .spec dt{
+    font-family:var(--mono);font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--ink-70);min-width:78px;
+  }
+  .spec dd{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.02em;text-align:right;margin-left:auto;
+    display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:baseline;gap:4px 5px}
+  .spec dd.big{font-size:13px}
+  .spec .unit{font-size:9px;color:var(--ink-70);font-weight:400;margin-left:3px}
+  .tag{
+    display:inline-block;border:var(--hair);padding:0 4px;
+    font-family:var(--mono);font-size:8px;letter-spacing:.09em;text-transform:uppercase;
+    vertical-align:1px;
+  }
+  .tag--cyan{background:var(--cyan);border-color:var(--ink)}
+  .tag--ink{background:var(--ink);color:var(--cream)}
+  .tag--hollow{border-style:dashed}
+  .quant-note{
+    margin-top:10px;border-top:var(--hair);padding-top:8px;
+    font-size:10px;line-height:1.5;color:var(--ink-70);
+  }
+  .quant-note b{color:var(--ink);letter-spacing:.04em}
+  .bio-foot{
+    margin-top:auto;border-top:var(--rule);padding:8px 12px;
+    display:grid;gap:1px;
+    font-family:var(--mono);font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-70);
+  }
+  .bio-foot span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hero{padding:14px 16px 12px;display:flex;flex-direction:column;min-width:0}
+  .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  .hero-title{font-size:26px;font-weight:800;letter-spacing:-.01em;line-height:1.05;text-transform:uppercase}
+  .hero-sub{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;margin-top:4px;color:var(--ink-70)}
+  .plate{
+    border:var(--rule);padding:4px 8px;text-align:center;flex:0 0 auto;
+    font-family:var(--mono);font-size:9px;letter-spacing:.12em;line-height:1.35;
+  }
+  .plate b{display:block;font-size:14px;letter-spacing:.06em}
+  .hero-art{flex:1;display:flex;align-items:center;justify-content:center;padding:6px 0 2px;min-height:0}
+  .hero-art svg{width:100%;height:auto;max-height:290px}
+  .hero-plate{
+    display:flex;flex-wrap:wrap;gap:4px 22px;justify-content:flex-start;
+    border-top:var(--hair);padding-top:7px;
+    font-family:var(--mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;
+  }
+  .hero-plate .bit{display:flex;align-items:baseline;gap:5px}
+  .hero-plate span{color:var(--ink-70)}
+  .hero-plate b{font-weight:700}
+
+  /* ----- gauges ----------------------------------------------------- */
+  .row-b{border-bottom:var(--rule)}
+  .gauge-grid{display:grid;grid-template-columns:repeat(3,1fr)}
+  .gauge-cell{padding:10px 14px 12px;border-right:var(--rule);display:flex;flex-direction:column}
+  .gauge-cell:last-child{border-right:0}
+  .gauge-top{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+  .gauge-top h3{font-size:10px;letter-spacing:.18em;text-transform:uppercase;font-weight:700}
+  .gauge-top .jp{margin-left:auto}
+  .gauge{width:100%;max-width:300px;margin:0 auto;display:block}
+  .gauge-cap{
+    display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:baseline;
+    border-top:var(--hair);padding-top:6px;margin-top:2px;
+  }
+  .gauge-cap .reading{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+  .gauge-cap .reading b{font-size:12px}
+  .gauge-cap .src{
+    grid-column:1/-1;font-family:var(--mono);font-size:9px;line-height:1.45;
+    letter-spacing:.01em;color:var(--ink);
+  }
+  .gauge-cap .scale{
+    grid-column:1/-1;font-family:var(--mono);font-size:7.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-70);border-top:1px dotted var(--ink-45);padding-top:3px;
+  }
+  .chip{
+    font-family:var(--mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;
+    border:var(--hair);padding:1px 5px;white-space:nowrap;
+  }
+  .chip--screening{border-style:dashed}
+  .chip--external{border-style:dotted;border-width:2px}
+  .chip--declared{color:var(--ink-70);border-color:var(--ink-45)}
+  .chip--none{border-color:var(--red);color:var(--red)}
+
+  /* ----- shifter ---------------------------------------------------- */
+  .row-c{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);border-bottom:var(--rule)}
+  .shifter{border-right:var(--rule);min-width:0}
+  .shifter-body{padding:10px 12px 12px}
+  .tree{width:100%;height:auto;display:block}
+  .tree-note{
+    display:flex;gap:14px;flex-wrap:wrap;align-items:baseline;
+    border-top:var(--hair);margin-top:6px;padding-top:6px;
+    font-family:var(--mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-70);
+  }
+  .tree-note .dir{display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
+  .tree-note .rule{width:26px;border-top:var(--hair);display:inline-block}
+  .pressure{
+    display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
+    border:var(--hair);padding:7px 9px;margin-top:10px;
+  }
+  .pressure label{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase}
+  .pressure input[type=range]{width:100%;accent-color:var(--ink);height:18px}
+  .pressure .read{font-family:var(--mono);font-size:9px;letter-spacing:.04em;text-align:right;white-space:nowrap}
+  .pressure .read b{font-size:11px}
+
+  .engage{padding:10px 12px 12px;display:flex;flex-direction:column;min-width:0}
+  .engage-state{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .engage-state .gear-no{
+    font-family:var(--mono);font-size:30px;font-weight:700;line-height:1;letter-spacing:-.03em;
+  }
+  .engage-state .gear-name{font-size:13px;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
+  .engage p{font-size:11px;line-height:1.5;margin-top:7px;max-width:46ch}
+  .engage p+p{margin-top:5px}
+  .fact-table{width:100%;border-collapse:collapse;margin-top:8px;font-family:var(--mono);font-size:9px}
+  .fact-table th,.fact-table td{border-top:1px dotted var(--ink-45);padding:3px 0;text-align:left;font-weight:400}
+  .fact-table th{color:var(--ink-70);letter-spacing:.06em;text-transform:uppercase;width:58%}
+  .fact-table td{text-align:right;font-weight:600}
+
+  /* ----- gear editor ------------------------------------------------ */
+  .row-d{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.62fr);border-bottom:var(--rule)}
+  .editor{border-right:var(--rule);min-width:0}
+  .editor-body{padding:9px 12px 10px}
+  .editor-bar{
+    display:flex;gap:6px;align-items:center;flex-wrap:wrap;
+    border-bottom:var(--hair);padding-bottom:7px;margin-bottom:7px;
+  }
+  .editor-bar .saved{margin-left:auto;font-family:var(--mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-70)}
+  .btn{
+    background:transparent;border:var(--hair);padding:2px 7px 1px;cursor:pointer;
+    font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .btn:hover{background:var(--ink);color:var(--cream)}
+  .btn[disabled]{opacity:.35;cursor:not-allowed}
+  .btn[disabled]:hover{background:transparent;color:var(--ink)}
+  .gear-list{list-style:none}
+  .gear{
+    display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:center;
+    border-bottom:1px dotted var(--ink-18);padding:5px 0;
+  }
+  .gear:last-child{border-bottom:0}
+  .gear .idx{
+    font-family:var(--mono);font-size:12px;font-weight:700;text-align:center;
+    border:var(--hair);line-height:1.35;
+  }
+  .gear[data-engaged="1"] .idx{background:var(--ink);color:var(--cream)}
+  .gear .edit{min-width:0}
+  .gear input[type=text]{
+    width:100%;background:transparent;border:0;border-bottom:1px dotted var(--ink-45);
+    font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:1px 0;
+  }
+  .gear input[type=text]:focus{border-bottom:1px solid var(--cyan)}
+  .gear .meta{
+    font-family:var(--mono);font-size:8px;letter-spacing:.03em;color:var(--ink-70);
+    margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .gear .meta .need{color:var(--ink)}
+  .gear .acts{display:flex;gap:3px}
+  .gear .acts .btn{padding:1px 4px;font-size:8px;letter-spacing:.04em}
+  .gear.unbound input[type=text]{text-decoration:line-through}
+  .editor-json{margin-top:9px;border-top:var(--hair);padding-top:7px}
+  .editor-json summary{
+    cursor:pointer;font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .editor-json textarea{
+    width:100%;margin-top:6px;background:var(--paper);border:var(--hair);
+    font-family:var(--mono);font-size:9px;line-height:1.45;padding:7px;resize:vertical;
+  }
+  .json-actions{display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap}
+  .json-msg{font-family:var(--mono);font-size:8.5px;letter-spacing:.04em}
+  .json-msg[data-bad="1"]{color:var(--red)}
+
+  /* ----- row E: livery / palette / notes ---------------------------- */
+  .row-e{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.75fr) minmax(0,1fr);border-bottom:var(--rule)}
+  .cell{padding:10px 12px 12px;border-right:var(--rule);min-width:0}
+  .cell:last-child{border-right:0}
+  .livery-art{width:100%;height:auto;display:block;margin-top:2px}
+  .swatches{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px}
+  .swatch{display:flex;gap:9px;align-items:flex-start;border-top:var(--hair);padding-top:6px}
+  .swatch .chipbox{width:44px;height:44px;border:var(--rule);flex:0 0 auto}
+  .swatch .hex{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.04em;display:block}
+  .swatch .idx{font-family:var(--mono);font-size:7.5px;letter-spacing:.14em;color:var(--ink-70);display:block;margin-bottom:1px}
+  .swatch .role{font-family:var(--mono);font-size:7.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-70);line-height:1.4;display:block;margin-top:2px}
+  .notes p{font-size:10.5px;line-height:1.55;margin-top:6px}
+  .notes p:first-of-type{margin-top:2px}
+  .notes p b{letter-spacing:.03em}
+  .sign{
+    margin-top:12px;font-family:Georgia,"Times New Roman",serif;font-style:italic;
+    font-size:19px;letter-spacing:.02em;transform:rotate(-1.4deg);transform-origin:left center;
+  }
+
+  /* ----- footer ----------------------------------------------------- */
+  .foot{display:grid;grid-template-columns:1.1fr 1fr;gap:0}
+  .foot .cell{padding:9px 12px 14px}
+  .key-row{display:flex;gap:8px;align-items:center;font-family:var(--mono);font-size:8.5px;letter-spacing:.03em;line-height:1.5}
+  .key-row+.key-row{margin-top:2px}
+  .key-row .sample{width:44px;flex:0 0 auto}
+  .wire{font-family:var(--mono);font-size:8px;line-height:1.6;letter-spacing:.01em;color:var(--ink-70)}
+  .wire b{color:var(--ink)}
+  .log-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:8.5px}
+  .log-table th,.log-table td{border-bottom:1px dotted var(--ink-45);padding:3px 4px 3px 0;text-align:left;font-weight:400}
+  .log-table th{color:var(--ink-70);letter-spacing:.08em;text-transform:uppercase;font-size:7.5px}
+  .log-table td:last-child{text-align:right}
+  .log-table tr[data-none="1"] td{color:var(--ink-70)}
+  .colophon{
+    display:flex;justify-content:space-between;gap:12px;border-top:var(--rule);
+    padding:7px 0 16px;font-family:var(--mono);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-70);
+  }
+
+  /* ----- responsive ------------------------------------------------ */
+  @media (max-width:1180px){
+    .wordmark{font-size:54px}
+    .wordmark .tach{width:52px;height:52px}
+    .row-a{grid-template-columns:minmax(0,410px) minmax(0,1fr)}
+    .hero-title{font-size:22px}
+  }
+  @media (max-width:1040px){
+    .sheet{padding:0 20px}
+    .row-a{grid-template-columns:1fr}
+    .bio{border-right:0;border-bottom:var(--rule)}
+    .head{grid-template-columns:1fr}
+    .head-meta{min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+    .stamps{grid-column:1/-1}
+    .row-c{grid-template-columns:1fr}
+    .shifter{border-right:0;border-bottom:var(--rule)}
+    .row-d{grid-template-columns:1fr}
+    .editor{border-right:0;border-bottom:var(--rule)}
+    .row-e{grid-template-columns:1fr 1fr}
+    .row-e .cell:nth-child(2){border-right:0}
+    .row-e .cell:nth-child(3){grid-column:1/-1;border-top:var(--rule)}
+    .foot{grid-template-columns:1fr}
+    .foot .cell:first-child{border-bottom:var(--rule)}
+  }
+  @media (max-width:900px){
+    body{padding:12px 8px 28px}
+    .sheet{padding:0 14px}
+    .wordmark{font-size:44px}
+    .wordmark .tach{width:42px;height:42px}
+    .configs{grid-template-columns:1fr}
+    .config{border-right:0;border-bottom:var(--hair)}
+    .config:last-child{border-bottom:0}
+    .gauge-cell{padding:8px 7px 10px}
+    .gauge-top h3{font-size:9px;letter-spacing:.12em}
+    .gauge-cap .src{font-size:8px}
+    .hero-title{font-size:20px}
+    .row-e{grid-template-columns:1fr}
+    .row-e .cell{border-right:0;border-bottom:var(--hair)}
+    .row-e .cell:last-child{border-bottom:0}
+    .swatches{grid-template-columns:1fr 1fr}
+  }
+  @media print{
+    body{padding:0;background:#fff}
+    .sheet{border:0;max-width:none;padding:0}
+    .config:hover{background:transparent}
+    .editor-json,.pressure{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- ============ HEADER ============ -->
+  <header class="head">
+    <div>
+      <div class="wordmark" id="wordmark" aria-label="TURBOFIT">
+        <span>TURB</span>
+        <svg class="tach" viewBox="0 0 64 64" role="img" aria-label="Tachometer O">
+          <circle cx="32" cy="32" r="27" fill="none" stroke="#1B1B1B" stroke-width="3.4"/>
+          <path d="M32 9.5 A22.5 22.5 0 0 1 51.8 21.6" fill="none" stroke="#7FD4E8" stroke-width="3.4"/>
+          <g stroke="#1B1B1B" stroke-width="1.4">
+            <line x1="32" y1="8.5" x2="32" y2="13"/>
+            <line x1="52.5" y1="19.5" x2="48.6" y2="21.8"/>
+            <line x1="55.5" y1="32" x2="51" y2="32"/>
+            <line x1="52.5" y1="44.5" x2="48.6" y2="42.2"/>
+            <line x1="32" y1="55.5" x2="32" y2="51"/>
+            <line x1="11.5" y1="44.5" x2="15.4" y2="42.2"/>
+            <line x1="8.5" y1="32" x2="13" y2="32"/>
+            <line x1="11.5" y1="19.5" x2="15.4" y2="21.8"/>
+          </g>
+          <g transform="rotate(58 32 32)">
+            <line x1="32" y1="32" x2="32" y2="14" stroke="#E03A2F" stroke-width="1.7"/>
+          </g>
+          <circle cx="32" cy="32" r="3.2" fill="#1B1B1B"/>
+          <circle cx="32" cy="32" r="1.2" fill="#F2EDE4"/>
+        </svg>
+        <span>FIT</span>
+      </div>
+      <p class="motto">
+        ANALOG SOUL, DIGITAL MIND.
+        <span>USE WHAT YOU HAVE. BUILD WHAT YOU NEED. KEEP IT YOUR.</span>
+      </p>
+    </div>
+    <div class="head-meta">
+      <div class="meta-row"><dt>REF</dt><span class="lead"></span><dd>TF-900 / '91</dd></div>
+      <div class="meta-row"><dt>SHEET</dt><span class="lead"></span><dd>01 / 01 · LOCAL INFERENCE</dd></div>
+      <div class="meta-row"><dt>REV</dt><span class="lead"></span><dd>2.4.1 · PROTOTYPE</dd></div>
+      <div class="stamps" id="stamps"></div>
+    </div>
+  </header>
+
+  <!-- ============ CONFIG SELECTOR ============ -->
+  <nav class="configs" id="configs" aria-label="Configuration under test"></nav>
+
+  <!-- ============ ROW A: STATS + HERO ============ -->
+  <section class="row-a" aria-labelledby="specTitle">
+    <div class="bio">
+      <div class="panel-head">
+        <span class="num">01</span>
+        <h2 id="specTitle">Specifications</h2>
+        <span class="jp">仕様</span>
+        <span class="right kicker" id="bio-tier"></span>
+      </div>
+      <div class="bio-body">
+        <dl id="specList"></dl>
+        <p class="quant-note" id="quantNote"></p>
+      </div>
+      <div class="bio-foot">
+        <span id="bioEvidence">EVIDENCE —</span>
+        <span id="bioRecipe">RECIPE —</span>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="hero-title" id="heroTitle">—</div>
+          <div class="hero-sub" id="heroSub">—</div>
+        </div>
+        <div class="plate">PLATE<b id="heroPlate">—</b>ISSUE 01</div>
+      </div>
+      <div class="hero-art" id="heroArt" aria-hidden="true"></div>
+      <div class="hero-plate" id="heroBits"></div>
+    </div>
+  </section>
+
+  <!-- ============ ROW B: DIALS ============ -->
+  <section class="row-b" aria-labelledby="dialTitle">
+    <div class="panel-head">
+      <span class="num">02</span>
+      <h2 id="dialTitle">Instruments</h2>
+      <span class="jp">計器</span>
+      <span class="right kicker">HOLLOW = SCREENING · SOLID = PROMOTION · GHOST = EXTERNAL</span>
+    </div>
+    <div class="gauge-grid" id="gauges"></div>
+  </section>
+
+  <!-- ============ ROW C: SHIFTER ============ -->
+  <section class="row-c" aria-labelledby="shiftTitle">
+    <div class="shifter">
+      <div class="panel-head">
+        <span class="num">03</span>
+        <h2 id="shiftTitle">Shifter Tree</h2>
+        <span class="jp">変速</span>
+        <span class="right kicker" id="laneLabel"></span>
+      </div>
+      <div class="shifter-body">
+        <svg class="tree" id="tree" viewBox="0 0 600 330" role="img" aria-label="H-pattern gear gate showing the fallback chain"></svg>
+        <div class="tree-note">
+          <span class="dir">GEAR 1 = CEILING <span class="rule"></span> DOWNSHIFT SHEDS CONTEXT FIRST</span>
+          <span>R = YIELD (RELEASE RESIDENCY)</span>
+        </div>
+        <div class="pressure">
+          <label for="pressure">MEMORY PRESSURE<br><span class="jp" style="font-size:8px">模擬</span></label>
+          <input id="pressure" type="range" min="0" max="100" step="1" value="16" aria-describedby="pressureRead">
+          <span class="read" id="pressureRead"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="engage" aria-labelledby="engageTitle">
+      <div class="panel-head" style="padding-left:0;padding-right:0;margin-bottom:8px">
+        <h2 id="engageTitle">Engagement</h2>
+        <span class="jp">選択理由</span>
+      </div>
+      <div class="engage-state" id="engageState"></div>
+      <div id="engageWhy"></div>
+      <table class="fact-table" id="factTable"></table>
+    </div>
+  </section>
+
+  <!-- ============ ROW D: EDITOR ============ -->
+  <section class="row-d" aria-labelledby="editTitle">
+    <div class="editor">
+      <div class="panel-head">
+        <span class="num">04</span>
+        <h2 id="editTitle">Gear List — User Owned</h2>
+        <span class="jp">編集</span>
+        <span class="right kicker">ORDER IS POLICY · EVIDENCE IS READ-ONLY</span>
+      </div>
+      <div class="editor-body">
+        <div class="editor-bar">
+          <button class="btn" id="addGear" type="button">+ GEAR</button>
+          <button class="btn" id="resetGears" type="button">RESET</button>
+          <button class="btn" id="shiftUp" type="button">UPSHIFT</button>
+          <button class="btn" id="shiftDown" type="button">DOWNSHIFT</button>
+          <span class="saved" id="saved" aria-live="polite">SAVED —</span>
+        </div>
+        <ol class="gear-list" id="gearList"></ol>
+        <details class="editor-json">
+          <summary>JSON — turbofit.shifter/v1 · localStorage + ~/.config/turbofit/shifter.json</summary>
+          <textarea id="jsonBox" rows="12" spellcheck="false" aria-label="Shifter document JSON"></textarea>
+          <div class="json-actions">
+            <button class="btn" id="applyJson" type="button">VALIDATE &amp; APPLY</button>
+            <button class="btn" id="refreshJson" type="button">REFRESH FROM SHEET</button>
+            <span class="json-msg" id="jsonMsg" role="status"></span>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="engage" aria-labelledby="provTitle">
+      <div class="panel-head" style="padding-left:0;padding-right:0;margin-bottom:8px">
+        <h2 id="provTitle">Provenance</h2>
+        <span class="jp">出典</span>
+      </div>
+      <table class="fact-table" id="provTable"></table>
+      <p style="font-size:10px;line-height:1.5;margin-top:8px;color:var(--ink-70)">
+        A reading exists only for the exact main / aux / quant / context recipe it was captured on.
+        Change the context and the old number does not follow it.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ ROW E: LIVERY / PALETTE / NOTES ============ -->
+  <section class="row-e" aria-labelledby="liveryTitle">
+    <div class="cell">
+      <div class="panel-head" style="padding-left:0;padding-right:0;margin-bottom:6px">
+        <span class="num">05</span>
+        <h2 id="liveryTitle">Livery</h2>
+        <span class="jp">塗装</span>
+      </div>
+      <div id="liveryArt"></div>
+      <p class="kicker" style="margin-top:6px">TACH-O MARK · CYAN FLANK STRIPE · NO GRADIENTS</p>
+    </div>
+
+    <div class="cell">
+      <div class="panel-head" style="padding-left:0;padding-right:0;margin-bottom:8px">
+        <span class="num">06</span>
+        <h2>Palette</h2>
+        <span class="jp">配色</span>
+      </div>
+      <div class="swatches" id="swatches"></div>
+    </div>
+
+    <div class="cell notes">
+      <div class="panel-head" style="padding-left:0;padding-right:0;margin-bottom:6px">
+        <span class="num">07</span>
+        <h2>Notes</h2>
+        <span class="jp">注記</span>
+      </div>
+      <p><b>THE DIALS ARE THE PRODUCT.</b> If a number has no evidence, the dial says so. It never reads zero.</p>
+      <p><b>QUANT IS A CEILING, NOT A LADDER.</b> Q4 is the top of normal use. Q5 and Q6 are excluded. Q8 and FP16 are exceptions, not upgrades. Q2/Q3 GSQ-RCO builds are first-class.</p>
+      <p><b>THE SHIFTER IS YOURS.</b> Reorder and rename the gears; the order is the policy. The measurements stay attached to the rung that earned them.</p>
+      <p><b>AUX IS MAPLE.</b> <span style="font-family:var(--mono);font-size:9px">maple-preview-tq2</span> at every rung. No second auxiliary exists.</p>
+      <p class="sign">— .sOuthpaw</p>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="foot">
+    <div class="cell">
+      <div class="panel-head" style="padding-left:0;padding-right:0;margin-bottom:7px">
+        <h2>Reading Key</h2><span class="jp">凡例</span>
+      </div>
+      <div class="key-row"><svg class="sample" viewBox="0 0 44 14"><line x1="2" y1="7" x2="42" y2="7" stroke="#1B1B1B" stroke-width="6"/></svg><span>PROMOTION EVIDENCE — solid band, solid needle.</span></div>
+      <div class="key-row"><svg class="sample" viewBox="0 0 44 14"><line x1="2" y1="7" x2="42" y2="7" stroke="#1B1B1B" stroke-width="6" stroke-dasharray="3 4"/></svg><span>SCREENING — hollow band, n=1 attempt. Never called promoted.</span></div>
+      <div class="key-row"><svg class="sample" viewBox="0 0 44 14"><line x1="2" y1="7" x2="42" y2="7" stroke="#1B1B1B" stroke-width="2.5" stroke-dasharray="1 5"/></svg><span>EXTERNAL — verified elsewhere, not re-measured on this host.</span></div>
+      <div class="key-row"><svg class="sample" viewBox="0 0 44 14"><rect x="6" y="2" width="32" height="10" fill="none" stroke="#E03A2F" stroke-width="1.4" stroke-dasharray="4 3"/></svg><span>NO MEASUREMENT — the honest empty state.</span></div>
+    </div>
+    <div class="cell">
+      <div class="panel-head" style="padding-left:0;padding-right:0;margin-bottom:7px">
+        <h2>Measurement Log</h2><span class="jp">測定記録</span>
+      </div>
+      <table class="log-table" id="logTable"></table>
+      <p class="wire" style="margin-top:6px">
+        A RUNG WITHOUT A ROW HAS NO READING. IT IS NEVER INTERPOLATED FROM A NEIGHBOUR.
+        ENDPOINT WIRING: <b>docs/ux-redesign.md §9</b>.
+      </p>
+    </div>
+  </footer>
+
+  <div class="colophon">
+    <span>TURBOFIT · UX REDESIGN PROTOTYPE · FIXTURE READINGS, NOT LIVE DATA</span>
+    <span>CREAM / CHARCOAL / CYAN / SIGNAL RED · 01 OF 01</span>
+  </div>
+  <span class="sheet-foot-mark" aria-hidden="true"></span>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ==================================================================
+     FIXTURE DATA
+     Readings are drawn from references/intelligence-scores.json and
+     references/fallback-chain.json where a real number exists. Anything
+     without hash-bound evidence is `null` — and the UI must say so.
+     ================================================================== */
+  const CONFIGS = [
+    {
+      key: "A",
+      id: "tf-48-gsq",
+      tier_gb: 48,
+      card_mb: 24576,
+      topology: "2×24 GB · dedicated",
+      family: "Qwen 3.8 27B GSQ-RCO",
+      model: "qwen3-8-27b-gsq-rco-iq3s",
+      quant: "UD-Q3_K_XL",
+      quantTag: "BELOW CEILING · FIRST CLASS",
+      context: 262144,
+      aux: "maple-preview-tq2",
+      auxMode: "route-to-main",
+      engine: "llama.cpp",
+      plate: "TF-048",
+      status: "ready",
+      statusLabel: "MEASURED · SCREENING",
+      recipe: "sha256:2175ca09…5b1e3",
+      evidence: "deep-swe 0/1 + agentic-pair 15/16 · n=1",
+      measuredAt: "2026-08-23",
+      intel: { value: 46.9, level: "screening", source: "screening harness, 2 suites, 1 attempt · 2026-08-23" },
+      speed: { value: 39.39, level: "measured-here", source: "same screening run, this host · recipe 2175ca09" },
+      balanced: { value: 58.78, level: "derived", source: "harmonic mean; speed fraction capped at 50 tok/s" },
+      pressure: 16,
+      gears: [
+        { id: "a0", label: "GSQ-RCO / 262K", model: "qwen3-8-27b-gsq-rco-iq3s", quant: "UD-Q3_K_XL", context: 262144, engine: "llama.cpp", aux: "maple-preview-tq2", needs_mb_per_card: 17400, evidence: "measured",
+          readings: { intel: { value: 46.9, level: "screening", source: "screening harness · 2026-08-23" }, speed: { value: 39.39, level: "measured-here", source: "same run, this host" } } },
+        { id: "a1", label: "LFM 24A2B / 131K", model: "lfm-24a2b", quant: "Q4_K_M", context: 131072, engine: "llama.cpp", aux: "maple-preview-tq2", needs_mb_per_card: 15000, evidence: "candidate", readings: {} },
+        { id: "a2", label: "GSQ-RCO / 64K", model: "qwen3-8-27b-gsq-rco-iq3s", quant: "UD-Q3_K_XL", context: 65536, engine: "llama.cpp", aux: "maple-preview-tq2", needs_mb_per_card: 12200, evidence: "measured",
+          readings: { intel: null, speed: null } },
+        { id: "a3", label: "BONSAI PTQ1 / 131K", model: "ternary-bonsai-2-27b-ptq1", quant: "PTQ1", context: 131072, engine: "llama.cpp", aux: "maple-preview-tq2", needs_mb_per_card: 11200, evidence: "measured", readings: {} },
+        { id: "a4", label: "MAPLE TQ2 / 128K", model: "maple-preview-20b-a1b", quant: "TQ2_0", context: 131072, engine: "llama.cpp", aux: "maple-preview-tq2", needs_mb_per_card: 8000, evidence: "portable-fit", readings: {} },
+        { id: "a5", label: "ARETE Q4 / 131K", model: "arete-27b", quant: "Q4_K_M", context: 131072, engine: "llama.cpp", aux: "maple-preview-tq2", needs_mb_per_card: 7600, evidence: "candidate", readings: {} }
+      ]
+    },
+    {
+      key: "B",
+      id: "tf-16-arete",
+      tier_gb: 16,
+      card_mb: 16384,
+      topology: "1×16 GB · dedicated",
+      family: "Arete 27B",
+      model: "arete-27b",
+      quant: "Q4_K_M",
+      quantTag: "AT CEILING",
+      context: 131072,
+      aux: "maple-preview-tq2",
+      auxMode: "route-to-main",
+      engine: "llama.cpp",
+      plate: "TF-016",
+      status: "no-measurements",
+      statusLabel: "NO MEASUREMENT",
+      recipe: "not bound — no campaign row",
+      evidence: "none on this tier",
+      measuredAt: null,
+      intel: null,
+      speed: null,
+      balanced: null,
+      pressure: 4,
+      gears: [
+        { id: "b0", label: "ARETE Q4 / 131K", model: "arete-27b", quant: "Q4_K_M", context: 131072, engine: "llama.cpp", aux: "maple-preview-tq2", needs_mb_per_card: 15200, evidence: "candidate", readings: {} },
+        { id: "b1", label: "ARETE Q4 / 64K", model: "arete-27b", quant: "Q4_K_M", context: 65536, engine: "llama.cpp", aux: "maple-preview-tq2", needs_mb_per_card: 12800, evidence: "candidate", readings: {} },
+        { id: "b2", label: "MAPLE TQ2 / 128K", model: "maple-preview-20b-a1b", quant: "TQ2_0", context: 131072, engine: "llama.cpp", aux: "maple-preview-tq2", needs_mb_per_card: 8000, evidence: "portable-fit", readings: {} }
+      ]
+    },
+    {
+      key: "C",
+      id: "tf-96-flash",
+      tier_gb: 96,
+      card_mb: 98304,
+      topology: "1×96 GB · unified class",
+      family: "Qwen 3.8 Flash Next",
+      model: "qwen3-8-flash-next-strata",
+      quant: "IQ3_S",
+      quantTag: "BELOW CEILING · FIRST CLASS",
+      context: 262144,
+      aux: "maple-preview-tq2",
+      auxMode: "route-to-main",
+      engine: "strata",
+      plate: "TF-096",
+      status: "measured",
+      statusLabel: "SPEED FAILED · INTEL PENDING",
+      recipe: "strata profile · 1×96",
+      evidence: "external TPS evidence; no intelligence run",
+      measuredAt: "2026-11-09",
+      intel: null,
+      speed: { value: 414.6, level: "external-verified", source: "Strata runtime profile evidence, 1×96 · PR #83 · not re-measured here" },
+      balanced: null,
+      pressure: 9,
+      gears: [
+        { id: "c0", label: "FLASH NEXT / 262K", model: "qwen3-8-flash-next-strata", quant: "IQ3_S", context: 262144, engine: "strata", aux: "maple-preview-tq2", needs_mb_per_card: 22000, evidence: "measured",
+          readings: { speed: { value: 414.6, level: "external-verified", source: "Strata 1×96 profile · PR #83" }, intel: null } },
+        { id: "c1", label: "FLASH NEXT / 131K", model: "qwen3-8-flash-next-strata", quant: "IQ3_S", context: 131072, engine: "strata", aux: "maple-preview-tq2", needs_mb_per_card: 19000, evidence: "portable-fit", readings: {} },
+        { id: "c2", label: "FLASH NEXT / 64K", model: "qwen3-8-flash-next-strata", quant: "IQ3_S", context: 65536, engine: "strata", aux: "maple-preview-tq2", needs_mb_per_card: 17500, evidence: "portable-fit", readings: {} },
+        { id: "c3", label: "GSQ-RCO / 262K", model: "qwen3-8-27b-gsq-rco-iq3s", quant: "UD-Q3_K_XL", context: 262144, engine: "llama.cpp", aux: "maple-preview-tq2", needs_mb_per_card: 17400, evidence: "measured",
+          readings: { intel: { value: 46.9, level: "screening", source: "screening harness · 2026-08-23" }, speed: { value: 39.39, level: "measured-here", source: "screening run" } } }
+      ]
+    }
+  ];
+
+  const PALETTE = [
+    { hex: "#1B1B1B", name: "CHARCOAL", role: "INK · RULES · PANEL" },
+    { hex: "#F2EDE4", name: "CREAM", role: "GROUND · PANEL FACE" },
+    { hex: "#7FD4E8", name: "LIGHT CYAN", role: "ACCENT STRIPE · FOCUS" },
+    { hex: "#E03A2F", name: "SIGNAL RED", role: "NEEDLE · REDLINE · CRITICAL" }
+  ];
+
+  const STORAGE_KEY = "turbofit.shifter.v1";
+  const state = { config: 0, pressure: {}, shifter: null, engagedId: null, dirty: false };
+
+  /* ---------------- helpers ---------------- */
+  const $ = (sel) => document.querySelector(sel);
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const nf = (n) => Number(n).toLocaleString("en-US");
+  function ctxLabel(v) {
+    if (!v) return "—";
+    if (v >= 1048576) return "1M";
+    if (v >= 262144) return "262K";
+    if (v >= 131072) return "128K";
+    if (v >= 65536) return "64K";
+    return Math.round(v / 1024) + "K";
+  }
+  function gb(mb) { return (mb / 1024).toFixed(1); }
+  function cfg() { return CONFIGS[state.config]; }
+
+  function defaultShifter(config) {
+    return {
+      schema: "turbofit.shifter/v1",
+      name: config.topology + " — " + config.family,
+      lane: config.tier_gb >= 64 ? "unified" : "dedicated",
+      context_floor: 65536,
+      updated: new Date().toISOString(),
+      gears: config.gears.map((g) => ({
+        id: g.id, label: g.label, model: g.model, quant: g.quant, context: g.context,
+        engine: g.engine, aux: g.aux, needs_mb_per_card: g.needs_mb_per_card, evidence: g.evidence
+      })),
+      reverse: { id: "yield", label: "YIELD", kind: "yield" }
+    };
+  }
+
+  /* Readings are evidence-owned: they live outside the editable document
+     and are re-attached by id on load, so a JSON import cannot invent one. */
+  const READING_REGISTRY = {};
+  CONFIGS.forEach((c) => c.gears.forEach((g) => { READING_REGISTRY[c.id + ":" + g.id] = g.readings || {}; }));
+
+  function loadShifter(config) {
+    const fallback = defaultShifter(config);
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY + ":" + config.id);
+      if (!raw) return { doc: fallback, restored: false };
+      const doc = JSON.parse(raw);
+      if (!doc || doc.schema !== "turbofit.shifter/v1" || !Array.isArray(doc.gears) || !doc.gears.length) {
+        return { doc: fallback, restored: false };
+      }
+      return { doc: normalizeDoc(doc, config), restored: true };
+    } catch (e) {
+      return { doc: fallback, restored: false };
+    }
+  }
+
+  function normalizeDoc(doc, config) {
+    const known = new Map(fallbackById(config).map((g) => [g.id, g]));
+    return {
+      schema: "turbofit.shifter/v1",
+      name: String(doc.name || config.topology),
+      lane: String(doc.lane || "dedicated"),
+      context_floor: Number(doc.context_floor) || 65536,
+      updated: doc.updated || new Date().toISOString(),
+      gears: doc.gears.map((g, i) => {
+        const base = known.get(g.id) || {};
+        return {
+          id: String(g.id || "g" + i),
+          label: String(g.label || base.label || "GEAR " + (i + 1)),
+          model: String(g.model || base.model || ""),
+          quant: String(g.quant || base.quant || ""),
+          context: Number(g.context || base.context || 0),
+          engine: String(g.engine || base.engine || ""),
+          aux: String(g.aux || base.aux || "maple-preview-tq2"),
+          needs_mb_per_card: Number(g.needs_mb_per_card != null ? g.needs_mb_per_card : (base.needs_mb_per_card || 0)),
+          evidence: String(g.evidence || base.evidence || "candidate")
+        };
+      }),
+      reverse: { id: "yield", label: "YIELD", kind: "yield" }
+    };
+  }
+  function fallbackById(config) { return defaultShifter(config).gears; }
+
+  function saveShifter() {
+    const doc = state.shifter;
+    doc.updated = new Date().toISOString();
+    state.snapshot = doc.gears.map((g) => ({ ...g }));
+    try {
+      localStorage.setItem(STORAGE_KEY + ":" + cfg().id, JSON.stringify(doc));
+      $("#saved").textContent = "SAVED " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    } catch (e) {
+      $("#saved").textContent = "NOT SAVED — STORAGE BLOCKED";
+    }
+    renderJson();
+  }
+
+  /* ---------------- engagement ---------------- */
+  function headroomMb() {
+    const c = cfg();
+    const used = Math.round((c.card_mb * state.pressure[c.id]) / 100);
+    return { headroom: Math.max(0, c.card_mb - used), used, total: c.card_mb };
+  }
+  function computeEngagement() {
+    const { headroom } = headroomMb();
+    for (let i = 0; i < state.shifter.gears.length; i++) {
+      if (headroom >= state.shifter.gears[i].needs_mb_per_card) {
+        return { index: i, gear: state.shifter.gears[i], yield: false, headroom };
+      }
+    }
+    return { index: -1, gear: null, yield: true, headroom };
+  }
+  function readingsFor(gear) {
+    if (!gear) return {};
+    return READING_REGISTRY[cfg().id + ":" + gear.id] || {};
+  }
+
+  /* ---------------- SVG utilities ---------------- */
+  const CX = 130, CY = 112, R = 92;
+  function polar(r, deg) {
+    const a = ((deg - 90) * Math.PI) / 180;
+    return [CX + r * Math.cos(a), CY + r * Math.sin(a)];
+  }
+  function arc(r, t0, t1) {
+    const a0 = -120 + 240 * t0, a1 = -120 + 240 * t1;
+    const [x0, y0] = polar(r, a0), [x1, y1] = polar(r, a1);
+    const large = Math.abs(a1 - a0) > 180 ? 1 : 0;
+    return `M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  }
+  function needlePath(deg) {
+    return `<g class="needle" transform="rotate(${deg.toFixed(2)} ${CX} ${CY})">
+      <polygon points="${CX - 3.6},${CY} ${CX + 3.6},${CY} ${CX},${CY - 76}" fill="#E03A2F"/>
+      <line x1="${CX}" y1="${CY}" x2="${CX}" y2="${CY + 12}" stroke="#1B1B1B" stroke-width="3.4"/>
+      <circle cx="${CX}" cy="${CY}" r="6" fill="#1B1B1B"/>
+      <circle cx="${CX}" cy="${CY}" r="2.2" fill="#F8F4EB"/>
+    </g>`;
+  }
+  function gaugeShell(title, subtitle) {
+    return `<svg class="gauge" viewBox="0 0 260 232" role="img" aria-label="${esc(title)}">
+      <circle cx="${CX}" cy="${CY}" r="100" fill="#F8F4EB" stroke="#1B1B1B" stroke-width="2"/>
+      <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#1B1B1B" stroke-width="1.4"/>
+    </svg>`;
+  }
+  function tickRow(values, r1, r2, filter) {
+    return values.map(([t, cls]) => {
+      if (filter && !filter(t)) return "";
+      const [x1, y1] = polar(r1, -120 + 240 * t);
+      const [x2, y2] = polar(r2, -120 + 240 * t);
+      const color = cls === "red" ? "#E03A2F" : "#1B1B1B";
+      return `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="${color}" stroke-width="${cls === "major" || cls === "red" ? 1.7 : 1}"/>`;
+    }).join("");
+  }
+  const noMeasure = (x, y) => `
+    <g>
+      <rect x="${x - 62}" y="${y - 17}" width="124" height="34" fill="none" stroke="#E03A2F" stroke-width="1.6" stroke-dasharray="5 3"/>
+      <text x="${x}" y="${y - 2}" text-anchor="middle" font-family="var(--mono)" font-size="8" letter-spacing="1.8" fill="#E03A2F">NO</text>
+      <text x="${x}" y="${y + 10}" text-anchor="middle" font-family="var(--mono)" font-size="8" letter-spacing="1.8" fill="#E03A2F">MEASUREMENT</text>
+    </g>`;
+
+  /* ---------------- the three dials ---------------- */
+  function dialFace(aria) {
+    return `<svg class="gauge" viewBox="0 0 260 232" role="img" aria-label="${esc(aria)}">
+      <circle cx="${CX}" cy="${CY}" r="100" fill="#F8F4EB" stroke="#1B1B1B" stroke-width="2"/>
+      <path d="${arc(R, 0, 1)}" fill="none" stroke="#1B1B1B" stroke-width="1.4"/>`;
+  }
+  function readingBlock(value, unit, sub, subColor) {
+    return `<text x="${CX}" y="166" text-anchor="middle" font-family="var(--mono)" font-size="20" font-weight="700" fill="#1B1B1B">${esc(value)}</text>
+      <text x="${CX}" y="180" text-anchor="middle" font-family="var(--mono)" font-size="7.5" letter-spacing="1.5" fill="#1B1B1B">${esc(unit)}</text>
+      ${sub ? `<text x="${CX}" y="194" text-anchor="middle" font-family="var(--mono)" font-size="7" letter-spacing="1.2" fill="${subColor || "#1B1B1B"}">${esc(sub)}</text>` : ""}`;
+  }
+
+  function contextGauge(gear) {
+    if (!gear) {
+      return dialFace("Context dial, residency released") + `
+        <path d="${arc(R, 0, 1)}" fill="none" stroke="rgba(27,27,27,.30)" stroke-width="1.4" stroke-dasharray="4 4"/>
+        ${noMeasure(CX, 176)}
+        <text x="${CX}" y="196" text-anchor="middle" font-family="var(--mono)" font-size="7" letter-spacing="1.4" fill="#1B1B1B">RESIDENCY RELEASED</text>
+      </svg>`;
+    }
+    const t = Math.min(1, Math.max(0, (Math.log2(gear.context) - 16) / 4));
+    const labels = ["64K", "128K", "256K", "512K", "1M"].map((label, i) => {
+      const [x, y] = polar(66, -120 + 240 * (i / 4));
+      return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#1B1B1B">${label}</text>`;
+    }).join("");
+    const minors = [];
+    for (let i = 0; i <= 32; i++) minors.push([i / 32, i % 8 === 0 ? "major" : "minor"]);
+    return dialFace(`Context dial, ${nf(gear.context)} tokens, configured`) + `
+      <path d="${arc(R - 14, 0, t)}" fill="none" stroke="#7FD4E8" stroke-width="7"/>
+      ${tickRow(minors, R, R - 7)}
+      ${labels}
+      <line x1="${polar(R + 2, -120)[0].toFixed(1)}" y1="${polar(R + 2, -120)[1].toFixed(1)}"
+            x2="${polar(R + 11, -120)[0].toFixed(1)}" y2="${polar(R + 11, -120)[1].toFixed(1)}"
+            stroke="#E03A2F" stroke-width="2.6"/>
+      <text x="20" y="160" font-family="var(--mono)" font-size="7" letter-spacing="1.2" fill="#E03A2F">FLOOR 64K</text>
+      ${needlePath(-120 + 240 * t)}
+      ${readingBlock(nf(gear.context), "TOKENS", "CONFIGURED · NOT MEASURED")}
+    </svg>`;
+  }
+
+  function speedGauge(reading) {
+    const majors = [0, 10, 20, 30, 40, 50, 60].map((v) => {
+      const [x, y] = polar(66, -120 + 240 * (v / 60));
+      return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="${v > 50 ? "#E03A2F" : "#1B1B1B"}">${v}</text>`;
+    }).join("");
+    const minors = [];
+    for (let i = 0; i <= 60; i++) minors.push([i / 60, i % 10 === 0 ? "major" : "minor"]);
+    const peg = reading && reading.value > 60;
+    const t = reading ? Math.min(1, reading.value / 60) : 0;
+    const band = reading
+      ? `<path d="${arc(R - 14, 0, t)}" fill="none" stroke="#1B1B1B" stroke-width="7"
+           ${reading.level === "screening" ? 'stroke-dasharray="3 4"' : ""}
+           ${reading.level === "external-verified" ? 'stroke-width="2.5" stroke-dasharray="1 5"' : ""}/>`
+      : "";
+    return dialFace(`Speed dial${reading ? ", " + reading.value + " tokens per second" : ", no measurement"}`) + `
+      <path d="${arc(R + 7, 50 / 60, 1)}" fill="none" stroke="#E03A2F" stroke-width="5"/>
+      ${band}
+      ${tickRow(minors, R, R - 7, (tt) => true)}
+      ${majors}
+      ${reading ? needlePath(peg ? 120 : -120 + 240 * t) : ""}
+      ${reading
+        ? readingBlock(peg ? "60+" : reading.value.toFixed(1), "TOK / S", peg ? "PEGGED · " + reading.value.toFixed(1) + " · EXTERNAL" : "", peg ? "#E03A2F" : null)
+        : noMeasure(CX, 176)}
+    </svg>`;
+  }
+
+  function intelGauge(reading) {
+    const majors = [0, 20, 40, 60, 80, 100].map((v) => {
+      const [x, y] = polar(66, -120 + 240 * (v / 100));
+      return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#1B1B1B">${v}</text>`;
+    }).join("");
+    const minors = [];
+    for (let i = 0; i <= 40; i++) minors.push([i / 40, i % 8 === 0 ? "major" : "minor"]);
+    const gate = 60 / 100;
+    const band = reading
+      ? `<path d="${arc(R - 14, 0, reading.value / 100)}" fill="none" stroke="#1B1B1B" stroke-width="7"
+           ${reading.level === "screening" ? 'stroke-dasharray="3 4"' : ""}
+           ${reading.level === "external-verified" ? 'stroke-width="2.5" stroke-dasharray="1 5"' : ""}/>`
+      : "";
+    return dialFace(`Intelligence dial${reading ? ", " + reading.value + " of 100" : ", no measurement"}`) + `
+      ${band}
+      ${tickRow(minors, R, R - 7, (tt) => true)}
+      ${majors}
+      <line x1="${polar(R + 2, -120 + 240 * gate)[0].toFixed(2)}" y1="${polar(R + 2, -120 + 240 * gate)[1].toFixed(2)}"
+            x2="${polar(R - 12, -120 + 240 * gate)[0].toFixed(2)}" y2="${polar(R - 12, -120 + 240 * gate)[1].toFixed(2)}"
+            stroke="#E03A2F" stroke-width="2.4"/>
+      ${reading ? needlePath(-120 + 240 * (reading.value / 100)) : ""}
+      ${reading
+        ? readingBlock(reading.value.toFixed(1), "HERMES INDEX", "", null)
+        : noMeasure(CX, 176)}
+    </svg>`;
+  }
+
+
+  const LEVEL_CHIP = {
+    "measured-here": ["MEASURED · THIS HOST", "chip--screening"],
+    "screening": ["SCREENING · n=1", "chip--screening"],
+    "external-verified": ["EXTERNAL · NOT RE-MEASURED", "chip--external"],
+    "derived": ["DERIVED", "chip--declared"],
+    "declared": ["CONFIGURED", "chip--declared"]
+  };
+  function chip(level) {
+    if (!level) return '<span class="chip chip--none">NO MEASUREMENT</span>';
+    const [label, cls] = LEVEL_CHIP[level] || [String(level).toUpperCase(), "chip--declared"];
+    return `<span class="chip ${cls}">${esc(label)}</span>`;
+  }
+
+  function renderGauges() {
+    const eng = computeEngagement();
+    const gear = eng.gear;
+    const reads = readingsFor(gear);
+    const cards = [
+      {
+        title: "Context", jp: "コンテキスト",
+        svg: contextGauge(gear),
+        reading: gear ? `<b>${nf(gear.context)}</b> tokens` : "—",
+        level: gear ? "declared" : null,
+        scale: "LOG₂ · 64K HARD FLOOR · 1M CEILING",
+        src: gear ? `GEAR ${eng.index + 1} · ${esc(gear.label)} · downshift halves the window before it swaps model` : "No rung engaged — residency released."
+      },
+      {
+        title: "Speed", jp: "速度",
+        svg: speedGauge(reads.speed || null),
+        reading: reads.speed ? `<b>${reads.speed.value.toFixed(2)}</b> tok/s` : "—",
+        level: reads.speed ? reads.speed.level : null,
+        scale: "0–60 · REDLINE 50 = BALANCED SCORE SATURATES",
+        src: reads.speed ? reads.speed.source : `No tok/s measurement exists for ${esc(gear ? gear.label : "yield")}.`
+      },
+      {
+        title: "Intelligence", jp: "知性",
+        svg: intelGauge(reads.intel || null),
+        reading: reads.intel ? `<b>${reads.intel.value.toFixed(1)}</b> / 100` : "—",
+        level: reads.intel ? reads.intel.level : null,
+        scale: "0–100 · RELEASE GATE 60 (POLICY, NOT A MEASUREMENT)",
+        src: reads.intel ? reads.intel.source : `No Hermes Index run for ${esc(gear ? gear.label : "yield")}.`
+      }
+    ];
+    $("#gauges").innerHTML = cards.map((c) => `
+      <div class="gauge-cell">
+        <div class="gauge-top"><h3>${esc(c.title)}</h3><span class="jp">${esc(c.jp)}</span></div>
+        ${c.svg}
+        <div class="gauge-cap">
+          <span class="reading">${c.reading}</span>
+          ${chip(c.level)}
+          <span class="src">${c.src}</span>
+          <span class="scale">${c.scale}</span>
+        </div>
+      </div>`).join("");
+  }
+
+  /* ---------------- H-pattern ---------------- */
+  function renderTree() {
+    const gears = state.shifter.gears;
+    const eng = computeEngagement();
+    const n = gears.length;
+    const cols = Math.max(2, Math.min(4, Math.ceil(n / 2)));
+    const width = cols === 2 ? 460 : cols === 3 ? 560 : 660;
+    const left = 96, gap = (width - left - 104) / (cols - 1 || 1);
+    const topY = 84, midY = 156, botY = 230;
+    const pos = (i) => {
+      const col = Math.floor(i / 2), row = i % 2;
+      return { x: left + col * gap, y: row === 0 ? topY : botY, col, row };
+    };
+    let g = "";
+    // gate frame
+    g += `<path d="M ${left - 26} ${midY} L ${left + (cols - 1) * gap + 26} ${midY}" stroke="#1B1B1B" stroke-width="2"/>`;
+    g += `<path d="M ${left - 26} ${midY + 9} L ${left + (cols - 1) * gap + 26} ${midY + 9}" stroke="#1B1B1B" stroke-width="2"/>`;
+    for (let c = 0; c < cols; c++) {
+      const x = left + c * gap;
+      g += `<line x1="${x}" y1="${topY}" x2="${x}" y2="${botY}" stroke="#1B1B1B" stroke-width="2.6"/>`;
+    }
+    // neutral marker
+    g += `<circle cx="${left - 26}" cy="${midY + 4.5}" r="2.4" fill="#1B1B1B"/>`;
+    g += `<text x="${left - 52}" y="${midY + 8}" font-family="var(--mono)" font-size="7.5" letter-spacing="1" fill="#1B1B1B">N</text>`;
+
+    // downshift direction
+    g += `<g><line x1="40" y1="312" x2="${width - 40}" y2="312" stroke="#1B1B1B" stroke-width="1.2" stroke-dasharray="2 4"/>
+      <path d="M ${width - 40} 312 l -9 -5 l 0 10 z" fill="#1B1B1B"/>
+      <text x="40" y="305" font-family="var(--mono)" font-size="7.5" letter-spacing="1.4" fill="#1B1B1B">UPSHIFT — NATIVE WINDOW</text>
+      <text x="${width - 44}" y="305" text-anchor="end" font-family="var(--mono)" font-size="7.5" letter-spacing="1.4" fill="#1B1B1B">DOWNSHIFT — SHED CONTEXT, THEN CLASS</text></g>`;
+
+    gears.forEach((gear, i) => {
+      const p = pos(i);
+      const isEng = eng.index === i;
+      const fit = eng.headroom >= gear.needs_mb_per_card;
+      g += `<g class="slot" data-i="${i}">
+        <circle cx="${p.x}" cy="${p.y}" r="19" fill="${isEng ? "#1B1B1B" : "#F8F4EB"}" stroke="#1B1B1B" stroke-width="2"/>
+        ${isEng ? `<circle cx="${p.x}" cy="${p.y}" r="25" fill="none" stroke="#7FD4E8" stroke-width="2.5"/>` : ""}
+        <text x="${p.x}" y="${(p.y + 5)}" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="${isEng ? "#F2EDE4" : fit ? "#1B1B1B" : "rgba(27,27,27,.45)"}">${i + 1}</text>
+        <text x="${p.x}" y="${p.y + 40}" text-anchor="middle" font-family="var(--mono)" font-size="8" letter-spacing=".6" fill="#1B1B1B">${esc(shortName(gear))}</text>
+        <text x="${p.x}" y="${p.y + 51}" text-anchor="middle" font-family="var(--mono)" font-size="7" letter-spacing=".4" fill="rgba(27,27,27,.62)">${esc((gear.quant || "") + " · " + ctxLabel(gear.context))}</text>
+        <text x="${p.x}" y="${p.y + 62}" text-anchor="middle" font-family="var(--mono)" font-size="6.5" letter-spacing=".4" fill="rgba(27,27,27,.62)">${(gear.needs_mb_per_card / 1024).toFixed(1)} GB/CARD</text>
+      </g>`;
+    });
+
+    // reverse gate
+    const rx = left + (cols - 1) * gap + 72;
+    const revEng = eng.yield;
+    g += `<line x1="${rx}" y1="${midY - 18}" x2="${rx}" y2="${botY + 30}" stroke="#1B1B1B" stroke-width="1.2" stroke-dasharray="4 4"/>`;
+    g += `<rect x="${rx - 34}" y="${midY - 26}" width="68" height="13" fill="#F2EDE4" stroke="#1B1B1B" stroke-width="1.2"/>
+      <text x="${rx}" y="${midY - 16}" text-anchor="middle" font-family="var(--mono)" font-size="7.5" letter-spacing=".7" fill="#1B1B1B">LIFT TO UNLOCK</text>`;
+    g += `<g>
+      <rect x="${rx - 24}" y="${botY - 24}" width="48" height="48" rx="3" fill="${revEng ? "#1B1B1B" : "#F8F4EB"}" stroke="${revEng ? "#1B1B1B" : "#E03A2F"}" stroke-width="2"/>
+      <text x="${rx}" y="${botY + 7}" text-anchor="middle" font-family="var(--mono)" font-size="15" font-weight="700" fill="${revEng ? "#F2EDE4" : "#E03A2F"}">R</text>
+      <text x="${rx}" y="${botY + 40}" text-anchor="middle" font-family="var(--mono)" font-size="7.5" letter-spacing="1" fill="#1B1B1B">YIELD</text>
+      <text x="${rx}" y="${botY + 51}" text-anchor="middle" font-family="var(--mono)" font-size="6.5" letter-spacing=".6" fill="rgba(27,27,27,.62)">RELEASE RESIDENCY</text>
+    </g>`;
+
+    // engaged gate path (neutral -> slot)
+    if (!eng.yield && eng.index >= 0) {
+      const p = pos(eng.index);
+      g += `<path d="M ${left - 26} ${midY + 4.5} L ${p.x} ${midY + 4.5} L ${p.x} ${p.y}" fill="none" stroke="#7FD4E8" stroke-width="3"/>`;
+      g += `<circle cx="${p.x}" cy="${midY + 4.5}" r="3" fill="#7FD4E8" stroke="#1B1B1B" stroke-width="1"/>`;
+    }
+
+    const svg = $("#tree");
+    svg.setAttribute("viewBox", `0 0 ${width} 330`);
+    svg.innerHTML = g;
+  }
+  function shortName(gear) {
+    const base = (gear.model || "").split("-").slice(0, 2).join(" ").toUpperCase();
+    return (gear.label || base).split("/")[0].trim();
+  }
+
+  /* ---------------- engagement panel ---------------- */
+  function renderEngagement() {
+    const eng = computeEngagement();
+    const { headroom, used, total } = headroomMb();
+    const c = cfg();
+    const gear = eng.gear;
+    if (eng.yield) {
+      $("#engageState").innerHTML = `<span class="gear-no">R</span><span class="gear-name">YIELD — RESIDENCY RELEASED</span>`;
+      $("#engageWhy").innerHTML = `<p>No gear's per-card requirement fits ${nf(headroom)} MB of headroom. TurboFit releases residency rather than thrashes; it restores after the expansion dwell once pressure clears.</p>`;
+    } else {
+      const rejected = eng.index;
+      $("#engageState").innerHTML = `<span class="gear-no">${eng.index + 1}</span><span class="gear-name">${esc(gear.label)}</span>${gear.evidence === "measured" ? '<span class="tag tag--cyan">MEASURED RUNG</span>' : '<span class="tag tag--hollow">' + esc(gear.evidence.toUpperCase()) + "</span>"}`;
+      const why = eng.index === 0
+        ? `<p><b>First rung, and it fits:</b> ${gb(gear.needs_mb_per_card)} GB per card against ${nf(headroom)} MB headroom on the tightest card. Nothing below it was consulted — the ceiling is not a suggestion.</p>`
+        : `<p><b>Downgrade:</b> ${rejected} higher gear${rejected === 1 ? "" : "s"} rejected on memory. Gear ${eng.index + 1} needs ${gb(gear.needs_mb_per_card)} GB/card and ${nf(headroom)} MB is free.</p>`;
+      const next = state.shifter.gears[eng.index + 1];
+      const nextLine = next
+        ? `<p style="color:var(--ink-70)">Next down: gear ${eng.index + 2} · ${esc(next.label)} · engages once headroom falls below ${nf(next.needs_mb_per_card)} MB.</p>`
+        : `<p style="color:var(--ink-70)">Last gear before yield.</p>`;
+      const scoreLine = gear.evidence === "measured"
+        ? `<p style="color:var(--ink-70)">Why the ordering is defensible here: this exact recipe carries hash-bound screening evidence.</p>`
+        : `<p style="color:var(--ink-70)">This rung is ${esc(gear.evidence)} — it is a fit hypothesis, not a measured winner. Nothing on this sheet upgrades it.</p>`;
+      $("#engageWhy").innerHTML = why + nextLine + scoreLine;
+    }
+    $("#factTable").innerHTML = `
+      <tr><th>Pressure state</th><td>${used / total > 0.90 ? "CRITICAL" : used / total > 0.75 ? "ELEVATED" : "NOMINAL"} · ${(100 * used / total).toFixed(1)}%</td></tr>
+      <tr><th>Used / card</th><td>${nf(used)} / ${nf(total)} MB</td></tr>
+      <tr><th>Headroom, tightest card</th><td>${nf(headroom)} MB</td></tr>
+      <tr><th>Engaged requirement</th><td>${gear ? nf(gear.needs_mb_per_card) + " MB/CARD" : "—"}</td></tr>
+      <tr><th>Context floor</th><td>${nf(state.shifter.context_floor)} TOKENS</td></tr>
+      <tr><th>Lane</th><td>${esc(state.shifter.lane.toUpperCase())}</td></tr>`;
+    $("#laneLabel").textContent = state.shifter.lane.toUpperCase() + " LANE · " + state.shifter.gears.length + " GEARS + R";
+    $("#pressureRead").innerHTML = `USED <b>${(100 * used / total).toFixed(0)}%</b><br>HEADROOM ${nf(headroom)} MB`;
+  }
+
+  /* ---------------- stats / hero ---------------- */
+  function renderConfig() {
+    const c = cfg();
+    $("#configs").innerHTML = CONFIGS.map((conf, i) => `
+      <button class="config" type="button" aria-pressed="${i === state.config}" data-i="${i}">
+        <span class="key">${conf.key}</span>
+        <span><span class="name">${esc(conf.family)}</span>
+            <span class="sub">${esc(conf.quant)} · ${ctxLabel(conf.context)} · ${conf.tier_gb} GB · ${esc(conf.engine)}</span></span>
+        <span class="prov">${conf.status === "no-measurements" ? "NO MEAS." : esc(conf.statusLabel.split(" · ")[0])}</span>
+      </button>`).join("");
+    $("#configs").querySelectorAll(".config").forEach((el) => {
+      el.addEventListener("click", () => switchConfig(Number(el.dataset.i)));
+    });
+
+    $("#stamps").innerHTML = [
+      ["GATEWAY", true], ["TAILNET", true], ["PROVIDER", true], ["TAILNET SERVE", false]
+    ].map(([label, on]) => `<span class="stamp" data-on="${on ? 1 : 0}"><span class="dot"></span>${label}</span>`).join("");
+
+    const intel = c.intel, speed = c.speed, bal = c.balanced;
+    const spaced = c.key === "C" ? 32 : c.key === "B" ? 32 : 20;
+    $("#bio-tier").textContent = c.tier_gb + " GB TIER · " + c.statusLabel;
+    $("#specList").innerHTML = [
+      ["FAMILY", esc(c.family)],
+      ["MODEL ID", `<span style="font-size:10px">${esc(c.model)}</span>`],
+      ["QUANT", `${esc(c.quant)} <span class="tag tag--hollow">${esc(c.quantTag)}</span>`],
+      ["CONTEXT", `${nf(c.context)} tokens <span class="unit">${ctxLabel(c.context)}</span>`],
+      ["AUX", `MAPLE <span class="unit">${esc(c.aux)}</span>`],
+      ["ENGINE", `${esc(c.engine)} <span class="unit">${esc(c.auxMode)}</span>`],
+      ["TIER", `${c.tier_gb} GB · ${esc(c.topology)}`],
+      ["INTELLIGENCE", intel ? `${intel.value.toFixed(1)} <span class="unit">/ 100</span>` : `<span style="color:var(--red);font-size:10px">NO MEASUREMENT</span>`],
+      ["SPEED", speed ? `${speed.value.toFixed(2)} <span class="unit">tok/s</span>` : `<span style="color:var(--red);font-size:10px">NO MEASUREMENT</span>`],
+      ["BALANCED", bal ? `${bal.value.toFixed(1)} <span class="unit">/ 100</span>` : `<span style="color:var(--red);font-size:10px">WITHHELD</span>`]
+    ].map(([k, v]) => `<div class="spec"><dt>${k}</dt><dd>${v}</dd></div>`).join("");
+
+    $("#quantNote").innerHTML = `<b>QUANT IS A CEILING, NOT A LADDER.</b> Normal use tops out at Q4.
+      Q5/Q6 are excluded; Q8/FP16 are documented exceptions; Q2/Q3 GSQ-RCO builds are first-class and
+      sit here on their measured behaviour, not on their bit-width.`;
+
+    $("#bioEvidence").textContent = "EVIDENCE — " + ({
+      A: "SCREENING · 2 SUITES · N=1",
+      B: "NONE ON THIS TIER",
+      C: "EXTERNAL TPS · NO INTEL RUN"
+    }[c.key] || "NONE");
+    $("#bioRecipe").textContent = "RECIPE — " + (c.recipe || "—");
+
+    $("#heroTitle").textContent = c.family;
+    $("#heroSub").textContent = c.quant + " · " + ctxLabel(c.context) + " · " + c.engine.toUpperCase() + " · AUX MAPLE";
+    $("#heroPlate").textContent = c.plate;
+    $("#heroArt").innerHTML = carSVG();
+    renderHeroBits();
+  }
+  function renderHeroBits() {
+    const c = cfg();
+    $("#heroBits").innerHTML = [
+      ["ENGINE", c.engine], ["AUX", "maple-preview-tq2"], ["RUNG", getEngagedLabel()], ["SHEET", "TF-900"]
+    ].map(([k, v]) => `<span class="bit"><span>${k}</span><b>${esc(v)}</b></span>`).join("");
+  }
+  function getEngagedLabel() {
+    const eng = computeEngagement();
+    return eng.yield ? "R / YIELD" : "GEAR " + (eng.index + 1);
+  }
+
+  function carSVG() {
+    return `<svg viewBox="0 0 720 320" role="img" aria-label="Line-art side profile of a 1990s hatchback in TurboFit livery">
+      <line x1="26" y1="272" x2="694" y2="272" stroke="#1B1B1B" stroke-width="2"/>
+      <!-- body -->
+      <path d="M 44 236 L 44 196 Q 44 182 60 179 L 208 158 L 296 104 Q 306 98 322 97 L 452 95 Q 470 95 482 109 L 566 186 L 646 196 Q 666 199 668 216 L 670 240"
+            fill="#F8F4EB" stroke="#1B1B1B" stroke-width="2.4" stroke-linejoin="round"/>
+      <!-- greenhouse -->
+      <path d="M 226 156 L 302 112 Q 310 106 322 106 L 445 105 Q 456 105 464 114 L 530 176 Z" fill="#F2EDE4" stroke="#1B1B1B" stroke-width="2"/>
+      <line x1="372" y1="106" x2="372" y2="176" stroke="#1B1B1B" stroke-width="2"/>
+      <line x1="226" y1="156" x2="530" y2="176" stroke="#1B1B1B" stroke-width="2"/>
+      <!-- mirrors -->
+      <path d="M 292 110 L 276 106 L 276 116 Z" fill="#1B1B1B"/>
+      <!-- flank stripe -->
+      <path d="M 58 208 L 654 214" stroke="#7FD4E8" stroke-width="9"/>
+      <path d="M 58 220 L 654 226" stroke="#1B1B1B" stroke-width="1.4"/>
+      <!-- livery wordmark on door -->
+      <text x="404" y="204" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="17" font-weight="800" letter-spacing="2.2" fill="#1B1B1B">TURB·FIT</text>
+      <!-- door cut -->
+      <line x1="386" y1="120" x2="386" y2="236" stroke="#1B1B1B" stroke-width="1.2"/>
+      <line x1="548" y1="196" x2="548" y2="236" stroke="#1B1B1B" stroke-width="1.2"/>
+      <!-- handle -->
+      <rect x="398" y="169" width="24" height="4" fill="#1B1B1B"/>
+      <!-- bumpers -->
+      <rect x="38" y="216" width="26" height="16" fill="#1B1B1B"/>
+      <rect x="652" y="216" width="22" height="16" fill="#1B1B1B"/>
+      <!-- headlight / grille -->
+      <rect x="58" y="184" width="30" height="12" fill="#F2EDE4" stroke="#1B1B1B" stroke-width="1.6"/>
+      <line x1="66" y1="198" x2="66" y2="208" stroke="#1B1B1B" stroke-width="1.2"/>
+      <!-- taillight -->
+      <rect x="632" y="200" width="26" height="10" fill="#E03A2F" stroke="#1B1B1B" stroke-width="1.2"/>
+      <!-- wheels -->
+      <g>
+        <circle cx="176" cy="238" r="40" fill="#F2EDE4" stroke="#1B1B1B" stroke-width="2.4"/>
+        <circle cx="176" cy="238" r="22" fill="#F8F4EB" stroke="#1B1B1B" stroke-width="1.6"/>
+        <circle cx="176" cy="238" r="4" fill="#1B1B1B"/>
+        <path d="M 140 238 A 36 36 0 0 1 212 238" fill="none" stroke="#1B1B1B" stroke-width="1"/>
+      </g>
+      <g>
+        <circle cx="560" cy="238" r="40" fill="#F2EDE4" stroke="#1B1B1B" stroke-width="2.4"/>
+        <circle cx="560" cy="238" r="22" fill="#F8F4EB" stroke="#1B1B1B" stroke-width="1.6"/>
+        <circle cx="560" cy="238" r="4" fill="#1B1B1B"/>
+        <path d="M 524 238 A 36 36 0 0 1 596 238" fill="none" stroke="#1B1B1B" stroke-width="1"/>
+      </g>
+      <!-- fender arches -->
+      <path d="M 126 242 A 50 50 0 0 1 226 242" fill="none" stroke="#1B1B1B" stroke-width="2.4"/>
+      <path d="M 510 242 A 50 50 0 0 1 610 242" fill="none" stroke="#1B1B1B" stroke-width="2.4"/>
+      <!-- exhaust -->
+      <rect x="656" y="246" width="16" height="6" fill="#1B1B1B"/>
+      <!-- plate -->
+      <rect x="286" y="246" width="96" height="20" fill="#F2EDE4" stroke="#1B1B1B" stroke-width="1.4"/>
+      <text x="334" y="260" text-anchor="middle" font-family="var(--mono)" font-size="9" letter-spacing="2" fill="#1B1B1B">ANALOG 01</text>
+    </svg>`;
+  }
+
+  /* ---------------- editor ---------------- */
+  function renderEditor() {
+    const eng = computeEngagement();
+    $("#gearList").innerHTML = state.shifter.gears.map((g, i) => `
+      <li class="gear" data-engaged="${eng.index === i ? 1 : 0}" data-unbound="${g.model ? 0 : 1}">
+        <span class="idx">${i + 1}</span>
+        <span class="edit">
+          <input type="text" value="${esc(g.label)}" data-i="${i}" aria-label="Gear ${i + 1} name" maxlength="28">
+          <span class="meta">${esc(g.model || "unbound")} · ${esc(g.quant)} · ${ctxLabel(g.context)} · ${esc(g.engine)} · aux ${esc(g.aux)}
+            · <span class="need">${gb(g.needs_mb_per_card)} GB/CARD</span> · ${esc(g.evidence.toUpperCase())}</span>
+        </span>
+        <span class="acts">
+          <button class="btn" type="button" data-act="up" data-i="${i}" ${i === 0 ? "disabled" : ""} aria-label="Move gear ${i + 1} up">UP</button>
+          <button class="btn" type="button" data-act="down" data-i="${i}" ${i === state.shifter.gears.length - 1 ? "disabled" : ""} aria-label="Move gear ${i + 1} down">DN</button>
+          <button class="btn" type="button" data-act="del" data-i="${i}" ${state.shifter.gears.length <= 1 ? "disabled" : ""} aria-label="Remove gear ${i + 1}">X</button>
+        </span>
+      </li>`).join("");
+
+    $("#gearList").querySelectorAll("input[type=text]").forEach((input) => {
+      input.addEventListener("input", () => {
+        state.shifter.gears[Number(input.dataset.i)].label = input.value.toUpperCase();
+        saveShifter();
+        renderTree(); renderGauges();
+      });
+    });
+    $("#gearList").querySelectorAll("button[data-act]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const i = Number(btn.dataset.i), act = btn.dataset.act;
+        const gears = state.shifter.gears;
+        if (act === "up" && i > 0) [gears[i - 1], gears[i]] = [gears[i], gears[i - 1]];
+        if (act === "down" && i < gears.length - 1) [gears[i + 1], gears[i]] = [gears[i], gears[i + 1]];
+        if (act === "del") gears.splice(i, 1);
+        const monotonic = gears.every((g, k) => k === 0 || g.needs_mb_per_card <= gears[k - 1].needs_mb_per_card);
+        if (!monotonic) {
+          // restore: a gear order that climbs is not a fallback ladder
+          const restored = state.snapshot;
+          state.shifter.gears = restored;
+          $("#saved").textContent = "ORDER REJECTED — THE LADDER MUST NOT CLIMB";
+          renderEditor();
+          return;
+        }
+        state.snapshot = gears.map((g) => ({ ...g }));
+        saveShifter(); renderAll();
+      });
+    });
+    $("#saved").textContent = state.restored ? "RESTORED FROM LOCAL STORE" : $("#saved").textContent;
+  }
+
+  function renderJson() {
+    const doc = Object.assign({}, state.shifter, { gears: state.shifter.gears.map(stripReadings) });
+    $("#jsonBox").value = JSON.stringify(doc, null, 2);
+  }
+  function stripReadings(g) {
+    return { id: g.id, label: g.label, model: g.model, quant: g.quant, context: g.context,
+             engine: g.engine, aux: g.aux, needs_mb_per_card: g.needs_mb_per_card, evidence: g.evidence };
+  }
+
+  function validateDoc(doc) {
+    const errs = [];
+    if (!doc || typeof doc !== "object") return ["document must be an object"];
+    if (doc.schema !== "turbofit.shifter/v1") errs.push("schema must be 'turbofit.shifter/v1'");
+    if (!Array.isArray(doc.gears) || !doc.gears.length) errs.push("gears must be a non-empty array");
+    const floor = Number(doc.context_floor);
+    if (!(floor >= 65536)) errs.push("context_floor may not go below 65536 tokens");
+    (doc.gears || []).forEach((g, i) => {
+      ["id", "label", "model", "context", "needs_mb_per_card"].forEach((k) => {
+        if (g[k] === undefined || g[k] === null || g[k] === "") errs.push(`gears[${i}].${k} is required`);
+      });
+      if (Number(g.context) < floor) errs.push(`gears[${i}].context ${g.context} is below the floor`);
+      if (i > 0 && Number(g.needs_mb_per_card) > Number(doc.gears[i - 1].needs_mb_per_card)) {
+        errs.push(`gears[${i}] needs more memory than the gear above it — the ladder must not climb`);
+      }
+      if (g.aux && g.aux !== "maple-preview-tq2") errs.push(`gears[${i}].aux must be maple-preview-tq2 (the only auxiliary)`);
+    });
+    if (!["dedicated", "unified"].includes(doc.lane)) errs.push("lane must be 'dedicated' or 'unified'");
+    return errs;
+  }
+
+  function renderProvenance() {
+    const eng = computeEngagement();
+    const reads = readingsFor(eng.gear);
+    const c = cfg();
+    const rows = [
+      ["Configuration", c.status === "no-measurements" ? "no campaign row" : c.id],
+      ["Intelligence", reads.intel ? reads.intel.value.toFixed(1) + " · " + reads.intel.level : "none for this rung"],
+      ["Speed", reads.speed ? reads.speed.value.toFixed(2) + " · " + reads.speed.level : "none for this rung"],
+      ["Balanced", reads.intel && reads.speed ? "derived" : "withheld — needs both"],
+      ["Measured at", c.measuredAt || "—"],
+      ["Recipe hash", c.recipe || "—"]
+    ];
+    $("#provTable").innerHTML = rows.map(([k, v]) => `<tr><th>${esc(k)}</th><td style="font-size:8.5px">${esc(v)}</td></tr>`).join("");
+  }
+
+  /* ---------------- misc render ---------------- */
+  function renderPalette() {
+    $("#swatches").innerHTML = PALETTE.map((p, i) => `
+      <div class="swatch">
+        <span class="chipbox" style="background:${p.hex}"></span>
+        <span><span class="idx">0${i + 1}</span><span class="hex">${p.hex}</span>
+          <span class="role">${esc(p.name)}<br>${esc(p.role)}</span></span>
+      </div>`).join("");
+  }
+
+  function renderLog() {
+    const rows = state.shifter.gears.map((g, i) => {
+      const reads = readingsFor(g);
+      const has = reads.intel || reads.speed;
+      const when = reads.intel && reads.intel.source.includes("2026-08-23") ? "2026-08-23"
+        : reads.speed && reads.speed.level === "external-verified" ? "PR #83" : "—";
+      const level = reads.intel ? "SCREENING" : reads.speed ? "EXTERNAL" : "NONE";
+      const vals = [
+        reads.intel ? "INDEX " + reads.intel.value.toFixed(1) : null,
+        reads.speed ? reads.speed.value.toFixed(2) + " TOK/S" : null
+      ].filter(Boolean).join(" · ") || "NO READING";
+      return `<tr data-none="${has ? 0 : 1}"><td>GEAR ${i + 1}</td><td>${esc(when)}</td><td>${esc(level)}</td><td>${esc(vals)}</td></tr>`;
+    }).join("");
+    $("#logTable").innerHTML = `<tr><th>RUNG</th><th>CAPTURED</th><th>LEVEL</th><th>READING</th></tr>${rows}`;
+  }
+  function renderLivery() {
+    $("#liveryArt").innerHTML = `<svg class="livery-art" viewBox="0 0 420 150" role="img" aria-label="TurboFit livery patch">
+      <rect x="1" y="1" width="418" height="148" fill="#F8F4EB" stroke="#1B1B1B" stroke-width="2"/>
+      <path d="M 0 118 L 420 118" stroke="#1B1B1B" stroke-width="2"/>
+      <path d="M 0 124 L 420 124" stroke="#7FD4E8" stroke-width="6"/>
+      <path d="M 0 134 L 420 134" stroke="#1B1B1B" stroke-width="1"/>
+      <text x="26" y="86" font-family="Helvetica,Arial,sans-serif" font-size="40" font-weight="800" letter-spacing="-1" fill="#1B1B1B">TURB</text>
+      <circle cx="188" cy="72" r="21" fill="none" stroke="#1B1B1B" stroke-width="3"/>
+      <path d="M 188 55 A 17 17 0 0 1 203 63" fill="none" stroke="#7FD4E8" stroke-width="3"/>
+      <line x1="188" y1="72" x2="188" y2="59" stroke="#E03A2F" stroke-width="1.8" transform="rotate(48 188 72)"/>
+      <circle cx="188" cy="72" r="2.6" fill="#1B1B1B"/>
+      <text x="212" y="86" font-family="Helvetica,Arial,sans-serif" font-size="40" font-weight="800" letter-spacing="-1" fill="#1B1B1B">FIT</text>
+      <text x="26" y="112" font-family="var(--mono)" font-size="8.5" letter-spacing="2.4" fill="#1B1B1B">ANALOG SOUL · DIGITAL MIND</text>
+      <text x="394" y="46" text-anchor="end" font-family="var(--mono)" font-size="8" letter-spacing="1.6" fill="#E03A2F">TF·91</text>
+      <g stroke="#1B1B1B" stroke-width="1.2">
+        <path d="M 300 24 L 380 24"/><path d="M 300 30 L 366 30"/>
+      </g>
+    </svg>`;
+  }
+
+  function renderAll() {
+    renderConfig();
+    renderGauges();
+    renderTree();
+    renderEngagement();
+    renderEditor();
+    renderJson();
+    renderProvenance();
+    renderLog();
+  }
+
+  /* ---------------- interaction ---------------- */
+  function switchConfig(i) {
+    state.config = i;
+    const c = cfg();
+    const loaded = loadShifter(c);
+    state.shifter = loaded.doc;
+    state.restored = loaded.restored;
+    state.snapshot = state.shifter.gears.map((g) => ({ ...g }));
+    state.pressure[c.id] = state.pressure[c.id] == null ? c.pressure : state.pressure[c.id];
+    $("#pressure").value = state.pressure[c.id];
+    renderAll();
+    saveShifter();
+  }
+
+  $("#pressure").addEventListener("input", (e) => {
+    state.pressure[cfg().id] = Number(e.target.value);
+    renderGauges();
+    renderTree();
+    renderEngagement();
+    renderProvenance();
+    renderHeroBits();
+  });
+
+  $("#addGear").addEventListener("click", () => {
+    const gears = state.shifter.gears;
+    const last = gears[gears.length - 1];
+    const next = Math.max(1024, Math.round((last.needs_mb_per_card * 0.85) / 512) * 512);
+    gears.push({
+      id: "g" + Date.now().toString(36), label: "NEW GEAR " + (gears.length + 1),
+      model: last.model, quant: last.quant, context: Math.max(65536, Math.floor(last.context / 2)),
+      engine: last.engine, aux: "maple-preview-tq2", needs_mb_per_card: next, evidence: "candidate"
+    });
+    saveShifter(); renderAll();
+  });
+
+  $("#resetGears").addEventListener("click", () => {
+    state.shifter = defaultShifter(cfg());
+    saveShifter(); renderAll();
+  });
+
+  function nudge(dir) {
+    const eng = computeEngagement();
+    const gears = state.shifter.gears;
+    let idx = eng.yield ? gears.length - 1 : eng.index;
+    idx = Math.min(gears.length - 1, Math.max(0, idx + dir));
+    const target = gears[idx];
+    // simulate the headroom at which that gear is the first to fit
+    const pct = Math.max(0, Math.min(100, Math.round(100 * (1 - (target.needs_mb_per_card + 256) / cfg().card_mb))));
+    state.pressure[cfg().id] = pct;
+    $("#pressure").value = pct;
+    renderAll();
+  }
+  $("#shiftUp").addEventListener("click", () => nudge(-1));
+  $("#shiftDown").addEventListener("click", () => nudge(1));
+
+  $("#applyJson").addEventListener("click", () => {
+    const msg = $("#jsonMsg");
+    let doc;
+    try { doc = JSON.parse($("#jsonBox").value); }
+    catch (e) { msg.dataset.bad = "1"; msg.textContent = "INVALID JSON — " + e.message; return; }
+    const errs = validateDoc(doc);
+    if (errs.length) {
+      msg.dataset.bad = "1";
+      msg.textContent = "REJECTED — " + errs.slice(0, 3).join(" · ");
+      return;
+    }
+    state.shifter = normalizeDoc(doc, cfg());
+    msg.dataset.bad = "0";
+    msg.textContent = "APPLIED — " + state.shifter.gears.length + " GEARS · SAVED LOCALLY";
+    saveShifter(); renderAll();
+  });
+  $("#refreshJson").addEventListener("click", () => { $("#jsonMsg").textContent = ""; renderJson(); });
+
+  /* ---------------- boot ---------------- */
+  renderPalette();
+  renderLivery();
+  switchConfig(0);
+})();
+</script>
+</body>
+</html>
