@@ -266,6 +266,23 @@ async def get_leaderboard() -> dict[str, Any]:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
+def _fit_rows(tier_gb: int | None = None) -> dict[str, Any]:
+    """What to run on this machine, and what is missing to run it."""
+    from turbofit_runtime.fit_view import load_fit_view
+
+    return load_fit_view(PLUGIN_ROOT, tier_gb=tier_gb)
+
+
+@router.get("/fit")
+async def get_fit(tier: int | None = None) -> dict[str, Any]:
+    if tier is not None and not 1 <= tier <= 4096:
+        raise HTTPException(status_code=422, detail="tier must be a GB value from 1 to 4096")
+    try:
+        return await asyncio.to_thread(_fit_rows, tier)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
 @router.get("/auxiliary-tiers")
 async def get_auxiliary_tiers() -> dict[str, Any]:
     try:

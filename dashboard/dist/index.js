@@ -25,6 +25,17 @@
     return h(Badge, { className: ok ? "tf-ok" : "tf-muted" }, ok ? yes : no);
   }
 
+  const FIT_STATUS_LABELS = {
+    "missing-artifacts": "needs downloads",
+    "engine-unsupported": "engine unsupported",
+    "no-measurements": "no measurements yet",
+    unresolvable: "cannot be resolved",
+  };
+
+  function statusLabel(status) {
+    return FIT_STATUS_LABELS[status] || status || "unknown";
+  }
+
   function Field(props) {
     return h("div", { className: "tf-field" },
       h(Label, { htmlFor: props.id }, props.label),
@@ -52,6 +63,7 @@
     const [hardwareTiers, setHardwareTiers] = useState(null);
     const [auxiliaryTiers, setAuxiliaryTiers] = useState(null);
     const [leaderboard, setLeaderboard] = useState(null);
+    const [fit, setFit] = useState(null);
     const [multimodal, setMultimodal] = useState(null);
     const [multimodalSelections, setMultimodalSelections] = useState({});
     const [primary, setPrimary] = useState(false);
@@ -79,7 +91,7 @@
     const load = useCallback(async function () {
       setMessage("");
       try {
-        const [nextStatus, nextCombinations, nextBackends, nextTournaments, nextHardwareTiers, nextAuxiliaryTiers, nextMultimodal, nextLeaderboard] = await Promise.all([
+        const [nextStatus, nextCombinations, nextBackends, nextTournaments, nextHardwareTiers, nextAuxiliaryTiers, nextMultimodal, nextLeaderboard, nextFit] = await Promise.all([
           SDK.fetchJSON("/api/plugins/turbofit/status"),
           SDK.fetchJSON("/api/plugins/turbofit/combinations"),
           SDK.fetchJSON("/api/plugins/turbofit/backends"),
@@ -88,6 +100,7 @@
           SDK.fetchJSON("/api/plugins/turbofit/auxiliary-tiers"),
           SDK.fetchJSON("/api/plugins/turbofit/multimodal"),
           SDK.fetchJSON("/api/plugins/turbofit/leaderboard"),
+          SDK.fetchJSON("/api/plugins/turbofit/fit"),
         ]);
         setStatus(nextStatus);
         const exact = nextCombinations.combinations || [];
@@ -97,6 +110,7 @@
         setHardwareTiers(nextHardwareTiers);
         setAuxiliaryTiers(nextAuxiliaryTiers);
         setLeaderboard(nextLeaderboard);
+        setFit(nextFit);
         setMultimodal(nextMultimodal);
         const selectedModalities = Object.assign({}, nextMultimodal.selected || {});
         ["image", "video", "music", "tts", "stt"].forEach((modality) => {
@@ -424,6 +438,25 @@
                 h("small", null, value(routes, role + ".mode", value(routes, role + ".kind", "—"))),
               )),
             ),
+          ),
+        ),
+
+        h(Card, { className: "tf-card tf-span-2" },
+          h(CardHeader, null, h(CardTitle, null, "Fit · what to run on this machine")),
+          h(CardContent, null,
+            h("p", { className: "tf-help" }, value(fit, "summary", "Checking this machine…")),
+            h("dl", { className: "tf-stats" },
+              value(fit, "tiers", []).map((tier) => h("div", { key: tier.hardware_tier_gb },
+                h("dt", null,
+                  tier.hardware_tier_gb + " GB · " +
+                  (tier.status === "ready" ? "ready" : statusLabel(tier.status))
+                ),
+                h("dd", null, tier.message),
+              )),
+            ),
+            value(fit, "cpu.statement", null)
+              ? h("p", { className: "tf-help" }, value(fit, "cpu.statement", ""))
+              : null,
           ),
         ),
 

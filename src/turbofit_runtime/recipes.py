@@ -152,6 +152,11 @@ class ResolvedComponent:
     model_path: str = ""
     projector_path: str = ""
     context: int = 0
+    #: Draft/assistant weights the command passes with --model-draft, if any.
+    draft_path: str = ""
+    #: Runtime flavor ("mainline", "prism", "strata", "vllm", "ik"); the engine
+    #: identity a fit check needs before a load is attempted.
+    engine: str = ""
 
 
 @dataclass(frozen=True)
@@ -376,6 +381,7 @@ class RecipeBook:
         if not 1 <= ubatch_size <= batch_size:
             raise ValueError(f"invalid batch/ubatch recipe for {family}: {batch_size}/{ubatch_size}")
         runtime_flavor = str(spec.get("runtime_flavor", "mainline"))
+        draft = ""
         gpu_layers = context_override.get(
             "gpu_layers", 99 if runtime_flavor == "ik" else "auto"
         )
@@ -419,7 +425,12 @@ class RecipeBook:
             data_root = os.environ.get("TURBOFIT_STRATA_DATA", "~/.local/share/turbofit/strata-data")
 
             def strata_path(value: str) -> str:
-                return str(value).replace("${TURBOFIT_STRATA_DATA}", str(Path(data_root).expanduser()))
+                # The recipes spell the root both ways; an unsubstituted
+                # "${turbofit_strata_data}" reached the engine as a literal path.
+                root = str(Path(data_root).expanduser())
+                return str(value).replace("${TURBOFIT_STRATA_DATA}", root).replace(
+                    "${turbofit_strata_data}", root
+                )
 
             command = [binary, "--serve", "--pack", strata_path(pack), "--native", model,
                        "--max-context", str(context)]
@@ -594,6 +605,7 @@ class RecipeBook:
             role=role, family=family, alias=alias, kind=kind, method=method,
             gpu=gpu, port=port, command=tuple(command),
             model_path=model, projector_path=projector, context=context,
+            draft_path=draft, engine=runtime_flavor,
         )
 
     def resolve_component(
