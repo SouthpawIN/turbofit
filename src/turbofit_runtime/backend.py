@@ -65,6 +65,8 @@ class CampaignBackend:
         self._production_suspended = False
         self._production_services_to_restore: list[str] = []
         self._campaign_lease_depth = 0
+        #: pinned port -> port chosen for it when the pinned one is taken.
+        self._port_assignments: dict[int, int] = {}
 
     @staticmethod
     def _request_json(url: str, payload: dict | None = None, timeout: int = 10) -> tuple[int, dict, dict]:
@@ -289,11 +291,25 @@ class CampaignBackend:
         """
         port = int(component.port)
         if not self._port_open(port) and not self._port_in_tcp_tables(port):
+            self._port_assignments.pop(port, None)
             return component
+        # A port already reassigned for this pinned port keeps its choice: the
+        # pre-gate reconcile and the launch itself must agree, and a second call
+        # must not walk to yet another port or repeat the log line.
+        remembered = self._port_assignments.get(port)
+        if (
+            remembered is not None
+            and remembered not in (reserved or set())
+            and not self._port_open(remembered)
+            and not self._port_in_tcp_tables(remembered)
+        ):
+            return self._with_port(component, remembered)
         owner = self._owned_listener(component, port)
         if owner is not None and self._reclaim(owner, port, component):
+            self._port_assignments.pop(port, None)
             return component
         chosen = self._next_free_port(port, reserved)
+        self._port_assignments[port] = chosen
         reason = (
             f"foreign listener on port {port}"
             if owner is None
@@ -304,11 +320,15 @@ class CampaignBackend:
             f"{component.family or component.alias} ({component.role})",
             file=sys.stderr, flush=True,
         )
-        rewritten = self._command_with_port(component.command, chosen)
+        return self._with_port(component, chosen)
+
+    @staticmethod
+    def _with_port(component: ResolvedComponent, port: int) -> ResolvedComponent:
+        rewritten = CampaignBackend._command_with_port(component.command, port)
         if is_dataclass(component):
-            return replace(component, port=chosen, command=rewritten)
+            return replace(component, port=int(port), command=rewritten)
         clone = copy.copy(component)
-        clone.port = chosen
+        clone.port = int(port)
         clone.command = rewritten
         return clone
 

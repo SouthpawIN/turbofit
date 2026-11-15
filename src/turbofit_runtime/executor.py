@@ -191,6 +191,24 @@ class LocalPairExecutor:
         acquire = getattr(self.backend, "acquire_campaign_lease", None)
         if acquire is not None:
             acquire()
+        self.reconcile_ports(self.recipes.resolve(item))
+
+    def reconcile_ports(self, recipe: ResolvedRecipe) -> None:
+        """Make each component's pinned port launchable before the GPU gate.
+
+        A residual engine from a killed run still holds its VRAM, so the clear
+        gate would wait out its whole budget *before* any launch could reclaim
+        the port. Reconciling here kills the two birds: an owned leftover is
+        terminated (freeing the GPU) and a foreign listener moves this run to
+        another port.
+        """
+        claim: Callable[..., ResolvedComponent] | None = getattr(self.backend, "claim_port", None)
+        if not callable(claim):
+            return
+        reserved: set[int] = set()
+        for component in recipe.components:
+            effective = claim(component, reserved=reserved)
+            reserved.add(int(effective.port))
 
     def finish(self, item: MatrixRow) -> None:
         release = getattr(self.backend, "release_campaign_lease", None)
