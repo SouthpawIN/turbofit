@@ -1,0 +1,596 @@
+{
+  "schema": "turbofit.model-footprints/v1",
+  "generated_at": "2026-11-15T00:18:55.478005+00:00",
+  "source": "references/artifact-manifest.json at pinned revisions; shard sets completed from the pinned repo listing",
+  "models": {
+    "qwen3-8-27b-q4-mtp": {
+      "weight_bytes": 21283389088,
+      "shard_set_complete": true,
+      "repos": [
+        "ggml-org/Qwen3.8-27B-GGUF"
+      ]
+    },
+    "qwen3-8-27b-q4": {
+      "weight_bytes": 19603117440,
+      "shard_set_complete": true,
+      "repos": [
+        "ggml-org/Qwen3.8-27B-GGUF"
+      ]
+    },
+    "qwen3-8-27b-q4-dflash2": {
+      "weight_bytes": 20746124192,
+      "shard_set_complete": true,
+      "repos": [
+        "ggml-org/Qwen3.8-27B-GGUF",
+        "incoai/Qwen3.8-27B-DFlash2-GGUF"
+      ]
+    },
+    "qwen3-8-27b-q8-mtp": {
+      "weight_bytes": 32389017248,
+      "shard_set_complete": true,
+      "repos": [
+        "ggml-org/Qwen3.8-27B-GGUF"
+      ]
+    },
+    "qwen3-8-27b-q8": {
+      "weight_bytes": 29225010560,
+      "shard_set_complete": true,
+      "repos": [
+        "ggml-org/Qwen3.8-27B-GGUF"
+      ]
+    },
+    "qwen3-8-27b-bf16-mtp": {
+      "weight_bytes": 60685437728,
+      "shard_set_complete": true,
+      "repos": [
+        "ggml-org/Qwen3.8-27B-GGUF"
+      ]
+    },
+    "qwen3-8-27b-bf16": {
+      "weight_bytes": 54739427840,
+      "shard_set_complete": true,
+      "repos": [
+        "ggml-org/Qwen3.8-27B-GGUF"
+      ]
+    },
+    "ternary-bonsai-27b": {
+      "weight_bytes": 8096267360,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-27B-gguf"
+      ]
+    },
+    "ternary-bonsai-27b-dspark-bf16": {
+      "weight_bytes": 14457007392,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-27B-gguf"
+      ]
+    },
+    "ternary-bonsai-27b-dspark": {
+      "weight_bytes": 10042660928,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-27B-gguf"
+      ]
+    },
+    "ternary-bonsai-27b-compact-vision-bf16": {
+      "weight_bytes": 8096267360,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-27B-gguf"
+      ]
+    },
+    "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16": {
+      "weight_bytes": 15388153152,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-27B-gguf"
+      ]
+    },
+    "ternary-bonsai-27b-compact-vision-bf16-dspark-q4": {
+      "weight_bytes": 10042660928,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-27B-gguf"
+      ]
+    },
+    "ternary-bonsai-27b-fp16": {
+      "weight_bytes": 53808280640,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-27B-gguf"
+      ]
+    },
+    "ternary-bonsai-27b-fp16-dspark-bf16": {
+      "weight_bytes": 61100166432,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-27B-gguf"
+      ]
+    },
+    "ternary-bonsai-27b-fp16-dspark-q4": {
+      "weight_bytes": 55754674208,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-27B-gguf"
+      ]
+    },
+    "ternary-bonsai-27b-fp16-vision-bf16": {
+      "weight_bytes": 54739426400,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-27B-gguf"
+      ]
+    },
+    "ternary-bonsai-27b-fp16-vision-dspark": {
+      "weight_bytes": 62031312192,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-27B-gguf"
+      ]
+    },
+    "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4": {
+      "weight_bytes": 56685819968,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b": {
+      "weight_bytes": 4432699360,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-dspark-bf16": {
+      "weight_bytes": 11095338272,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-dspark": {
+      "weight_bytes": 6220168128,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-compact-vision-bf16": {
+      "weight_bytes": 4734598240,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-compact-vision-bf16-dspark-bf16": {
+      "weight_bytes": 12026484032,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-compact-vision-bf16-dspark-q4": {
+      "weight_bytes": 6522067008,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-compact-vision-q8": {
+      "weight_bytes": 4432699360,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-compact-vision-q8-dspark-bf16": {
+      "weight_bytes": 11724585152,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-compact-vision-q8-dspark-q4": {
+      "weight_bytes": 6220168128,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-fp16": {
+      "weight_bytes": 53808280640,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-fp16-dspark-bf16": {
+      "weight_bytes": 61100166432,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-fp16-dspark-q4": {
+      "weight_bytes": 55595749408,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-fp16-vision-bf16": {
+      "weight_bytes": 54739426400,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-fp16-vision-dspark": {
+      "weight_bytes": 62031312192,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-fp16-vision-bf16-dspark-q4": {
+      "weight_bytes": 56526895168,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-fp16-vision-q8": {
+      "weight_bytes": 54437527520,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-fp16-vision-q8-dspark-bf16": {
+      "weight_bytes": 61729413312,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "bonsai-27b-fp16-vision-q8-dspark-q4": {
+      "weight_bytes": 56224996288,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Bonsai-27B-gguf"
+      ]
+    },
+    "glm-5-2-2-788bpw": {
+      "weight_bytes": 262521465440,
+      "shard_set_complete": true,
+      "repos": [
+        "sokann/GLM-5.2-GGUF-2.788bpw"
+      ]
+    },
+    "minimax-m3-q4": {
+      "weight_bytes": 264031796736,
+      "shard_set_complete": true,
+      "repos": [
+        "unsloth/MiniMax-M3-GGUF"
+      ]
+    },
+    "laguna-s2-1-fp16": {
+      "weight_bytes": 235202258240,
+      "shard_set_complete": true,
+      "repos": [
+        "poolside/Laguna-S-2.1-GGUF"
+      ]
+    },
+    "laguna-s2-1-q4": {
+      "weight_bytes": 75173103200,
+      "shard_set_complete": true,
+      "repos": [
+        "poolside/Laguna-S-2.1-GGUF"
+      ]
+    },
+    "maple-preview-tq2": {
+      "weight_bytes": 5454482432,
+      "shard_set_complete": true,
+      "repos": [
+        "stamsam/maple-preview-gguf"
+      ]
+    },
+    "qwen3-8-27b-gsq-rco-iq3s": {
+      "weight_bytes": 24822710272,
+      "shard_set_complete": true,
+      "repos": [
+        "ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF"
+      ]
+    },
+    "qwen3-8-27b-gsq-rco-iq3xxs": {
+      "weight_bytes": 21468332000,
+      "shard_set_complete": true,
+      "repos": [
+        "ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF"
+      ]
+    },
+    "qwen3-8-27b-gsq-rco-iq2s": {
+      "weight_bytes": 18867492032,
+      "shard_set_complete": true,
+      "repos": [
+        "ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF"
+      ]
+    },
+    "qwen3-8-27b-gsq-rco-iq2xs": {
+      "weight_bytes": 17194153152,
+      "shard_set_complete": true,
+      "repos": [
+        "ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF"
+      ]
+    },
+    "qwen3-8-flash-next-strata": {
+      "weight_bytes": 68026093024,
+      "shard_set_complete": true,
+      "repos": [
+        "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF"
+      ]
+    },
+    "ternary-bonsai-2-27b-ptq1": {
+      "weight_bytes": 6575895904,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-2-27B-gguf"
+      ]
+    },
+    "ternary-bonsai-2-27b-pq2": {
+      "weight_bytes": 7835415904,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-2-27B-gguf"
+      ]
+    },
+    "ternary-bonsai-2-27b-f16": {
+      "weight_bytes": 53808408928,
+      "shard_set_complete": true,
+      "repos": [
+        "prism-ml/Ternary-Bonsai-2-27B-gguf"
+      ]
+    },
+    "underdog-27b-pq2": {
+      "weight_bytes": 7206168928,
+      "shard_set_complete": true,
+      "repos": [
+        "ConwayResearch/Underdog-Ternary-1.1"
+      ]
+    },
+    "cyber-tiel-coder-35b-a3b-ud-iq3-xxs": {
+      "weight_bytes": 13211177984,
+      "shard_set_complete": true,
+      "repos": [
+        "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF"
+      ]
+    },
+    "cyber-tiel-coder-35b-a3b-ud-q4-k-xl": {
+      "weight_bytes": 22134551552,
+      "shard_set_complete": true,
+      "repos": [
+        "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF"
+      ]
+    },
+    "cyber-tiel-coder-35b-a3b-ud-q5-k-xl": {
+      "weight_bytes": 20893037568,
+      "shard_set_complete": true,
+      "repos": [
+        "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF"
+      ]
+    },
+    "cyber-tiel-coder-35b-a3b-ud-q6-k-xl": {
+      "weight_bytes": 16845534208,
+      "shard_set_complete": true,
+      "repos": [
+        "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF"
+      ]
+    },
+    "cyber-tiel-coder-35b-a3b-ud-q8-k-xl": {
+      "weight_bytes": 17730532352,
+      "shard_set_complete": true,
+      "repos": [
+        "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF"
+      ]
+    },
+    "darwin-180b-rsi-strata": {
+      "weight_bytes": 134475460857,
+      "shard_set_complete": true,
+      "repos": [
+        "Baekpica/Darwin-180B-RSI-Mixed-Quant-GGUF"
+      ]
+    },
+    "arete-27b-q3": {
+      "weight_bytes": 13428507968,
+      "shard_set_complete": true,
+      "repos": [
+        "bartowski/NousResearch_Arete-27B-GGUF"
+      ]
+    },
+    "arete-27b-q4": {
+      "weight_bytes": 18131023168,
+      "shard_set_complete": true,
+      "repos": [
+        "bartowski/NousResearch_Arete-27B-GGUF"
+      ]
+    },
+    "arete-27b-q5": {
+      "weight_bytes": 21612500288,
+      "shard_set_complete": true,
+      "repos": [
+        "bartowski/NousResearch_Arete-27B-GGUF"
+      ]
+    },
+    "arete-27b-q8": {
+      "weight_bytes": 29592675648,
+      "shard_set_complete": true,
+      "repos": [
+        "bartowski/NousResearch_Arete-27B-GGUF"
+      ]
+    },
+    "nanbeige-33b-iq3xs": {
+      "weight_bytes": 14809050208,
+      "shard_set_complete": true,
+      "repos": [
+        "abenzerps/Nanbeige4.3-33B-GSQ-RCO-GGUF"
+      ]
+    },
+    "nanbeige-33b-iq4xs": {
+      "weight_bytes": 18691697760,
+      "shard_set_complete": true,
+      "repos": [
+        "abenzerps/Nanbeige4.3-33B-GSQ-RCO-GGUF"
+      ]
+    },
+    "flint-40a2-5b-mix12g": {
+      "weight_bytes": 24166842272,
+      "shard_set_complete": true,
+      "repos": [
+        "dima6312/Flint-40B-A2.5B-abliterated-GGUF"
+      ]
+    },
+    "flint-40a2-5b-mix24g": {
+      "weight_bytes": 28314255264,
+      "shard_set_complete": true,
+      "repos": [
+        "dima6312/Flint-40B-A2.5B-abliterated-GGUF"
+      ]
+    },
+    "qwen3-8-flash-next-iq3xxs": {
+      "weight_bytes": 75839998528,
+      "shard_set_complete": true,
+      "repos": [
+        "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF"
+      ]
+    },
+    "deepseek-v4-1-flash-1017-iq1m": {
+      "weight_bytes": 120721194336,
+      "shard_set_complete": false,
+      "repos": [
+        "ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-GGUF"
+      ]
+    },
+    "glm-5-3-flash-maya-xs": {
+      "weight_bytes": 74539436032,
+      "shard_set_complete": true,
+      "repos": [
+        "peasantsmith/GLM-5.3-Flash-Maya-GGUF"
+      ]
+    },
+    "glm-5-3-flash-maya-s24": {
+      "weight_bytes": 95829723168,
+      "shard_set_complete": true,
+      "repos": [
+        "peasantsmith/GLM-5.3-Flash-Maya-GGUF"
+      ]
+    },
+    "glm-5-3-flash-maya-m": {
+      "weight_bytes": 117131610112,
+      "shard_set_complete": true,
+      "repos": [
+        "peasantsmith/GLM-5.3-Flash-Maya-GGUF"
+      ]
+    },
+    "glm-5-3-flash-maya-l": {
+      "weight_bytes": 157447260352,
+      "shard_set_complete": true,
+      "repos": [
+        "peasantsmith/GLM-5.3-Flash-Maya-GGUF"
+      ]
+    },
+    "qwen3-6-35b-a3b-q4": {
+      "weight_bytes": 23562671008,
+      "shard_set_complete": true,
+      "repos": [
+        "unsloth/Qwen3.6-35B-A3B-MTP-GGUF"
+      ]
+    },
+    "qwen3-5-35b-a3b-q4": {
+      "weight_bytes": 23527019264,
+      "shard_set_complete": true,
+      "repos": [
+        "unsloth/Qwen3.5-35B-A3B-MTP-GGUF"
+      ]
+    },
+    "lfm2-5-24b-a2b-q4": {
+      "weight_bytes": 14526258464,
+      "shard_set_complete": true,
+      "repos": [
+        "LiquidAI/LFM2.5-24B-A2B-GGUF"
+      ]
+    },
+    "lfm3-omni-2b-q4": {
+      "weight_bytes": 1391216800,
+      "shard_set_complete": true,
+      "repos": [
+        "LiquidAI/LFM3-Omni-2B-GGUF"
+      ]
+    },
+    "nemotron-bolt-74b-24gb": {
+      "weight_bytes": 23752019264,
+      "shard_set_complete": true,
+      "repos": [
+        "nvidia/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB-GGUF"
+      ]
+    },
+    "arete-27b-uncensored-v2": {
+      "weight_bytes": 16810714496,
+      "shard_set_complete": true,
+      "repos": [
+        "SargeDev/Arete-27B-Uncensored-V2-GGUF"
+      ]
+    },
+    "qwen3-8-27b-unleashed": {
+      "weight_bytes": 16519489376,
+      "shard_set_complete": true,
+      "repos": [
+        "outsourc-e/Qwen3.8-27B-Unleashed-GGUF"
+      ]
+    },
+    "qwen3-6-35b-a3b-abliterated": {
+      "weight_bytes": 21712409824,
+      "shard_set_complete": true,
+      "repos": [
+        "huihui-ai/Huihui-Qwen3.6-35B-A3B-abliterated-MTP-GGUF"
+      ]
+    },
+    "lfm2-5-24b-a2b-uncensored": {
+      "weight_bytes": 15359771360,
+      "shard_set_complete": true,
+      "repos": [
+        "AtomicChat/LFM2.5-24B-A2B-Uncensored-GGUF"
+      ]
+    },
+    "flint-40b-abliterated": {
+      "weight_bytes": 24166842272,
+      "shard_set_complete": true,
+      "repos": [
+        "dima6312/Flint-40B-A2.5B-abliterated-GGUF"
+      ]
+    },
+    "nemotron-bolt-74b-abliterated": {
+      "weight_bytes": 22018326528,
+      "shard_set_complete": true,
+      "repos": [
+        "BoldingBuilds/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-Abliterated-24GB-GGUF"
+      ]
+    },
+    "qwen3-8-flash-next-abliterated": {
+      "weight_bytes": 83863586496,
+      "shard_set_complete": true,
+      "repos": [
+        "SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF"
+      ]
+    },
+    "inkling-2-small": {
+      "weight_bytes": 393489000000,
+      "shard_set_complete": true,
+      "repos": [
+        "thinkingmachines/Inkling-2-Small"
+      ]
+    }
+  }
+}

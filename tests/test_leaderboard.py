@@ -42,17 +42,19 @@ def test_committed_references_build_expected_leaderboard() -> None:
     report, matrix = _loaded()
     board = build_leaderboard(report, matrix)
     assert board["schema"] == LEADERBOARD_SCHEMA
-    assert [t["capacity_gb"] for t in board["tiers"]] == [8, 16, 24, 48, 64, 96, 200, 300]
+    assert [t["capacity_gb"] for t in board["tiers"]] == [8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384]
     by_cap = {t["capacity_gb"]: t for t in board["tiers"]}
 
+    # The Maple-aux tournaments have no hash-bound physical evidence yet, so no
+    # tier may claim a measured winner; every tier falls back to a catalog
+    # candidate rather than reusing a winner from a retired aux policy.
     t48 = by_cap[48]
-    assert t48["status"] == "physically-validated"
-    assert t48["winner"]["basis"] == "measured"
-    assert t48["winner"]["model"] == "qwen3-8-27b-gsq-rco-iq3s"
-    assert t48["winner"]["measured_tps"] is not None
-    assert t48["winner"]["evidence"] is not None
-    assert t48["engine_source"] == "matrix"
-    assert "native" not in t48["engines"]
+    assert t48["status"] == "catalog-candidates-only"
+    assert t48["winner"]["basis"] == "catalog-candidate"
+    assert t48["winner"]["measured_tps"] is None
+    assert t48["winner"]["evidence"] is None
+    assert t48["engine_source"] == "default"
+    assert "native" in t48["engines"]
     # The winner's own configuration must never appear as a runner-up.
     assert t48["winner"]["configuration_id"] not in t48["runners_up"]
 
@@ -132,7 +134,7 @@ def test_markdown_has_generated_markers_and_all_tiers() -> None:
     md = render_leaderboard_markdown(build_leaderboard(report, matrix))
     assert md.startswith(GENERATED_BEGIN)
     assert md.rstrip().endswith(GENERATED_END)
-    for cap in (8, 16, 24, 48, 64, 96, 200, 300):
+    for cap in (8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384):
         assert f"### {cap} GB" in md
     assert "## Method" in md
     assert "hardware-tier-report.json" in md

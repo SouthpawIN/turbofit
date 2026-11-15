@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""Regenerate per-main weight footprints from the pinned artifact manifest.
+
+Every model family is resolved through ``references/artifact-manifest.json``
+(pinned revision + SHA-256).  Sharded checkpoints are completed from the repo
+listing at the same pinned revision, because the manifest tracks only the shard
+the recipe points llama.cpp at.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.tier_fit import build_footprints
+
+
+def pinned_siblings(repo_id: str, revision: str) -> dict[str, int]:
+    url = f"https://huggingface.co/api/models/{repo_id}/revision/{revision}?blobs=true"
+    with urllib.request.urlopen(url, timeout=60) as response:
+        payload: dict[str, Any] = json.load(response)
+    listing: dict[str, int] = {}
+    for sibling in payload.get("siblings") or []:
+        size = sibling.get("size")
+        if size is None:
+            size = (sibling.get("lfs") or {}).get("size")
+        if size is not None:
+            listing[str(sibling["rfilename"])] = int(size)
+    return listing
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--offline", action="store_true", help="sum only manifest rows (understates sharded repos)")
+    parser.add_argument("--output", type=Path, default=ROOT / "references/model-footprints.json")
+    args = parser.parse_args()
+
+    catalog = json.loads((ROOT / "references/model-catalog.json").read_text(encoding="utf-8"))
+    manifest = json.loads((ROOT / "references/artifact-manifest.json").read_text(encoding="utf-8"))
+
+    provider = None
+    if not args.offline:
+        revisions = {
+            str(item["repo_id"]): str(item["revision"])
+            for item in manifest["artifacts"]
+            if isinstance(item, dict)
+        }
+        cache: dict[str, dict[str, int]] = {}
+
+        def provider(repo_id: str) -> dict[str, int]:  # type: ignore[misc]
+            if repo_id not in cache:
+                cache[repo_id] = pinned_siblings(repo_id, revisions[repo_id])
+            return cache[repo_id]
+
+    payload = build_footprints(
+        catalog,
+        manifest,
+        siblings_provider=provider,
+        generated_at=datetime.now(timezone.utc).isoformat(),
+    )
+    args.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    incomplete = [key for key, value in payload["models"].items() if not value["shard_set_complete"]]
+    print(json.dumps({
+        "models": len(payload["models"]),
+        "path": str(args.output),
+        "incomplete_shard_sets": incomplete,
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

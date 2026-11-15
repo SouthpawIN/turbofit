@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-23T04:37:58.192449+00:00",
+  "generated_at": "2026-11-15T00:17:39.461672+00:00",
   "levels": [
     {
       "hardware_level_gb": 8,
@@ -15,43 +15,21 @@
     },
     {
       "hardware_level_gb": 24,
-      "status": "measured-tps-only",
+      "status": "pending-benchmarks",
       "tier_id": "hardware-24gb",
-      "winner": {
-        "auxiliary": "Cyber-Tiel Coder 35B-A3B UD-Q4_K_M",
-        "balanced_score": null,
-        "configuration_id": "cyber-tiel-coder-35b-a3b-ud-iq3-xxs--cyber-tiel-coder-35b-a3b-ud-q4-k-xl--64k",
-        "context": 65536,
-        "evidence": "sha256:b46c2f2ff185519910c72db6e7a433951c53dc9af0638e6d2f599797d4aec4db",
-        "hardware_fingerprint": "sha256:mac-m1pro-32gb-unified",
-        "intelligence_score": null,
-        "main": "Cyber-Tiel Coder 35B-A3B UD-IQ3_XXS",
-        "measured_tps": 25.625082,
-        "partial": true
-      }
+      "winner": null
     },
     {
       "hardware_level_gb": 32,
       "status": "pending-benchmarks",
-      "tier_id": null,
+      "tier_id": "hardware-32gb",
       "winner": null
     },
     {
       "hardware_level_gb": 48,
-      "status": "winner",
+      "status": "pending-benchmarks",
       "tier_id": "hardware-48gb",
-      "winner": {
-        "auxiliary": "Route auxiliary tasks to main",
-        "balanced_score": 58.778209660040595,
-        "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--auto--262k",
-        "context": 262144,
-        "evidence": "sha256:b27632086b4389e9b6b539eaf24d35a0d8151b398557ac8e4b23efb72cf9764f",
-        "hardware_fingerprint": "sha256:aa8f29e3c3917a04f4301806f0b0f7d33e7267d283e1dfb96264e0ef313d926b",
-        "intelligence_score": 46.875,
-        "main": "Qwen 3.8 27B GSQ-RCO UD-Q3_K_XL",
-        "measured_tps": 39.39215795117914,
-        "partial": false
-      }
+      "winner": null
     },
     {
       "hardware_level_gb": 64,
@@ -68,25 +46,25 @@
     {
       "hardware_level_gb": 128,
       "status": "pending-benchmarks",
-      "tier_id": null,
+      "tier_id": "hardware-128gb",
       "winner": null
     },
     {
       "hardware_level_gb": 192,
       "status": "pending-benchmarks",
-      "tier_id": null,
+      "tier_id": "hardware-192gb",
       "winner": null
     },
     {
       "hardware_level_gb": 256,
       "status": "pending-benchmarks",
-      "tier_id": null,
+      "tier_id": "hardware-256gb",
       "winner": null
     },
     {
       "hardware_level_gb": 384,
       "status": "pending-benchmarks",
-      "tier_id": null,
+      "tier_id": "hardware-384gb",
       "winner": null
     }
   ],
