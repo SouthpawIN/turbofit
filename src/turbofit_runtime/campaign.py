@@ -97,6 +97,7 @@ class CampaignRunner:
         clear_ceilings_mb: dict[int, int] | None = None,
         deferred_row_ids: frozenset[str] | None = None,
         waiting_download_rows: Mapping[str, str] | None = None,
+        waiting_memory_rows: Mapping[str, str] | None = None,
     ) -> None:
         self.matrix_path = matrix_path
         self.state_path = state_path
@@ -109,6 +110,9 @@ class CampaignRunner:
         # Rows whose weights are not verifiably installed: attempting them can
         # only rediscover a download that has not finished, so they wait.
         self.waiting_download_rows = dict(waiting_download_rows or {})
+        # Rows the offload planner measured as too large for this host. Their
+        # reason is the planner's own arithmetic; they are never attempted.
+        self.waiting_memory_rows = dict(waiting_memory_rows or {})
 
     def _load_state(self) -> dict:
         try:
@@ -141,7 +145,11 @@ class CampaignRunner:
         state = self._load_state()
         pending = []
         for row in matrix.rows:
-            if row.id in self.deferred_row_ids or row.id in self.waiting_download_rows:
+            if (
+                row.id in self.deferred_row_ids
+                or row.id in self.waiting_download_rows
+                or row.id in self.waiting_memory_rows
+            ):
                 continue
             record = state["rows"].get(row.id) or {}
             campaign_status = record.get("status")
@@ -177,7 +185,11 @@ class CampaignRunner:
         state = self._load_state()
         unresolved = []
         for row in matrix.rows:
-            if row.id in self.deferred_row_ids or row.id in self.waiting_download_rows:
+            if (
+                row.id in self.deferred_row_ids
+                or row.id in self.waiting_download_rows
+                or row.id in self.waiting_memory_rows
+            ):
                 continue
             record = state["rows"].get(row.id) or {}
             if row.id in runnable:
@@ -322,6 +334,11 @@ class CampaignRunner:
             # No GPU clear, no engine launch, no failure evidence: the row simply
             # is not runnable until the download finishes.
             return CampaignOutcome(row_id=row.id, status="waiting-download", error=waiting)
+        too_big = self.waiting_memory_rows.get(row.id)
+        if too_big is not None:
+            # Same rule for a model this host cannot hold: report the planner's
+            # arithmetic instead of launching an engine that must OOM.
+            return CampaignOutcome(row_id=row.id, status="waiting-memory", error=too_big)
         before: GPUClearEvent | None = None
         after: GPUClearEvent | None = None
         raw: RawBenchmark | None = None

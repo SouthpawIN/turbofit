@@ -297,3 +297,38 @@ def test_committed_references_answer_the_question_for_this_host() -> None:
         assert tier["message"].endswith(".")
         row = tier["hardware_tier_gb"]
         assert row in {48}
+
+
+def test_tier_whose_weights_do_not_fit_reports_waiting_memory(tmp_path):
+    """/fit must not promise a run the offload planner already refused."""
+    from turbofit_runtime.fit_view import STATUS_MEMORY
+    from turbofit_runtime.gguf_footprint import ExpertFootprint
+
+    footprint = ExpertFootprint(
+        total_bytes=80 * 2**30, expert_bytes=40 * 2**30, expert_layers=40,
+        dense_bytes=40 * 2**30, tensor_count=120, expert_tensor_count=120,
+        expert_tensor_names=(), shards=("model.gguf",),
+    )
+    book = RecipeBook.load(
+        REFS / "model-recipes.json", backend_name="cuda",
+        vram_probe=lambda: 7 * 2**30,
+        ram_probe=lambda: 256 * 2**30,
+        footprint_probe=lambda _path: footprint,
+    )
+    book.model_root = tmp_path
+    view = build_fit_view(
+        leaderboard={"schema": "turbofit.intelligence-leaderboard/v1",
+                     "tiers": [_tier(48, "minimax-m3--auto--64k", "MiniMax M3",
+                                     "auto:MiniMax M3", 65536)]},
+        recipe_book=book,
+        configurations=json.loads((REFS / "configuration-matrix.json").read_text())["rows"],
+        flags=AVX512,
+        binary_installed=lambda _: True,
+        model_names={"MiniMax M3": "MiniMax M3"},
+    )
+
+    tier = view["tiers"][0]
+    assert tier["status"] == STATUS_MEMORY
+    assert tier["recommendation"]["runnable"] is False
+    assert "non-expert weights alone need" in tier["message"]
+    assert "cannot be loaded on this machine" in tier["message"]

@@ -43,6 +43,7 @@ ENGINE_LABELS = {
 STATUS_READY = "ready"
 STATUS_MISSING = "missing-artifacts"
 STATUS_ENGINE = "engine-unsupported"
+STATUS_MEMORY = "waiting-memory"
 STATUS_UNMEASURED = "no-measurements"
 STATUS_UNRESOLVABLE = "unresolvable"
 
@@ -202,6 +203,7 @@ def _sentence(
     families: Iterable[str] = (),
     blocker: Mapping[str, Any] | None = None,
     measured: Mapping[str, Any] | None = None,
+    detail: str = "",
 ) -> str:
     """One sentence a user can act on -- never a status code."""
     rows = list(missing)
@@ -217,6 +219,11 @@ def _sentence(
         )
     if status == STATUS_ENGINE:
         return str((blocker or {}).get("reason") or "the engine cannot run on this machine.")
+    if status == STATUS_MEMORY:
+        return (
+            f"{main_name or 'This configuration'} cannot be loaded on this machine: "
+            f"{detail or 'its weights do not fit in VRAM plus usable RAM'}."
+        )
     if status == STATUS_MISSING:
         # Report in the order the user thinks about them, not alphabetically.
         wanted = ("model", "projector", "draft", "expert-pack")
@@ -337,8 +344,18 @@ def _tier_entry(
 
     # A CPU that cannot execute the engine is not a download problem, so it is
     # reported before (and instead of) missing artifacts.
+    memory_reason = next(
+        (
+            component.offload_reason
+            for component in (main_component, aux_component)
+            if component is not None and component.offload_infeasible
+        ),
+        "",
+    )
     strata_blocked = main_component.engine == "strata" and engine["usable"] is False
-    if strata_blocked:
+    if memory_reason:
+        status = STATUS_MEMORY
+    elif strata_blocked:
         status = STATUS_ENGINE
     elif missing:
         status = STATUS_MISSING
@@ -362,6 +379,7 @@ def _tier_entry(
         families=families,
         blocker=blocker,
         measured=recommended,
+        detail=memory_reason,
     )
     return {
         **base,
@@ -403,7 +421,7 @@ def _overall(entries: Iterable[Mapping[str, Any]]) -> str:
     if ready:
         best = ready[0]
         return f"On this machine, run {best['recommendation']['main']} ({best['hardware_tier_gb']} GB tier)."
-    for blocker in (STATUS_ENGINE, STATUS_MISSING):
+    for blocker in (STATUS_MEMORY, STATUS_ENGINE, STATUS_MISSING):
         blocked = [row for row in rows if row.get("status") == blocker]
         if blocked:
             return str(blocked[0].get("message") or "")
@@ -500,6 +518,7 @@ __all__ = [
     "MAPLE_AUX_ID",
     "SCHEMA",
     "STATUS_ENGINE",
+    "STATUS_MEMORY",
     "STATUS_MISSING",
     "STATUS_READY",
     "STATUS_UNMEASURED",
