@@ -178,12 +178,23 @@ def build_environment():
     local = LocalPairExecutor(recipes=recipes, backend=backend, result_dir=RESULTS)
     configuration_index = build_configuration_index(configurations, catalog)
     deferred_row_ids, policy = deferred_rows(configurations, catalog)
-    waiting = waiting_download_rows(configuration_index, recipes)
-    memory = memory_deferred_rows(configuration_index, recipes)
-    # One verdict per row: a row already waiting on weights or memory keeps
-    # that reason, so the status counts partition the matrix.
+    # One verdict per row, so the status counts partition the matrix: a
+    # deferred row (policy or CPU capability) is already not runnable and is
+    # reported once as deferred, not also as waiting for weights or a runtime.
+    waiting = {
+        row_id: item
+        for row_id, item in waiting_download_rows(configuration_index, recipes).items()
+        if row_id not in deferred_row_ids
+    }
+    memory = {
+        row_id: item
+        for row_id, item in memory_deferred_rows(configuration_index, recipes).items()
+        if row_id not in deferred_row_ids
+    }
     runtime = waiting_runtime_rows(
-        configuration_index, recipes, skip=set(waiting) | set(memory)
+        configuration_index,
+        recipes,
+        skip=deferred_row_ids | set(waiting) | set(memory),
     )
     executor = CatalogExecutorAdapter(local, configuration_index)
     publisher = EvidencePublisher(matrix_path=MATRIX, checklist_path=WIKI, evidence_dir=EVIDENCE)

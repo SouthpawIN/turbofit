@@ -216,11 +216,16 @@ def test_status_counts_reconcile_with_all_three_waiting_verdicts(
     available = [row.id for row in matrix.rows if row.id not in deferred]
     assert len(available) >= 4
     downloading, too_big, no_engine, runnable = available[:4]
+    # A deferred row that also lacks weights must be counted once, as deferred.
+    deferred_id = sorted(deferred)[0] if deferred else None
 
-    monkeypatch.setattr(
-        campaign, "waiting_download_rows",
-        lambda index, recipes: {downloading: _Download(downloading)},
-    )
+    def fake_download(index, recipes):
+        rows = {downloading: _Download(downloading)}
+        if deferred_id is not None:
+            rows[deferred_id] = _Download(deferred_id)
+        return rows
+
+    monkeypatch.setattr(campaign, "waiting_download_rows", fake_download)
     monkeypatch.setattr(
         campaign, "memory_deferred_rows",
         lambda index, recipes: {too_big: _Memory(too_big)},
@@ -241,6 +246,12 @@ def test_status_counts_reconcile_with_all_three_waiting_verdicts(
     assert current["waiting_download"] == 1
     assert current["waiting_memory"] == 1
     assert current["waiting_runtime"] == 1
+    if deferred_id is not None:
+        # The deferred row that also lacked weights is counted once, as deferred.
+        assert deferred_id not in {
+            item["row_id"] for item in report["waiting_download"]["detail"]
+        }
+    assert current["deferred"] == len(deferred)
     assert (
         current["pending"] + current["resolved"] + current["deferred"]
         + current["waiting_download"] + current["waiting_memory"]
@@ -255,4 +266,5 @@ def test_status_counts_reconcile_with_all_three_waiting_verdicts(
     assert no_engine not in {
         row.id for row in campaign.build_runner().pending_rows()
     }
-    assert seen_skip and seen_skip[0] == {downloading, too_big}
+    assert seen_skip and {downloading, too_big} <= seen_skip[0]
+    assert deferred <= seen_skip[0]
