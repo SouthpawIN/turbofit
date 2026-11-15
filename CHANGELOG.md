@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — expert offload measured per host
+
+- **Models bigger than VRAM now run**: `auto_cpu_moe: true` on a recipe
+  measures the GGUF's real expert footprint (tensor table, not a size guess) and
+  this host's free VRAM/`MemAvailable`, then passes llama.cpp `--n-cpu-moe N`.
+  Models that fit still plan zero offload; an infeasible plan refuses to launch
+  with the planner's reason instead of an OOM. Strata/vLLM recipes never receive
+  the flag. Laguna S2.1, MiniMax M3 and Qwen 3.8 Flash Next Abliterated use it.
+  See `docs/expert-offload.md`.
+
 ## Unreleased — one MoE family, one 64K floor
 
 - **`GET /api/plugins/turbofit/fit`**: one answer per hardware tier — the
