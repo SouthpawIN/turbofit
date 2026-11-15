@@ -10,11 +10,24 @@ import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from .allowed_lineup import expert_residency
+from .experts import (
+    MIB,
+    ModelOffloadDecision,
+    available_ram_bytes,
+    plan_model_offload,
+    plan_tensor_split,
+)
+from .gguf_footprint import GGUFFormatError
+from .gpu import probe_gpus
 from .hardware import HardwareFingerprint
 from .schema import MatrixRow
+
+# Flavors that speak llama.cpp's `--n-cpu-moe`. Strata (Colibri), vLLM and the
+# other runtimes place experts themselves and would reject or misread it.
+LLAMA_FLAVORS = frozenset({"mainline", "ik", "prism"})
 
 
 # Typed launch overrides: validated keys only, never a raw shell escape.
@@ -157,7 +170,8 @@ class ResolvedComponent:
     #: Runtime flavor ("mainline", "prism", "strata", "vllm", "ik"); the engine
     #: identity a fit check needs before a load is attempted.
     engine: str = ""
-
+    n_cpu_moe: int | None = None
+    offload_reason: str = ""
 
 @dataclass(frozen=True)
 class ResolvedRecipe:
@@ -170,6 +184,40 @@ class ResolvedRecipe:
     main_context: int = 0
     aux_context: int = 0
     aux_residency: dict | None = None
+
+
+class ExpertOffloadInfeasible(ValueError):
+    """A measured model fits neither VRAM nor VRAM+RAM on this host.
+
+    Carries the planner's own explanation (what did not fit and by how much) so
+    the error a user sees is the arithmetic, not a bare "failed to load".
+    """
+
+    def __init__(self, family: str, decision: ModelOffloadDecision) -> None:
+        self.family = family
+        self.decision = decision
+        super().__init__(f"{family}: {decision.plan.reason}")
+
+
+def host_free_vram_bytes(
+    *, hardware: HardwareFingerprint | None = None, probe=probe_gpus
+) -> int | None:
+    """Currently free VRAM across visible cards, or device total as a fallback.
+
+    Free is preferred over total: another model may already hold a card, and
+    planning against capacity that is not available is how an engine gets
+    launched into an OOM.
+    """
+    try:
+        samples = probe()
+    except (OSError, ValueError):
+        samples = ()
+    free_mb = sum(max(0, sample.free_mb) for sample in samples)
+    if free_mb > 0:
+        return free_mb * MIB
+    if hardware is not None and hardware.devices:
+        return hardware.total_vram_mb * MIB
+    return None
 
 
 class UnknownRecipeError(ValueError):
@@ -228,6 +276,9 @@ class RecipeBook:
         platform_name: str | None = None,
         backend_name: str | None = None,
         hardware: HardwareFingerprint | None = None,
+        vram_probe: Callable[[], int | None] | None = None,
+        ram_probe: Callable[[], int | None] | None = None,
+        footprint_probe: Callable[[str], Any] | None = None,
     ) -> None:
         if data.get("schema_version") != 1:
             raise ValueError(f"unsupported recipe schema: {data.get('schema_version')}")
@@ -237,6 +288,9 @@ class RecipeBook:
         self.recipes_by_alias = self._build_alias_index()
         self.platform_name = platform_name or sys.platform
         self.hardware = hardware
+        self.vram_probe = vram_probe
+        self.ram_probe = ram_probe
+        self.footprint_probe = footprint_probe
         self.model_root = Path(
             os.environ.get("TURBOFIT_MODEL_ROOT", "~/Models/storage/gguf")
         ).expanduser()
@@ -258,12 +312,18 @@ class RecipeBook:
         platform_name: str | None = None,
         backend_name: str | None = None,
         hardware: HardwareFingerprint | None = None,
+        vram_probe: Callable[[], int | None] | None = None,
+        ram_probe: Callable[[], int | None] | None = None,
+        footprint_probe: Callable[[str], Any] | None = None,
     ) -> "RecipeBook":
         return cls(
             json.loads(Path(path).read_text()),
             platform_name=platform_name,
             backend_name=backend_name,
             hardware=hardware,
+            vram_probe=vram_probe,
+            ram_probe=ram_probe,
+            footprint_probe=footprint_probe,
         )
 
     @staticmethod
@@ -314,6 +374,44 @@ class RecipeBook:
                 names.add(alias)
         return tuple(sorted(names))
 
+
+    def _auto_offload_decision(
+        self, family: str, model: str, spec: Mapping[str, Any]
+    ) -> ModelOffloadDecision | None:
+        """Plan `--n-cpu-moe` from this host's free VRAM/RAM and the model's header.
+
+        Returns None when the host capacity or the artifact cannot be measured:
+        a checkpoint that has not been downloaded yet is a planning state, not
+        an OOM risk, so resolution must not fail over it. A model that *is*
+        measurable but cannot fit raises, carrying the planner's reason.
+        """
+        vram_bytes = self.vram_probe() if self.vram_probe is not None else host_free_vram_bytes(
+            hardware=self.hardware
+        )
+        if not vram_bytes or vram_bytes <= 0:
+            return None
+        ram_bytes = self.ram_probe() if self.ram_probe is not None else available_ram_bytes()
+        reserve_mb = spec.get("offload_vram_reserve_mb")
+        reserve_bytes = int(reserve_mb) * MIB if reserve_mb is not None else 1536 * MIB
+        footprint = None
+        if self.footprint_probe is not None:
+            try:
+                footprint = self.footprint_probe(model)
+            except (GGUFFormatError, OSError):
+                return None
+        try:
+            decision = plan_model_offload(
+                model,
+                vram_bytes=vram_bytes,
+                ram_bytes=ram_bytes,
+                footprint=footprint,
+                vram_reserve_bytes=reserve_bytes,
+            )
+        except (GGUFFormatError, OSError):
+            return None
+        if not decision.plan.feasible:
+            raise ExpertOffloadInfeasible(family, decision)
+        return decision
 
     def _component(
         self,
@@ -505,8 +603,32 @@ class RecipeBook:
         if context_override.get("main_gpu") is not None and self.backend_name in {"cuda", "rocm", "vulkan"}:
             command.extend(["--main-gpu", str(context_override["main_gpu"])])
         n_cpu_moe = context_override.get("n_cpu_moe", spec.get("n_cpu_moe"))
-        if n_cpu_moe is not None:
-            command.extend([ "--n-cpu-moe", str(n_cpu_moe)])
+        offload_reason = "explicit recipe value" if n_cpu_moe is not None else ""
+        auto_cpu_moe = context_override.get("auto_cpu_moe", spec.get("auto_cpu_moe", False))
+        if isinstance(auto_cpu_moe, str):
+            auto_cpu_moe = auto_cpu_moe.strip().lower() in {"on", "true", "1", "yes"}
+        if n_cpu_moe is not None and runtime_flavor not in LLAMA_FLAVORS:
+            # Strata/vLLM place experts themselves; the llama.cpp flag would be
+            # rejected or silently ignored by their argument parsers.
+            raise ValueError(
+                f"{runtime_flavor} recipe for {family} cannot take n_cpu_moe"
+            )
+        if n_cpu_moe is None and auto_cpu_moe is True:
+            if runtime_flavor in LLAMA_FLAVORS and self.backend_name != "cpu":
+                decision = self._auto_offload_decision(family, model, spec)
+                if decision is not None:
+                    n_cpu_moe = decision.plan.n_cpu_moe
+                    offload_reason = decision.plan.reason
+                    devices = len([item for item in gpu.split(",") if item])
+                    if n_cpu_moe and decision.footprint is not None and devices > 1:
+                        # Later layers keep their experts on the GPU, so an even
+                        # layer split would overload the last card.
+                        split = plan_tensor_split(decision.footprint, n_cpu_moe=n_cpu_moe,
+                                                  device_count=devices)
+                        if split and "--tensor-split" not in command:
+                            command.extend(["--tensor-split", split])
+        if n_cpu_moe:
+            command.extend(["--n-cpu-moe", str(n_cpu_moe)])
         if runtime_flavor != "strata" and context_override.get("cpu_moe", spec.get("cpu_moe")) is True:
             command.append("--cpu-moe")
         # Aux hard-drive/RAM streaming (allowed_lineup.expert_residency), applied to
@@ -519,6 +641,7 @@ class RecipeBook:
             if residency.get("mlock") is True and "--mlock" not in command:
                 command.append("--mlock")
             if (runtime_flavor != "strata"
+                    and not n_cpu_moe
                     and residency.get("cpu_moe") is True
                     and "--cpu-moe" not in command):
                 command.append("--cpu-moe")
@@ -606,7 +729,7 @@ class RecipeBook:
             gpu=gpu, port=port, command=tuple(command),
             model_path=model, projector_path=projector, context=context,
             draft_path=draft, engine=runtime_flavor,
-        )
+            n_cpu_moe=n_cpu_moe, offload_reason=offload_reason,        )
 
     def resolve_component(
         self,

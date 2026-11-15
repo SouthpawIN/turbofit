@@ -1159,6 +1159,8 @@
   "Laguna S2.1": {
    "alias": "laguna-s2-1",
    "kind": "process",
+   "auto_cpu_moe": true,
+   "offload_vram_reserve_mb": 12288,
    "model": "${TURBOFIT_MODEL_ROOT}/Laguna-S-2.1/laguna-s-2.1-Q4_K_M.gguf",
    "port": 11603,
    "large": true,
@@ -1172,6 +1174,7 @@
   "MiniMax M3": {
    "alias": "minimax-m3",
    "kind": "process",
+   "auto_cpu_moe": true,
    "model": "${TURBOFIT_MODEL_ROOT}/MiniMax-M3/UD-Q4_K_M/MiniMax-M3-UD-Q4_K_M-00001-of-00007.gguf",
    "port": 11601,
    "large": true,
@@ -1873,6 +1876,7 @@
   "Qwen 3.8 Flash Next Abliterated": {
    "alias": "qwen3-8-flash-next-abliterated",
    "kind": "process",
+   "auto_cpu_moe": true,
    "native_binaries": {
     "cuda": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-cuda/bin/llama-server",
     "rocm": "~/.local/share/turbofit/runtimes/llama.cpp-1c3c9674de4d455f1e571bed808252af54932767/build-rocm/bin/llama-server",
