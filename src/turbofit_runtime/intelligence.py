@@ -1,8 +1,12 @@
 """Measured intelligence scores for exact production model configurations.
 
-No catalog tier, download count, parameter count, or estimated capability is an
-intelligence score. A score exists only when every required benchmark has a
-hash-bound raw result for the exact main/aux/quant/context recipe.
+The score is the **Hermes Index**: the equal-weight mean pass@1 across the four
+suites Nous Research runs inside Hermes Agent (Hermes Bench, TerminalBench 4,
+TerminalBench Science, SkillsBench). Nothing else contributes. No catalog tier,
+download count, parameter count, or estimated capability is an intelligence
+score, and neither is TurboFit's retired ``deep-swe``/``agentic-pair`` pair: a
+score exists only when at least one Hermes suite has a hash-bound raw result for
+the exact main/aux/quant/context recipe.
 """
 from __future__ import annotations
 
@@ -14,21 +18,28 @@ from dataclasses import dataclass
 from typing import Any, Iterable, Mapping, Sequence
 
 _HASH = re.compile(r"^sha256:[0-9a-f]{64}$")
-REQUIRED_BENCHMARKS = ("deep-swe", "agentic-pair")
 
-# Suites beyond the two TurboFit runs today. Names and intent mirror Nous Research's
-# Hermes Index, which averages pass@1 across four suites run inside Hermes Agent:
-# Hermes Bench, TerminalBench 4, TerminalBench Science and SkillsBench.
-EXTENDED_BENCHMARKS = (
+#: The Hermes Index, as Nous Research defines it: the equal-weight mean pass@1
+#: across these four suites, run inside an agent harness. This tuple *is* the
+#: index — there is no second tier of suites and no auxiliary weighting.
+HERMES_INDEX_SUITES = (
     "hermes-bench",
     "terminal-bench-4",
     "terminal-bench-science",
     "skills-bench",
 )
-ALL_BENCHMARKS = REQUIRED_BENCHMARKS + EXTENDED_BENCHMARKS
-INTELLIGENCE_RECIPE_PROTOCOL = "turbofit.intelligence-recipe/v2"
+#: ``deep-swe`` and ``agentic-pair`` were TurboFit's interim pair. They are kept
+#: as harnesses, but they are retired as *scores*: a measurement carrying either
+#: name is rejected, so no record can turn a DeepSWE number into an index.
+RETIRED_BENCHMARKS = ("deep-swe", "agentic-pair")
+
+REQUIRED_BENCHMARKS = HERMES_INDEX_SUITES
+EXTENDED_BENCHMARKS = HERMES_INDEX_SUITES
+ALL_BENCHMARKS = HERMES_INDEX_SUITES
+INTELLIGENCE_RECIPE_PROTOCOL = "turbofit.intelligence-recipe/v3"
 DEEPSWE_RUNNER_PROTOCOL = "turbofit.deepswe-pier/v7"
 AGENTIC_PAIR_PROTOCOL = "turbofit.agentic-production-pair/v1"
+HERMES_SUITE_RUNNER_PROTOCOL = "turbofit.hermes-suite-evidence/v1"
 
 
 def canonical_intelligence_recipe(
@@ -37,6 +48,14 @@ def canonical_intelligence_recipe(
     payload = {
         "intelligence_recipe_protocol": INTELLIGENCE_RECIPE_PROTOCOL,
         "benchmark_protocols": {
+            "hermes-bench": HERMES_SUITE_RUNNER_PROTOCOL,
+            "terminal-bench-4": HERMES_SUITE_RUNNER_PROTOCOL,
+            "terminal-bench-science": HERMES_SUITE_RUNNER_PROTOCOL,
+            "skills-bench": HERMES_SUITE_RUNNER_PROTOCOL,
+        },
+        # Retired harnesses stay in the hash so a recipe change that re-enables
+        # them cannot collide with a Hermes-Index recipe of the same shape.
+        "retired_harnesses": {
             "deep-swe": DEEPSWE_RUNNER_PROTOCOL,
             "agentic-pair": AGENTIC_PAIR_PROTOCOL,
         },
@@ -89,8 +108,10 @@ class ConfigurationIntelligence:
 
     @property
     def coverage(self) -> str:
-        names = {item.name for item in self.measurements}
-        return "complete" if set(REQUIRED_BENCHMARKS) <= names else "partial"
+        measured = measured_suites(self)
+        if not measured:
+            return "none"
+        return "complete" if len(measured) == len(HERMES_INDEX_SUITES) else "partial"
 
     @property
     def intelligence(self) -> float:
@@ -106,6 +127,11 @@ class ConfigurationIntelligence:
 
 
 def validate_measurement(item: BenchmarkMeasurement) -> None:
+    if item.name in RETIRED_BENCHMARKS:
+        raise ValueError(
+            f"benchmark {item.name!r} is retired: the index is the four Hermes Index suites "
+            f"({', '.join(HERMES_INDEX_SUITES)})"
+        )
     if item.name not in ALL_BENCHMARKS:
         raise ValueError(f"unsupported benchmark: {item.name}")
     if not item.revision.strip():
@@ -151,17 +177,28 @@ def validate_configuration(item: ConfigurationIntelligence) -> None:
         validate_measurement(measurement)
 
 
+def measured_suites(item: ConfigurationIntelligence) -> tuple[str, ...]:
+    """Hermes Index suites that actually carry a measurement, in canonical order."""
+    seen = {measurement.name for measurement in item.measurements}
+    return tuple(name for name in HERMES_INDEX_SUITES if name in seen)
+
+
 def intelligence_score(item: ConfigurationIntelligence) -> float:
+    """The Hermes Index: equal-weight mean pass@1 over measured Hermes suites.
+
+    Exactly Nous's definition, minus what could not be measured. A configuration
+    with no Hermes-suite measurement has no index at all — a partial run is
+    reported as ``suites N/4`` rather than quietly inflated.
+    """
     validate_configuration(item)
-    measurements = {measurement.name: measurement for measurement in item.measurements}
-    missing = [name for name in REQUIRED_BENCHMARKS if name not in measurements]
-    if missing:
-        raise ValueError("missing required benchmark measurements: " + ", ".join(missing))
-    # Equal-weight arithmetic mean preserves each real suite's contribution.
-    # A genuine 0/N result remains visible in its raw measurement, but it no
-    # longer erases non-zero measured capability from every other suite. Tier
-    # promotion can still enforce per-suite floors separately.
-    values = [float(measurements[name].score) for name in REQUIRED_BENCHMARKS]
+    measured = measured_suites(item)
+    if not measured:
+        raise ValueError(
+            "missing required benchmark measurements: none of the Hermes Index suites "
+            f"({', '.join(HERMES_INDEX_SUITES)}) was measured"
+        )
+    by_name = {measurement.name: measurement for measurement in item.measurements}
+    values = [float(by_name[name].score) for name in measured]
     return round(100.0 * sum(values) / len(values), 6)
 
 
@@ -180,12 +217,21 @@ def rank_configurations(
 
 
 def refresh_score_payload(value: Mapping[str, object]) -> dict[str, object]:
-    """Recompute derived composite fields from hash-bound suite measurements."""
+    """Recompute derived fields from hash-bound Hermes-suite measurements.
+
+    Raises ``ValueError`` for a payload that cannot carry an index — retired
+    ``deep-swe``/``agentic-pair`` measurements, or no Hermes suite at all — so
+    the campaign never re-derives a score it no longer believes in.
+    """
     item = from_mapping(value)
+    coverage = suite_coverage_summary(item)
     return {
         **dict(value),
         "intelligence_score": item.intelligence,
         "balanced_score": item.balanced,
+        "combined_score": item.intelligence,
+        "suite_coverage": coverage,
+        "index_suites": list(coverage["measured_suites"]),
     }
 
 
@@ -207,20 +253,26 @@ def from_mapping(value: Mapping[str, object]) -> ConfigurationIntelligence:
 
 
 def combined_score(item: ConfigurationIntelligence) -> float:
-    """Equal-weight mean pass@1 across every suite that actually ran.
+    """Alias of :func:`intelligence_score` kept for callers storing ``combined_score``.
 
-    Hermes Index averages four suites. TurboFit runs two of them today, so this
-    averages over what was measured and reports how many suites stand behind the
-    number rather than silently dividing by six and understating the model.
+    There is no second composite: the Hermes Index is the only score.
     """
-    validate_configuration(item)
-    measured = [float(m.score) for m in item.measurements if m.name in ALL_BENCHMARKS]
-    if not measured:
-        raise ValueError("no benchmark measurements to combine")
-    return round(100.0 * sum(measured) / len(measured), 6)
+    return intelligence_score(item)
 
 
 def suite_coverage(item: ConfigurationIntelligence) -> dict[str, bool]:
-    """Which suites back a configuration's score — 'measured N of M'."""
+    """Which Hermes Index suites back a configuration's score."""
     seen = {m.name for m in item.measurements}
-    return {name: name in seen for name in ALL_BENCHMARKS}
+    return {name: name in seen for name in HERMES_INDEX_SUITES}
+
+
+def suite_coverage_summary(item: ConfigurationIntelligence) -> dict[str, Any]:
+    """'N of 4' — the count a published row must show next to its index."""
+    coverage = suite_coverage(item)
+    measured = [name for name, present in coverage.items() if present]
+    return {
+        "measured": len(measured),
+        "total": len(HERMES_INDEX_SUITES),
+        "suites": coverage,
+        "measured_suites": measured,
+    }

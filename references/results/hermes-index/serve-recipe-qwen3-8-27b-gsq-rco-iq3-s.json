@@ -1,0 +1,19 @@
+{
+  "alias": "qwen3-8-27b-gsq-rco-iq3-s",
+  "context": 65536,
+  "flags": [
+    "--jinja",
+    "-t 16",
+    "--main-gpu 0"
+  ],
+  "kv_cache": "q8_0/q8_0",
+  "model": "/root/Models/storage/gguf/Qwen3.8-27B-GSQ-RCO/Qwen3.8-27B-GSQ-RCO-IQ3_S.gguf",
+  "ngl": 99,
+  "parallel": 1,
+  "quantization": "IQ3_S",
+  "runtime": "/root/llama/llama-b12373/llama-server",
+  "runtime_build": "b12373 (commit ded522f83)",
+  "schema": "turbofit.serve-recipe/v1",
+  "sha256": "sha256:f6666a25c48f49b13a63abb6b70aaf0d2562aba0d2b428afe58ed74661e02fee",
+  "tensor_split": "1,0"
+}

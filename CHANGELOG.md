@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased — the index is the four Hermes suites, and nothing else
+
+- **`intelligence_score` is now the Hermes Index**: the equal-weight mean pass@1
+  across `hermes-bench`, `terminal-bench-4`, `terminal-bench-science` and
+  `skills-bench` — the same four suites Nous Research averages — over the suites
+  actually measured, with `suite_coverage` reporting `N of 4` on every record.
+- **`deep-swe` and `agentic-pair` are retired as scores.** They remain harnesses
+  (`scripts/turbofit-deepswe` is untouched), but a measurement carrying either
+  name is rejected by validation, so no DeepSWE number can become an index. The
+  one committed record scored that way is archived as `superseded` with its
+  provenance intact, and the README renders `no measurements yet` for it.
+- **New `scripts/turbofit-hermes-suite`** prepares, runs and summarizes one suite
+  against a TurboFit-served local OpenAI-compatible endpoint, pinned by harness
+  version and dataset revision: Harbor `0.26.0` for
+  `terminal-bench/terminal-bench@4.1.0` and
+  `terminal-bench-science/terminal-bench-science@0.1.0`, benchflow `0.6.3` for
+  `skillsbench@1.1` (`b63b7b2`, all 87 task digests re-verified).
+- **Hermes Bench is recorded as `unavailable: nous-internal`** with the reason and
+  the fix, never as a zero, so a local index always states 3/4 coverage honestly.
+- **The campaign runs the suites per level** (screening = one task per suite;
+  release = 66/70/87) and refuses to score a suite whose trials lack a verifier
+  reward: that is an infrastructure failure with `status: invalid`, not a model
+  scoring zero.
+- `docs/hermes-index.md` documents the definition, pins, commands and evidence
+  format; `docs/hermes-index-results.md` carries the first real local run.
+
 ## Unreleased — first run scans, recommends one model, downloads only that
 
 - **`scripts/turbofit-onboard`** is the first-run entry point: it detects the

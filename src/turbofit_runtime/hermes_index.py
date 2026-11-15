@@ -8,8 +8,9 @@ from __future__ import annotations
 
 from typing import Any, Iterable, Mapping
 
-SUITES = ("hermes-bench", "terminal-bench-4", "terminal-bench-science",
-          "skills-bench", "deep-swe", "agentic-pair")
+SUITES = ("hermes-bench", "terminal-bench-4", "terminal-bench-science", "skills-bench")
+#: Retired suites: they can appear in archived evidence, never in a live row.
+RETIRED_SUITES = ("deep-swe", "agentic-pair")
 
 
 def _latest(records: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
@@ -25,19 +26,25 @@ def _latest(records: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
 
 
 def index_row(record: Mapping[str, Any]) -> dict[str, Any]:
-    """One table row: what was measured, how many suites back it, what it costs."""
-    measured = [str(name) for name in (record.get("suites") or []) if name]
+    """One table row: what was measured, how many Hermes suites back it, what it costs."""
+    named = [str(name) for name in (record.get("suites") or []) if name]
+    measured = [name for name in named if name in SUITES]
+    retired = sorted(name for name in named if name in RETIRED_SUITES)
     tps = float(record.get("throughput_tps") or 0.0)
     seconds_per_task = round(1.0 / tps, 4) if tps > 0 else None
+    index = record.get("combined_score") or record.get("intelligence_score")
     return {
         "model": record.get("main"),
         "configuration": record.get("configuration_id"),
         "hardware_tier_gb": record.get("hardware_tier_gb"),
         "context": record.get("context"),
         "auxiliary": record.get("auxiliary"),
-        "index": record.get("combined_score") or record.get("intelligence_score"),
+        # A row with no Hermes-suite measurement has no index, whatever a legacy
+        # composite in the record says.
+        "index": index if measured else None,
         "suites_measured": len(measured),
         "suites_total": len(SUITES),
+        "retired_suites": retired,
         "tokens_per_second": tps,
         "seconds_per_task_at_1k": seconds_per_task,
         "level": record.get("benchmark_level"),
@@ -45,7 +52,8 @@ def index_row(record: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def build_table(records: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
-    rows = [index_row(r) for r in _latest(records)]
+    # A configuration with no Hermes-suite measurement has no index and no row.
+    rows = [row for row in (index_row(r) for r in _latest(records)) if row["suites_measured"]]
     rows.sort(key=lambda r: (-float(r["index"] or 0), str(r["configuration"])))
     return {"rows": rows, "measured": len(rows)}
 

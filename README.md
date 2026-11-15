@@ -207,10 +207,11 @@ The **Hermes Index** is the mean pass@1 across the four suites Hermes Agent runs
 
 | Model | Tier | Context | Aux | Index | Suites | tok/s | s/task @1k | Measurement |
 |---|---|---|---|---|---|---|---|---|
-| `qwen3-8-27b-gsq-rco-iq3s` UD-Q3_K_XL | 48 GB | 262,144 | shared-main · `auto:qwen3-8-27b-gsq-rco-iq3s` | 46.9 | 2/4 | 39.39 | 25.39 | screening |
-| — | 8 GB, 12 GB, 16 GB, 24 GB, 32 GB, 64 GB, 96 GB, 128 GB, 192 GB, 256 GB, 384 GB | — | — | **no measurements yet** | 0/4 | — | — | — |
+| — | 8 GB, 12 GB, 16 GB, 24 GB, 32 GB, 48 GB, 64 GB, 96 GB, 128 GB, 192 GB, 256 GB, 384 GB | — | — | **no measurements yet** | 0/4 | — | — | — |
 
-`deep-swe` and `agentic-pair` are the interim suites TurboFit can run today; the other two Hermes Index suites are not wired yet, so no row above is a complete index. `s/task @1k` is `1,000 ÷ tok/s`. The `no measurements yet` row lists every tier the campaign has not reached — those tiers stay visible instead of being dropped.
+A suite that cannot be run here is reported as **unavailable** with its reason rather than as a zero, so `suites` shows exactly how much of the index a row carries. Hermes Bench is run by Nous and is not publicly reproducible; TerminalBench 4, TerminalBench Science and SkillsBench are wired through their own harnesses against a TurboFit-served local endpoint. `s/task @1k` is `1,000 ÷ tok/s`. The `no measurements yet` row lists every tier the campaign has not reached — those tiers stay visible instead of being dropped.
+
+Superseded and not published: `qwen3-8-27b-gsq-rco-iq3s--auto--262k` — scored under the retired `deep-swe`/`agentic-pair` definition, which no longer contributes to any index.
 
 Source: `references/intelligence-scores.json`; regenerate with `tools/turbofit-intel-leaderboard`. Do not hand-edit between the markers.
 
