@@ -298,7 +298,7 @@ class MeshGatewayHandler(GatewayHandler):
 
 if __name__ == "__main__":
     port = int(os.environ.get("TURBOFIT_GATEWAY_PORT", "8091"))
-    host = os.environ.get("TURBOFIT_GATEWAY_HOST", "127.0.0.1")
+    host = os.environ.get("TURBOFIT_GATEWAY_HOST", "0.0.0.0")
     server = ThreadingHTTPServer((host, port), MeshGatewayHandler)
     log.info(f"Turbofit Mesh Gateway on :{port}")
     log.info("  /v1/models → unified local + Tailscale model list")

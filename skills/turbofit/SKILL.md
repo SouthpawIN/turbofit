@@ -80,9 +80,9 @@ Measured on RTX 3080 10GB + 32GB RAM, Cyber-Tiel-Coder-35B-A3B Q4_K_M, ngl 99 nc
 
 Hermes Cloud (portal.nousresearch.com/cloud) is a hosted always-on Hermes **agent** instance sized by VM tier — its RAM is for the agent process, never for hosting GGUFs. The integration direction that matters: route the remote agent's inference to the local Turbofit gateway.
 
-- Expose the gateway: re-run the Windows service installer with `-GatewayHost 0.0.0.0` (or set `TURBOFIT_GATEWAY_HOST`; default `127.0.0.1`). The LAN-sharing recipe itself: `references/windows-native-install.md`.
+- Expose the gateway: it binds `0.0.0.0` by default so tailnet peers can discover it; set `TURBOFIT_GATEWAY_HOST=127.0.0.1` to keep it local-only (Windows: `-GatewayHost 127.0.0.1`). The LAN-sharing recipe itself: `references/windows-native-install.md`.
 - On the remote Hermes: `provider: custom`, `base_url: http://<reachable-ip>:8091/v1`, model id one of the stable route IDs (`auto`, `active:main`, `active:aux`). Never `custom` + a GGUF filename on the client.
-- The gateway authenticates no inbound calls — anything beyond loopback must sit behind a tailnet or tunnel, never raw public. The CORS `browser_origin_allowed` check gates only browser origins; server-to-server calls pass.
+- The gateway authenticates no inbound calls — it admits loopback, private-network and `100.64.0.0/10` clients only, so anything beyond a tailnet or LAN must still sit behind an authenticating proxy, never raw public. The CORS `browser_origin_allowed` check gates only browser origins; server-to-server calls pass.
 - An always-on remote agent loses its main model whenever the rig sleeps — keep a portal-model fallback in the remote config, and say so before recommending the setup.
 - Manage cloud instances from a local Hermes via the Portal MCP server: `hermes mcp add --url https://portal.nousresearch.com/mcp --auth oauth hermes-cloud` (list/start/stop/create/`update_env`, cost estimates).
 

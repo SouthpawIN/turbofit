@@ -19,6 +19,15 @@
   `index`, `suites measured / total`, tok/s, and `s/task @1k` in place of a dollar
   cost. Unmeasured tiers stay listed as `no measurements yet`. `tools/sync-wiki-readme.sh`
   re-renders it after the wiki copy, so the table survives a README sync.
+- **Tailnet federation**: the gateway now binds `0.0.0.0` by default (a loopback
+  gateway is invisible to every peer) and admits loopback/LAN/tailnet clients
+  only. Peer probes run concurrently under a deadline and classify `open` /
+  `refused` (peer up, gateway down) / `unreachable` / `unresolved` instead of
+  collapsing every failure into "no peers"; `TURBOFIT_TAILSCALE_SOCKET` is
+  honoured so rootless daemons are not reported as unavailable. `/v1/models`
+  advertises the node's RAM/VRAM bands, and remote entries are no longer
+  overwritten with local role metadata. Verified inventory and probe commands:
+  `docs/tailnet-federation.md`.
 
 ## 2.4.1 — pressure yield, external-unit rungs, naming
 

@@ -12,6 +12,7 @@ Runs on :8091
 
 import hashlib
 import http.client
+import ipaddress
 import json
 import math
 import select
@@ -110,6 +111,23 @@ _inflight_requests: dict[str, float] = {}
 
 _cache = {"main": None, "aux": None, "ts": 0}
 CACHE_TTL = 10
+
+
+def client_address_allowed(address):
+    """Admit loopback, RFC1918/LAN and tailnet (100.64.0.0/10) clients only.
+
+    The gateway is an unauthenticated model proxy. Binding it beyond loopback
+    is what makes tailnet federation work, so the exposure is scoped by source
+    instead of by interface: a stray port-forward to the public internet still
+    cannot use it.
+    """
+    try:
+        ip = ipaddress.ip_address(str(address).split("%", 1)[0])
+    except ValueError:
+        return False
+    if ip.is_loopback or ip.is_private or ip.is_link_local:
+        return True
+    return ip.version == 4 and ip in ipaddress.ip_network("100.64.0.0/10")
 
 
 def browser_origin_allowed(origin):
@@ -336,6 +354,28 @@ _remote_cache_lock = threading.Lock()
 _remote_discovery_lock = threading.Lock()
 
 
+_node_advertisement_cache: dict = {}
+
+
+def node_advertisement_payload() -> dict:
+    """This node's memory/capability bands, advertised to tailnet peers.
+
+    Cached: probing hardware shells out to nvidia-smi/rocm-smi/vulkaninfo and
+    must not run on every /health or /v1/models call. Failure is reported
+    rather than raised — a gateway that cannot probe GPU still serves.
+    """
+    if _node_advertisement_cache:
+        return _node_advertisement_cache
+    try:
+        from turbofit_runtime.tailnet import node_advertisement
+
+        payload = node_advertisement(provider_port=SELF_PORT)
+    except Exception as exc:  # noqa: BLE001 - advertisement is best-effort
+        payload = {"error": f"hardware probe unavailable: {exc}", "provider_port": SELF_PORT}
+    _node_advertisement_cache.update(payload)
+    return _node_advertisement_cache
+
+
 def _remote_models_or_empty():
     """Cached federated catalog for health reporting. Never triggers discovery."""
     with _remote_cache_lock:
@@ -456,6 +496,11 @@ def _discover_remote_models() -> list[dict]:
             try:
                 with urlopen(peer + "/v1/models", timeout=10.0) as handle:
                     data = json.loads(handle.read().decode())
+                # Peers advertise their own memory/capability bands in the
+                # catalog envelope. Carry them onto every remote model so a
+                # recommendation can weigh RAM/VRAM instead of treating every
+                # peer as an unknown box.
+                peer_node = data.get("node") if isinstance(data.get("node"), dict) else None
                 for item in (data.get("data") or []):
                     # Never relay a peer's remote entries: re-prefixing
                     # them builds nested "host/host/host/..." model IDs
@@ -471,6 +516,17 @@ def _discover_remote_models() -> list[dict]:
                         continue
                     host = urlsplit(peer).hostname or peer
                     remote_role = str((item.get("metadata") or {}).get("role") or "main").strip()
+                    model_metadata = {
+                        "role": remote_role,
+                        "backing_model": model_id,
+                        "residency": "remote",
+                        "mode": "tailnet",
+                        "observed_at": None,
+                        "freshness": {"age_s": None, "max_age_s": 15.0, "stale": False},
+                    }
+                    if peer_node:
+                        model_metadata["peer_node"] = peer_node
+                        model_metadata["peer_bands"] = peer_node.get("bands")
                     models.append({
                         "id": f"{host}/{model_id}",
                         "object": "model",
@@ -480,14 +536,7 @@ def _discover_remote_models() -> list[dict]:
                         "source": "remote",
                         "base_url": peer,
                         "remote_model": model_id,
-                        "metadata": {
-                            "role": remote_role,
-                            "backing_model": model_id,
-                            "residency": "remote",
-                            "mode": "tailnet",
-                            "observed_at": None,
-                            "freshness": {"age_s": None, "max_age_s": 15.0, "stale": False},
-                        },
+                        "metadata": model_metadata,
                     })
             except Exception:
                 continue
@@ -537,6 +586,11 @@ def provider_models():
             seen.add(model["id"])
     metadata = provider_model_metadata()
     for index, model in enumerate(models):
+        # Remote entries describe another machine's residency. Overwriting them
+        # with the local role metadata relabelled a tailnet model as local
+        # (mode/residency/freshness) and dropped the peer's advertised bands.
+        if model.get("source") == "remote":
+            continue
         role = "auto" if index == 0 else model.get("metadata", {}).get("role")
         if role in metadata:
             model["metadata"] = metadata[role]
@@ -1472,6 +1526,17 @@ class GatewayHandler(BaseHTTPRequestHandler):
     def _proxy(self):
         path = self.path
 
+        if not client_address_allowed(self.client_address[0]):
+            self._send_json(403, {
+                "error": {
+                    "message": (
+                        "forbidden: this gateway serves loopback, private-network "
+                        "and tailnet clients only"
+                    )
+                }
+            })
+            return
+
         if path == "/v1/models":
             self._send_provider_models()
         elif path == "/v1/props":
@@ -1492,7 +1557,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self.send_error(404, f"Unknown path: {path}")
 
     def _send_provider_models(self):
-        self._send_json(200, {"object": "list", "data": provider_models()})
+        self._send_json(200, {
+            "object": "list",
+            "data": provider_models(),
+            # Envelope-level advertisement: peers read this to learn what this
+            # machine can hold, without a second request.
+            "node": node_advertisement_payload(),
+        })
 
     def _send_provider_model(self, model_id):
         model = next((item for item in provider_models() if item["id"] == model_id), None)
@@ -2163,7 +2234,22 @@ class GatewayHandler(BaseHTTPRequestHandler):
             "backend": "api-fallback" if is_api else ("local" if main else "none"),
             "local": bool(main) and not is_api,
             "cloud_fallback": is_api,
+            "node": node_advertisement_payload(),
         }
+        try:
+            from turbofit_runtime.tailnet import last_peer_scan
+
+            scan = last_peer_scan()
+            if scan:
+                payload["federation"] = {
+                    "peers_seen": scan.get("peers_seen", 0),
+                    "gateways_up": len(scan.get("peers") or []),
+                    "gateway_down": [p.get("host") for p in (scan.get("gateway_down") or [])],
+                    "unreachable": [p.get("host") for p in (scan.get("unreachable") or [])],
+                    "error": scan.get("error"),
+                }
+        except Exception:  # noqa: BLE001 - health must answer even if discovery is unavailable
+            payload["federation"] = {"error": "discovery diagnostics unavailable"}
         try:
             from turbofit_runtime import hermes_bridge
 
@@ -2233,9 +2319,20 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     port = int(os.environ.get("TURBOFIT_GATEWAY_PORT", "8091"))
-    host = os.environ.get("TURBOFIT_GATEWAY_HOST", "127.0.0.1")
+    # Federation requires the port to be reachable from other machines. Bind
+    # every interface by default: a loopback gateway works locally and is
+    # invisible to every tailnet peer, so discovery silently drops the node.
+    # Set TURBOFIT_GATEWAY_HOST=127.0.0.1 to opt back in to local-only.
+    host = os.environ.get("TURBOFIT_GATEWAY_HOST", "0.0.0.0")
     server = ThreadingHTTPServer((host, port), GatewayHandler)
-    log.info(f"turbofit-gateway/2.0 on :{port} — graceful degradation active")
+    log.info(f"turbofit-gateway/2.0 on {host}:{port} — graceful degradation active")
+    if host in {"127.0.0.1", "localhost", "::1"}:
+        log.warning(
+            "bound to loopback: tailnet peers cannot discover or reach this "
+            "gateway; set TURBOFIT_GATEWAY_HOST=0.0.0.0 to federate"
+        )
+    else:
+        log.info(f"  federating: tailnet peers probe {port} on this node")
     log.info(f"  /main/ → stall-while-loading ({STALL_TIMEOUT_S:.0f}s) → API fallback")
     log.info(f"  /aux/  → ready-or-skip (no stall)")
     log.info(f"  /status → JSON, /health → 200/503")
