@@ -139,3 +139,15 @@ class _DeadProcess:
 
     def poll(self) -> int:
         return self._code
+
+
+def test_clean_exit_during_load_is_reported_as_a_shutdown() -> None:
+    message = artifacts.describe_load_failure(
+        role="aux", model="maple-preview-tq2", file="/models/maple.gguf",
+        exit_code=0, pid=31337, log_tail_lines=["srv load_model: loading model ..."],
+    )
+
+    assert "exited with code 0 while loading" in message
+    assert "shutdown" in message and "SIGTERM" in message
+    assert "failed to load model" not in message
+    assert "SIGKILL" not in message
