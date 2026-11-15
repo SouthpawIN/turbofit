@@ -7,11 +7,7 @@
   1048576
  ],
  "auxiliary_options": [
-  "maple-preview-tq2",
-  "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
-  "qwen3-8-flash-next-strata",
-  "carwin-nano",
-  "auto"
+  "maple-preview-tq2"
  ],
  "models": [
   {
@@ -150,41 +146,6 @@
    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
    "upstream_source": "https://huggingface.co/Qwen/Qwen3.8-27B",
    "upstream_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"
-  },
-  {
-   "id": "carwin-nano",
-   "name": "Carwin MoE Nano MTP",
-   "family": "Carwin Nano",
-   "source": "https://huggingface.co/isneezekittens/Carwin-MoE-Nano-GGUF",
-   "artifact": "carwin-moe-Nano.gguf",
-   "quantization": "native",
-   "vision": false,
-   "moe": true,
-   "runtime_features": [
-    "mtp",
-    "expert-offload"
-   ],
-   "roles": [
-    "aux"
-   ],
-   "revision": "ae4705a9b6c6051fa59615665eb2d2d1e2884557"
-  },
-  {
-   "id": "carwin-nano-no-mtp",
-   "name": "Carwin MoE Nano No MTP",
-   "family": "Carwin Nano",
-   "source": "https://huggingface.co/isneezekittens/Carwin-MoE-Nano-GGUF",
-   "artifact": "carwin-moe-Nano.gguf",
-   "quantization": "native",
-   "vision": false,
-   "moe": true,
-   "runtime_features": [
-    "expert-offload"
-   ],
-   "roles": [
-    "aux"
-   ],
-   "revision": "ae4705a9b6c6051fa59615665eb2d2d1e2884557"
   },
   {
    "id": "ternary-bonsai-27b",

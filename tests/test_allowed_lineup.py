@@ -38,6 +38,16 @@ def test_eight_gb_aux_does_not_stack_two_models() -> None:
     assert local_aux_for_host(vram_gb=64, host_ram_gb=64) == "maple-preview-tq2"
 
 
+def test_maple_is_the_only_real_auxiliary() -> None:
+    assert is_allowed_aux("maple-preview-tq2")
+    assert is_allowed_aux("auto")
+    assert not is_allowed_aux("carwin-nano")
+    assert not is_allowed_aux("carwin-moe-nano")
+    assert not is_allowed_aux("cyber-tiel-coder-35b-a3b-ud-q4-k-xl")
+    assert not is_allowed_aux("qwen3-8-flash-next-strata")
+    assert not is_allowed_aux("qwen3-8-27b-gsq-rco-iq3s")
+
+
 def test_gsq_rco_bands() -> None:
     assert local_main_for_vram_gb(16) == "qwen3-8-27b-gsq-rco-iq3xxs"
     assert local_main_for_vram_gb(24) == "qwen3-8-27b-gsq-rco-iq3s"

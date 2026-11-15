@@ -14,7 +14,7 @@ scripts/expand-multipart-artifacts
 Current generated scope:
 
 - **84 main configurations**
-- **5 auxiliary choices** (`maple-preview-tq2`, `cyber-tiel-coder-35b-a3b-ud-q4-k-xl`, `qwen3-8-flash-next-strata`, `carwin-nano`, `auto`)
+- **1 auxiliary choice** (`maple-preview-tq2`, the Colibri build) on every configuration
 - **4 exact context tiers**
 - Maple Preview TQ2_0 is the 8 GB Fit List candidate and is native 64K/128K only
 - DeepSeek V4 Flash 0731 is **not** in the active catalog
@@ -82,10 +82,9 @@ Only artifacts actually published by the pinned upstream revision enter the matr
 
 ### Auxiliary choices
 
-- Cyber-Tiel Coder 35B-A3B (MoE aux; scale-down offloads experts first)
-- Qwen 3.8 Flash Next (Strata)
-- Carwin MoE Nano
-- Automatic auxiliary selection
+- Maple Preview 20B-A1B TQ2_0 (`maple-preview-tq2`) — the only auxiliary, at every tier
+
+`auto` (share the main process) remains a runtime routing mode, not a model: it is never a matrix column. No Cyber-Tiel Coder, Carwin Nano, or Flash Next auxiliary is offered.
 
 Auxiliary recipes do not load vision projectors. Visual input is routed to the main model.
 

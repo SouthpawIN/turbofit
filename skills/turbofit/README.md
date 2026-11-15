@@ -12,10 +12,8 @@ Serves each model on the runtime that can hold it: llama.cpp (mainline, and the 
 | **LFM3 Omni 2B** | Q4_K_M + vision projector | Active catalog candidate |
 | **Nemotron Bolt 74B-A9B** | 24GB native, MoE + vision | Active catalog candidate |
 | **Inkling 2 Small** | 366.5 GiB checkpoint, **vLLM**, 1M context | Engine-wired; needs vLLM installed |
-| **Maple Preview 20B-A1B** | TQ2_0 8 GB main candidate | CPU 8 GiB envelope verified; exact 8 GB GPU pending |
+| **Maple Preview 20B-A1B** | TQ2_0 8 GB main candidate; the only auxiliary at every tier | CPU 8 GiB envelope verified; exact 8 GB GPU pending |
 | **Qwen 3.8 27B GSQ-RCO** | IQ3_S → Q8, with or without MTP | Active catalog candidate |
-| **Cyber-Tiel Coder 35B-A3B** | Q4_K_M MoE auxiliary | Active auxiliary candidate |
-| **Carwin Nano** | Optional MoE auxiliary | Optional auxiliary candidate |
 | **MiniMax Music 3** | Music generation (diffusers-modular) | Pinned integration candidate |
 | **NVIDIA Parakeet TDT 0.6B v3** | Speech-to-text | Pinned integration candidate |
 | **Soprano TTS** | Text-to-speech | Pinned integration candidate |
@@ -88,7 +86,7 @@ PYTHONPATH=src:. scripts/turbofit-catalog-campaign status
 PYTHONPATH=src:. scripts/turbofit-catalog-campaign run
 ```
 
-The generated campaign covers all valid pinned main/add-on combinations, every auxiliary option, and 64K/128K/262K/1M context. Candidate rows remain candidates until physical evidence passes.
+The generated campaign covers all valid pinned main/add-on combinations, the single Maple auxiliary, and 64K/128K/262K/1M context. Candidate rows remain candidates until physical evidence passes.
 
 ## Verification
 

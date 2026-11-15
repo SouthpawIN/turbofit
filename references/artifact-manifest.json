@@ -107,18 +107,6 @@
    "size_bytes": 629246880
   },
   {
-   "destination": "Carwin-MoE-Nano/carwin-moe-Nano.gguf",
-   "families": [
-    "carwin-nano",
-    "carwin-nano-no-mtp"
-   ],
-   "repo_id": "isneezekittens/Carwin-MoE-Nano-GGUF",
-   "revision": "ae4705a9b6c6051fa59615665eb2d2d1e2884557",
-   "path": "carwin-moe-Nano.gguf",
-   "sha256": "5c6ddebfa5669d3f0dca4b569cbd3e06aa7fa781d2198ab1ec67b6d05e63636b",
-   "size_bytes": 12335504896
-  },
-  {
    "destination": "GLM-5.2-2.788bpw/GLM-5.2-GGUF-2.788bpw-muzzy-imatrix.gguf",
    "families": [
     "glm-5-2-2-788bpw"

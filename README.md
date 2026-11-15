@@ -142,7 +142,7 @@ A variant never displaces a band default. It is offered *at* the band it fits, b
 | tts | Qwen3 TTS CustomVoice, Darwin TTS 1.7B, **Soprano TTS**, PersonaPlex (duplex), Edge TTS |
 | stt | **NVIDIA Parakeet TDT 0.6B v3**, Nemotron ASR 0.6B, faster-whisper, PersonaPlex (duplex) |
 
-**Auxiliary text slots** stay in the main catalog: **Maple Preview 20B-A1B** is the default auxiliary for every configuration; **Cyber-Tiel Coder 35B-A3B** is the MoE auxiliary offered alongside it. `recommend_multimodal()` ranks every modality against the detected hardware and returns `fit`, an action and the reason.
+**Auxiliary text slots** stay in the main catalog: **Maple Preview 20B-A1B** (`maple-preview-tq2`) is the auxiliary for every configuration — one aux model across the board, with no alternative auxiliary. `auto` still means "share the main process"; it is a routing mode, not a second model. `recommend_multimodal()` ranks every modality against the detected hardware and returns `fit`, an action and the reason.
 
 Rules that hold at every rung: MTP on wherever the model supports it; **IQ3_S is lossless**, so 32 GB and 48 GB both stay on it rather than paying for a heavier quant; DFlash2 drafters belong to Qwen only, Bonsai keeps its own Prism DSpark sidecar.
 
