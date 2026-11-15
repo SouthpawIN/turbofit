@@ -264,7 +264,7 @@ The **Hermes Index** is the mean pass@1 across the four suites Hermes Agent runs
 | Model | Tier | Context | Aux | Index | Suites | tok/s | s/task @1k | Measurement |
 |---|---|---|---|---|---|---|---|---|
 | `qwen3-8-27b-gsq-rco-iq3s` UD-Q3_K_XL | 48 GB | 262,144 | shared-main · `auto:qwen3-8-27b-gsq-rco-iq3s` | 46.9 | 2/4 | 39.39 | 25.39 | screening |
-| — | 8 GB, 16 GB, 24 GB, 64 GB, 96 GB, 200 GB, 300 GB | — | — | **no measurements yet** | 0/4 | — | — | — |
+| — | 8 GB, 12 GB, 16 GB, 24 GB, 32 GB, 64 GB, 96 GB, 128 GB, 192 GB, 256 GB, 384 GB | — | — | **no measurements yet** | 0/4 | — | — | — |
 
 `deep-swe` and `agentic-pair` are the interim suites TurboFit can run today; the other two Hermes Index suites are not wired yet, so no row above is a complete index. `s/task @1k` is `1,000 ÷ tok/s`. The `no measurements yet` row lists every tier the campaign has not reached — those tiers stay visible instead of being dropped.
 
@@ -296,6 +296,7 @@ Engine binaries are PM-pinned and never downloaded at boot. TurboFit tracks upst
 - How TurboFit maps onto Hermes' built-in local runtime — [`docs/hermes-local-runtime-adapter.md`](docs/hermes-local-runtime-adapter.md)
 - Chain data — [`references/fallback-chain.json`](references/fallback-chain.json) · ladders — [`references/fit-lists.json`](references/fit-lists.json) · catalog — [`references/model-catalog.json`](references/model-catalog.json)
 - Binary selection — [`references/binary-selection.md`](references/binary-selection.md) · troubleshooting — [`docs/turbofit-check.md`](docs/turbofit-check.md)
+- Tailnet peer federation — verified peer inventory, probe commands, failure modes — [`docs/tailnet-federation.md`](docs/tailnet-federation.md)
 - Changelog — [`CHANGELOG.md`](CHANGELOG.md) · roadmap — [`ROADMAP.md`](ROADMAP.md) · full wiki topic — [bot-wiki](https://github.com/SouthpawIN/bot-wiki/blob/wiki/wiki-topics/turbofit/index.md)
 
 MIT.

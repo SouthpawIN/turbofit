@@ -2,11 +2,45 @@
 from __future__ import annotations
 
 import json
+import os
+import platform
+import socket
 import subprocess
+import threading
+import time
 from collections.abc import Callable
 from typing import Any
 
 CommandRunner = Callable[[list[str]], subprocess.CompletedProcess[str]]
+
+# Outcome of a single TCP probe against a peer's gateway port.
+PROBE_OPEN = "open"          # peer up, TurboFit gateway answering
+PROBE_REFUSED = "refused"    # peer up, nothing listening (gateway down / loopback-bound)
+PROBE_UNREACHABLE = "unreachable"  # no TCP answer at all (peer down, firewall, no route)
+PROBE_UNRESOLVED = "unresolved"    # MagicDNS name did not resolve
+
+# Last scan, for diagnostics: discovery used to return [] and drop every
+# reason on the floor, which made "peer online but gateway down" and "no
+# tailnet at all" look identical to the caller.
+_LAST_SCAN: dict[str, Any] = {}
+
+
+def tailscale_command(*args: str) -> list[str]:
+    """Build a ``tailscale`` argv, honouring a non-default daemon socket.
+
+    Rootless/userspace tailscaled instances (containers, unprivileged VPS, a
+    daemon started with ``--socket``) are not reachable on the default socket
+    path. Without this every call failed with "failed to connect to local
+    tailscaled" and the whole tailnet integration reported ``available: false``
+    even though the node was up and serving.
+    """
+    socket_path = (
+        os.environ.get("TURBOFIT_TAILSCALE_SOCKET")
+        or os.environ.get("TAILSCALE_SOCKET")
+        or ""
+    ).strip()
+    socket_args = [f"--socket={socket_path}"] if socket_path else []
+    return ["tailscale", *socket_args, *args]
 
 
 def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
@@ -37,8 +71,8 @@ def _execute_json(command: list[str], runner: CommandRunner) -> dict[str, Any]:
 def tailnet_status(*, command_runner: CommandRunner | None = None) -> dict[str, Any]:
     runner = command_runner or _run
     try:
-        status = _execute_json(["tailscale", "status", "--json"], runner)
-        serve = _execute_json(["tailscale", "serve", "status", "--json"], runner)
+        status = _execute_json(tailscale_command("status", "--json"), runner)
+        serve = _execute_json(tailscale_command("serve", "status", "--json"), runner)
     except (FileNotFoundError, OSError, subprocess.SubprocessError, RuntimeError) as exc:
         return {"available": False, "connected": False, "dns_name": None, "serve": {}, "error": str(exc)}
     raw_self = status.get("Self")
@@ -121,7 +155,9 @@ def publish_tailnet(
                 f"Tailscale Serve port {https_port} is already configured; refusing to overwrite it"
             )
     for command in commands:
-        result = runner(list(command))
+        # `serve` is executed through the same socket-aware argv; build_serve_commands
+        # stays a pure function so the published URLs are unchanged.
+        result = runner(tailscale_command(*list(command)[1:]))
         if result.returncode:
             message = (result.stderr or result.stdout or "tailscale serve failed").strip()
             raise RuntimeError(message)
@@ -204,44 +240,71 @@ def ensure_tailnet(
         }
 
 
-def discover_turbofit_peers(
+def probe_gateway(
+    host: str,
+    port: int = 8091,
     *,
-    provider_port: int = 8091,
     timeout_s: float = 2.0,
-    command_runner: CommandRunner | None = None,
-    probe: Callable[[str, float], bool] | None = None,
-) -> list[dict[str, Any]]:
-    """Discover TurboFit gateways running on other machines in the tailnet.
+    connector: Callable[..., Any] | None = None,
+) -> dict[str, Any]:
+    """TCP-probe one peer's gateway port and classify the outcome.
 
-    Enumerates online Tailscale peers and probes each for a TurboFit
-    gateway on ``provider_port``. Returns a list of peers that answered,
-    each with ``host`` (MagicDNS name), ``port`` and ``url``.
-
-    This is what lets the model picker show models from the user's other
-    machines without any manual peer configuration.
+    A refused connection is *not* "peer down": the peer answered, its
+    gateway simply is not listening there — the normal signature of a
+    gateway bound to loopback (or not started). Collapsing both into
+    ``False`` made discovery drop a live machine with no explanation.
     """
-    import socket
-
-    runner = command_runner or _run
-
-    def default_probe(host: str, timeout: float) -> bool:
-        try:
-            with socket.create_connection((host, provider_port), timeout=timeout):
-                return True
-        except OSError:
-            return False
-
-    probe_fn = probe or default_probe
-
+    connect = connector or socket.create_connection
+    started = time.monotonic()
     try:
-        status = _execute_json(["tailscale", "status", "--json"], runner)
-    except (FileNotFoundError, OSError, subprocess.SubprocessError, RuntimeError):
-        return []
+        with connect((host, port), timeout=timeout_s):
+            status, error = PROBE_OPEN, None
+    except ConnectionRefusedError as exc:
+        status, error = PROBE_REFUSED, f"connection refused: {exc}"
+    except socket.gaierror as exc:
+        status, error = PROBE_UNRESOLVED, f"name did not resolve: {exc}"
+    except (socket.timeout, TimeoutError) as exc:
+        status, error = PROBE_UNREACHABLE, f"timed out after {timeout_s}s: {exc}"
+    except OSError as exc:
+        status, error = PROBE_UNREACHABLE, str(exc)
+    return {
+        "host": host,
+        "port": port,
+        "status": status,
+        "error": error,
+        "elapsed_s": round(time.monotonic() - started, 3),
+    }
 
-    peers: list[dict[str, Any]] = []
+
+def _normalise_probe_result(result: Any, host: str, port: int) -> dict[str, Any]:
+    """Accept a structured probe result, a status string, or a legacy bool."""
+    if isinstance(result, str):
+        result = {"status": result.strip()}
+    if isinstance(result, dict):
+        status = str(result.get("status") or "").strip()
+        if status in {PROBE_OPEN, PROBE_REFUSED, PROBE_UNREACHABLE, PROBE_UNRESOLVED}:
+            return {
+                "host": result.get("host") or host,
+                "port": int(result.get("port") or port),
+                "status": status,
+                "error": result.get("error"),
+                "elapsed_s": result.get("elapsed_s"),
+            }
+        answered = bool(result.get("open"))
+    else:
+        answered = bool(result)
+    # A boolean probe only tells us the port answered; a False is ambiguous
+    # (refused vs unreachable), so report it as unreachable rather than
+    # inventing a cause.
+    status = PROBE_OPEN if answered else PROBE_UNREACHABLE
+    return {"host": host, "port": port, "status": status, "error": None, "elapsed_s": None}
+
+
+def _online_peers(status: dict[str, Any]) -> list[dict[str, Any]]:
     raw_peer_map = status.get("Peer") or {}
     if not isinstance(raw_peer_map, dict):
         return []
+    peers: list[dict[str, Any]] = []
     for _key, raw_peer in raw_peer_map.items():
         if not isinstance(raw_peer, dict):
             continue
@@ -250,12 +313,186 @@ def discover_turbofit_peers(
         dns_name = str(raw_peer.get("DNSName") or "").strip().rstrip(".")
         if not dns_name:
             continue
-        if not probe_fn(dns_name, timeout_s):
-            continue
-        peers.append({
-            "host": dns_name,
-            "port": provider_port,
-            "url": f"http://{dns_name}:{provider_port}",
-            "os": raw_peer.get("OS"),
-        })
+        peers.append({"host": dns_name, "os": raw_peer.get("OS")})
     return peers
+
+
+def scan_turbofit_peers(
+    *,
+    provider_port: int = 8091,
+    timeout_s: float = 2.0,
+    deadline_s: float | None = None,
+    command_runner: CommandRunner | None = None,
+    probe: Callable[[str, float], Any] | None = None,
+) -> dict[str, Any]:
+    """Enumerate online tailnet peers and classify each one's gateway port.
+
+    Probes run concurrently under a hard wall-clock deadline (``deadline_s``,
+    default two probe timeouts). Before this, a peer whose MagicDNS name or
+    route black-holed cost a full serial timeout each; with four peers a
+    single ``/v1/models`` call could stall for the whole budget. The result
+    keeps the three outcomes separate instead of only returning survivors:
+
+    ``peers``        — gateway answered (federate these)
+    ``gateway_down`` — peer up, nothing listening on the port
+    ``unreachable``  — no TCP answer (peer down, firewall, no route)
+    ``unresolved``   — MagicDNS name failed to resolve
+    """
+    global _LAST_SCAN
+
+    runner = command_runner or _run
+    port = _port(provider_port, "provider_port")
+    timeout = max(0.05, float(timeout_s))
+    scan: dict[str, Any] = {
+        "peers": [],
+        "gateway_down": [],
+        "unreachable": [],
+        "unresolved": [],
+        "peers_seen": 0,
+        "probe_timeout_s": timeout,
+        "error": None,
+        "scanned_at": time.time(),
+    }
+
+    try:
+        status = _execute_json(tailscale_command("status", "--json"), runner)
+    except (FileNotFoundError, OSError, subprocess.SubprocessError, RuntimeError) as exc:
+        scan["error"] = str(exc) or "tailscale status failed"
+        _LAST_SCAN = scan
+        return scan
+
+    candidates = _online_peers(status)
+    scan["peers_seen"] = len(candidates)
+    if not candidates:
+        _LAST_SCAN = scan
+        return scan
+
+    deadline = time.monotonic() + (
+        float(deadline_s) if deadline_s is not None else timeout * 2
+    )
+    results: dict[str, dict[str, Any]] = {}
+
+    def worker(candidate: dict[str, Any]) -> None:
+        host = candidate["host"]
+        if probe is None:
+            results[host] = probe_gateway(host, port, timeout_s=timeout)
+            return
+        try:
+            results[host] = _normalise_probe_result(probe(host, timeout), host, port)
+        except Exception as exc:  # noqa: BLE001 - one bad probe must not kill the scan
+            results[host] = {
+                "host": host, "port": port, "status": PROBE_UNREACHABLE,
+                "error": f"probe raised: {exc}", "elapsed_s": None,
+            }
+
+    # One daemon thread per peer: a hung getaddrinfo() cannot block the
+    # caller or interpreter shutdown the way a ThreadPoolExecutor worker can.
+    threads = [
+        threading.Thread(target=worker, args=(candidate,), daemon=True, name=f"probe-{candidate['host']}")
+        for candidate in candidates
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=max(0.0, deadline - time.monotonic()))
+
+    for candidate in candidates:
+        host = candidate["host"]
+        outcome = results.get(host) or {
+            "host": host,
+            "port": port,
+            "status": PROBE_UNREACHABLE,
+            "error": "probe did not finish before the scan deadline",
+            "elapsed_s": None,
+        }
+        outcome = {**outcome, "os": candidate.get("os")}
+        if outcome["status"] == PROBE_OPEN:
+            outcome["url"] = f"http://{host}:{port}"
+            scan["peers"].append(outcome)
+        elif outcome["status"] == PROBE_REFUSED:
+            scan["gateway_down"].append(outcome)
+        elif outcome["status"] == PROBE_UNRESOLVED:
+            scan["unresolved"].append(outcome)
+        else:
+            scan["unreachable"].append(outcome)
+
+    _LAST_SCAN = scan
+    return scan
+
+
+def last_peer_scan() -> dict[str, Any]:
+    """Most recent :func:`scan_turbofit_peers` result, including failures."""
+    return dict(_LAST_SCAN)
+
+
+def discover_turbofit_peers(
+    *,
+    provider_port: int = 8091,
+    timeout_s: float = 2.0,
+    command_runner: CommandRunner | None = None,
+    probe: Callable[[str, float], Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Discover TurboFit gateways running on other machines in the tailnet.
+
+    Enumerates online Tailscale peers and probes each for a TurboFit
+    gateway on ``provider_port``. Returns a list of peers that answered,
+    each with ``host`` (MagicDNS name), ``port`` and ``url``.
+
+    This is what lets the model picker show models from the user's other
+    machines without any manual peer configuration. Peers that are up with
+    no gateway, and peers that are unreachable, are available afterwards
+    from :func:`last_peer_scan` — they are not returned here, because only a
+    gateway that answered can serve models.
+    """
+    scan = scan_turbofit_peers(
+        provider_port=provider_port,
+        timeout_s=timeout_s,
+        command_runner=command_runner,
+        probe=probe,
+    )
+    return [
+        {"host": peer["host"], "port": peer["port"], "url": peer["url"], "os": peer.get("os")}
+        for peer in scan["peers"]
+    ]
+
+
+def node_advertisement(*, hardware: Any | None = None, provider_port: int = 8091) -> dict[str, Any]:
+    """Describe this machine's memory/capability bands for tailnet peers.
+
+    Peers choose between models blind unless the node states what it can
+    actually hold: advertising only model IDs dropped the RAM/VRAM numbers
+    that make a remote recommendation meaningful. ``hardware`` accepts a
+    pre-probed :class:`~turbofit_runtime.hardware.HardwareFingerprint`.
+    """
+    fingerprint = hardware
+    if fingerprint is None:
+        from .hardware import probe_hardware
+
+        fingerprint = probe_hardware()
+    ram_gb = round(fingerprint.system_ram_mb / 1024, 1)
+    vram_gb = round(fingerprint.total_vram_mb / 1024, 1)
+    usable_ram_gb = round(fingerprint.host_usable_memory_mb / 1024, 1)
+    return {
+        "host": platform.node(),
+        "os": fingerprint.os,
+        "architecture": fingerprint.architecture,
+        "provider_port": provider_port,
+        "bands": {
+            "ram_gb": ram_gb,
+            "vram_gb": vram_gb,
+            "usable_ram_gb": usable_ram_gb,
+            "memory_pool": fingerprint.memory_pool_kind,
+            "shared_memory": fingerprint.shared_memory_pool,
+            "total_usable_gb": round(fingerprint.total_usable_memory_mb / 1024, 1),
+        },
+        "accelerators": [
+            {
+                "index": device.index,
+                "name": device.name,
+                "vendor": device.vendor,
+                "backend": device.backend,
+                "memory_gb": round(device.memory_total_mb / 1024, 1),
+            }
+            for device in fingerprint.devices
+        ],
+    }

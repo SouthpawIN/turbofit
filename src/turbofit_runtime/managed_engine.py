@@ -28,6 +28,10 @@ class EngineLaunch:
     upstream_model_id: str
     command: tuple[str, ...]
     required_model_files: tuple[str, ...] = ("config.json",)
+    # Model servers must stay on loopback. A *proxy* engine (the TurboFit
+    # gateway) has to accept tailnet peers, so it opts in explicitly rather
+    # than the invariant being loosened for everything.
+    network_bind: bool = False
 
     def __post_init__(self) -> None:
         if not self.engine_id or not self.model_id or not self.upstream_model_id or not self.command:
@@ -40,7 +44,7 @@ class EngineLaunch:
             address = ipaddress.ip_address(self.bind_host)
         except ValueError as exc:
             raise ValueError("managed engine bind host must be an IP address") from exc
-        if not address.is_loopback:
+        if not address.is_loopback and not self.network_bind:
             raise ValueError("managed engines must bind to loopback")
 
 
@@ -337,6 +341,7 @@ class ManagedEngineRuntime:
             upstream_model_id=resident.upstream_model_id,
             command=resident.command,
             required_model_files=(),
+            network_bind=not ipaddress.ip_address(resident.bind_host).is_loopback,
         )
         if not self._ready(spec):
             return {"ok": False, "status": "loading", "runtime": payload}
