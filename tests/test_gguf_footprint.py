@@ -180,3 +180,41 @@ def test_footprint_is_serialisable_for_evidence():
                                 expert_tensor_names=("blk.0.ffn_gate_exps.weight",),
                                 shards=("a.gguf",))
     assert footprint.as_dict()["expert_tensor_names"] == ["blk.0.ffn_gate_exps.weight"]
+
+
+def test_remote_http_range_measurement_matches_the_local_reader(tmp_path, monkeypatch):
+    """A header read over HTTP Range must produce the local reader's numbers."""
+    from turbofit_runtime import gguf_remote
+    from turbofit_runtime.gguf_remote import RemoteShard, measure_remote_expert_footprint
+
+    path = write_gguf(
+        tmp_path / "remote.gguf",
+        [("blk.0.ffn_gate_exps.weight", 4 * MIB), ("blk.0.attn_q.weight", MIB)],
+        {"general.block_count": 1},
+    )
+    payload = path.read_bytes()
+    # Force the growth path: the first read is deliberately too short.
+    monkeypatch.setattr(gguf_remote, "INITIAL_HEADER_BYTES", 64)
+    reads = []
+
+    def fetch(url: str, start: int, length: int) -> bytes:
+        reads.append(length)
+        return payload[start:start + length]
+
+    shard = RemoteShard(path="remote.gguf", url="https://example.invalid/x", size_bytes=len(payload))
+    remote = measure_remote_expert_footprint([shard], fetch)
+    local = measure_expert_footprint(path, cache_dir=False)
+
+    assert remote.expert_bytes == local.expert_bytes == 4 * MIB
+    assert remote.total_bytes == local.total_bytes
+    assert remote.expert_layers == local.expert_layers == 1
+    assert reads[0] == 64 and max(reads) > 64
+
+
+def test_remote_reader_propagates_a_non_gguf_file(monkeypatch):
+    from turbofit_runtime.gguf_remote import RemoteShard, read_remote_index
+
+    shard = RemoteShard(path="ple.bin", url="https://example.invalid/x", size_bytes=64)
+
+    with pytest.raises(GGUFFormatError, match="bad magic"):
+        read_remote_index(shard, lambda url, start, length: b"NOTGGUF" + b"\0" * 64)

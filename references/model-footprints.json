@@ -1,21 +1,24 @@
 {
   "schema": "turbofit.model-footprints/v1",
-  "generated_at": "2026-11-15T00:18:55.478005+00:00",
+  "generated_at": "2026-11-15T02:00:00+00:00",
   "source": "references/artifact-manifest.json at pinned revisions; shard sets completed from the pinned repo listing",
+  "expert_source": "GGUF tensor tables read from the pinned revision (HTTP Range headers or local files); models without expert_bytes are MoE but unmeasured",
   "models": {
     "qwen3-8-27b-q4-mtp": {
       "weight_bytes": 21283389088,
       "shard_set_complete": true,
       "repos": [
         "ggml-org/Qwen3.8-27B-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "qwen3-8-27b-q4": {
       "weight_bytes": 19603117440,
       "shard_set_complete": true,
       "repos": [
         "ggml-org/Qwen3.8-27B-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "qwen3-8-27b-q4-dflash2": {
       "weight_bytes": 20746124192,
@@ -23,574 +26,917 @@
       "repos": [
         "ggml-org/Qwen3.8-27B-GGUF",
         "incoai/Qwen3.8-27B-DFlash2-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "qwen3-8-27b-q8-mtp": {
       "weight_bytes": 32389017248,
       "shard_set_complete": true,
       "repos": [
         "ggml-org/Qwen3.8-27B-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "qwen3-8-27b-q8": {
       "weight_bytes": 29225010560,
       "shard_set_complete": true,
       "repos": [
         "ggml-org/Qwen3.8-27B-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "qwen3-8-27b-bf16-mtp": {
       "weight_bytes": 60685437728,
       "shard_set_complete": true,
       "repos": [
         "ggml-org/Qwen3.8-27B-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "qwen3-8-27b-bf16": {
       "weight_bytes": 54739427840,
       "shard_set_complete": true,
       "repos": [
         "ggml-org/Qwen3.8-27B-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-27b": {
       "weight_bytes": 8096267360,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-27b-dspark-bf16": {
       "weight_bytes": 14457007392,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-27b-dspark": {
       "weight_bytes": 10042660928,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-27b-compact-vision-bf16": {
       "weight_bytes": 8096267360,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-27b-compact-vision-bf16-dspark-bf16": {
       "weight_bytes": 15388153152,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-27b-compact-vision-bf16-dspark-q4": {
       "weight_bytes": 10042660928,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-27b-fp16": {
       "weight_bytes": 53808280640,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-27b-fp16-dspark-bf16": {
       "weight_bytes": 61100166432,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-27b-fp16-dspark-q4": {
       "weight_bytes": 55754674208,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-27b-fp16-vision-bf16": {
       "weight_bytes": 54739426400,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-27b-fp16-vision-dspark": {
       "weight_bytes": 62031312192,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-27b-fp16-vision-bf16-dspark-q4": {
       "weight_bytes": 56685819968,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b": {
       "weight_bytes": 4432699360,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-dspark-bf16": {
       "weight_bytes": 11095338272,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-dspark": {
       "weight_bytes": 6220168128,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-compact-vision-bf16": {
       "weight_bytes": 4734598240,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-compact-vision-bf16-dspark-bf16": {
       "weight_bytes": 12026484032,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-compact-vision-bf16-dspark-q4": {
       "weight_bytes": 6522067008,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-compact-vision-q8": {
       "weight_bytes": 4432699360,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-compact-vision-q8-dspark-bf16": {
       "weight_bytes": 11724585152,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-compact-vision-q8-dspark-q4": {
       "weight_bytes": 6220168128,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-fp16": {
       "weight_bytes": 53808280640,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-fp16-dspark-bf16": {
       "weight_bytes": 61100166432,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-fp16-dspark-q4": {
       "weight_bytes": 55595749408,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-fp16-vision-bf16": {
       "weight_bytes": 54739426400,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-fp16-vision-dspark": {
       "weight_bytes": 62031312192,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-fp16-vision-bf16-dspark-q4": {
       "weight_bytes": 56526895168,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-fp16-vision-q8": {
       "weight_bytes": 54437527520,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-fp16-vision-q8-dspark-bf16": {
       "weight_bytes": 61729413312,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "bonsai-27b-fp16-vision-q8-dspark-q4": {
       "weight_bytes": 56224996288,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Bonsai-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "glm-5-2-2-788bpw": {
       "weight_bytes": 262521465440,
       "shard_set_complete": true,
       "repos": [
         "sokann/GLM-5.2-GGUF-2.788bpw"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 247124197376,
+      "expert_layers": 76,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:sokann/GLM-5.2-GGUF-2.788bpw@f7c4ef0107a861ac4007e67543ec4eb12c4248c5",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 262521465440,
+        "matches_weight_bytes": true
+      }
     },
     "minimax-m3-q4": {
       "weight_bytes": 264031796736,
       "shard_set_complete": true,
       "repos": [
         "unsloth/MiniMax-M3-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 250557235200,
+      "expert_layers": 57,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:unsloth/MiniMax-M3-GGUF@18039c2c5277fc64109acee91fa3ca3a9da73c57",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 264031796736,
+        "matches_weight_bytes": true
+      }
     },
     "laguna-s2-1-fp16": {
       "weight_bytes": 235202258240,
       "shard_set_complete": true,
       "repos": [
         "poolside/Laguna-S-2.1-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 227096395776,
+      "expert_layers": 47,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:poolside/Laguna-S-2.1-GGUF@e08e1fe855bb2d43f96ad78e24495283f3426c67",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 235202258240,
+        "matches_weight_bytes": true
+      }
     },
     "laguna-s2-1-q4": {
       "weight_bytes": 75173103200,
       "shard_set_complete": true,
       "repos": [
         "poolside/Laguna-S-2.1-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 68646076416,
+      "expert_layers": 47,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:poolside/Laguna-S-2.1-GGUF@e08e1fe855bb2d43f96ad78e24495283f3426c67",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 75173103200,
+        "matches_weight_bytes": true
+      }
     },
     "maple-preview-tq2": {
       "weight_bytes": 5454482432,
       "shard_set_complete": true,
       "repos": [
         "stamsam/maple-preview-gguf"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 4982833152,
+      "expert_layers": 24,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:stamsam/maple-preview-gguf@0afcb98771d39ab4de25252ee006ea9f9eab1920",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 5454482432,
+        "matches_weight_bytes": true
+      }
     },
     "qwen3-8-27b-gsq-rco-iq3s": {
       "weight_bytes": 24822710272,
       "shard_set_complete": true,
       "repos": [
         "ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "qwen3-8-27b-gsq-rco-iq3xxs": {
       "weight_bytes": 21468332000,
       "shard_set_complete": true,
       "repos": [
         "ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "qwen3-8-27b-gsq-rco-iq2s": {
       "weight_bytes": 18867492032,
       "shard_set_complete": true,
       "repos": [
         "ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "qwen3-8-27b-gsq-rco-iq2xs": {
       "weight_bytes": 17194153152,
       "shard_set_complete": true,
       "repos": [
         "ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "qwen3-8-flash-next-strata": {
       "weight_bytes": 68026093024,
       "shard_set_complete": true,
       "repos": [
         "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 35454976000,
+      "expert_layers": 48,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF@ed59f92082b1e93c0e96d60a8b11aab089b52f09",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 68026093024,
+        "matches_weight_bytes": true
+      }
     },
     "ternary-bonsai-2-27b-ptq1": {
       "weight_bytes": 6575895904,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-2-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-2-27b-pq2": {
       "weight_bytes": 7835415904,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-2-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "ternary-bonsai-2-27b-f16": {
       "weight_bytes": 53808408928,
       "shard_set_complete": true,
       "repos": [
         "prism-ml/Ternary-Bonsai-2-27B-gguf"
-      ]
+      ],
+      "moe": false
     },
     "underdog-27b-pq2": {
       "weight_bytes": 7206168928,
       "shard_set_complete": true,
       "repos": [
         "ConwayResearch/Underdog-Ternary-1.1"
-      ]
+      ],
+      "moe": false
     },
     "cyber-tiel-coder-35b-a3b-ud-iq3-xxs": {
       "weight_bytes": 13211177984,
       "shard_set_complete": true,
       "repos": [
         "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 11108614144,
+      "expert_layers": 40,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF@e59f05c5bda27883c2846bd6163acba3f5e00a8e",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 13211177984,
+        "matches_weight_bytes": true
+      }
     },
     "cyber-tiel-coder-35b-a3b-ud-q4-k-xl": {
       "weight_bytes": 22134551552,
       "shard_set_complete": true,
       "repos": [
         "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 19568525312,
+      "expert_layers": 40,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF@e59f05c5bda27883c2846bd6163acba3f5e00a8e",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 22134551552,
+        "matches_weight_bytes": true
+      }
     },
     "cyber-tiel-coder-35b-a3b-ud-q5-k-xl": {
       "weight_bytes": 20893037568,
       "shard_set_complete": true,
       "repos": [
         "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 18327011328,
+      "expert_layers": 40,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF@e59f05c5bda27883c2846bd6163acba3f5e00a8e",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 20893037568,
+        "matches_weight_bytes": true
+      }
     },
     "cyber-tiel-coder-35b-a3b-ud-q6-k-xl": {
       "weight_bytes": 16845534208,
       "shard_set_complete": true,
       "repos": [
         "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 14279507968,
+      "expert_layers": 40,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF@e59f05c5bda27883c2846bd6163acba3f5e00a8e",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 16845534208,
+        "matches_weight_bytes": true
+      }
     },
     "cyber-tiel-coder-35b-a3b-ud-q8-k-xl": {
       "weight_bytes": 17730532352,
       "shard_set_complete": true,
       "repos": [
         "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 15164506112,
+      "expert_layers": 40,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF@e59f05c5bda27883c2846bd6163acba3f5e00a8e",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 17730532352,
+        "matches_weight_bytes": true
+      }
     },
     "darwin-180b-rsi-strata": {
       "weight_bytes": 134475460857,
       "shard_set_complete": true,
       "repos": [
         "Baekpica/Darwin-180B-RSI-Mixed-Quant-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 76493619200,
+      "expert_layers": 48,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:Baekpica/Darwin-180B-RSI-Mixed-Quant-GGUF@0caa1f4961fc9d1ef9de400df7f11dd7ac6a6cd1",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 134475460857,
+        "matches_weight_bytes": true
+      }
     },
     "arete-27b-q3": {
       "weight_bytes": 13428507968,
       "shard_set_complete": true,
       "repos": [
         "bartowski/NousResearch_Arete-27B-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "arete-27b-q4": {
       "weight_bytes": 18131023168,
       "shard_set_complete": true,
       "repos": [
         "bartowski/NousResearch_Arete-27B-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "arete-27b-q5": {
       "weight_bytes": 21612500288,
       "shard_set_complete": true,
       "repos": [
         "bartowski/NousResearch_Arete-27B-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "arete-27b-q8": {
       "weight_bytes": 29592675648,
       "shard_set_complete": true,
       "repos": [
         "bartowski/NousResearch_Arete-27B-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "nanbeige-33b-iq3xs": {
       "weight_bytes": 14809050208,
       "shard_set_complete": true,
       "repos": [
         "abenzerps/Nanbeige4.3-33B-GSQ-RCO-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "nanbeige-33b-iq4xs": {
       "weight_bytes": 18691697760,
       "shard_set_complete": true,
       "repos": [
         "abenzerps/Nanbeige4.3-33B-GSQ-RCO-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "flint-40a2-5b-mix12g": {
       "weight_bytes": 24166842272,
       "shard_set_complete": true,
       "repos": [
         "dima6312/Flint-40B-A2.5B-abliterated-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 22882025472,
+      "expert_layers": 47,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:dima6312/Flint-40B-A2.5B-abliterated-GGUF@1be756925ce786f5d7eb10725195764a46d596fc",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 24166842272,
+        "matches_weight_bytes": true
+      }
     },
     "flint-40a2-5b-mix24g": {
       "weight_bytes": 28314255264,
       "shard_set_complete": true,
       "repos": [
         "dima6312/Flint-40B-A2.5B-abliterated-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 26841448448,
+      "expert_layers": 47,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:dima6312/Flint-40B-A2.5B-abliterated-GGUF@1be756925ce786f5d7eb10725195764a46d596fc",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 28314255264,
+        "matches_weight_bytes": true
+      }
     },
     "qwen3-8-flash-next-iq3xxs": {
       "weight_bytes": 75839998528,
       "shard_set_complete": true,
       "repos": [
         "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 42912972800,
+      "expert_layers": 48,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF@ed59f92082b1e93c0e96d60a8b11aab089b52f09",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 75839998528,
+        "matches_weight_bytes": true
+      }
     },
     "deepseek-v4-1-flash-1017-iq1m": {
       "weight_bytes": 120721194336,
       "shard_set_complete": false,
       "repos": [
         "ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 114555617280,
+      "expert_layers": 40,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-GGUF@65d53bc8be65123e255ff02f3ded958b6dbf54fd",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 120721194336,
+        "matches_weight_bytes": true
+      }
     },
     "glm-5-3-flash-maya-xs": {
       "weight_bytes": 74539436032,
       "shard_set_complete": true,
       "repos": [
         "peasantsmith/GLM-5.3-Flash-Maya-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 67362619392,
+      "expert_layers": 43,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:peasantsmith/GLM-5.3-Flash-Maya-GGUF@a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 74539436032,
+        "matches_weight_bytes": true
+      }
     },
     "glm-5-3-flash-maya-s24": {
       "weight_bytes": 95829723168,
       "shard_set_complete": true,
       "repos": [
         "peasantsmith/GLM-5.3-Flash-Maya-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 88652906496,
+      "expert_layers": 43,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:peasantsmith/GLM-5.3-Flash-Maya-GGUF@a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 95829723168,
+        "matches_weight_bytes": true
+      }
     },
     "glm-5-3-flash-maya-m": {
       "weight_bytes": 117131610112,
       "shard_set_complete": true,
       "repos": [
         "peasantsmith/GLM-5.3-Flash-Maya-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 108187877376,
+      "expert_layers": 43,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:peasantsmith/GLM-5.3-Flash-Maya-GGUF@a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 117131610112,
+        "matches_weight_bytes": true
+      }
     },
     "glm-5-3-flash-maya-l": {
       "weight_bytes": 157447260352,
       "shard_set_complete": true,
       "repos": [
         "peasantsmith/GLM-5.3-Flash-Maya-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 148503527424,
+      "expert_layers": 43,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:peasantsmith/GLM-5.3-Flash-Maya-GGUF@a1c2a554ea72a7e8e66cc28b3eaf5036c9313860",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 157447260352,
+        "matches_weight_bytes": true
+      }
     },
     "qwen3-6-35b-a3b-q4": {
       "weight_bytes": 23562671008,
       "shard_set_complete": true,
       "repos": [
         "unsloth/Qwen3.6-35B-A3B-MTP-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 20055064576,
+      "expert_layers": 41,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:unsloth/Qwen3.6-35B-A3B-MTP-GGUF@5bc3e238d916f48a861bac2f8a1990a0e9b7e98d",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 23562671008,
+        "matches_weight_bytes": true
+      }
     },
     "qwen3-5-35b-a3b-q4": {
       "weight_bytes": 23527019264,
       "shard_set_complete": true,
       "repos": [
         "unsloth/Qwen3.5-35B-A3B-MTP-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 20019412992,
+      "expert_layers": 41,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:unsloth/Qwen3.5-35B-A3B-MTP-GGUF@63af8373893a7a73c6dfcb84cb63d815981da5e0",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 23527019264,
+        "matches_weight_bytes": true
+      }
     },
     "lfm2-5-24b-a2b-q4": {
       "weight_bytes": 14526258464,
       "shard_set_complete": true,
       "repos": [
         "LiquidAI/LFM2.5-24B-A2B-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 13844348928,
+      "expert_layers": 38,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:LiquidAI/LFM2.5-24B-A2B-GGUF@7be3a8c77b010e612c42089d0dc082962cecb3a6",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 14526258464,
+        "matches_weight_bytes": true
+      }
     },
     "lfm3-omni-2b-q4": {
       "weight_bytes": 1391216800,
       "shard_set_complete": true,
       "repos": [
         "LiquidAI/LFM3-Omni-2B-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "nemotron-bolt-74b-24gb": {
       "weight_bytes": 23752019264,
       "shard_set_complete": true,
       "repos": [
         "nvidia/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 17052794880,
+      "expert_layers": 40,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:nvidia/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB-GGUF@e0fecb69cb3e5e4c5e8a056fa2aec98c78e91246",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 23752019264,
+        "matches_weight_bytes": true
+      }
     },
     "arete-27b-uncensored-v2": {
       "weight_bytes": 16810714496,
       "shard_set_complete": true,
       "repos": [
         "SargeDev/Arete-27B-Uncensored-V2-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "qwen3-8-27b-unleashed": {
       "weight_bytes": 16519489376,
       "shard_set_complete": true,
       "repos": [
         "outsourc-e/Qwen3.8-27B-Unleashed-GGUF"
-      ]
+      ],
+      "moe": false
     },
     "qwen3-6-35b-a3b-abliterated": {
       "weight_bytes": 21712409824,
       "shard_set_complete": true,
       "repos": [
         "huihui-ai/Huihui-Qwen3.6-35B-A3B-abliterated-MTP-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 20025704448,
+      "expert_layers": 41,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:huihui-ai/Huihui-Qwen3.6-35B-A3B-abliterated-MTP-GGUF@1fbb5305060b5365c84879612a619d0d2c0b137a",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 21712409824,
+        "matches_weight_bytes": true
+      }
     },
     "lfm2-5-24b-a2b-uncensored": {
       "weight_bytes": 15359771360,
       "shard_set_complete": true,
       "repos": [
         "AtomicChat/LFM2.5-24B-A2B-Uncensored-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 14251720704,
+      "expert_layers": 38,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:AtomicChat/LFM2.5-24B-A2B-Uncensored-GGUF@b0f357bb729bcf03269e7f138cd4d30060515dee",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 15359771360,
+        "matches_weight_bytes": true
+      }
     },
     "flint-40b-abliterated": {
       "weight_bytes": 24166842272,
       "shard_set_complete": true,
       "repos": [
         "dima6312/Flint-40B-A2.5B-abliterated-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 22882025472,
+      "expert_layers": 47,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:dima6312/Flint-40B-A2.5B-abliterated-GGUF@1be756925ce786f5d7eb10725195764a46d596fc",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 24166842272,
+        "matches_weight_bytes": true
+      }
     },
     "nemotron-bolt-74b-abliterated": {
       "weight_bytes": 22018326528,
       "shard_set_complete": true,
       "repos": [
         "BoldingBuilds/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-Abliterated-24GB-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 17052794880,
+      "expert_layers": 40,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:BoldingBuilds/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-Abliterated-24GB-GGUF@b6360e7379899484c800116f6bcf85448fc4925b",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 22018326528,
+        "matches_weight_bytes": true
+      }
     },
     "qwen3-8-flash-next-abliterated": {
       "weight_bytes": 83863586496,
       "shard_set_complete": true,
       "repos": [
         "SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF"
-      ]
+      ],
+      "moe": true,
+      "expert_bytes": 50292326400,
+      "expert_layers": 48,
+      "expert_measurement": {
+        "method": "gguf-header",
+        "source": "huggingface:SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF@90a3350cd800ec1fe0d1660a38414ad9e985782f",
+        "measured_at": "2026-11-15T02:00:00+00:00",
+        "measured_total_bytes": 83863586496,
+        "matches_weight_bytes": true
+      }
     },
     "inkling-2-small": {
       "weight_bytes": 393489000000,
       "shard_set_complete": true,
       "repos": [
         "thinkingmachines/Inkling-2-Small"
-      ]
+      ],
+      "moe": true
     }
   }
 }

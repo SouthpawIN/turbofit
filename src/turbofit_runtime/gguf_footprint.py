@@ -23,6 +23,7 @@ import re
 import struct
 from dataclasses import dataclass, asdict
 from pathlib import Path
+from typing import Sequence
 
 GGUF_MAGIC = b"GGUF"
 DEFAULT_ALIGNMENT = 32
@@ -162,35 +163,59 @@ def _read_gguf_index(path: str | Path) -> GGUFFileIndex:
     # that keeps a corrupt file from eating memory.
     with target.open("rb") as handle:
         head = handle.read(64 * 1024 * 1024)
-    if head[:4] != GGUF_MAGIC:
-        raise GGUFFormatError(f"{target} is not a GGUF file (bad magic)")
-    version, = struct.unpack_from("<I", head, 4)
+    try:
+        return parse_gguf_header(head, file_size=file_size, path=str(target))
+    except struct.error as exc:
+        raise GGUFFormatError(f"{target} has a truncated or corrupt GGUF header") from exc
+
+
+def parse_gguf_header(buf: bytes, *, file_size: int, path: str = "<memory>") -> GGUFFileIndex:
+    """Parse a GGUF header already in memory.
+
+    ``file_size`` is the size of the whole shard, not of ``buf``: tensor sizes
+    are derived from the gaps between descriptor offsets, and the last tensor
+    runs to the end of the data section. Splitting the parser from the file read
+    lets a caller measure an artifact it cannot download (an HTTP Range over a
+    pinned Hugging Face revision) with the same arithmetic as a local file.
+    """
+    try:
+        return _parse_gguf_header(buf, file_size=file_size, path=path)
+    except struct.error as exc:
+        raise GGUFFormatError(f"{path} has a truncated or corrupt GGUF header") from exc
+
+
+def _parse_gguf_header(buf: bytes, *, file_size: int, path: str) -> GGUFFileIndex:
+    if len(buf) < 24:
+        raise GGUFFormatError(f"{path} is shorter than a GGUF header")
+    if buf[:4] != GGUF_MAGIC:
+        raise GGUFFormatError(f"{path} is not a GGUF file (bad magic)")
+    version, = struct.unpack_from("<I", buf, 4)
     if version not in {2, 3}:
-        raise GGUFFormatError(f"{target} uses unsupported GGUF version {version}")
-    n_tensors, = struct.unpack_from("<Q", head, 8)
-    n_kv, = struct.unpack_from("<Q", head, 16)
+        raise GGUFFormatError(f"{path} uses unsupported GGUF version {version}")
+    n_tensors, = struct.unpack_from("<Q", buf, 8)
+    n_kv, = struct.unpack_from("<Q", buf, 16)
     pos = 24
     metadata: dict = {}
     alignment = DEFAULT_ALIGNMENT
     for _ in range(n_kv):
-        key, pos = _read_string(head, pos)
-        value_type, = struct.unpack_from("<I", head, pos)
+        key, pos = _read_string(buf, pos)
+        value_type, = struct.unpack_from("<I", buf, pos)
         pos += 4
-        value, pos = _skip_value(head, pos, value_type)
+        value, pos = _skip_value(buf, pos, value_type)
         if key == "general.alignment" and isinstance(value, int) and value > 0:
             alignment = value
         if value is not None:
             metadata[key] = value
     tensors: list[TensorInfo] = []
     for _ in range(n_tensors):
-        name, pos = _read_string(head, pos)
-        n_dims, = struct.unpack_from("<I", head, pos)
+        name, pos = _read_string(buf, pos)
+        n_dims, = struct.unpack_from("<I", buf, pos)
         pos += 4
         if n_dims > 8:
-            raise GGUFFormatError(f"{target} tensor {name} has {n_dims} dims")
-        dims = struct.unpack_from(f"<{n_dims}Q", head, pos)
+            raise GGUFFormatError(f"{path} tensor {name} has {n_dims} dims")
+        dims = struct.unpack_from(f"<{n_dims}Q", buf, pos)
         pos += 8 * n_dims
-        ggml_type, offset = struct.unpack_from("<IQ", head, pos)
+        ggml_type, offset = struct.unpack_from("<IQ", buf, pos)
         pos += 12
         tensors.append(TensorInfo(name=name, offset=offset, shape=tuple(dims),
                                   ggml_type=ggml_type))
@@ -205,7 +230,7 @@ def _read_gguf_index(path: str | Path) -> GGUFFileIndex:
         size = max(0, end - tensor.offset)
         sized.append(TensorInfo(name=tensor.name, offset=tensor.offset, shape=tensor.shape,
                                 ggml_type=tensor.ggml_type, size_bytes=size))
-    return GGUFFileIndex(path=str(target), file_size=file_size, data_start=data_start,
+    return GGUFFileIndex(path=str(path), file_size=file_size, data_start=data_start,
                          tensors=tuple(sized), metadata=metadata)
 
 
@@ -227,22 +252,12 @@ def shard_paths(path: str | Path) -> tuple[Path, ...]:
     return tuple(stems)
 
 
-def measure_expert_footprint(
-    path: str | Path, *, cache_dir: str | Path | bool | None = None
-) -> ExpertFootprint:
-    """Sum expert tensor bytes and count expert layers across all shards.
+def footprint_from_indices(indices: Sequence[GGUFFileIndex]) -> ExpertFootprint:
+    """Sum a shard set's tensor tables into one expert footprint.
 
-    The result is cached by (resolved path, size, mtime) so resolving a recipe
-    twice does not re-read headers, while a re-quantized or replaced file
-    invalidates automatically.
+    Shared by the on-disk reader and the HTTP-Range reader so a remote
+    measurement cannot drift from a local one.
     """
-    shards = shard_paths(path)
-    key = _cache_key(shards)
-    cache_file = _cache_path(cache_dir, key)
-    cached = _read_cache(cache_file)
-    if cached is not None:
-        return cached
-
     total_bytes = 0
     expert_bytes = 0
     layer_indices: set[int] = set()
@@ -250,8 +265,7 @@ def measure_expert_footprint(
     tensor_count = 0
     block_counts: list[int] = []
     per_layer: dict[int, list[int]] = {}
-    for shard in shards:
-        index = read_gguf_index(shard)
+    for index in indices:
         total_bytes += index.file_size
         tensor_count += len(index.tensors)
         block_count = index.metadata.get("general.block_count") or index.metadata.get(
@@ -279,7 +293,7 @@ def measure_expert_footprint(
         # Some architectures emit one fused expert tensor per layer under a
         # name without a block index; fall back to the declared block count.
         expert_layers = max(block_counts)
-    footprint = ExpertFootprint(
+    return ExpertFootprint(
         total_bytes=total_bytes,
         expert_bytes=expert_bytes,
         expert_layers=expert_layers,
@@ -287,12 +301,31 @@ def measure_expert_footprint(
         tensor_count=tensor_count,
         expert_tensor_count=len(expert_names),
         expert_tensor_names=tuple(expert_names),
-        shards=tuple(str(item) for item in shards),
+        shards=tuple(index.path for index in indices),
         layers=tuple(
             LayerFootprint(index=index, expert_bytes=bytes_[0], other_bytes=bytes_[1])
             for index, bytes_ in sorted(per_layer.items())
         ),
     )
+
+
+def measure_expert_footprint(
+    path: str | Path, *, cache_dir: str | Path | bool | None = None
+) -> ExpertFootprint:
+    """Sum expert tensor bytes and count expert layers across all shards.
+
+    The result is cached by (resolved path, size, mtime) so resolving a recipe
+    twice does not re-read headers, while a re-quantized or replaced file
+    invalidates automatically.
+    """
+    shards = shard_paths(path)
+    key = _cache_key(shards)
+    cache_file = _cache_path(cache_dir, key)
+    cached = _read_cache(cache_file)
+    if cached is not None:
+        return cached
+
+    footprint = footprint_from_indices([read_gguf_index(shard) for shard in shards])
     _write_cache(cache_file, key, footprint)
     return footprint
 
