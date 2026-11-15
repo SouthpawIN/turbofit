@@ -7,7 +7,7 @@
     "server_decode_tps",
     "fit"
   ],
-  "policy": "Candidate labels only until current production-recipe intelligence and TPS evidence passes on the exact tier topology.",
+  "policy": "Maple Preview TQ2_0 (maple-preview-tq2) is the only auxiliary across every hardware tier. Candidate labels only until current production-recipe intelligence and TPS evidence passes on the exact tier topology.",
   "tiers": [
     {
       "vram_gb": 8,
@@ -21,77 +21,75 @@
         "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "auto",
-      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     },
     {
       "vram_gb": 12,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "context": 65536,
-      "artifact_gib": 7.05,
+      "artifact_gib": 5.207,
       "decode_tps": null,
       "evidence": null,
       "limitations": [
         "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "auto",
-      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     },
     {
       "vram_gb": 16,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "context": 65536,
-      "artifact_gib": 11.488,
+      "artifact_gib": 5.207,
       "decode_tps": null,
       "evidence": null,
       "limitations": [
         "GSQ-RCO IQ3_S benchmarked on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
-      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     },
     {
       "vram_gb": 24,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "context": 65536,
-      "artifact_gib": 11.488,
+      "artifact_gib": 5.207,
       "decode_tps": null,
       "evidence": null,
       "limitations": [
         "GSQ-RCO IQ3_S benchmarked at 262K on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
-      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     },
     {
       "vram_gb": 32,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "context": 131072,
-      "artifact_gib": 11.53,
+      "artifact_gib": 5.207,
       "decode_tps": null,
       "evidence": null,
       "limitations": [
         "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "auto",
-      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     },
     {
       "vram_gb": 48,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "candidates": [
-        "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
-        "carwin-nano",
-        "auto"
+        "maple-preview-tq2"
       ],
       "main_control": null,
       "context": 65536,
@@ -99,35 +97,36 @@
         "GSQ-RCO IQ3_S benchmarked at 262K on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
-      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai.",
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered.",
       "evidence": null,
-      "decode_tps": null
+      "decode_tps": null,
+      "artifact_gib": 5.207
     },
     {
       "vram_gb": 64,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
-      "candidate": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
-      "artifact_gib": null,
+      "candidate": "maple-preview-tq2",
+      "artifact_gib": 5.207,
       "capabilities": [],
       "limitations": [
         "Strata Flash Next benchmarked on Omarchy 2x3090"
       ],
-      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai.",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered.",
       "evidence": null
     },
     {
       "vram_gb": 96,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
-      "candidate": "cyber-tiel-coder-35b-a3b-ud-q4-k-xl",
-      "artifact_gib": null,
+      "candidate": "maple-preview-tq2",
+      "artifact_gib": 5.207,
       "capabilities": [],
       "limitations": [
         "Strata Flash Next benchmarked on Omarchy 2x3090"
       ],
-      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai.",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered.",
       "evidence": null
     },
     {
@@ -135,60 +134,60 @@
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "context": 262144,
-      "artifact_gib": 11.53,
+      "artifact_gib": 5.207,
       "decode_tps": null,
       "evidence": null,
       "limitations": [
         "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "auto",
-      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     },
     {
       "vram_gb": 192,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "context": 262144,
-      "artifact_gib": 11.53,
+      "artifact_gib": 5.207,
       "decode_tps": null,
       "evidence": null,
       "limitations": [
         "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "auto",
-      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     },
     {
       "vram_gb": 256,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "context": 262144,
-      "artifact_gib": 11.53,
+      "artifact_gib": 5.207,
       "decode_tps": null,
       "evidence": null,
       "limitations": [
         "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "auto",
-      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     },
     {
       "vram_gb": 384,
       "best_auxiliary": null,
       "status": "requires-current-recipe-validation",
       "context": 262144,
-      "artifact_gib": 11.53,
+      "artifact_gib": 5.207,
       "decode_tps": null,
       "evidence": null,
       "limitations": [
         "GSQ-RCO IQ3_XXS benchmarked on Omarchy 2x3090",
         "current production-recipe intelligence and TPS evidence required"
       ],
-      "candidate": "auto",
-      "basis": "Auxiliary authority is Cyber-Tiel Coder 35B-A3B (MoE), optional Carwin Nano, or auto. Scale-down: offload experts, then lower context, then auto, then a listed Qwen 3.8 27B GSQ-RCO quant, then Bonsai."
+      "candidate": "maple-preview-tq2",
+      "basis": "Maple Preview 20B-A1B TQ2_0 is the single auxiliary at every tier: a 5.1 GiB MoE that streams from host RAM/disk and never displaces the main model's VRAM. No Cyber-Tiel Coder, Carwin Nano, or auto fallback is offered."
     }
   ]
 }

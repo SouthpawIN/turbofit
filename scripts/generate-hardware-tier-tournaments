@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""Rebuild the hardware-tier tournaments: every fitting main, Maple aux only.
+
+The candidate list is the ranking surface of the intelligence campaign, so it
+must not pre-select a winner.  Every catalog main that can hold a 64K ctx in
+the tier's memory band is listed against the single auxiliary
+``maple-preview-tq2``; the campaign then measures intelligence and speed for
+all of them and the leaderboard picks one recommended per slot.
+
+Winners stay ``null`` until a Maple-aux configuration has hash-bound physical
+evidence for that class; the old winners referenced ``--auto--`` rows that are
+no longer candidates.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from turbofit_runtime.tier_fit import AUXILIARY_ID, TIERS, load_footprints, select_candidates
+from turbofit_runtime.tier_tournament import SCHEMA, validate_tournaments
+
+RANKING = [
+    "quality",
+    "context_128k",
+    "server_decode_30_tps",
+    "context_262k",
+    "server_decode_50_tps",
+    "context_1m",
+]
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, default=ROOT / "references/hardware-tier-tournaments.json")
+    args = parser.parse_args()
+
+    configurations = json.loads((ROOT / "references/configuration-matrix.json").read_text(encoding="utf-8"))
+    catalog = json.loads((ROOT / "references/model-catalog.json").read_text(encoding="utf-8"))
+    footprints = load_footprints(ROOT)
+
+    tiers = []
+    for vram_gb in TIERS:
+        candidates = select_candidates(catalog, configurations, footprints, vram_gb)
+        if not candidates:
+            raise ValueError(f"no fitting main model for the {vram_gb} GB tier")
+        tiers.append({
+            "id": f"hardware-{vram_gb}gb",
+            "vram_gb": vram_gb,
+            "physical_evidence_required": True,
+            "candidates": candidates,
+            "winner": None,
+        })
+    payload = {"ranking": RANKING, "schema": SCHEMA, "tiers": tiers}
+    validate_tournaments(payload, configurations)
+    args.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({
+        "path": str(args.output),
+        "auxiliary": AUXILIARY_ID,
+        "tiers": [
+            {
+                "vram_gb": tier["vram_gb"],
+                "mains": len({item.split("--", 1)[0] for item in tier["candidates"]}),
+                "candidates": len(tier["candidates"]),
+            }
+            for tier in tiers
+        ],
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
