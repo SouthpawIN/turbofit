@@ -125,7 +125,7 @@ A vLLM recipe composes `vllm serve <checkpoint-dir>` with tensor parallelism and
 
 **88 catalog entries, 84 main models, four contexts (64K / 128K / 262K / 1M).** Every entry pins a Hugging Face revision and a sha256, and `tools/check-artifact-existence` fails the build if any pinned artifact stops resolving upstream.
 
-Two ladders, never one. Dense on dedicated VRAM — **Arete 27B is the default at every dedicated band it fits (IQ2_XXS / Q3_K_S / Q4_K_M / Q5_K_M)** — and Mixture-of-Experts on unified/CPU, because dense crawls there. **Each band lists a default and the alternatives that also fit it** — `auto` takes the default, and you can pin any alternative by name.
+Two ladders, never one. Dense on dedicated VRAM — **Arete 27B is the default at every dedicated band it fits (IQ2_XXS / Q3_K_S / Q4_K_M)** — and Mixture-of-Experts on unified/CPU, because dense crawls there. **Each band lists a default and the alternatives that also fit it** — `auto` takes the default, and you can pin any alternative by name.
 
 **Ladder 1 — dedicated VRAM**
 
@@ -134,7 +134,7 @@ Two ladders, never one. Dense on dedicated VRAM — **Arete 27B is the default a
 | 8–11 GB | **Arete 27B IQ2_XXS** | Ternary Bonsai 2 27B, LFM3 Omni 2B | 65k |
 | 12–15 GB | **Arete 27B Q3_K_S** | Arete Q3_K_M, Underdog 27B, LFM2.5 24B-A2B | 131k |
 | 16–23 GB | **Arete 27B Q4_K_M** | Qwen 3.8 27B GSQ-RCO IQ3_S, Qwen 3.6 35B-A3B (MTP), Qwen 3.5 35B-A3B, Nanbeige 4.3 33B, Nemotron Bolt 74B-A9B, Flint 40B Abliterated | 131k–262k |
-| 24–63 GB | **Arete 27B Q5_K_M** | Qwen 3.8 27B GSQ-RCO IQ3_S, DeepSeek V4.1 Flash IQ2_XS | 262k |
+| 24–63 GB | **Arete 27B Q4_K_M** | Qwen 3.8 27B GSQ-RCO IQ3_S, DeepSeek V4.1 Flash IQ2_XS | 262k |
 | 64 GB+ | Qwen 3.8 Flash Next (Strata) | Flash Next Abliterated, Inkling 2 Small (vLLM), GLM 5.3 Flash, DeepSeek V4.1 Flash | 262k–1M |
 
 **Ladder 2 — unified / CPU / Apple Silicon (MoE only)**
@@ -144,8 +144,8 @@ Two ladders, never one. Dense on dedicated VRAM — **Arete 27B is the default a
 | 8–15 GB | Maple Preview 20B-A1B (Colibri int2) | Maple TQ2_0 GGUF, LFM3 Omni 2B | 131k |
 | 16–23 GB | Qwen 3.6 35B-A3B UD-Q4_K_M (MTP) | LFM2.5 24B-A2B, Cyber-Tiel Coder 35B-A3B, **Nanbeige 4.3 33B**, Flash Next (Strata) | 262k |
 | 24–31 GB | Qwen 3.5 35B-A3B UD-Q4_K_M (MTP) | Nemotron Bolt 74B-A9B, Cyber-Tiel Q4_K_XL, Flash Next (Strata) | 262k |
-| 32–47 GB | Flint 40B-A2.5B UD-Q4_K_XL | Qwen 3.6 UD-Q5_K_M, Cyber-Tiel Q5_K_XL | 131k–262k |
-| 48–63 GB | Cyber-Tiel Coder 35B-A3B UD-Q6_K_XL | Flint 40B UD-Q5_K_M | 262k |
+| 32–47 GB | Flint 40B-A2.5B UD-Q4_K_XL | Qwen 3.6 UD-Q4_K_M, Cyber-Tiel UD-Q4_K_XL | 131k–262k |
+| 48–63 GB | Cyber-Tiel Coder 35B-A3B UD-Q4_K_XL | Flint 40B UD-Q4_K_XL | 262k |
 | 64 GB+ | Qwen 3.8 Flash Next (Strata) | DeepSeek V4.1 Flash (Strata), Inkling 2 Small (vLLM) | 262k–1M |
 
 **Also in the catalog, deliberately not a band default** — Arete 27B (Q3_K_S → Q8_0, the one sanctioned dense exception on the unified side), Qwen 3.8 27B Unleashed, Qwen 3.6 35B-A3B Abliterated, LFM2.5 24B-A2B Uncensored, Flint 40B Abliterated, Nemotron Bolt Abliterated, Darwin 180B RSI, GLM 5.3 Flash and its Maya quants.

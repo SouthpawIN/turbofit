@@ -9,6 +9,7 @@ from types import MappingProxyType
 from typing import Mapping, Sequence
 
 from .hardware import HardwareFingerprint
+from .quant_policy import default_admits
 from .runtime_profile import HardwareConstraint, Turbofile
 
 MIN_CONTEXT = 131_072
@@ -48,6 +49,12 @@ class EvidenceCandidate:
     min_tps: float
     evidence_digest: str | None
     policy_variant: str
+    # Optional quant identity. When present, the recommendation honours the
+    # Q4 ceiling: a Q5/Q6 candidate is only eligible with a recorded
+    # justification, and a Q8/full-precision candidate carries its reason.
+    quantization: str | None = None
+    quantization_justification: str | None = None
+    accuracy_tier: bool = False
 
     def __post_init__(self) -> None:
         if (
@@ -103,6 +110,8 @@ class RecommendationResult:
     current_profile_id: str | None
     current_rung_id: str | None
     policy_variant: str | None
+    quant_reason: str | None = None
+    quant_skipped: tuple[dict[str, str], ...] = ()
 
 
 def priority_key(
@@ -126,32 +135,61 @@ def recommend(
     *,
     policy_variant: str | None = None,
 ) -> RecommendationResult:
-    """Recommend from immutable physical capacity; current free VRAM is metadata only."""
-    eligible = tuple(
-        candidate
-        for candidate in candidates
-        if candidate.has_evidence
-        and (policy_variant is None or candidate.policy_variant == policy_variant)
-        and hardware_satisfies(state.hardware, candidate.profile.hardware)
-    )
+    """Recommend from immutable physical capacity; current free VRAM is metadata only.
+
+    Candidates that name a quantization go through the Q4-ceiling policy: a
+    Q5/Q6 profile is skipped unless it carries a justification, and a
+    Q8/full-precision profile is eligible with its reason recorded.  Fit and
+    measured speed/intelligence still decide among eligible profiles; quant
+    width is never a score.
+    """
+    eligible = []
+    skipped: list[dict[str, str]] = []
+    for candidate in candidates:
+        if not candidate.has_evidence:
+            continue
+        if policy_variant is not None and candidate.policy_variant != policy_variant:
+            continue
+        if not hardware_satisfies(state.hardware, candidate.profile.hardware):
+            continue
+        if candidate.quantization:
+            admitted, reason = default_admits(
+                {
+                    "quantization": candidate.quantization,
+                    "quantization_justification": candidate.quantization_justification,
+                    "accuracy_tier": candidate.accuracy_tier,
+                },
+                fits_fully_in_vram=True,
+            )
+            if not admitted:
+                skipped.append({"profile": candidate.profile.id, "reason": reason})
+                continue
+        else:
+            reason = ""
+        eligible.append((candidate, reason))
     if not eligible:
-        raise NoRecommendation("no evidence-backed profile matches physical hardware")
-    ranked = tuple(
+        detail = "; ".join(item["reason"] for item in skipped) or "no evidence-backed profile matches physical hardware"
+        raise NoRecommendation(detail)
+    ranked_pairs = tuple(
         sorted(
             eligible,
             key=lambda item: (
-                priority_key(item.max_context, item.min_tps, item.quality_rank),
-                item.profile.id,
+                priority_key(item[0].max_context, item[0].min_tps, item[0].quality_rank),
+                item[0].profile.id,
             ),
             reverse=True,
         )
     )
+    ranked = tuple(item[0] for item in ranked_pairs)
+    best_reason = ranked_pairs[0][1]
     return RecommendationResult(
         recommended=ranked[0],
         eligible=ranked,
         current_profile_id=state.current_profile_id,
         current_rung_id=state.current_rung_id,
         policy_variant=policy_variant,
+        quant_reason=best_reason or None,
+        quant_skipped=tuple(skipped),
     )
 
 

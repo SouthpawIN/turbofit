@@ -128,7 +128,7 @@ Outside `src/`: `plugin_tools.py` (1.4k lines — Hermes-facing configure/status
 | Band | Model | Context |
 |---|---|---|
 | 8–15 GB | Maple Preview 20B-A1B (TQ2_0) | 131k |
-| 16–23 GB | Cyber-Tiel Coder 35B-A3B (UD-IQ3_XXS / Q4 / Q5 / Q6 by band) | 262k |
+| 16–63 GB | Cyber-Tiel Coder 35B-A3B (UD-IQ3_XXS, UD-Q4_K_XL at the ceiling) | 262k |
 | 64 GB+ | Qwen 3.8 Flash Next (Strata) | 262k |
 
 Cross-cutting rules: MTP on wherever the model supports it; **IQ3_S is lossless**, so 32 GB and

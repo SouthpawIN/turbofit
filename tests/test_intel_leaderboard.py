@@ -30,3 +30,55 @@ def test_one_winner_per_tier_and_empty_is_safe():
     assert [t["hardware_tier_gb"] for t in board["tiers"]] == [16, 48]
     assert build_leaderboard([])["tiers"] == []
     assert "No measured configurations" in render_markdown(build_leaderboard([]))
+
+
+CATALOG = {
+    "models": [
+        {"id": "q5-main", "quantization": "Q5_K_M"},
+        {"id": "q8-main", "quantization": "Q8_0"},
+        {"id": "iq3-main", "quantization": "GSQ-RCO-IQ3_S"},
+    ]
+}
+
+
+def test_q5_measurement_is_never_the_recommendation():
+    board = build_leaderboard(
+        [
+            _rec("q5-row", 48, 70.0, 40.0, main="q5-main"),
+            _rec("iq3-row", 48, 55.0, 38.0, main="iq3-main"),
+        ],
+        CATALOG,
+    )
+    tier = board["tiers"][0]
+
+    assert tier["recommended"]["configuration_id"] == "iq3-row"
+    assert tier["recommended"]["quant_class"] == "allowed"
+    assert tier["quant_skipped"][0]["configuration_id"] == "q5-row"
+    assert "Q5_K_M" in tier["quant_skipped"][0]["reason"]
+    # The measurement is still visible, flagged as not-default.
+    assert any(option.get("not_default") for option in tier["options"])
+    assert "not default" in render_markdown(board)
+
+
+def test_q8_measurement_is_recommended_with_a_visible_reason():
+    board = build_leaderboard(
+        [
+            _rec("q8-row", 96, 70.0, 20.0, main="q8-main"),
+            _rec("iq3-row", 96, 55.0, 38.0, main="iq3-main"),
+        ],
+        CATALOG,
+    )
+    recommended = board["tiers"][0]["recommended"]
+
+    assert recommended["configuration_id"] == "q8-row"
+    assert recommended["quant_class"] == "allowed-exception"
+    assert recommended["quant_exception_reason"].startswith("fits-fully-in-vram")
+
+
+def test_tier_with_only_excluded_measurements_has_no_recommendation():
+    board = build_leaderboard([_rec("q5-row", 48, 70.0, 40.0, main="q5-main")], CATALOG)
+    tier = board["tiers"][0]
+
+    assert tier["recommended"] is None
+    assert "quantization policy" in tier["reason"]
+    assert "No recommendation" in render_markdown(board)

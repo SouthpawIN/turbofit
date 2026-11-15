@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .model_catalog import ModelCatalog, validate_configuration_matrix
+from .quant_policy import classify_entry, default_admits, entry_quantization
 from .schema import MatrixRow
 
 
@@ -68,10 +69,50 @@ class CatalogRegistryAdapter:
         self.registry.register(item, result, evidence_path, recipe=recipe)
 
 
+def quant_policy_rows(
+    configurations: Mapping[str, Any], catalog: ModelCatalog
+) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+    """Split configuration rows by the quantization policy, with reasons.
+
+    Returns ``(excluded, exceptions)``.  ``excluded`` maps row id -> record for
+    rows whose main is above the Q4 ceiling without a recorded justification;
+    they are not campaign rows by default, but they stay in the catalog and in
+    the configuration matrix.  ``exceptions`` maps row id -> record for admitted
+    Q8/full-precision rows, so the reason travels with the selection.
+    """
+    by_id = {item.id: item for item in catalog.models}
+    excluded: dict[str, dict[str, Any]] = {}
+    exceptions: dict[str, dict[str, Any]] = {}
+    for row in configurations["rows"]:
+        main = by_id.get(str(row["main"]))
+        if main is None:
+            continue
+        admitted, reason = default_admits(main, accuracy_point=True)
+        if not admitted:
+            excluded[row["id"]] = {
+                "main": main.id,
+                "quantization": entry_quantization(main),
+                "reason": reason,
+            }
+        elif not classify_entry(main).is_allowed:
+            exceptions[row["id"]] = {
+                "main": main.id,
+                "quantization": entry_quantization(main),
+                "reason": reason,
+            }
+    return excluded, exceptions
+
+
 def build_campaign_matrix(
-    configurations: Mapping[str, Any], catalog: ModelCatalog, output: Path
+    configurations: Mapping[str, Any],
+    catalog: ModelCatalog,
+    output: Path,
+    *,
+    enforce_quant_policy: bool = True,
 ) -> dict[str, Any]:
-    return build_selected_campaign_matrix(configurations, catalog, output)
+    return build_selected_campaign_matrix(
+        configurations, catalog, output, enforce_quant_policy=enforce_quant_policy,
+    )
 
 
 def build_selected_campaign_matrix(
@@ -79,12 +120,17 @@ def build_selected_campaign_matrix(
     catalog: ModelCatalog,
     output: Path,
     configuration_ids: set[str] | None = None,
+    *,
+    enforce_quant_policy: bool = True,
 ) -> dict[str, Any]:
     validate_configuration_matrix(configurations, catalog)
     by_id = {item.id: item for item in catalog.models}
+    excluded_rows = quant_policy_rows(configurations, catalog)[0] if enforce_quant_policy else {}
     rows = []
     for item in configurations["rows"]:
         if configuration_ids is not None and item["id"] not in configuration_ids:
+            continue
+        if item["id"] in excluded_rows:
             continue
         main = by_id[item["main"]]
         aux_id = item["auxiliary"]

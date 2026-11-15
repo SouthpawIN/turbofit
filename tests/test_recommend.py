@@ -65,6 +65,9 @@ def candidate(
     tps: float = 30,
     evidence: str | None = EVIDENCE,
     variant: str = "quality-first",
+    quantization: str | None = None,
+    justification: str | None = None,
+    accuracy_tier: bool = False,
 ) -> EvidenceCandidate:
     return EvidenceCandidate(
         profile=item,
@@ -72,6 +75,9 @@ def candidate(
         min_tps=tps,
         evidence_digest=evidence,
         policy_variant=variant,
+        quantization=quantization,
+        quantization_justification=justification,
+        accuracy_tier=accuracy_tier,
     )
 
 
@@ -247,3 +253,61 @@ def test_accelerator_pair_match_does_not_cross_product_mixed_devices() -> None:
     )
 
     assert hardware_satisfies(mixed, constraint) is False
+
+
+def test_q5_evidence_profile_is_not_recommended_by_default() -> None:
+    physical = hardware(24576)
+    candidates = (
+        candidate(profile("q5-fast", topology="1x24"), quality=40, quantization="Q5_K_M"),
+        candidate(profile("q3-solid", topology="1x24"), quality=30, quantization="IQ3_S"),
+    )
+
+    result = recommend(live(physical, (24576,)), candidates)
+
+    assert result.recommended.profile.id == "q3-solid"
+    assert [item["profile"] for item in result.quant_skipped] == ["q5-fast"]
+    assert "Q5_K_M" in result.quant_skipped[0]["reason"]
+
+
+def test_q5_evidence_profile_with_a_recorded_justification_is_eligible() -> None:
+    physical = hardware(24576)
+    candidates = (
+        candidate(
+            profile("q5-justified", topology="1x24"),
+            quality=40,
+            quantization="Q5_K_M",
+            justification="only build carrying the required tool-use patch",
+        ),
+    )
+
+    result = recommend(live(physical, (24576,)), candidates)
+
+    assert result.recommended.profile.id == "q5-justified"
+    assert result.quant_reason == "justified: only build carrying the required tool-use patch"
+
+
+def test_q8_profile_carries_its_exception_reason() -> None:
+    physical = hardware(24576)
+    candidates = (
+        candidate(profile("q8-accurate", topology="1x24"), quality=50, quantization="Q8_0"),
+    )
+
+    result = recommend(live(physical, (24576,)), candidates)
+
+    assert result.recommended.profile.id == "q8-accurate"
+    assert result.quant_reason is not None
+    assert result.quant_reason.startswith("fits-fully-in-vram")
+
+
+def test_low_quant_is_never_penalised_in_ranking() -> None:
+    """Fit and measured quality decide; quant width is not a ranking input."""
+    physical = hardware(24576)
+    candidates = (
+        candidate(profile("q4-good", topology="1x24"), quality=35, quantization="Q4_K_M"),
+        candidate(profile("iq2-better", topology="1x24"), quality=45, quantization="IQ2_XXS"),
+    )
+
+    result = recommend(live(physical, (24576,)), candidates)
+
+    assert result.recommended.profile.id == "iq2-better"
+    assert result.quant_skipped == ()

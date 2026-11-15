@@ -12,10 +12,12 @@ Dedicated (GPU VRAM) — dense models preferred:
 Unified / CPU — MoE models preferred (dense 27B crawls on CPU):
     8-15 GB   Maple Preview TQ2_0 (20B-A1B ternary MoE)
     16-23 GB  Cyber-Tiel Coder UD-IQ3_XXS (35B-A3B)
-    24-31 GB  Cyber-Tiel Coder UD-Q4_K_XL
-    32-47 GB  Cyber-Tiel Coder UD-Q5_K_XL
-    48-63 GB  Cyber-Tiel Coder UD-Q6_K_XL
+    24-63 GB  Cyber-Tiel Coder UD-Q4_K_XL
     64+ GB    Strata Flash Next
+
+The unified ladder does not escalate quantization with memory: the quant
+ceiling is Q4, so more RAM buys context headroom, never a wider build. Low
+quants stay first-class (8-15 GB is TQ2_0, 16-23 GB is IQ3_XXS).
 
 The fit function is the single target-selection input for contraction
 (live re-fit under pressure) and direct expansion. The ban list
@@ -66,16 +68,12 @@ DEDICATED_TIERS: tuple[TierProfile, ...] = (
 # Unified / CPU ladder (MoE models preferred — dense 27B crawls on CPU):
 #   8-15 GB   Maple Preview TQ2_0
 #   16-23 GB  Cyber-Tiel Coder UD-IQ3_XXS
-#   24-31 GB  Cyber-Tiel Coder UD-Q4_K_XL
-#   32-47 GB  Cyber-Tiel Coder UD-Q5_K_XL
-#   48-63 GB  Cyber-Tiel Coder UD-Q6_K_XL
+#   24-63 GB  Cyber-Tiel Coder UD-Q4_K_XL (ceiling; no quant escalation with RAM)
 #   64+ GB    Strata Flash Next
 SHARED_TIERS: tuple[TierProfile, ...] = (
     _tier("maple-tq2-8gb", "shared", 8, 15, "maple", "tq2"),
     _tier("cyber-tiel-iq3-xxs-16gb", "shared", 16, 23, "cyber-tiel", "iq3-xxs"),
-    _tier("cyber-tiel-q4-k-xl-24gb", "shared", 24, 31, "cyber-tiel", "q4-k-xl"),
-    _tier("cyber-tiel-q5-k-xl-32gb", "shared", 32, 47, "cyber-tiel", "q5-k-xl"),
-    _tier("cyber-tiel-q6-k-xl-48gb", "shared", 48, 63, "cyber-tiel", "q6-k-xl"),
+    _tier("cyber-tiel-q4-k-xl-24gb", "shared", 24, 63, "cyber-tiel", "q4-k-xl"),
     _tier("strata-flash-next-64gb", "shared", 64, None, "strata", "flash-next"),
 )
 TIERS_BY_CLASS = {"shared": SHARED_TIERS, "dedicated": DEDICATED_TIERS}

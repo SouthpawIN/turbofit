@@ -60,9 +60,7 @@ Dense does not run well on CPU / Unified memory, so the tiers split into two lad
 |------|-------|-------|------|----------|---------|-------|
 | 8-15 GB | Maple Preview 20B-A1B | TQ2_0 | 5.5 GiB | ~6 GiB | 131K native | MoE; stands in for Ternary Bonsai 2 27B / Underdog (dense) |
 | 16-23 GB | Cyber-Tiel Coder 35B-A3B | UD-IQ3_XXS | — | — | 262K native | MoE, 3B active; faster than Qwen 3.8 27B GSQ-RCO on CPU |
-| 24-31 GB | Cyber-Tiel Coder 35B-A3B | UD-Q4_K_XL | 22.4 GiB | ~23 GiB | 262K native | Fast on CPU |
-| 32-47 GB | Cyber-Tiel Coder 35B-A3B | UD-Q5_K_XL | — | — | 262K native | Fast on CPU |
-| 48-63 GB | Cyber-Tiel Coder 35B-A3B | UD-Q6_K_XL | — | — | 262K+ | More KV headroom |
+| 24-63 GB | Cyber-Tiel Coder 35B-A3B | UD-Q4_K_XL | 20.6 GiB | ~21 GiB | 262K native | Q4 ceiling: extra RAM buys KV headroom, never a wider quant |
 | 64 GB | Qwen 3.8 Flash Next | IQ3_XXS | 47 GiB | ~48 GiB | 262K native | Both ladders converge (Cyber-Tiel Coder 35B-A3B stood in for Qwen 3.8 27B GSQ-RCO) |
 | 96 GB | Qwen 3.8 Flash Next | IQ3_XXS | 47 GiB | ~48 GiB | 262K native | Flash Next entry tier |
 | 128 GB | Qwen 3.8 Flash Next | IQ3_XXS | 47 GiB | ~48 GiB | 1M w/ YaRN | Max context |
@@ -74,9 +72,7 @@ Dense does not run well on CPU / Unified memory, so the tiers split into two lad
 |------|-------|-------|------|----------|---------|-------|
 | 8-15 GB | Maple Preview 20B-A1B | TQ2_0 | 5.5 GiB | ~6 GiB | 131K native | MoE; 218 tok/s on M4; stands in for Ternary Bonsai 2 27B / Underdog |
 | 16-23 GB | Cyber-Tiel Coder 35B-A3B | UD-IQ3_XXS | — | — | 262K native | MoE, 3B active; faster than Qwen 3.8 27B GSQ-RCO |
-| 24-31 GB | Cyber-Tiel Coder 35B-A3B | UD-Q4_K_XL | 22.4 GiB | ~23 GiB | 262K native | 22+4 = 26 GB ✓ |
-| 32-47 GB | Cyber-Tiel Coder 35B-A3B | UD-Q5_K_XL | — | — | 262K native | Fast on CPU |
-| 48-63 GB | Cyber-Tiel Coder 35B-A3B | UD-Q6_K_XL | — | — | 262K+ | M2 Max/Ultra territory |
+| 24-63 GB | Cyber-Tiel Coder 35B-A3B | UD-Q4_K_XL | 20.6 GiB | ~21 GiB | 262K native | Q4 ceiling: 20.6+4 = 25 GB ✓; M2 Max/Ultra add context, not quant |
 | 64 GB | Qwen 3.8 Flash Next | IQ3_XXS | 47 GiB | ~48 GiB | 262K native | Candidate-only on Apple — no macOS engine yet |
 | 96 GB | Qwen 3.8 Flash Next | IQ3_XXS | 47 GiB | ~48 GiB | 262K native | M4 Ultra |
 | 128 GB | Qwen 3.8 Flash Next | IQ3_XXS | 47 GiB | ~48 GiB | 1M w/ YaRN | Max Flash Next |

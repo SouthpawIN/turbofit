@@ -75,10 +75,10 @@
    },
    "24-63gb": {
     "model": "Arete 27B",
-    "quant": "Q5_K_M",
-    "size_gb": 24.0,
+    "quant": "Q4_K_M",
+    "size_gb": 16.9,
     "context": 262144,
-    "note": "dense 27B at Q5_K_M with 262K context",
+    "note": "dense 27B at Q4_K_M with 262K context (Q4 is the ceiling, not a target)",
     "alternatives": [
      {
       "model": "Qwen 3.8 27B GSQ-RCO",
@@ -193,30 +193,30 @@
     "quant": "UD-Q4_K_XL",
     "size_gb": 23.3,
     "context": 131072,
-    "note": "new MoE; Qwen 3.6 at UD-Q5_K_M (25.2 GB) is the 262K alternative",
+    "note": "new MoE; Qwen 3.6 and Cyber-Tiel stay at Q4-class builds for 262K",
     "alternatives": [
      {
       "model": "Qwen 3.6 35B-A3B",
-      "quant": "UD-Q5_K_M",
+      "quant": "UD-Q4_K_M",
       "context": 262144
      },
      {
       "model": "Cyber-Tiel Coder 35B-A3B",
-      "quant": "UD-Q5_K_XL",
+      "quant": "UD-Q4_K_XL",
       "context": 262144
      }
     ]
    },
    "48-63gb": {
     "model": "Cyber-Tiel Coder 35B-A3B",
-    "quant": "UD-Q6_K_XL",
-    "size_gb": 30.4,
+    "quant": "UD-Q4_K_XL",
+    "size_gb": 20.6,
     "context": 262144,
-    "note": "highest-fidelity 35B-A3B that still fits below 64 GB",
+    "note": "same 35B-A3B at the Q4 ceiling; extra RAM buys context headroom, not a wider quant",
     "alternatives": [
      {
       "model": "Flint 40B-A2.5B",
-      "quant": "UD-Q5_K_M",
+      "quant": "UD-Q4_K_XL",
       "context": 131072
      }
     ]
