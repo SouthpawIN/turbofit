@@ -546,6 +546,32 @@ def describe_signal_exit(
     return message
 
 
+def describe_clean_exit(
+    *,
+    role: str,
+    model: str,
+    log_path: str | Path | None = None,
+    pid: int | None = None,
+    log_tail_lines: Iterable[str] | None = None,
+) -> str:
+    """Explain an engine that exited 0 *during load* — a shutdown, not a failure.
+
+    llama-server handles SIGTERM and exits 0, so an external ``pkill``, a
+    supervisor stop or a concurrent campaign reclaiming the port looks like
+    "failed to load model (exit code 0)" next to a complete weights file.
+    """
+    tail = list(log_tail_lines if log_tail_lines is not None else log_tail(log_path))
+    message = (
+        f"{role} engine for model {model} exited with code 0 while loading"
+        f"{f' (pid {pid})' if pid else ''}: a clean exit during load is a shutdown"
+        " (SIGTERM from a supervisor, an operator `pkill`, or a concurrent campaign"
+        " stopping engines), not a rejected model — the weights were not the cause."
+    )
+    if tail:
+        message += f" Engine log {log_path} (last {len(tail)} lines):\n" + "\n".join(tail)
+    return message
+
+
 def describe_load_failure(
     *,
     role: str,
@@ -571,6 +597,11 @@ def describe_load_failure(
         return describe_signal_exit(
             role=role, model=model, exit_code=int(exit_code), log_path=log_path,
             pid=pid, log_tail_lines=log_tail_lines,
+        )
+    if exit_code is not None and int(exit_code) == 0:
+        return describe_clean_exit(
+            role=role, model=model, log_path=log_path, pid=pid,
+            log_tail_lines=log_tail_lines,
         )
     identity = f"{role} failed to load model {model or '<unknown>'}"
     tail = list(log_tail_lines if log_tail_lines is not None else log_tail(log_path))
