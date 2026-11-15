@@ -33,3 +33,9 @@ if "generated from the [TurboFit wiki]" in text:
 open(dest, "w").write(text.rstrip() + footer)
 print("Synced with link rewrite:", hub, "->", dest)
 PY
+
+# The README is fully generated from the wiki, so generated data sections cannot
+# live in the hub: the hub has no access to the repo's measured evidence. Re-render
+# them here, after the copy, so a wiki edit never wipes them.
+PYTHONPATH="$REPO_DIR/src${PYTHONPATH:+:$PYTHONPATH}" python3 -m turbofit_runtime.intelligence_readme \
+  --repo-root "$REPO_DIR" --readme "$DEST"
