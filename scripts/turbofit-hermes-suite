@@ -191,13 +191,11 @@ def main() -> int:
             measurement_from_evidence(payload, raw_result=str(path))
             for payload, path in zip(payloads, args.evidence)
         ]
-        speeds = [
-            float(payload["summary"]["tokens_per_second"])
-            for payload in payloads if payload["summary"].get("tokens_per_second")
-        ]
-        throughput = args.tokens_per_second or (
-            sum(speeds) / len(speeds) if speeds
-            else probe_throughput(base_url=args.base_url, model=args.model)
+        # Decode throughput comes from a real completion, exactly as the campaign
+        # measures it — the per-trial "tokens per wall second" in the evidence
+        # includes sandbox setup and agent thinking time, so it is not a decode rate.
+        throughput = args.tokens_per_second or probe_throughput(
+            base_url=args.base_url, model=args.model,
         )
         score = record_score(
             configuration_id=args.configuration_id,
