@@ -160,12 +160,12 @@ def rung_artifact_problem(
             return f"{role}: {exc}"
         if not is_file(component.command[0]):
             return f"{role}: native runtime binary is missing: {component.command[0]}"
-        if component.model_path:
-            # Presence is the artifact machinery's answer, not a bare is_file():
-            # a sharded model missing siblings is not a model that can launch.
-            state = inspect_artifact(component.model_path)
-            if not state.present:
-                return f"{role}: model artifact is missing: {state.describe()}"
+        # Only existence here. This runs while composing every profile's ladder,
+        # including explicitly selected ones, and a stricter answer there would
+        # change what a named configuration composes to. Completeness is the
+        # *automatic* choice's question (``rung_artifact_presence``).
+        if component.model_path and not is_file(component.model_path):
+            return f"{role}: model artifact is missing: {component.model_path}"
         # A missing projector costs vision, not the rung: the text model still
         # serves, so it must not make the ladder look unavailable.
     return None

@@ -205,6 +205,21 @@ def test_nothing_present_yields_waiting_download_with_bytes_not_a_crash() -> Non
     assert "waiting-download" in str(waiting)
 
 
+def test_explicit_selection_ignores_the_probe_and_composes_as_before() -> None:
+    """Only the automatic choice asks about artifacts; a named one is honoured."""
+    included = local_profile(48, "2x24")
+    catalog = ProfileCatalog((local_profile(24, "1x24"), included))
+
+    def probe(_profile: Turbofile, _index: int) -> ArtifactPresence:
+        return absent("Cyber-Tiel Coder 35B-A3B", 22 * GIB)
+
+    choice = catalog.select(hardware(24576, 24576), requested="hardware-48gb", probe=probe)
+
+    assert choice.mode is SelectionMode.MANUAL
+    assert choice.profile.id == "hardware-48gb"
+    assert choice.initial_rung_index == len(included.rungs) - 1
+
+
 def test_service_persists_and_reports_the_artifact_aware_choice(tmp_path: Path) -> None:
     profiles = ProfileCatalog(
         load_yaml_profile(ROOT / "runtime-profiles" / f"{size}gb.yaml")
