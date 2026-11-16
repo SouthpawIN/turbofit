@@ -136,6 +136,28 @@ def test_sharded_model_missing_siblings_is_absent(tmp_path: Path) -> None:
     assert complete.present is True
 
 
+def test_symlinked_model_root_still_matches_manifest_rows(tmp_path: Path) -> None:
+    """Model roots are often symlinks to another disk; presence must survive it."""
+    real = tmp_path / "disk"
+    (real / "Bonsai-27B").mkdir(parents=True)
+    with open(real / "Bonsai-27B" / "Bonsai-27B-Q1_0.gguf", "wb") as handle:
+        handle.truncate(2 * GIB)
+    root = tmp_path / "gguf"
+    root.symlink_to(real, target_is_directory=True)
+    rows = [
+        {
+            "destination": "Bonsai-27B/Bonsai-27B-Q1_0.gguf",
+            "repo_id": "org/bonsai",
+            "size_bytes": 2 * GIB,
+        }
+    ]
+
+    state = inspect_artifact(root / "Bonsai-27B" / "Bonsai-27B-Q1_0.gguf", model_root=root, rows=rows)
+
+    assert state.present is True
+    assert state.expected_bytes == 2 * GIB
+
+
 def test_sharded_incomplete_rung_counts_as_absent_for_selection(tmp_path: Path) -> None:
     directory = tmp_path / "Big-Model"
     directory.mkdir()

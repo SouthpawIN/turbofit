@@ -191,11 +191,22 @@ def artifact_members(
     still checked, their size simply cannot be stated.
     """
     root = model_root_default(model_root)
-    candidate = Path(str(path))
-    try:
-        relative = candidate.expanduser().resolve().relative_to(root.resolve()).as_posix()
-    except (OSError, ValueError):
-        relative = candidate.name
+    candidate = Path(str(path)).expanduser()
+    # Compare lexically first: a model root (or an artifact inside it) is often
+    # a symlink to another disk, and resolving would move the file out of the
+    # root it is named under, losing its manifest row.
+    relative = candidate.name
+    lexical_root = Path(os.path.abspath(str(root)))
+    lexical_path = Path(os.path.abspath(str(candidate)))
+    for base, target in (
+        (lexical_root, lexical_path),
+        (lexical_root.resolve(), lexical_path.resolve()),
+    ):
+        try:
+            relative = target.relative_to(base).as_posix()
+            break
+        except (OSError, ValueError):
+            continue
     all_rows = list(rows if rows is not None else manifest_rows())
     sizes_by_name: dict[str, int | None] = {}
     for row in all_rows:
