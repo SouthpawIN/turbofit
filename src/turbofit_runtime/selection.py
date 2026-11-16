@@ -7,7 +7,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
-from typing import Any, Iterable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 from .hardware import HardwareFingerprint
 from .profile_io import load_profile
@@ -20,12 +20,63 @@ class SelectionMode(str, Enum):
     MANUAL = "manual"
 
 
+def _gib(value: int) -> str:
+    """Short human size used in selection reasons (``41.2 GiB``)."""
+    return f"{value / (1024 ** 3):.1f} GiB"
+
+
+@dataclass(frozen=True)
+class ArtifactPresence:
+    """What the artifact machinery knows about one rung's weights on this disk.
+
+    Automatic selection may not pick a configuration it cannot launch: this is
+    the answer it consults before ranking, so "fits the tier" and "is on disk"
+    are one decision rather than two.
+    """
+
+    present: bool
+    missing_bytes: int = 0
+    model: str = ""
+    detail: str = ""
+
+
+ArtifactProbe = Callable[["Turbofile", int], ArtifactPresence]
+
+
+class WaitingForDownload(ValueError):
+    """No automatic candidate has its artifacts on disk.
+
+    The controller reports this as ``waiting-download`` with the missing byte
+    count instead of retrying a launch that cannot succeed.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        recommended_profile_id: str = "",
+        recommended_rung_id: str = "",
+        model: str = "",
+        missing_bytes: int = 0,
+    ) -> None:
+        super().__init__(message)
+        self.reason = message
+        self.recommended_profile_id = recommended_profile_id
+        self.recommended_rung_id = recommended_rung_id
+        self.model = model
+        self.missing_bytes = missing_bytes
+
+
 @dataclass(frozen=True)
 class ProfileChoice:
     mode: SelectionMode
     profile: Turbofile
     initial_rung_index: int
     target_ceiling_index: int = 0
+    reason: str = ""
+    recommended_profile_id: str = ""
+    recommended_rung_id: str = ""
+    missing_bytes: int = 0
 
 
 def save_selection(path: str | Path, choice: ProfileChoice) -> None:
@@ -91,6 +142,8 @@ def load_or_create_selection(
     path: str | Path,
     catalog: "ProfileCatalog",
     hardware: HardwareFingerprint,
+    *,
+    probe: "ArtifactProbe | None" = None,
 ) -> tuple[dict[str, Any], bool]:
     """Return the persisted selection, persisting a default one on first run.
 
@@ -107,7 +160,7 @@ def load_or_create_selection(
     try:
         return load_selection(path), False
     except FileNotFoundError:
-        choice = catalog.select(hardware, requested="auto")
+        choice = catalog.select(hardware, requested="auto", probe=probe)
         save_selection(path, choice)
         return load_selection(path), True
 
@@ -199,44 +252,158 @@ class ProfileCatalog:
             filtered.append(selected)
         return ProfileCatalog(filtered), problems
 
-    def select(self, hardware: HardwareFingerprint, *, requested: str = "auto") -> ProfileChoice:
+    def select(
+        self,
+        hardware: HardwareFingerprint,
+        *,
+        requested: str = "auto",
+        probe: ArtifactProbe | None = None,
+    ) -> ProfileChoice:
         if requested == "auto":
-            profile = self._auto(hardware)
-            mode = SelectionMode.AUTO
-        else:
-            profile = self._by_id.get(requested)
-            if profile is None:
-                raise ValueError(f"unknown profile: {requested}")
-            if self._has_local_rung(profile) and not hardware_satisfies(hardware, profile.hardware):
-                raise ValueError(
-                    f"manual profile {requested} does not fit physical hardware {hardware.topology_key}"
-                )
-            mode = SelectionMode.MANUAL
+            return self._auto_choice(hardware, probe)
+        profile = self._by_id.get(requested)
+        if profile is None:
+            raise ValueError(f"unknown profile: {requested}")
+        if self._has_local_rung(profile) and not hardware_satisfies(hardware, profile.hardware):
+            raise ValueError(
+                f"manual profile {requested} does not fit physical hardware {hardware.topology_key}"
+            )
         return ProfileChoice(
-            mode=mode,
+            mode=SelectionMode.MANUAL,
             profile=profile,
             initial_rung_index=len(profile.rungs) - 1,
             target_ceiling_index=0,
+            reason=f"manually requested {profile.id}",
         )
 
-    def _auto(self, hardware: HardwareFingerprint) -> Turbofile:
+    def _auto_choice(
+        self,
+        hardware: HardwareFingerprint,
+        probe: ArtifactProbe | None,
+    ) -> ProfileChoice:
+        """Pick the best tier fit whose weights are actually on this disk.
+
+        Ranking by fit alone is what made a fresh host select a model it had
+        never downloaded and fail every tick. With a probe, the recommended
+        (best-fit) configuration is still named -- so the record can say what
+        is missing -- but only a present one is ever returned.
+        """
         exact = [
             profile
             for profile in self._profiles
             if hardware_satisfies(hardware, profile.hardware)
         ]
-        if exact:
-            return max(exact, key=self._auto_rank)
+        if not exact:
+            return self._auto_api_choice(hardware)
+        ranked = sorted(exact, key=self._auto_rank, reverse=True)
+        recommended = next(
+            (profile for profile in ranked if self._has_local_rung(profile)), None
+        )
+        if recommended is None:
+            # Every fitting profile is API-only by design: no weights to want.
+            return self._auto_api_choice(hardware, exact)
+        if probe is None:
+            return ProfileChoice(
+                mode=SelectionMode.AUTO,
+                profile=recommended,
+                initial_rung_index=len(recommended.rungs) - 1,
+                target_ceiling_index=0,
+                reason=(
+                    f"highest tier fit for {hardware.topology_key}: "
+                    f"{recommended.id}/{recommended.rungs[len(recommended.rungs) - 1].id}"
+                ),
+            )
+        recommended_index = self._top_local_rung_index(recommended)
 
+        recommended_presence = probe(recommended, recommended_index)
+        recommended_model = (
+            recommended_presence.model or recommended.rungs[recommended_index].id
+        )
+        for profile in ranked:
+            index = self._present_rung_index(profile, probe)
+            if index is None:
+                continue
+            presence = probe(profile, index)
+            chosen_model = presence.model or profile.rungs[index].id
+            reason = f"best present artifact at this tier: {chosen_model}"
+            if profile.id != recommended.id or index != recommended_index:
+                short = (
+                    f"{_gib(recommended_presence.missing_bytes)} short"
+                    if recommended_presence.missing_bytes
+                    else "not on disk"
+                )
+                reason += f"; recommended {recommended_model} is {short}"
+            else:
+                reason += f" ({profile.id}/{profile.rungs[index].id})"
+            return ProfileChoice(
+                mode=SelectionMode.AUTO,
+                profile=profile,
+                initial_rung_index=index,
+                target_ceiling_index=0,
+                reason=reason,
+                recommended_profile_id=recommended.id,
+                recommended_rung_id=recommended.rungs[recommended_index].id,
+                missing_bytes=recommended_presence.missing_bytes,
+            )
+
+        short = (
+            f"{_gib(recommended_presence.missing_bytes)} short"
+            if recommended_presence.missing_bytes
+            else "of unknown size"
+        )
+        raise WaitingForDownload(
+            f"waiting-download: no tier-fitting artifact is on disk; "
+            f"recommended {recommended_model} is {short}",
+            recommended_profile_id=recommended.id,
+            recommended_rung_id=recommended.rungs[recommended_index].id,
+            model=recommended_model,
+            missing_bytes=recommended_presence.missing_bytes,
+        )
+
+    def _present_rung_index(
+        self, profile: Turbofile, probe: ArtifactProbe
+    ) -> int | None:
+        """Highest local rung of *profile* whose artifacts are complete.
+
+        API rungs are skipped: they need no weights, so treating them as
+        "present" would answer a missing-download with a cloud fallback instead
+        of the local model one tier down that is actually installed.
+        """
+        for index in range(len(profile.rungs) - 1, -1, -1):
+            if profile.rungs[index].aux_mode is AuxMode.API:
+                continue
+            if probe(profile, index).present:
+                return index
+        return None
+
+    @staticmethod
+    def _top_local_rung_index(profile: Turbofile) -> int:
+        """Index of the highest local (weights-bearing) rung of *profile*."""
+        for index in range(len(profile.rungs) - 1, -1, -1):
+            if profile.rungs[index].aux_mode is not AuxMode.API:
+                return index
+        return len(profile.rungs) - 1
+
+    def _auto_api_choice(
+        self, hardware: HardwareFingerprint, candidates: Iterable[Turbofile] | None = None
+    ) -> ProfileChoice:
+        pool = list(candidates) if candidates is not None else list(self._profiles)
         total_gb = hardware.total_usable_memory_mb / 1024
         safe_api = [
             profile
-            for profile in self._profiles
+            for profile in pool
             if not self._has_local_rung(profile)
             and profile.hardware.class_vram_gb <= total_gb
         ]
         if safe_api:
-            return max(safe_api, key=lambda item: (item.hardware.class_vram_gb, item.id))
+            profile = max(safe_api, key=lambda item: (item.hardware.class_vram_gb, item.id))
+            return ProfileChoice(
+                mode=SelectionMode.AUTO,
+                profile=profile,
+                initial_rung_index=len(profile.rungs) - 1,
+                target_ceiling_index=0,
+                reason=f"no local profile fits; API-only fallback {profile.id}",
+            )
         raise ValueError(
             f"no safe automatic profile for physical hardware {hardware.topology_key}"
         )

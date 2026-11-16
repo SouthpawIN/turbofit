@@ -18,7 +18,15 @@ from .hardware import HardwareFingerprint
 from .pressure import PressureSnapshot
 from .reconciler import ReconcilerState, RuntimeBackend, transition
 from .routes import RuntimeResolutions, build_route_state, publish_route_state
-from .selection import ProfileCatalog, load_or_create_selection
+from .selection import (
+    ArtifactProbe,
+    ProfileCatalog,
+    ProfileChoice,
+    SelectionMode,
+    load_or_create_selection,
+    load_selection,
+    save_selection,
+)
 
 BackendFactory = Callable[[object, ReconcilerState], RuntimeBackend]
 
@@ -43,6 +51,7 @@ class RuntimeService:
         route_state_path: str | Path,
         manager_port: int,
         backend_factory: BackendFactory,
+        artifact_probe: ArtifactProbe | None = None,
     ) -> None:
         self.catalog = catalog
         self.resolutions = resolutions
@@ -52,6 +61,9 @@ class RuntimeService:
         self.route_state_path = Path(route_state_path)
         self.manager_port = manager_port
         self.backend_factory = backend_factory
+        self.artifact_probe = artifact_probe
+        self.selection_reason = ""
+        self.selection_choice: ProfileChoice | None = None
         self.controller: AdaptiveController | None = None
 
     def synchronize(
@@ -59,7 +71,9 @@ class RuntimeService:
         selection_path: str | Path,
         hardware: HardwareFingerprint,
     ) -> AdaptiveController:
-        selection, created = load_or_create_selection(selection_path, self.catalog, hardware)
+        selection, created = load_or_create_selection(
+            selection_path, self.catalog, hardware, probe=self.artifact_probe
+        )
         if created:
             print(
                 json.dumps(
@@ -70,9 +84,32 @@ class RuntimeService:
                 file=sys.stderr,
                 flush=True,
             )
-        choice = self.catalog.select(hardware, requested=selection["requested"])
+        choice = self.catalog.select(
+            hardware, requested=selection["requested"], probe=self.artifact_probe
+        )
+        self.selection_reason = choice.reason
+        self.selection_choice = choice
         if choice.profile.id != selection["profile_id"]:
-            raise ValueError("persisted automatic selection is stale for current physical hardware")
+            if choice.mode is SelectionMode.AUTO and self.artifact_probe is not None:
+                # Artifact presence moves: a download that finishes promotes a
+                # better tier, and a deleted file demotes one. The automatic
+                # record is derived from the disk, so refresh it instead of
+                # calling the machine stale and refusing to serve.
+                save_selection(selection_path, choice)
+                selection = load_selection(selection_path)
+                print(
+                    json.dumps(
+                        {"selection": "refreshed-auto", "path": str(selection_path),
+                         "profile_id": choice.profile.id, "reason": choice.reason},
+                        sort_keys=True,
+                    ),
+                    file=sys.stderr,
+                    flush=True,
+                )
+            else:
+                raise ValueError(
+                    "persisted automatic selection is stale for current physical hardware"
+                )
 
         existing: ControllerState | None
         try:

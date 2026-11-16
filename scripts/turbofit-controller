@@ -29,14 +29,18 @@ except ImportError:
         os.execv(str(_venv), [str(_venv), str(Path(__file__).resolve()), *sys.argv[1:]])
 
 from turbofit_runtime.hardware import probe_hardware  # noqa: E402
-from turbofit_runtime.native_backend import NativeRuntimeBackend, rung_artifact_problem  # noqa: E402
+from turbofit_runtime.native_backend import (  # noqa: E402
+    NativeRuntimeBackend,
+    rung_artifact_presence,
+    rung_artifact_problem,
+)
 from turbofit_runtime.native_lifecycle import IdleLifecycle, LifecycleEndpoint  # noqa: E402
 from turbofit_runtime.pressure_probe import probe_accelerator_pressure  # noqa: E402
 from turbofit_runtime.recipes import RecipeBook  # noqa: E402
 from turbofit_runtime.routes import load_runtime_resolutions_many  # noqa: E402
 from turbofit_runtime.runtime_profile import AuxMode  # noqa: E402
 from turbofit_runtime.runtime_service import RuntimeService  # noqa: E402
-from turbofit_runtime.selection import ProfileCatalog  # noqa: E402
+from turbofit_runtime.selection import ArtifactPresence, ProfileCatalog, WaitingForDownload  # noqa: E402
 
 
 CONFIG_DIR = Path.home() / ".config" / "turbofit"
@@ -102,6 +106,21 @@ def build_runtime(args: argparse.Namespace) -> RuntimeService:
                 print(json.dumps({"skipped_rung": key, "reason": problem}, sort_keys=True),
                       file=sys.stderr, flush=True)
 
+    def artifact_probe(profile, index):
+        """Is this rung's weights complete on disk, and how far short is it?
+
+        Selection asks this before it ranks a profile: tier fit alone picked a
+        model that was never downloaded and failed every launch after.
+        """
+        rung = profile.rungs[index]
+        status = rung_artifact_presence(profile, rung.id, resolutions, recipe_book)
+        return ArtifactPresence(
+            present=status.present,
+            missing_bytes=status.missing_bytes,
+            model=status.model,
+            detail=status.detail,
+        )
+
     return RuntimeService(
         catalog=catalog,
         resolutions=resolutions,
@@ -113,6 +132,7 @@ def build_runtime(args: argparse.Namespace) -> RuntimeService:
         route_state_path=args.routes,
         manager_port=args.manager_port,
         backend_factory=backend_factory,
+        artifact_probe=artifact_probe,
     )
 
 
@@ -267,6 +287,8 @@ def main(argv: list[str]) -> int:
                         "transitioned": result.transitioned,
                         "reason": result.reason,
                     })
+                    if runtime.selection_reason:
+                        payload["selection_reason"] = runtime.selection_reason
                     # A steady state repeats every tick. Report the record when it
                     # changes, and otherwise at most once per --log-interval, so a
                     # 2 s tick does not bury a real transition in its own echo.
@@ -284,6 +306,30 @@ def main(argv: list[str]) -> int:
                         print(json.dumps(record, sort_keys=True), flush=True)
                         last_record, last_record_at = record, now
                 last_error = None
+            except WaitingForDownload as waiting:
+                # Not an operational failure: nothing is broken, the weights
+                # simply are not here yet. Say so once and keep the loop alive.
+                error_count = 0
+                payload.update({
+                    "degraded": False,
+                    "state": "waiting-download",
+                    "reason": waiting.reason,
+                    "waiting": {
+                        "model": waiting.model,
+                        "missing_bytes": waiting.missing_bytes,
+                        "profile_id": waiting.recommended_profile_id,
+                        "rung_id": waiting.recommended_rung_id,
+                    },
+                })
+                now = time.monotonic()
+                if waiting.reason != last_error or now - last_error_at >= args.log_interval:
+                    print(json.dumps({"waiting-download": waiting.reason,
+                                      "missing_bytes": waiting.missing_bytes},
+                                     sort_keys=True), flush=True)
+                    last_error, last_error_at = waiting.reason, now
+                _write_status(args.status_file, payload)
+                if args.once:
+                    return 0
             except Exception as exc:
                 error_count += 1
                 message = str(exc)

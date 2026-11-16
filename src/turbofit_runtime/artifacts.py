@@ -163,6 +163,109 @@ def is_complete(path: str | Path, expected_bytes: int | None = None) -> bool:
     return inspect_file(path, expected_bytes).present
 
 
+def model_root_default(model_root: str | Path | None = None) -> Path:
+    """The directory model destinations are relative to."""
+    return Path(
+        model_root or os.environ.get("TURBOFIT_MODEL_ROOT", "~/Models/storage/gguf")
+    ).expanduser()
+
+
+def _destination_size(row: Mapping[str, Any]) -> int | None:
+    raw = row.get("size_bytes")
+    if isinstance(raw, int) and not isinstance(raw, bool) and raw > 0:
+        return int(raw)
+    return None
+
+
+def artifact_members(
+    path: str | Path,
+    *,
+    model_root: str | Path | None = None,
+    rows: Iterable[Mapping[str, Any]] | None = None,
+) -> list[tuple[str, int | None]]:
+    """Every on-disk file one catalog artifact needs, as ``(destination, size)``.
+
+    A shard set named by its first shard, or by the unsharded basename the
+    catalog prefers, expands to all ``N`` members the pinned manifest declares.
+    Members the manifest does not pin keep ``size=None``: their presence is
+    still checked, their size simply cannot be stated.
+    """
+    root = model_root_default(model_root)
+    candidate = Path(str(path))
+    try:
+        relative = candidate.expanduser().resolve().relative_to(root.resolve()).as_posix()
+    except (OSError, ValueError):
+        relative = candidate.name
+    all_rows = list(rows if rows is not None else manifest_rows())
+    sizes_by_name: dict[str, int | None] = {}
+    for row in all_rows:
+        destination = str(row.get("destination") or "")
+        if not destination:
+            continue
+        sizes_by_name[PurePosixPath(destination).name] = _destination_size(row)
+    name = PurePosixPath(relative).name
+    parsed = parse_shard(name)
+    count: int | None = None
+    if parsed is not None:
+        count = parsed[1]
+    else:
+        first = re.compile(
+            rf"^{re.escape(PurePosixPath(name).stem)}-0*1-of-(?P<count>\d{{5}})\.(gguf|safetensors)$",
+            re.IGNORECASE,
+        )
+        for candidate_name in sizes_by_name:
+            if first.match(candidate_name):
+                count = int(first.match(candidate_name).group("count"))  # type: ignore[union-attr]
+                break
+    if count is None:
+        return [(relative, sizes_by_name.get(name))]
+    directory = PurePosixPath(relative).parent
+    members: list[tuple[str, int | None]] = []
+    for member in shard_names(name, count):
+        destination = str(directory / member) if str(directory) != "." else member
+        members.append((destination, sizes_by_name.get(member)))
+    return members
+
+
+def inspect_artifact(
+    path: str | Path,
+    *,
+    model_root: str | Path | None = None,
+    rows: Iterable[Mapping[str, Any]] | None = None,
+) -> FileState:
+    """Presence and completeness of one catalog artifact, shard set included.
+
+    Sizes come from the pinned manifest: a model whose first shard is on
+    disk but whose siblings are not is *absent*, not partially serveable, and
+    its shortfall counts every missing byte. This is the single answer the
+    selection and the campaign must agree on.
+    """
+    root = model_root_default(model_root)
+    members = artifact_members(path, model_root=root, rows=rows)
+    states = [
+        inspect_file(root / member, expected) for member, expected in members
+    ]
+    present = bool(states) and all(state.present for state in states)
+    size_bytes = sum(state.size_bytes for state in states)
+    expected_total = (
+        sum(state.expected_bytes or 0 for state in states)
+        if all(state.expected_bytes is not None for state in states)
+        else None
+    )
+    if present:
+        reason = "complete"
+    else:
+        absent = [state for state in states if not state.present]
+        reasons = sorted({state.reason for state in absent})
+        if len(members) > 1:
+            reason = (
+                f"{len(absent)} of {len(members)} shards unusable ({', '.join(reasons)})"
+            )
+        else:
+            reason = reasons[0] if reasons else "missing"
+    return FileState(Path(str(path)), present, size_bytes, expected_total, reason)
+
+
 class ArtifactTree:
     """Hugging Face sibling listing, cached per (repo, revision).
 
@@ -727,12 +830,14 @@ __all__ = [
     "SiblingInfo",
     "ShardSetError",
     "WEIGHT_SUFFIXES",
+    "artifact_members",
     "describe_load_failure",
     "discover_shard_set",
     "expand_artifact",
     "expected_size_for_model_root",
     "expected_size_for_path",
     "human_bytes",
+    "inspect_artifact",
     "inspect_file",
     "is_complete",
     "is_metadata_path",
