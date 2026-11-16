@@ -223,14 +223,14 @@ def rung_artifact_presence(
             details.append(f"{role}: native runtime binary is missing: {component.command[0]}")
         if not component.model_path:
             continue
+        model = model or str(getattr(component, "family", "") or "") or Path(
+            component.model_path
+        ).name
         state = inspect_artifact(component.model_path, model_root=model_root, rows=rows)
         if state.present:
             continue
         present = False
         missing_bytes += state.shortfall
-        model = model or str(getattr(component, "family", "") or "") or Path(
-            component.model_path
-        ).name
         details.append(f"{role}: {state.describe()}")
     return RungArtifactStatus(present, missing_bytes, model, "; ".join(details))
 
