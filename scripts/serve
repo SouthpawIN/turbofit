@@ -3327,7 +3327,7 @@ print(f'Updated catalog: mmproj set to $new_mmproj')
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Recommend: scan catalog, rank by Chris's criteria
+# Recommend: scan catalog, rank by the operator's criteria
 # ─────────────────────────────────────────────────────────────────────────────
 
 recommend_fit() {
