@@ -16,11 +16,22 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+from .artifacts import inspect_artifact
 from .backend import CampaignBackend
 from .recipes import RecipeBook, ResolvedComponent
 from .reconciler import ReconcileError, ReconcilerState
 from .routes import RuntimeResolutions, build_route_state, publish_route_state
 from .runtime_profile import LAUNCHER_SYSTEMD_UNIT, AuxMode, Turbofile
+
+
+@dataclass(frozen=True)
+class RungArtifactStatus:
+    """Presence of one rung's weights, with the shortfall that blocks it."""
+
+    present: bool
+    missing_bytes: int = 0
+    model: str = ""
+    detail: str = ""
 
 
 @dataclass
@@ -149,11 +160,79 @@ def rung_artifact_problem(
             return f"{role}: {exc}"
         if not is_file(component.command[0]):
             return f"{role}: native runtime binary is missing: {component.command[0]}"
+        # Only existence here. This runs while composing every profile's ladder,
+        # including explicitly selected ones, and a stricter answer there would
+        # change what a named configuration composes to. Completeness is the
+        # *automatic* choice's question (``rung_artifact_presence``).
         if component.model_path and not is_file(component.model_path):
             return f"{role}: model artifact is missing: {component.model_path}"
         # A missing projector costs vision, not the rung: the text model still
         # serves, so it must not make the ladder look unavailable.
     return None
+
+
+def rung_artifact_presence(
+    profile: Turbofile,
+    rung_id: str,
+    resolutions: RuntimeResolutions,
+    recipe_book: RecipeBook,
+    *,
+    model_root: str | Path | None = None,
+    rows: Any | None = None,
+    exists: Callable[[str], bool] | None = None,
+) -> "RungArtifactStatus":
+    """Whether a rung's weights are complete on this disk, and what is missing.
+
+    This is the selection-time counterpart of :func:`rung_artifact_problem`: the
+    same resolutions, the same manifest sizes and the same shard-set definition
+    (``artifacts.inspect_artifact``), but it also reports the missing byte count
+    so an automatic choice can explain itself instead of failing a launch.
+    """
+    is_file = exists or (lambda path: Path(path).is_file())
+    rung = next((item for item in profile.rungs if item.id == rung_id), None)
+    if rung is None:
+        return RungArtifactStatus(False, 0, "", "rung is not in the selected profile")
+    if rung.aux_mode is AuxMode.API or rung.launcher == LAUNCHER_SYSTEMD_UNIT:
+        return RungArtifactStatus(True, 0, "", "no local artifact to verify")
+    try:
+        roles = resolutions[profile.id][rung_id]
+    except KeyError:
+        return RungArtifactStatus(
+            False, 0, "", f"missing native runtime resolution for {profile.id}/{rung_id}"
+        )
+    present = True
+    missing_bytes = 0
+    model = ""
+    details: list[str] = []
+    for role, item in roles.items():
+        try:
+            component = recipe_book.resolve_component(
+                str(item["family"]),
+                role=role,
+                gpu=str(item["gpu"]),
+                port=int(item["port"]),
+                context=int(item.get("context", rung.context)),
+                alias=str(item["model_tag"]),
+            )
+        except (ValueError, KeyError, TypeError) as exc:
+            present = False
+            details.append(f"{role}: {exc}")
+            continue
+        if not is_file(component.command[0]):
+            present = False
+            details.append(f"{role}: native runtime binary is missing: {component.command[0]}")
+        if not component.model_path:
+            continue
+        model = model or str(getattr(component, "family", "") or "") or Path(
+            component.model_path
+        ).name
+        state = inspect_artifact(component.model_path, model_root=model_root, rows=rows)
+        if state.present:
+            continue
+        present = False
+        missing_bytes += state.shortfall
+        details.append(f"{role}: {state.describe()}")
+    return RungArtifactStatus(present, missing_bytes, model, "; ".join(details))
 
 
 class NativeRuntimeBackend:
