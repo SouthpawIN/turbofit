@@ -98,7 +98,9 @@
         },
         "total": 4
       },
-      "throughput_tps": 40.736
+      "throughput_tps": 40.736,
+      "suites_measured": 1,
+      "suites_total": 4
     }
   ],
   "retired_benchmarks": [

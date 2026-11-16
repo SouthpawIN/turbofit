@@ -785,6 +785,8 @@ def record_score(
         "combined_score": intelligence_score(record),
         "suite_coverage": coverage,
         "index_suites": list(coverage["measured_suites"]),
+        "suites_measured": sum(1 for present in coverage.values() if present),
+        "suites_total": len(coverage),
     }
 
 

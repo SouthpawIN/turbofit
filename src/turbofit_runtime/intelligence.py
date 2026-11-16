@@ -232,6 +232,8 @@ def refresh_score_payload(value: Mapping[str, object]) -> dict[str, object]:
         "combined_score": item.intelligence,
         "suite_coverage": coverage,
         "index_suites": list(coverage["measured_suites"]),
+        "suites_measured": coverage["measured"],
+        "suites_total": coverage["total"],
     }
 
 
