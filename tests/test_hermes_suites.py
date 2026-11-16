@@ -18,16 +18,23 @@ from pathlib import Path
 import pytest
 
 from turbofit_runtime.hermes_suites import (
+    AGENT_CACHE_DIRNAME,
+    AGENT_UV_CACHE_DIRNAME,
     BENCHFLOW_VERSION,
     HARBOR_VERSION,
     SKILLSBENCH_DATASET,
     SKILLSBENCH_REVISION,
+    SUITE_AGENTS,
     TERMINAL_BENCH_DATASET,
     TERMINAL_BENCH_SCIENCE_DATASET,
+    UNUSABLE_AGENTS,
+    agent_cache_ready,
+    agent_mounts,
     availability,
     harbor_command,
     index_block,
     measurement_from_evidence,
+    prepare_agent_cache,
     probe_throughput,
     render_index_block,
     skillsbench_command,
@@ -280,3 +287,128 @@ def test_probe_throughput_refuses_an_unmeasurable_endpoint(monkeypatch) -> None:
     monkeypatch.setattr("urllib.request.urlopen", lambda *a, **k: Response())
     with pytest.raises(RuntimeError, match="no measurable decode throughput"):
         probe_throughput(base_url="http://127.0.0.1:8092/v1", model="m")
+
+
+# ---------------------------------------------------------------------------
+# The agent install is a one-time cost, not a per-trial one
+# ---------------------------------------------------------------------------
+
+def _warm_cache(root: Path) -> Path:
+    cache = root / AGENT_CACHE_DIRNAME
+    (cache / "bin").mkdir(parents=True)
+    (cache / "bin" / "mini-swe-agent").write_text("#!/bin/sh\n", encoding="utf-8")
+    (cache / "bin" / "uv").write_text("#!/bin/sh\n", encoding="utf-8")
+    return cache
+
+
+def test_a_cold_agent_cache_is_not_mounted(tmp_path: Path) -> None:
+    assert agent_cache_ready(tmp_path) is False
+    assert agent_mounts(tmp_path) == ()
+
+
+def test_a_warm_agent_cache_is_mounted_as_the_trial_home(tmp_path: Path) -> None:
+    cache = _warm_cache(tmp_path)
+
+    assert agent_cache_ready(tmp_path) is True
+    assert agent_mounts(tmp_path) == (
+        (str(cache), "/root/.local"),
+        (str(tmp_path / AGENT_UV_CACHE_DIRNAME), "/root/.cache/uv"),
+    )
+
+
+def test_harbor_command_binds_the_warm_cache(monkeypatch, tmp_path: Path) -> None:
+    import turbofit_runtime.hermes_suites as module
+
+    monkeypatch.setattr(module, "host_route_address", lambda: "192.168.1.172")
+    cache = _warm_cache(tmp_path)
+    command, _ = harbor_command(
+        suite="terminal-bench-4", model="m", base_url="http://127.0.0.1:8092/v1",
+        jobs_dir=tmp_path / "jobs", n_tasks=1,
+        mounts=agent_mounts(tmp_path),
+    )
+
+    mounts = json.loads(command[command.index("--mounts") + 1])
+    assert mounts == [
+        {"type": "bind", "source": str(cache), "target": "/root/.local"},
+        {"type": "bind", "source": str(tmp_path / AGENT_UV_CACHE_DIRNAME), "target": "/root/.cache/uv"},
+    ]
+    # The mount must not disturb task selection or the endpoint wiring.
+    assert command[command.index("--n-tasks") + 1] == "1"
+    assert command[command.index("--agent") + 1] == "mini-swe-agent"
+
+
+def test_harbor_command_is_unchanged_without_a_header_cache(monkeypatch, tmp_path: Path) -> None:
+    import turbofit_runtime.hermes_suites as module
+
+    monkeypatch.setattr(module, "host_route_address", lambda: "192.168.1.172")
+    command, _ = harbor_command(
+        suite="terminal-bench-4", model="m", base_url="http://127.0.0.1:8092/v1",
+        jobs_dir=tmp_path / "jobs", n_tasks=1, mounts=agent_mounts(tmp_path),
+    )
+    assert "--mounts" not in command
+
+
+def test_prepare_agent_cache_installs_without_running_a_task(monkeypatch, tmp_path: Path) -> None:
+    import turbofit_runtime.hermes_suites as module
+
+    monkeypatch.setattr(module, "host_route_address", lambda: "192.168.1.172")
+    command, environment = prepare_agent_cache(
+        suite="terminal-bench-4", base_url="http://127.0.0.1:8092/v1",
+        jobs_dir=tmp_path / "warm", root=tmp_path,
+    )
+
+    assert command[-1] == "--install-only"
+    assert json.loads(command[command.index("--mounts") + 1])[0]["target"] == "/root/.local"
+    assert environment["OPENAI_API_KEY"]
+
+
+# ---------------------------------------------------------------------------
+# SkillsBench: cap the task count, and never ship the broken node shim
+# ---------------------------------------------------------------------------
+
+def _fake_skillsbench(root: Path, names=("alpha-task", "beta-task", "gamma-task")) -> Path:
+    tasks = root / f"skillsbench-{SKILLSBENCH_REVISION[:12]}" / "tasks"
+    for name in names:
+        (tasks / name).mkdir(parents=True)
+    return tasks
+
+
+def test_skillsbench_n_tasks_becomes_a_deterministic_include_list(monkeypatch, tmp_path: Path) -> None:
+    import turbofit_runtime.hermes_suites as module
+
+    monkeypatch.setattr(module, "host_route_address", lambda: "10.0.0.5")
+    _fake_skillsbench(tmp_path)
+
+    command, _ = skillsbench_command(
+        model="m", base_url="http://127.0.0.1:8092/v1",
+        jobs_dir=tmp_path / "jobs", n_tasks=2, root=tmp_path,
+    )
+
+    included = [command[index + 1] for index, item in enumerate(command) if item == "--include"]
+    assert included == ["alpha-task", "beta-task"]
+
+
+def test_skillsbench_refuses_to_run_the_whole_dataset_unprepared(tmp_path: Path) -> None:
+    with pytest.raises(RuntimeError, match="prepare --suite skills-bench"):
+        skillsbench_command(
+            model="m", base_url="http://127.0.0.1:8092/v1",
+            jobs_dir=tmp_path / "jobs", n_tasks=1, root=tmp_path,
+        )
+
+
+def test_skillsbench_agent_is_not_the_broken_node_shim() -> None:
+    """opencode-ai declares an ELF binary; benchflow 0.6.3 launches it with node."""
+    assert SUITE_AGENTS["skills-bench"] != "opencode"
+    assert "opencode" in UNUSABLE_AGENTS
+    assert "ELF" in UNUSABLE_AGENTS["opencode"]
+
+
+def test_evidence_records_which_agent_produced_the_score(tmp_path: Path) -> None:
+    _trial(tmp_path, "a", _harbor_trial("music-harmony", 0.0))
+
+    evidence = summarize_job(
+        suite="terminal-bench-4", jobs_dir=tmp_path,
+        configuration_id="q", production_recipe_sha256=SHA,
+    )
+
+    assert evidence["suite"]["agent"] == SUITE_AGENTS["terminal-bench-4"] == "mini-swe-agent"

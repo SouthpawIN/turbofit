@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from turbofit_runtime.intelligence import HERMES_INDEX_SUITES, RETIRED_BENCHMARKS
 from turbofit_runtime.intelligence_campaign import LEVEL_PARAMETERS
 from turbofit_runtime.intelligence_readme import build_rows, load_scores, render_section
@@ -51,11 +53,30 @@ def test_level_parameters_describe_suites_not_the_retired_pair() -> None:
     }
 
 
-def test_committed_scores_publish_nothing_and_archive_the_retired_record() -> None:
+def test_committed_scores_publish_only_hermes_index_measurements() -> None:
     payload = json.loads(SCORES.read_text(encoding="utf-8"))
 
     assert payload["index_suites"] == list(HERMES_INDEX_SUITES)
-    assert payload["records"] == []
+    # A real trial has been recorded, so the file is no longer empty — but what
+    # it publishes is still only the Hermes suites.
+    assert payload["records"], "a completed trial was recorded; the file must not be empty"
+    for record in payload["records"]:
+        names = {measurement["name"] for measurement in record["measurements"]}
+        assert names, "a record without measurements is not a score"
+        assert names <= set(HERMES_INDEX_SUITES), names
+        assert not names & set(RETIRED_BENCHMARKS), names
+        coverage = record["suite_coverage"]
+        assert 1 <= coverage["measured"] <= 4
+        assert coverage["measured_suites"] == [
+            name for name in HERMES_INDEX_SUITES if name in names
+        ]
+        # The index is the mean over the suites that ran, never over all four.
+        mean = 100.0 * sum(m["score"] for m in record["measurements"]) / len(names)
+        assert record["intelligence_score"] == pytest.approx(mean)
+        for measurement in record["measurements"]:
+            assert measurement["tasks_total"] >= 1
+            assert measurement["raw_result_sha256"].startswith("sha256:")
+
     archived = payload["archived"]
     assert len(archived) == 1
     record = archived[0]
@@ -71,9 +92,19 @@ def test_committed_scores_publish_nothing_and_archive_the_retired_record() -> No
 def test_no_committed_row_can_render_a_deepswe_index() -> None:
     scores = load_scores(SCORES)
 
-    assert build_rows(scores) == []
+    rows = build_rows(scores)
+    assert rows, "the recorded trial must render, or the table hides a real measurement"
+    for row in rows:
+        names = {name.strip() for name in str(row["suite_names"]).split(",") if name.strip()}
+        assert names and names != {"none"}, row
+        assert names <= set(HERMES_INDEX_SUITES), row
+        assert not row["retired_suites"], row
+        # Partial coverage is published as such, never rounded up to 4/4.
+        assert row["suites"] == f"{row['suites_measured']}/{len(HERMES_INDEX_SUITES)}"
+        assert 1 <= row["suites_measured"] < len(HERMES_INDEX_SUITES)
+
     section = render_section(scores, [48])
-    assert "no measurements yet" in section
+    assert "1/4" in section
     assert "46.9" not in section
     assert "Superseded and not published" in section
 

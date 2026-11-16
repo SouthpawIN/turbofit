@@ -252,11 +252,23 @@ def _run_index_suites(
             "--base-url", base_url, "--n-tasks", str(tasks), "--n-concurrent", "1",
             "--jobs-dir", str(jobs),
         ]
-        subprocess.run(command, check=True)
-        payload = summarize_job(
-            suite=name, jobs_dir=jobs, configuration_id=run["configuration_id"],
-            production_recipe_sha256=recipe_sha, output=output,
-        )
+        try:
+            subprocess.run(command, check=True)
+            payload = summarize_job(
+                suite=name, jobs_dir=jobs, configuration_id=run["configuration_id"],
+                production_recipe_sha256=recipe_sha, output=output,
+            )
+        except Exception as exc:
+            # One suite that cannot start (an unprepared dataset, a harness that
+            # will not install, a sandbox that never launches its agent) must not
+            # erase a sibling suite's real measurement. It is recorded as a
+            # failure with the command that would fix it, and coverage drops.
+            unavailable[name] = {
+                "status": "failed",
+                "reason": f"{type(exc).__name__}: {exc}"[:2000],
+                "fix": f"{HERMES_SUITE.name} prepare --suite {name}",
+            }
+            continue
         measurements.append(measurement_from_evidence(payload, raw_result=str(output)))
         evidence[name] = payload["summary"]
     if not measurements:
@@ -446,8 +458,21 @@ def rebuild_scores(state: dict[str, Any] | None = None) -> int:
         "index_suites": list(HERMES_INDEX_SUITES),
         "retired_benchmarks": list(RETIRED_BENCHMARKS),
         "records": sorted(by_configuration.values(), key=lambda item: str(item["configuration_id"])),
+        # Provenance survives a rebuild: an archived record is the only trace of
+        # a superseded definition, and regenerate-from-scratch silently deleted it.
+        "archived": _archived_entries(),
     })
     return refreshed_count
+
+
+def _archived_entries() -> list[dict[str, Any]]:
+    """The previously archived records, if the score file already has them."""
+    try:
+        payload = json.loads(SCORES.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    archived = payload.get("archived")
+    return list(archived) if isinstance(archived, list) else []
 
 
 def run_one(state: dict[str, Any], catalog: ModelCatalog, recipes: RecipeBook) -> int:
