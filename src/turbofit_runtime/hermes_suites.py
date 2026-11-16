@@ -32,15 +32,18 @@ import shutil
 import socket
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 from urllib.parse import urlsplit, urlunsplit
 
-from .intelligence import (
+from turbofit_runtime.intelligence import (
     HERMES_INDEX_SUITES,
     BenchmarkMeasurement,
+    ConfigurationIntelligence,
+    intelligence_score,
+    suite_coverage_summary,
     validate_measurement,
 )
 
@@ -60,15 +63,56 @@ SKILLSBENCH_DATASET = "skillsbench@1.1"
 SKILLSBENCH_REVISION = "b63b7b2850226b6aa4fb5929a8c1ac7bc4d9a6af"
 
 DEFAULT_ROOT = Path.home() / ".local" / "share" / "turbofit" / "benchmarks"
+
+#: One-time agent install cache.
+#:
+#: Both harnesses provision a **fresh container per trial** and install their
+#: agent into that container. Measured on this host, a cold install costs ~100 s
+#: per trial (apt for curl/tar/xz, a ~30 MB Node download, then
+#: ``npm install -g opencode-ai`` at 43 s) and SkillsBench runs 87 tasks per
+#: screening level, so the same install is paid hundreds of times per campaign
+#: and no task ever finishes inside its own budget.
+#:
+#: Harbor bind-mounts host paths into the trial container, so the install is
+#: paid **once** into :func:`agent_cache_dir` and every later trial finds the
+#: agent already on ``PATH``. The mount target is the container's ``$HOME/.local``
+#: because that is where harbor's own installer puts ``uv`` and
+#: ``mini-swe-agent``.
+AGENT_CACHE_DIRNAME = "harbor-agent-cache"
+AGENT_CACHE_HOME = "/root/.local"
+#: uv's download/wheel cache. Without it a cache-hit ``uv tool install`` still
+#: re-resolves ``litellm[mcp]`` against PyPI and re-downloads ~50 MB, which is
+#: the 100 s the mount is meant to remove.
+AGENT_UV_CACHE_DIRNAME = "harbor-agent-uv-cache"
+AGENT_UV_CACHE_HOME = "/root/.cache/uv"
+
 #: Harbor and benchflow keep separate agent registries; each suite names the
 #: harness-native agent that speaks OpenAI-compatible chat completions.
 DEFAULT_AGENT = "mini-swe-agent"
 SUITE_AGENTS = {
     "terminal-bench-4": "mini-swe-agent",
     "terminal-bench-science": "mini-swe-agent",
-    # benchflow 0.6.3 has no mini-swe-agent; opencode is its OpenAI-compatible
-    # coding agent.
-    "skills-bench": "opencode",
+    # benchflow 0.6.3 has no mini-swe-agent. ``opencode`` is the agent the
+    # harness documents for OpenAI-compatible endpoints, but its installer is
+    # broken in that harness version: ``npm install -g opencode-ai@latest``
+    # resolves ``opencode-ai@1.19.5``, whose package manifest declares
+    # ``bin = {opencode: 'bin/opencode.exe'}`` — a **native ELF**, not the JS
+    # entrypoint benchflow 0.6.3 assumes when it writes
+    # ``exec node /opt/benchflow/js-agents/bin/opencode``. Node then dies with
+    # ``SyntaxError: Invalid or unexpected token`` on the ELF header, every
+    # retry, forever. ``deepagents`` is the Python ACP shim in the same registry
+    # (no Node, no npm, reads the OPENAI_* env this runner already sets), so it is
+    # the agent that actually launches in-sandbox here.
+    "skills-bench": "deepagents",
+}
+#: Harness-native agents that are known broken, and why — so a future reader
+#: does not "restore" one that never ran.
+UNUSABLE_AGENTS = {
+    "opencode": (
+        "benchflow 0.6.3 runs `node /opt/benchflow/js-agents/bin/opencode`, but "
+        "opencode-ai@1.19.5 declares its bin as `bin/opencode.exe`, a native "
+        "ELF — Node exits rc=1 with SyntaxError on the ELF header."
+    ),
 }
 DEFAULT_API_FORMAT = "openai_chat_completions"
 LOCAL_API_KEY = "turbofit-local"
@@ -176,6 +220,98 @@ def require_runnable(suite: str) -> SuiteRunner:
 
 
 # ---------------------------------------------------------------------------
+# One-time agent install cache
+# ---------------------------------------------------------------------------
+
+def agent_cache_dir(root: str | Path | None = None) -> Path:
+    """Host directory holding the agent installed exactly once."""
+    return Path(root or DEFAULT_ROOT) / AGENT_CACHE_DIRNAME
+
+
+def agent_uv_cache_dir(root: str | Path | None = None) -> Path:
+    """Host directory holding uv's package cache for the one-time install."""
+    return Path(root or DEFAULT_ROOT) / AGENT_UV_CACHE_DIRNAME
+
+
+def agent_cache_ready(root: str | Path | None = None) -> bool:
+    """True when the cache already carries a launchable mini-swe-agent."""
+    cache = agent_cache_dir(root)
+    return (cache / "bin" / "mini-swe-agent").exists() and (cache / "bin" / "uv").exists()
+
+
+def agent_mounts(root: str | Path | None = None) -> tuple[tuple[str, str], ...]:
+    """Host→container binds that make the agent install a one-time cost.
+
+    ``$HOME/.local`` carries the installed agent; ``~/.cache/uv`` carries the
+    wheels so even a re-resolve is offline. Both are skipped when the cache has
+    not been warmed: mounting empty directories hides the container's own for
+    nothing.
+    """
+    if not agent_cache_ready(root):
+        return ()
+    return (
+        (str(agent_cache_dir(root)), AGENT_CACHE_HOME),
+        (str(agent_uv_cache_dir(root)), AGENT_UV_CACHE_HOME),
+    )
+
+
+def _mounts_json(mounts: Sequence[tuple[str, str]]) -> str:
+    return json.dumps([
+        {"type": "bind", "source": source, "target": target}
+        for source, target in mounts
+    ])
+
+
+def prepare_agent_cache(
+    *, suite: str, base_url: str, jobs_dir: str | Path, root: str | Path | None = None,
+    n_tasks: int = 1, harbor_bin: str = "harbor",
+) -> tuple[list[str], dict[str, str]]:
+    """The one command that pays the agent install **once**.
+
+    ``harbor run --install-only`` installs the agent into the mounted cache and
+    stops without running or verifying a task, so warming costs one container
+    build and nothing else. It still validates the model connection, so the
+    returned environment carries the local API key.
+    """
+    cache = agent_cache_dir(root)
+    cache.mkdir(parents=True, exist_ok=True)
+    uv_cache = agent_uv_cache_dir(root)
+    uv_cache.mkdir(parents=True, exist_ok=True)
+    command, environment = harbor_command(
+        suite=suite,
+        model="warm",
+        base_url=base_url,
+        jobs_dir=Path(jobs_dir),
+        n_tasks=n_tasks,
+        mounts=((str(cache), AGENT_CACHE_HOME), (str(uv_cache), AGENT_UV_CACHE_HOME)),
+        harbor_bin=harbor_bin,
+    )
+    command.append("--install-only")
+    return command, environment
+
+
+def skillsbench_task_names(root: str | Path | None = None) -> list[str]:
+    """Task names from the pinned SkillsBench checkout, in stable order.
+
+    benchflow has no ``--n-tasks`` limit; it runs the whole dataset of 87 tasks
+    unless every task it should run is named with ``--include``. Reading the
+    names from the pinned git checkout keeps the selection reproducible without
+    trusting a mutable registry listing.
+    """
+    base = Path(root or DEFAULT_ROOT) / f"skillsbench-{SKILLSBENCH_REVISION[:12]}"
+    tasks = base / "tasks"
+    if not tasks.is_dir():
+        raise RuntimeError(
+            f"SkillsBench is not prepared at {base}; run "
+            "`scripts/turbofit-hermes-suite prepare --suite skills-bench` first"
+        )
+    names = sorted(path.name for path in tasks.iterdir() if path.is_dir())
+    if not names:
+        raise RuntimeError(f"no task directories under {tasks}")
+    return names
+
+
+# ---------------------------------------------------------------------------
 # Local endpoint plumbing
 # ---------------------------------------------------------------------------
 
@@ -234,9 +370,15 @@ def harbor_command(
     n_concurrent: int = 1,
     api_format: str = DEFAULT_API_FORMAT,
     api_key: str = LOCAL_API_KEY,
+    mounts: Sequence[tuple[str, str]] = (),
     harbor_bin: str = "harbor",
 ) -> tuple[list[str], dict[str, str]]:
-    """``harbor run`` argv for a local OpenAI-compatible endpoint."""
+    """``harbor run`` argv for a local OpenAI-compatible endpoint.
+
+    ``mounts`` binds a host directory into the trial container. The runner uses
+    it for the warmed agent cache, so the per-trial agent install becomes a
+    one-time cost. It changes nothing the verifier measures.
+    """
     definition = require_runnable(suite)
     if definition.harness != "harbor":
         raise ValueError(f"{suite} is not a harbor suite")
@@ -262,6 +404,8 @@ def harbor_command(
         command.extend(("--allow-agent-host", host))
     for name in include:
         command.extend(("--include-task-name", name))
+    if mounts:
+        command.extend(("--mounts", _mounts_json(mounts)))
     command.extend([
         "--n-tasks", str(n_tasks),
         "--n-concurrent", str(n_concurrent),
@@ -287,6 +431,8 @@ def skillsbench_command(
     include: Sequence[str] = (),
     agent: str | None = None,
     n_concurrent: int = 1,
+    n_tasks: int | None = None,
+    root: str | Path | None = None,
     api_format: str = DEFAULT_API_FORMAT,
     api_key: str = LOCAL_API_KEY,
     bench_bin: str = "bench",
@@ -295,6 +441,11 @@ def skillsbench_command(
 
     Either a pinned registry dataset (digest-verified) or a prepared tasks
     directory is required; SkillsBench never runs against an unpinned tree.
+
+    ``n_tasks`` is translated into ``--include``: benchflow 0.6.3 has no
+    ``--n-tasks``, so a screening level that asks for one task would otherwise
+    run all 87 tasks (and retry each several times). Passing an explicit
+    ``include`` wins over ``n_tasks``.
     """
     definition = require_runnable("skills-bench")
     _validate_endpoint(model, base_url, 1)
@@ -316,6 +467,8 @@ def skillsbench_command(
         command.extend(("--tasks-dir", str(tasks_dir)))
     else:
         command.extend(("--dataset", dataset))
+    if not include and n_tasks:
+        include = tuple(skillsbench_task_names(root)[: int(n_tasks)])
     for name in include:
         command.extend(("--include", name))
     command.extend((
@@ -532,6 +685,9 @@ def summarize_job(
             "harness": definition.harness,
             "harness_version": definition.harness_version,
             "dataset": definition.dataset,
+            # The agent is part of the measurement: a different in-sandbox agent
+            # scores differently, so the choice travels with the evidence.
+            "agent": SUITE_AGENTS.get(suite),
         },
         "status": "invalid" if invalid else "measured",
         "configuration_id": configuration_id,
@@ -583,9 +739,58 @@ def measurement_from_evidence(
 
 
 # ---------------------------------------------------------------------------
-# Publication block
+# Recording a score from finished evidence
 # ---------------------------------------------------------------------------
 
+def record_score(
+    *,
+    configuration_id: str,
+    main: str,
+    auxiliary: str,
+    production_recipe_sha256: str,
+    hardware_tier_gb: int,
+    context: int,
+    quantizations: Sequence[str],
+    throughput_tps: float,
+    measurements: Sequence[BenchmarkMeasurement],
+    benchmark_level: str = "screening",
+) -> dict[str, Any]:
+    """The ``intelligence.json`` payload for a configuration from finished runs.
+
+    This is the same shape ``turbofit-intelligence-campaign`` writes, built from
+    evidence a suite runner already hash-bound, so a single completed trial can
+    be recorded without inventing a campaign attempt. ``intelligence_score`` is
+    the mean over the suites that actually ran — a one-suite run is
+    ``suites_measured: 1`` and says so, it is never divided by four.
+    """
+    record = ConfigurationIntelligence(
+        configuration_id=configuration_id,
+        hardware_tier_gb=hardware_tier_gb,
+        main=main,
+        auxiliary=auxiliary,
+        context=context,
+        quantizations=tuple(quantizations),
+        production_recipe_sha256=production_recipe_sha256,
+        throughput_tps=float(throughput_tps),
+        measurements=tuple(measurements),
+    )
+    coverage = suite_coverage_summary(record)
+    return {
+        "schema": "turbofit.configuration-intelligence/v1",
+        **asdict(record),
+        "intelligence_score": intelligence_score(record),
+        "balanced_score": record.balanced,
+        "benchmark_level": benchmark_level,
+        "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "combined_score": intelligence_score(record),
+        "suite_coverage": coverage,
+        "index_suites": list(coverage["measured_suites"]),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Publication block
+# ---------------------------------------------------------------------------
 
 def index_block(
     *,

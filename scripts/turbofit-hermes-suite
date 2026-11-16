@@ -29,10 +29,16 @@ from turbofit_runtime.hermes_suites import (  # noqa: E402
     DEFAULT_ROOT,
     SKILLSBENCH_DATASET,
     SKILLSBENCH_REVISION,
+    agent_cache_dir,
+    agent_cache_ready,
+    agent_mounts,
     availability,
     harbor_command,
     install_harness,
     measurement_from_evidence,
+    prepare_agent_cache,
+    probe_throughput,
+    record_score,
     render_index_block,
     index_block,
     require_runnable,
@@ -41,8 +47,13 @@ from turbofit_runtime.hermes_suites import (  # noqa: E402
     summarize_job,
 )
 
+#: A URL harbor can validate without reaching it: ``--install-only`` never issues
+#: an inference request, it only resolves the model-connection config.
+BASE_URL_FOR_WARM = "http://127.0.0.1:8092/v1"
+
 
 def prepare(suite: str, root: Path) -> dict:
+    """Install the harness, fetch the pinned dataset, and warm the agent cache once."""
     definition = require_runnable(suite)
     root.mkdir(parents=True, exist_ok=True)
     install = install_harness(suite)
@@ -79,7 +90,7 @@ def prepare(suite: str, root: Path) -> dict:
     task_dirs = sorted(p.name for p in tasks.iterdir() if p.is_dir()) if tasks is not None else None
     if task_count is None and task_dirs:
         task_count = len(task_dirs)
-    return {
+    result = {
         "status": "ready",
         "suite": suite,
         "harness": definition.harness,
@@ -91,11 +102,30 @@ def prepare(suite: str, root: Path) -> dict:
         "tasks_total": task_count,
         "fetch_exit": getattr(fetched, "returncode", None),
     }
+    if definition.harness == "harbor":
+        # One-time cost: install the agent into the shared cache now, so no
+        # trial pays for it. Idempotent — a warm cache is left alone.
+        if agent_cache_ready(root):
+            result["agent_cache"] = {"path": str(agent_cache_dir(root)), "status": "warm"}
+        else:
+            warm_command, warm_env = prepare_agent_cache(
+                suite=suite, base_url=BASE_URL_FOR_WARM, jobs_dir=root / "warm-agent",
+                root=root, n_tasks=1,
+            )
+            subprocess.run(warm_command, env=warm_env, check=True)
+            result["agent_cache"] = {
+                "path": str(agent_cache_dir(root)),
+                "status": "warm" if agent_cache_ready(root) else "incomplete",
+            }
+    return result
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("action", choices=("availability", "prepare", "run", "summarize", "block"))
+    parser.add_argument(
+        "action",
+        choices=("availability", "prepare", "run", "summarize", "record", "block"),
+    )
     parser.add_argument("--suite", choices=tuple(availability()["suites"]))
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     parser.add_argument("--model", default="auto")
@@ -105,6 +135,10 @@ def main() -> int:
     parser.add_argument("--n-concurrent", type=int, default=1)
     parser.add_argument("--include", action="append", default=[])
     parser.add_argument("--agent", default=None, help="override the suite's harness-native agent")
+    parser.add_argument(
+        "--no-agent-cache", action="store_true",
+        help="do not bind-mount the warmed agent cache (pays the install per trial)",
+    )
     parser.add_argument("--dataset", default=SKILLSBENCH_DATASET)
     parser.add_argument("--tasks-dir", type=Path)
     parser.add_argument("--configuration-id")
@@ -114,6 +148,10 @@ def main() -> int:
     parser.add_argument("--hardware-tier-gb", type=int, default=48)
     parser.add_argument("--context", type=int, default=65_536)
     parser.add_argument("--tokens-per-second", type=float)
+    parser.add_argument("--main", help="served main alias, e.g. nanbeige-33b-iq3xs")
+    parser.add_argument("--auxiliary", help="served auxiliary alias, e.g. maple-preview-tq2")
+    parser.add_argument("--quantization", action="append", default=[])
+    parser.add_argument("--benchmark-level", default="screening")
     args = parser.parse_args()
 
     if args.action == "availability":
@@ -139,6 +177,44 @@ def main() -> int:
             output=args.output,
         )
         print(json.dumps(evidence, indent=2))
+        return 0
+
+    if args.action == "record":
+        if not args.evidence:
+            parser.error("record requires at least one --evidence file")
+        if not args.configuration_id or not args.production_recipe_sha256:
+            parser.error("record requires --configuration-id and --production-recipe-sha256")
+        if not args.main or not args.auxiliary:
+            parser.error("record requires --main and --auxiliary (the aliases that actually served)")
+        payloads = [json.loads(Path(path).read_text(encoding="utf-8")) for path in args.evidence]
+        measurements = [
+            measurement_from_evidence(payload, raw_result=str(path))
+            for payload, path in zip(payloads, args.evidence)
+        ]
+        speeds = [
+            float(payload["summary"]["tokens_per_second"])
+            for payload in payloads if payload["summary"].get("tokens_per_second")
+        ]
+        throughput = args.tokens_per_second or (
+            sum(speeds) / len(speeds) if speeds
+            else probe_throughput(base_url=args.base_url, model=args.model)
+        )
+        score = record_score(
+            configuration_id=args.configuration_id,
+            main=args.main,
+            auxiliary=args.auxiliary,
+            production_recipe_sha256=args.production_recipe_sha256,
+            hardware_tier_gb=args.hardware_tier_gb,
+            context=args.context,
+            quantizations=args.quantization,
+            throughput_tps=throughput,
+            measurements=tuple(measurements),
+            benchmark_level=args.benchmark_level,
+        )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(json.dumps(score, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(json.dumps(score, indent=2))
         return 0
 
     if args.action == "block":
@@ -176,6 +252,10 @@ def main() -> int:
             include=args.include,
             agent=args.agent,
             n_concurrent=args.n_concurrent,
+            # Pay the agent install once, not once per trial: the warm cache is
+            # bind-mounted as the trial's $HOME/.local, so harbor's installer
+            # finds mini-swe-agent already present and skips the download.
+            mounts=() if args.no_agent_cache else agent_mounts(args.root),
         )
     else:
         command, environment = skillsbench_command(
@@ -187,6 +267,10 @@ def main() -> int:
             include=args.include,
             agent=args.agent,
             n_concurrent=args.n_concurrent,
+            # benchflow has no --n-tasks; without this a one-task screening run
+            # fans out to the whole 87-task dataset.
+            n_tasks=args.n_tasks,
+            root=args.root,
         )
     print(json.dumps({"command": command, "endpoint": environment["OPENAI_BASE_URL"]}, indent=2))
     return subprocess.run(command, env=environment, check=False).returncode
