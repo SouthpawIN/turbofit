@@ -1,25 +1,18 @@
 {
-  "schema": "turbofit.intelligence-scores/v1",
-  "generated_at": "2026-11-15T15:20:00+00:00",
-  "index_suites": [
-    "hermes-bench",
-    "terminal-bench-4",
-    "terminal-bench-science",
-    "skills-bench"
-  ],
-  "retired_benchmarks": [
-    "deep-swe",
-    "agentic-pair"
-  ],
-  "records": [],
   "archived": [
     {
+      "aux_mode": "shared-main",
+      "auxiliary": "auto:qwen3-8-27b-gsq-rco-iq3s",
+      "benchmark_level": "screening",
+      "catalog_auxiliary": "auto",
+      "catalog_main": "qwen3-8-27b-gsq-rco-iq3s",
       "configuration_id": "qwen3-8-27b-gsq-rco-iq3s--auto--262k",
-      "status": "superseded",
-      "superseded_at": "2026-11-15T15:20:00+00:00",
-      "superseded_because": "Scored under the retired definition: intelligence_score 46.875 was the mean of deep-swe (0/1 tasks) and agentic-pair (15/16 decisions). Neither suite contributes to the Hermes Index, which is the four suites Hermes Agent runs (hermes-bench, terminal-bench-4, terminal-bench-science, skills-bench). The record also routes on an `auto` auxiliary that no longer exists in production. Retained for provenance; it may not be republished as an index.",
-      "previous_intelligence_score": 46.875,
+      "context": 262144,
+      "hardware_tier_gb": 48,
+      "host_process_rss_peak_mb": 9405.19140625,
+      "main": "qwen3-8-27b-gsq-rco-iq3s",
       "previous_balanced_score": 58.77821,
+      "previous_intelligence_score": 46.875,
       "previous_measurements": [
         {
           "name": "deep-swe",
@@ -40,23 +33,77 @@
           "tasks_total": 16
         }
       ],
-      "schema": "turbofit.configuration-intelligence/v1",
-      "recorded_at": "2026-08-23T05:38:24.951167+00:00",
       "production_recipe_sha256": "sha256:2175ca09445736c9b74867bce5a7e7eee1c594245af5e2aa4da1a1510435b1e3",
-      "throughput_tps": 39.39215795117914,
-      "host_process_rss_peak_mb": 9405.19140625,
-      "hardware_tier_gb": 48,
-      "context": 262144,
-      "main": "qwen3-8-27b-gsq-rco-iq3s",
-      "auxiliary": "auto:qwen3-8-27b-gsq-rco-iq3s",
-      "aux_mode": "shared-main",
-      "catalog_main": "qwen3-8-27b-gsq-rco-iq3s",
-      "catalog_auxiliary": "auto",
-      "benchmark_level": "screening",
       "quantizations": [
         "UD-Q3_K_XL",
         "route-to-main"
-      ]
+      ],
+      "recorded_at": "2026-08-23T05:38:24.951167+00:00",
+      "schema": "turbofit.configuration-intelligence/v1",
+      "status": "superseded",
+      "superseded_at": "2026-11-15T15:20:00+00:00",
+      "superseded_because": "Scored under the retired definition: intelligence_score 46.875 was the mean of deep-swe (0/1 tasks) and agentic-pair (15/16 decisions). Neither suite contributes to the Hermes Index, which is the four suites Hermes Agent runs (hermes-bench, terminal-bench-4, terminal-bench-science, skills-bench). The record also routes on an `auto` auxiliary that no longer exists in production. Retained for provenance; it may not be republished as an index.",
+      "throughput_tps": 39.39215795117914
     }
-  ]
+  ],
+  "generated_at": "2026-11-16T23:23:22.441254+00:00",
+  "index_suites": [
+    "hermes-bench",
+    "terminal-bench-4",
+    "terminal-bench-science",
+    "skills-bench"
+  ],
+  "records": [
+    {
+      "auxiliary": "maple-preview-tq2",
+      "balanced_score": 0.0,
+      "benchmark_level": "screening",
+      "combined_score": 0.0,
+      "configuration_id": "nanbeige-33b-iq3xs--maple-preview-tq2--64k",
+      "context": 65536,
+      "hardware_tier_gb": 48,
+      "index_suites": [
+        "terminal-bench-4"
+      ],
+      "intelligence_score": 0.0,
+      "main": "nanbeige-33b-iq3xs",
+      "measurements": [
+        {
+          "name": "terminal-bench-4",
+          "raw_result": "/root/turbofit/references/results/intelligence-campaign/nanbeige-33b-iq3xs--maple-preview-tq2--64k/screening/attempts/20261116T172800.226938Z/suites/terminal-bench-4.json",
+          "raw_result_sha256": "sha256:7c8832cfb410bec79d50d2c31bb1c33f31531a3254af274e39cb78435c82f170",
+          "revision": "terminal-bench/terminal-bench@4.1.0",
+          "score": 0.0,
+          "tasks_passed": 0,
+          "tasks_total": 1
+        }
+      ],
+      "production_recipe_sha256": "sha256:5d224394e553a88238753896c055fd00cb8cd0e405ddd25a6db8a22e72c10fc7",
+      "quantizations": [
+        "IQ3_XS",
+        "TQ2_0"
+      ],
+      "recorded_at": "2026-11-16T23:23:16.369127+00:00",
+      "schema": "turbofit.configuration-intelligence/v1",
+      "suite_coverage": {
+        "measured": 1,
+        "measured_suites": [
+          "terminal-bench-4"
+        ],
+        "suites": {
+          "hermes-bench": false,
+          "skills-bench": false,
+          "terminal-bench-4": true,
+          "terminal-bench-science": false
+        },
+        "total": 4
+      },
+      "throughput_tps": 40.736
+    }
+  ],
+  "retired_benchmarks": [
+    "deep-swe",
+    "agentic-pair"
+  ],
+  "schema": "turbofit.intelligence-scores/v1"
 }
