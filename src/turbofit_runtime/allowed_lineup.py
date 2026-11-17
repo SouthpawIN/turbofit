@@ -22,7 +22,9 @@ candidate only: custom SGLang kernels, no llama.cpp recipe, no TurboFit TPS.
 from __future__ import annotations
 
 import re
-from typing import Iterable
+from typing import Any, Iterable
+
+from . import strata_tiers
 
 ALLOWED_MAIN = (
     "maple-preview-tq2",
@@ -203,6 +205,58 @@ def main_matches_recommendable(alias: str, allowed: Iterable[str]) -> bool:
     return any(token == item or token.startswith(f"{item}-") for item in allowed)
 
 
+def strata_options(
+    *,
+    vram_gb: float,
+    host_ram_gb: float,
+    cpu_flags: Iterable[str] | None,
+    backend: str = "cuda",
+    root: str | None = None,
+) -> tuple[list[dict[str, object]], strata_tiers.StrataTierView | None]:
+    """Strata-served mains this dedicated host admits, ranked before llama.cpp.
+
+    ``cpu_flags`` is the probed CPU flag set (``cpu_features.cpu_flags()``).
+    ``None`` means "not interrogated": no Strata row is claimed and none is
+    excluded, because neither answer would be honest. A host whose flags lack
+    any of ``STRATA_REQUIRED`` gets no rows either — the recommendation surface
+    carries the exclusion reason from :func:`strata_tiers.capability`, which
+    names the missing flags.
+
+    Strata is a Linux CUDA/ROCm engine per ``references/engine-serve-matrix.json``,
+    so the Vulkan/Metal/CPU paths are untouched.
+    """
+    if backend not in {"cuda", "rocm"}:
+        return [], None
+    # Below the smallest band the raw figure is still the honest tier: a 4 GB
+    # card must be refused with the documented floor, not silently ignored.
+    tier_gb = strata_tiers.tier_for_vram(vram_gb) or int(vram_gb)
+    if tier_gb <= 0:
+        return [], None
+    view = strata_tiers.tier_view(
+        tier_gb=tier_gb,
+        ram_bytes=max(0, int(host_ram_gb * strata_tiers.GIB)),
+        cpu_flags=cpu_flags,
+        root=root,
+    )
+    options: list[dict[str, object]] = []
+    # The recommendation surface lists the strongest three admitted rows; the
+    # tier report carries the full admitted set for audit.
+    for placement in view.admitted[:3]:
+        options.append({
+            "role": "main",
+            "alias": placement.model_id,
+            "engine": "strata",
+            "context": placement.context,
+            "required_context": placement.context,
+            "why": (
+                view.reason if not options
+                else placement.reason
+            ),
+            "residency": expert_residency(host_ram_gb=host_ram_gb),
+        })
+    return options, view
+
+
 def check_local_options(
     *,
     vram_gb: float,
@@ -210,10 +264,21 @@ def check_local_options(
     memory_pool: str = "dedicated",
     backend: str = "cuda",
     vendor: str = "nvidia",
+    cpu_flags: Iterable[str] | None = None,
+    strata_root: str | None = None,
 ) -> list[dict[str, object]]:
     residency = expert_residency(host_ram_gb=host_ram_gb)
     apple = vendor == "apple" or backend == "metal"
     unified = memory_pool == "unified" or apple
+    # A Strata-capable host gets its admitted MoE rows ahead of every llama.cpp
+    # row at this tier: intelligence per tier, not tokens per second alone.
+    preferred, _strata_view = (
+        ([], None) if (apple or unified)
+        else strata_options(
+            vram_gb=vram_gb, host_ram_gb=host_ram_gb, cpu_flags=cpu_flags,
+            backend=backend, root=strata_root,
+        )
+    )
 
     if apple:
         main = apple_mlx_main(unified_ram_gb=host_ram_gb)
@@ -287,6 +352,22 @@ def check_local_options(
             },
         ]
 
+    tier_gb = strata_tiers.tier_for_vram(vram_gb)
+    ram_bytes = max(0, int(host_ram_gb * strata_tiers.GIB))
+    return strata_ranked(
+        preferred,
+        _dedicated_options(vram_gb, host_ram_gb, residency),
+        tier_gb=tier_gb,
+        ram_bytes=ram_bytes,
+        root=strata_root,
+        view=_strata_view,
+    )
+
+
+def _dedicated_options(
+    vram_gb: float, host_ram_gb: float, residency: dict[str, object]
+) -> list[dict[str, object]]:
+    """The llama.cpp band ladder for a dedicated host, before the 64K gate."""
     if vram_gb < 16:
         options: list[dict[str, object]] = [
             {
@@ -297,14 +378,17 @@ def check_local_options(
             },
         ]
         if vram_gb >= 12:
+            # Arete 27B Q3_K_S is 12.5 GiB with its projector: it cannot hold 64K
+            # on a 12 GB card, so the 12 GB rung is the 27B GSQ-RCO IQ3_XXS
+            # (10.3 GiB), which does.
             options.append(
                 {
                     "role": "main",
-                    "alias": "arete-27b-q3",
+                    "alias": "qwen3-8-27b-gsq-rco-iq3xxs",
                     "engine": "llama.cpp",
                     "why": (
-                        "Arete 27B Q3_K_S (~11.6 GiB weights) fits a 12 GB card at "
-                        "reduced context; the smallest tier that clears q3."
+                        "Qwen 3.8 27B GSQ-RCO IQ3_XXS (~10.3 GiB) holds 64K on a "
+                        "12 GB card; a dense Q3 at 12.5 GiB cannot."
                     ),
                 }
             )
@@ -344,7 +428,7 @@ def check_local_options(
                 "role": "main",
                 "alias": "arete-27b-q4",
                 "engine": "llama.cpp",
-                "why": "Arete 27B Q4_K_M (~16 GiB) at 131K context on a 16-23 GB card.",
+                "why": "Arete 27B Q4_K_M (~18 GiB) at 128K context on a 16-23 GB card.",
             }
         )
         options.append(
@@ -361,7 +445,7 @@ def check_local_options(
                 "role": "main",
                 "alias": "arete-27b-q4",
                 "engine": "llama.cpp",
-                "why": "Arete 27B Q4_K_M (~16 GiB) at 262K context: the dense quality pick.",
+                "why": "Arete 27B Q4_K_M (~18 GiB) at 262K context: the dense quality pick.",
             }
         )
         options.append(
@@ -380,51 +464,13 @@ def check_local_options(
                 "why": "Flint 40A2.5B Mix-24G for the larger card in this band.",
             }
         )
-        if host_ram_gb >= 64:
-            options.append(
-                {
-                    "role": "main",
-                    "alias": "glm-5-3-flash-maya-xs",
-                    "engine": "strata",
-                    "why": (
-                        "GLM 5.3 Flash Maya-XS (321B MoE, ~18B active, 73.4 GiB): Project Maya "
-                        "keeps hot experts on the GPU, the rest in RAM/SSD. Documented target is "
-                        "64 GB RAM + one 24 GB card at 128K with int8 KV."
-                    ),
-                    "residency": residency,
-                }
-            )
     else:
         options.append(
             {
                 "role": "main",
                 "alias": "arete-27b-q8",
                 "engine": "llama.cpp",
-                "why": "Arete 27B Q8_0 (~26.7 GiB): near-lossless dense at 64 GB+.",
-            }
-        )
-        options.append(
-            {
-                "role": "main",
-                "alias": "qwen3-8-flash-next-iq3xxs",
-                "engine": "strata",
-                "why": "Qwen 3.8 Flash Next IQ3_XXS (~70 GiB) served through Strata expert tiering.",
-            }
-        )
-        options.append(
-            {
-                "role": "main",
-                "alias": "glm-5-3-flash-maya-xs",
-                "engine": "strata",
-                "why": "GLM 5.3 Flash Maya-XS: 92.4% of FP8 accuracy in 73.4 GiB, expert-tiered.",
-            }
-        )
-        options.append(
-            {
-                "role": "main",
-                "alias": "glm-5-3-flash-maya-s24",
-                "engine": "strata",
-                "why": "GLM 5.3 Flash Maya-S24: 97.7% accuracy, tuned for 24 GB cards (+14% decode).",
+                "why": "Arete 27B Q8_0 (~27 GiB): near-lossless dense at 64 GB+.",
             }
         )
         options.append(
@@ -447,6 +493,95 @@ def check_local_options(
     return options
 
 
+def _known_artifact(alias: str, root: str | None) -> bool:
+    import json
+    from pathlib import Path
+
+    base = Path(root) if root is not None else strata_tiers.default_root()
+    payload = json.loads((base / "references/model-footprints.json").read_text(encoding="utf-8"))
+    return normalize(alias) in (payload.get("models") or {})
+
+
+def holds_floor(
+    alias: str, *, tier_gb: int, ram_bytes: int, root: str | None = None
+) -> bool | None:
+    """Whether a main holds >= 64K at this tier; ``None`` when it is unmeasured.
+
+    Offload counts: an MoE that legitimately keeps experts in RAM passes, while
+    a dense build that only fits by spilling cannot. An artifact the footprint
+    table does not know is ``None`` (unknown), never a silent refusal.
+    """
+    return strata_tiers.floor_state(
+        normalize(alias), tier_gb=tier_gb, ram_bytes=ram_bytes, root=root,
+    )
+
+
+def floor_refusals(
+    *,
+    vram_gb: float,
+    host_ram_gb: float,
+    memory_pool: str = "dedicated",
+    backend: str = "cuda",
+    vendor: str = "nvidia",
+    strata_root: str | None = None,
+) -> list[dict[str, object]]:
+    """Banded mains this tier would have offered that cannot hold the 64K floor.
+
+    Kept separate from :func:`check_local_options` so the operator's report can
+    say *which* recommendation the floor deleted, not merely that the tier got
+    shorter.
+    """
+    apple = vendor == "apple" or backend == "metal"
+    unified = memory_pool == "unified" or apple
+    if apple or unified:
+        return []
+    tier_gb = strata_tiers.tier_for_vram(vram_gb)
+    if tier_gb <= 0:
+        return []
+    ram_bytes = max(0, int(host_ram_gb * strata_tiers.GIB))
+    refusals: list[dict[str, object]] = []
+    for item in _dedicated_options(vram_gb, host_ram_gb, expert_residency(host_ram_gb=host_ram_gb)):
+        if item.get("role") != "main":
+            continue
+        alias = str(item["alias"])
+        if holds_floor(alias, tier_gb=tier_gb, ram_bytes=ram_bytes, root=strata_root) is False:
+            refusals.append({
+                "model": normalize(alias),
+                "reason": (
+                    f"below the {65_536:,} token (64K) floor: no placement at "
+                    f"{tier_gb} GB holds 65,536 tokens"
+                ),
+            })
+    return refusals
+
+
+def strata_ranked(
+    preferred: list[dict[str, object]],
+    options: list[dict[str, object]],
+    *,
+    tier_gb: int,
+    ram_bytes: int,
+    root: str | None,
+    view: strata_tiers.StrataTierView | None,
+) -> list[dict[str, object]]:
+    """Strata-first ordering when admitted, with sub-floor mains dropped.
+
+    Strata rows lead only when the view says they hold at least the context of
+    the best llama.cpp option at this tier. When llama.cpp holds more context,
+    its rows stay ahead and the view reason names that, instead of quietly
+    ranking a shorter-context model first.
+    """
+    kept = [
+        item for item in options
+        if item.get("role") != "main"
+        or item.get("engine") == "strata"
+        or holds_floor(
+            str(item["alias"]), tier_gb=tier_gb, ram_bytes=ram_bytes, root=root,
+        ) is not False
+    ]
+    if preferred and view is not None and view.preferred_over_llamacpp:
+        return preferred + kept
+    return kept + preferred
 def filter_aliases(aliases: Iterable[str], *, role: str) -> list[str]:
     checker = is_allowed_main if role == "main" else is_allowed_aux
     return [alias for alias in aliases if checker(alias)]

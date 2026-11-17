@@ -36,7 +36,7 @@ import sys
 from dataclasses import dataclass, field, replace
 from typing import Any, Mapping
 
-from . import allowed_lineup
+from . import allowed_lineup, cpu_features, strata_tiers
 
 # --- built-in (Hermes local runtime) ---------------------------------------
 _HERMES_PKG = "hermes_cli"
@@ -127,6 +127,10 @@ class Recommendation:
     turbofit_canonical: dict[str, Any] | None = None
     suggested_profile: str | None = None
     why: str = ""
+    #: Strata's contribution at this tier: admitted rows, refusals, the CPU
+    #: capability verdict (including the missing flags) and the engine choice.
+    strata: dict[str, Any] | None = None
+    context_floor_tokens: int = 65_536
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -148,6 +152,8 @@ class Recommendation:
             "turbofit_canonical": self.turbofit_canonical,
             "suggested_profile": self.suggested_profile,
             "why": self.why,
+            "strata": self.strata,
+            "context_floor_tokens": self.context_floor_tokens,
         }
 
 
@@ -341,7 +347,13 @@ def scan(backend: str = "auto") -> dict[str, Any]:
 
 
 # --- overlay: TurboFit doctrine --------------------------------------------
-def _turbofit_canonical(vram_gb: float, host_ram_gb: float, pool_kind: str, backend: str):
+def _turbofit_canonical(
+    vram_gb: float,
+    host_ram_gb: float,
+    pool_kind: str,
+    backend: str,
+    cpu_flags: object = None,
+):
     vendor = "apple" if pool_kind == "unified" else ("nvidia" if backend == "cuda" else "other")
     try:
         options = allowed_lineup.check_local_options(
@@ -350,6 +362,7 @@ def _turbofit_canonical(vram_gb: float, host_ram_gb: float, pool_kind: str, back
             memory_pool=pool_kind,
             backend=backend,
             vendor=vendor,
+            cpu_flags=cpu_flags,
         )
     except Exception:
         return None
@@ -402,6 +415,31 @@ def _stretch_target(fits, refused) -> dict[str, Any] | None:
     return None
 
 
+def _strata_view(
+    vram_gb: float,
+    host_ram_gb: float,
+    pool_kind: str,
+    backend: str,
+    flags: object,
+) -> dict[str, Any] | None:
+    """Strata's tier view for this host, or None where the engine does not apply.
+
+    Strata is served on Linux CUDA/ROCm per the engine matrix; a unified/Metal
+    host gets no claim and therefore no exclusion sentence either.
+    """
+    if pool_kind == "unified" or backend not in {"cuda", "rocm", "auto"}:
+        return None
+    tier_gb = strata_tiers.tier_for_vram(vram_gb)
+    if tier_gb <= 0:
+        return None
+    view = strata_tiers.tier_view(
+        tier_gb=tier_gb,
+        ram_bytes=max(0, int(host_ram_gb * _GIB)),
+        cpu_flags=flags,  # type: ignore[arg-type]
+    )
+    return view.as_dict()
+
+
 def recommend(backend: str = "auto") -> Recommendation:
     """Built-in Hermes recommendation + TurboFit doctrine overlay.
 
@@ -428,8 +466,14 @@ def recommend(backend: str = "auto") -> Recommendation:
                 key=lambda m: m.tok_per_sec,
                 default=None,
             )
+            flags = cpu_features.cpu_flags()
             canonical = _turbofit_canonical(
-                data["vram_gb"], data["host_ram_gb"], data["pool_kind"], data["backend"]
+                data["vram_gb"], data["host_ram_gb"], data["pool_kind"], data["backend"],
+                cpu_flags=flags,
+            )
+            strata = _strata_view(
+                data["vram_gb"], data["host_ram_gb"], data["pool_kind"],
+                data["backend"], flags,
             )
             if primary is None and canonical and canonical.get("main"):
                 # Built-in found nothing allowed (all banned) -> use TurboFit's own pick.
@@ -447,16 +491,44 @@ def recommend(backend: str = "auto") -> Recommendation:
                     alias=canonical["main"],
                 )
             ladder = "unified/moe" if data["uma"] else "dedicated/dense"
-            why = (
-                "Built-in Hermes local-runtime scan "
-                f"({'UMA-compensated ' if data['compensated'] else ''}"
-                f"pool={data['pool_kind']}, {data['usable_vram_gb']:.1f} GiB usable)"
-                + (
-                    f" -> primary {primary.model} (allowed, not banned)"
-                    if primary
-                    else " -> no built-in model fits; using TurboFit fallback"
-                )
+            engine = (canonical or {}).get("engine")
+            strata_preferred = bool(
+                strata
+                and strata.get("admitted")
+                and strata.get("preferred_over_llamacpp")
             )
+            if strata_preferred:
+                top = strata["admitted"][0]
+                # Intelligence per tier: the admitted Strata MoE leads, and the
+                # built-in dense pick stays visible in `fits`.
+                primary = ModelFit(
+                    model=str(top["model_id"]),
+                    quality=0,
+                    variant=None,
+                    quant=str(top.get("quant") or "") or None,
+                    context_window=int(top["context"]),
+                    zero_spill=False,
+                    tok_per_sec=0.0,
+                    required_gb=round(float(top.get("total_gib") or 0.0), 1),
+                    allowed=True,
+                    banned=False,
+                    alias=str(top["model_id"]),
+                )
+                engine = "strata"
+                why = str(strata["reason"])
+            else:
+                why = (
+                    "Built-in Hermes local-runtime scan "
+                    f"({'UMA-compensated ' if data['compensated'] else ''}"
+                    f"pool={data['pool_kind']}, {data['usable_vram_gb']:.1f} GiB usable)"
+                    + (
+                        f" -> primary {primary.model} (allowed, not banned)"
+                        if primary
+                        else " -> no built-in model fits; using TurboFit fallback"
+                    )
+                )
+                if strata:
+                    why += " | " + str(strata["reason"])
             rec = Recommendation(
                 source="hermes-builtin",
                 uma=data["uma"],
@@ -472,10 +544,11 @@ def recommend(backend: str = "auto") -> Recommendation:
                 stretch=_stretch_target(fits, refused),
                 fits=[m for m in fits if not m.banned],
                 refused=refused,
-                engine=(canonical or {}).get("engine"),
+                engine=engine,
                 turbofit_canonical=canonical,
                 suggested_profile=None,
                 why=why,
+                strata=strata,
             )
             rec.suggested_profile = _suggested_profile(data)
             return rec

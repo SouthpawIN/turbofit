@@ -311,3 +311,29 @@ def test_low_quant_is_never_penalised_in_ranking() -> None:
 
     assert result.recommended.profile.id == "iq2-better"
     assert result.quant_skipped == ()
+
+
+def test_a_32k_profile_is_refused_by_name_at_the_64k_floor() -> None:
+    """32K is not a floor: the profile is skipped with its number, not ranked last."""
+    physical = hardware(24576)
+    only_32k = candidate(profile("only-32k", topology="1x24", context=32_768), quality=90)
+
+    with pytest.raises(NoRecommendation) as excinfo:
+        recommend(live(physical, (24576,)), (only_32k,))
+
+    message = str(excinfo.value)
+    assert "only-32k" in message
+    assert "32,768" in message
+    assert "65,536" in message
+    assert "floor" in message
+
+
+def test_a_64k_profile_is_admitted_and_a_32k_one_does_not_outrank_it() -> None:
+    physical = hardware(24576)
+    only_64k = candidate(profile("only-64k", topology="1x24", context=65_536), quality=10)
+    only_32k = candidate(profile("only-32k", topology="1x24", context=32_768), quality=99)
+
+    result = recommend(live(physical, (24576,)), (only_32k, only_64k))
+
+    assert result.recommended.profile.id == "only-64k"
+    assert {item["profile"] for item in result.quant_skipped} >= {"only-32k"}

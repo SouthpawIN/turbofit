@@ -1,16 +1,27 @@
 """What this host's CPU can actually execute.
 
-Colibri/Strata needs AVX-512 VNNI and VBMI for its expert kernel and refuses to
-decode without them (its scalar fallback is test-only). Discovering that from a
-failed load is a bad way to learn it, so the requirement is probed up front.
+Strata's documented CPU requirement is **AVX2**, not AVX-512:
+
+* ``docs/AI_SETUP.md`` (Niko1221/Strata): "CPU: x86-64 with AVX2. Without AVX2
+  (Xeon E5 v1/v2 and older) setup still installs, as an experimental and slow
+  build".
+* ``docs/AMD_HIP.md`` reports a measured configuration on "a Ryzen 9 3900X (16
+  threads, no AVX-512)".
+
+So AVX2 is the gate. AVX-512 is an *accelerator* (faster prefill), never an
+exclusion: treating a missing AVX-512 flag as a deferral hid Strata from every
+AVX2-only desktop, which is most of them.
 """
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Iterable
 
-# Colibri is an Intel Ice Lake / AMD Zen 4 class requirement.
-STRATA_REQUIRED = ("avx512f", "avx512bw", "avx512vl", "avx512_vnni", "avx512vbmi")
+#: The gate. Without this flag Strata's kernel is not what its docs support.
+STRATA_REQUIRED = ("avx2",)
+
+#: Optional ISA that makes Strata faster (prefill), never a requirement.
+STRATA_ACCELERATOR = ("avx512f", "avx512bw", "avx512vl", "avx512_vnni", "avx512vbmi")
 
 
 def cpu_flags(cpuinfo: Path | str | None = None) -> frozenset[str] | None:
@@ -38,3 +49,10 @@ def strata_supported(flags: frozenset[str] | None) -> bool | None:
     if flags is None:
         return None
     return not missing_flags(STRATA_REQUIRED, flags)
+
+
+def strata_accelerated(flags: frozenset[str] | None) -> bool | None:
+    """True when AVX-512 is present (faster prefill); None when unknown."""
+    if flags is None:
+        return None
+    return not missing_flags(STRATA_ACCELERATOR, flags)

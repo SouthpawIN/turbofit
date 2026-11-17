@@ -14,6 +14,7 @@ from .hardware import HardwareFingerprint
 from .intelligence import canonical_intelligence_recipe
 from .quant_policy import classify_entry, default_admits
 from .recommend import vram_reporting_tolerance_mb
+from .strata_tiers import StrataTierView, tier_view
 from .recipes import RecipeBook
 from .schema import MatrixRow
 from .tier_fit import (
@@ -224,7 +225,16 @@ def build_tier_report(
     root: str | Path,
     hardware: HardwareFingerprint,
     ram_bytes: int | None = None,
+    cpu_flags: object = None,
 ) -> dict[str, Any]:
+    """Every tier's candidates plus the Strata gate for this host.
+
+    ``cpu_flags`` is the probed CPU flag set (``cpu_features.cpu_flags()``).
+    Passing it lets each tier publish which Strata rows it admits, which it
+    refuses and, on a CPU without AVX2, the deferral with the missing flag
+    named. ``None`` means "not interrogated": the section says so instead of
+    implying Strata was considered and rejected.
+    """
     root = Path(root)
     ram_bytes, ram_source = _ram_budget(hardware, ram_bytes)
     configurations = json.loads((root / "references/configuration-matrix.json").read_text(encoding="utf-8"))
@@ -386,6 +396,9 @@ def build_tier_report(
             (item for item in candidate_rows if item["balanced_score"] is not None),
             key=lambda item: (item["balanced_score"], item["intelligence_score"], item["measured_tps"]), reverse=True,
         )
+        strata_view: StrataTierView = tier_view(
+            tier_gb=capacity, ram_bytes=ram_bytes, cpu_flags=cpu_flags, root=root,
+        )
         tiers.append({
             "id": f"hardware-{capacity}gb",
             "capacity_gb": capacity,
@@ -399,6 +412,7 @@ def build_tier_report(
             },
             "candidates": candidate_rows,
             "offload_candidates": offload_rows,
+            "strata": strata_view.as_dict(),
         })
     return {
         "schema": "turbofit.hardware-tier-report/v1",

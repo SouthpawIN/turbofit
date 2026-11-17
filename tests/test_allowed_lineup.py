@@ -128,19 +128,17 @@ def test_eight_gb_vram_thirty_two_gb_ram_is_maple_or_cyber_tiel_not_dense_27b() 
     assert not main_matches_recommendable("qwen3-8-27b-q4-k-m", allowed)
 
 
-def test_arete_is_offered_from_twelve_gb_up() -> None:
-    """Arete 27B is a q3+ option on every dedicated tier that can hold it."""
+def test_sixteen_gb_gets_the_64k_floor_not_a_dense_27b_that_cannot_hold_it() -> None:
+    """A 27B Q3/Q4 cannot hold 64K on a 12-16 GB card; the ladder says so."""
     eight = [o["alias"] for o in check_local_options(vram_gb=8, host_ram_gb=64)]
     twelve = [o["alias"] for o in check_local_options(vram_gb=12, host_ram_gb=64)]
     sixteen = [o["alias"] for o in check_local_options(vram_gb=16, host_ram_gb=64)]
-    twentyfour = [o["alias"] for o in check_local_options(vram_gb=24, host_ram_gb=64)]
     sixtyfour = [o["alias"] for o in check_local_options(vram_gb=64, host_ram_gb=64)]
 
-    assert "arete-27b-q3" not in eight, "q3 weights do not fit an 8-11 GB card"
-    assert "arete-27b-q3" in twelve
-    assert "arete-27b-q4" in sixteen
-    assert "arete-27b-q4" in twentyfour
-    assert "arete-27b-q5" not in twentyfour, "Q5 is above the default ceiling"
+    assert "arete-27b-q3" not in twelve, "12.5 GiB of weights cannot hold 64K at 12 GB"
+    assert "qwen3-8-27b-gsq-rco-iq3xxs" in twelve
+    assert "arete-27b-q4" not in sixteen, "16.9 GiB of weights cannot hold 64K at 16 GB"
+    assert "arete-27b-q4" not in eight
     assert "arete-27b-q8" in sixtyfour
     for alias in ("arete-27b-q3", "arete-27b-q4", "arete-27b-q5", "arete-27b-q8"):
         assert is_allowed_main(alias), f"{alias} must survive filter_aliases"
@@ -151,8 +149,51 @@ def test_matrix_alternatives_are_offered_not_defaulted() -> None:
     sixteen = [o["alias"] for o in check_local_options(vram_gb=16, host_ram_gb=64)]
     assert "flint-40a2-5b-mix12g" in sixteen
     assert sixteen[0] == "qwen3-8-27b-gsq-rco-iq3xxs", "default must not shift"
-    sixtyfour = [o["alias"] for o in check_local_options(vram_gb=64, host_ram_gb=64)]
-    assert "qwen3-8-flash-next-iq3xxs" in sixtyfour
+    # Strata is only claimed when the caller passes the probed CPU flags.
+    assert "qwen3-8-flash-next-iq3xxs" not in sixteen
+    capable = [
+        o["alias"] for o in check_local_options(
+            vram_gb=64, host_ram_gb=64, cpu_flags={"avx2"},
+        )
+    ]
+    assert capable[0].startswith("qwen3-8-flash-next"), "Strata leads once eligible"
+
+
+def test_glm_maya_is_offered_where_project_maya_says_it_runs() -> None:
+    """Maya-XS targets 64 GB RAM + a 24 GB card; it must not appear without the RAM."""
+    thin = [o["alias"] for o in check_local_options(vram_gb=24, host_ram_gb=32)]
+    assert "glm-5-3-flash-maya-xs" not in thin
+
+    rich = [
+        o["alias"] for o in check_local_options(
+            vram_gb=24, host_ram_gb=64, cpu_flags={"avx2"},
+        )
+    ]
+    assert "glm-5-3-flash-maya-xs" in rich
+    assert rich[0].startswith("qwen3-8-flash-next"), "Strata MoE leads at equal context"
+
+    big = [
+        o["alias"] for o in check_local_options(
+            vram_gb=64, host_ram_gb=64, cpu_flags={"avx2"},
+        )
+    ]
+    assert "glm-5-3-flash-maya-xs" in big
+    # The recommendation lists the strongest three rows; the tier view keeps the
+    # full admitted set (Maya-S24 included) for audit.
+    from turbofit_runtime.allowed_lineup import strata_options
+
+    _preferred, view = strata_options(
+        vram_gb=64, host_ram_gb=64, cpu_flags={"avx2"},
+    )
+    assert view is not None
+    assert "glm-5-3-flash-maya-s24" in {row.model_id for row in view.admitted}
+
+    small = [
+        o["alias"] for o in check_local_options(
+            vram_gb=8, host_ram_gb=64, cpu_flags={"avx2"},
+        )
+    ]
+    assert not any(a.startswith("glm-5-3-flash") for a in small), "Maya-XS is 24 GB+"
 
 
 def test_unified_offers_arete_as_dense_exception() -> None:
@@ -162,19 +203,3 @@ def test_unified_offers_arete_as_dense_exception() -> None:
     mains = [o["alias"] for o in options if o["role"] == "main"]
     assert "arete-27b-q3" in mains
     assert mains[0] == "cyber-tiel-coder-35b-a3b-ud-iq3-xxs", "MoE stays the unified default"
-
-
-def test_glm_maya_is_offered_where_project_maya_says_it_runs() -> None:
-    """Maya-XS targets 64 GB RAM + a 24 GB card; it must not appear without the RAM."""
-    thin = [o["alias"] for o in check_local_options(vram_gb=24, host_ram_gb=32)]
-    assert "glm-5-3-flash-maya-xs" not in thin
-
-    rich = [o["alias"] for o in check_local_options(vram_gb=24, host_ram_gb=64)]
-    assert "glm-5-3-flash-maya-xs" in rich
-    assert rich[0] == "qwen3-8-27b-gsq-rco-iq3s", "band default unchanged"
-
-    big = [o["alias"] for o in check_local_options(vram_gb=64, host_ram_gb=64)]
-    assert "glm-5-3-flash-maya-xs" in big and "glm-5-3-flash-maya-s24" in big
-
-    small = [o["alias"] for o in check_local_options(vram_gb=8, host_ram_gb=64)]
-    assert not any(a.startswith("glm-5-3-flash") for a in small)
