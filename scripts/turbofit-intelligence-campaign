@@ -252,6 +252,12 @@ def _run_index_suites(
             "--base-url", base_url, "--n-tasks", str(tasks), "--n-concurrent", "1",
             "--jobs-dir", str(jobs),
         ]
+        print(
+            f"campaign: {run['configuration_id']} [{run['level']}] suite {name} "
+            f"starting {tasks} task(s)",
+            flush=True,
+        )
+        started_at = time.monotonic()
         try:
             subprocess.run(command, check=True)
             payload = summarize_job(
@@ -269,8 +275,15 @@ def _run_index_suites(
                 "fix": f"{HERMES_SUITE.name} prepare --suite {name}",
             }
             continue
-        measurements.append(measurement_from_evidence(payload, raw_result=str(output)))
+        measurement = measurement_from_evidence(payload, raw_result=str(output))
+        measurements.append(measurement)
         evidence[name] = payload["summary"]
+        print(
+            f"campaign: {name} pass@1 {measurement.score:.3f} "
+            f"({measurement.tasks_passed}/{measurement.tasks_total} tasks) "
+            f"in {time.monotonic() - started_at:.0f}s",
+            flush=True,
+        )
     if not measurements:
         raise RuntimeError(
             "no Hermes Index suite could run: " + ", ".join(sorted(unavailable))
