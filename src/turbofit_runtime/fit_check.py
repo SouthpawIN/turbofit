@@ -28,6 +28,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from .context_floor import MIN_CONTEXT_TOKENS, floor_refusal, meets_context_floor
+
 DEFAULT_BAN_LIST = frozenset({"9b"})
 _TOKEN_SPLIT = re.compile(r"[^a-z0-9.]+")
 
@@ -120,13 +122,22 @@ def fit_tier(
     *,
     memory_class: str = "shared",
     ban_list: frozenset[str] = DEFAULT_BAN_LIST,
+    context_tokens: int | None = None,
 ) -> TierProfile | None:
-    """f(available_memory) -> tier profile, or None when no tier fits."""
+    """f(available_memory) -> tier profile, or None when no tier fits.
+
+    ``context_tokens`` is the context this band can actually hold. When given,
+    it is a hard gate: a band that can only hold less than
+    :data:`context_floor.MIN_CONTEXT_TOKENS` (64K) returns ``None`` — 32K is not
+    a floor, and a shorter-context substitute is not a recommendation.
+    """
     if not isinstance(available_memory_gb, (int, float)) or available_memory_gb < 0:
         raise ValueError("available_memory_gb must be a non-negative number")
     tiers = TIERS_BY_CLASS.get(memory_class)
     if tiers is None:
         raise ValueError(f"unknown memory class: {memory_class}")
+    if context_tokens is not None and not meets_context_floor(context_tokens):
+        return None
     usable = int(available_memory_gb)
     for tier in tiers:
         if tier.min_gb <= usable and (tier.max_gb is None or usable <= tier.max_gb):
@@ -134,6 +145,13 @@ def fit_tier(
                 return None
             return tier
     return None
+
+
+def fit_tier_refusal(context_tokens: int | None) -> str | None:
+    """The 64K-floor sentence for a band that cannot hold the floor."""
+    if context_tokens is None or meets_context_floor(context_tokens):
+        return None
+    return floor_refusal(context_tokens, subject="this band")
 
 
 def select_rung_for_tier(

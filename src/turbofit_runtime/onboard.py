@@ -408,7 +408,7 @@ def _entries_for(component: Any, *, model_root: Path, index: Any, footprints: Ma
 
 def _strata_block(flavor: str, scan: HostScan) -> str:
     if flavor == "strata" and scan.strata is False:
-        return "Strata needs AVX-512 VNNI/VBMI, which this CPU does not expose."
+        return "Strata needs AVX2, which this CPU does not expose."
     return ""
 
 

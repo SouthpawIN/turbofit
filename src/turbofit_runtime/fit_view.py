@@ -24,7 +24,14 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping
 
 from .artifacts import expected_size_for_model_root, human_bytes, inspect_file
-from .cpu_features import STRATA_REQUIRED, cpu_flags, missing_flags, strata_supported
+from .cpu_features import (
+    STRATA_ACCELERATOR,
+    STRATA_REQUIRED,
+    cpu_flags,
+    missing_flags,
+    strata_accelerated,
+    strata_supported,
+)
 
 SCHEMA = "turbofit.fit-view/v1"
 
@@ -58,12 +65,21 @@ def engine_label(flavor: str | None) -> str:
 def _cpu_report(flags: frozenset[str] | None) -> dict[str, Any]:
     missing = list(missing_flags(STRATA_REQUIRED, flags)) if flags is not None else []
     supported = strata_supported(flags)
+    accelerated = strata_accelerated(flags)
     if supported is None:
         statement = "This host exposes no CPU feature flags, so engine support could not be checked."
+    elif supported and accelerated:
+        statement = "This CPU has AVX2 and AVX-512, so Strata's expert kernels run at full prefill speed."
     elif supported:
-        statement = "This CPU has the AVX-512 features every engine here needs."
+        statement = (
+            "This CPU has AVX2, which is what Strata requires; AVX-512 is absent, "
+            "so prefill is slower than an AVX-512 host."
+        )
     else:
-        statement = "This CPU lacks " + ", ".join(missing) + ", so Strata cannot decode here."
+        statement = (
+            "This CPU lacks " + ", ".join(missing) + ", so Strata cannot decode here "
+            "(its documented requirement is AVX2)."
+        )
     return {
         "flags_known": flags is not None,
         "strata_supported": supported,
@@ -88,12 +104,18 @@ def _engine_state(
         if supported is False:
             usable = False
             reason = (
-                "Strata needs AVX-512 VNNI/VBMI and this CPU lacks "
+                "Strata needs AVX2 and this CPU lacks "
                 + ", ".join(missing_flags(STRATA_REQUIRED, flags))
                 + ", so it cannot decode here."
             )
         elif supported is None and usable:
             reason = "CPU support for Strata could not be confirmed on this host."
+        elif strata_accelerated(flags) is False:
+            missing_accel = ", ".join(missing_flags(STRATA_ACCELERATOR, flags))
+            reason = (
+                "AVX2 present, so Strata runs; AVX-512 (" + missing_accel + ") is "
+                "absent, which costs prefill speed only."
+            )
     if not installed:
         usable = False
         reason = reason or f"the engine binary is not installed at {binary or '<unknown>'}."

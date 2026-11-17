@@ -63,8 +63,10 @@ def test_apple_uma_compensated(monkeypatch):
     assert rec.suggested_profile == "hardware-32gb"
 
 
-def test_nvidia_dedicated_dense_ladder(monkeypatch):
+def test_nvidia_dedicated_prefers_strata_moe_over_the_dense_27b(monkeypatch):
+    """At 48 GB with AVX2, an admitted Strata MoE outranks the dense 27B."""
     _patch_probe(monkeypatch, NVIDIA_48)
+    monkeypatch.setattr(hermes_fit.cpu_features, "cpu_flags", lambda: frozenset({"avx2"}))
     rec = hermes_fit.build_recommendation()
     assert rec.uma is False
     assert rec.ladder == "dedicated/dense"
@@ -72,8 +74,29 @@ def test_nvidia_dedicated_dense_ladder(monkeypatch):
     assert rec.pool_kind == "dedicated"
     assert rec.backend == "cuda"
     assert rec.primary is not None
-    # 48 GB dedicated: the built-in's own pick is the best-quality resident.
-    assert rec.primary.model == "qwen3.8-27b"
+    assert rec.engine == "strata"
+    assert rec.primary.model.startswith("qwen3-8-flash-next")
+    assert rec.primary.context_window == 262_144
+    assert "strata:" in rec.why
+    assert "256K" in rec.why
+    assert rec.strata is not None
+    assert rec.strata["capability"]["supported"] is True
+    # The built-in dense pick is still visible in `fits`, just not preferred.
+    assert any(fit.model == "qwen3.8-27b" for fit in rec.fits)
+
+
+def test_avx2_absent_defers_strata_with_the_flag_named(monkeypatch):
+    _patch_probe(monkeypatch, NVIDIA_48)
+    monkeypatch.setattr(
+        hermes_fit.cpu_features, "cpu_flags", lambda: frozenset({"fpu", "avx"}),
+    )
+    rec = hermes_fit.build_recommendation()
+    assert rec.engine != "strata"
+    assert rec.strata is not None
+    assert rec.strata["capability"]["supported"] is False
+    assert rec.strata["capability"]["missing_flags"] == ["avx2"]
+    assert "lacks avx2" in rec.why
+    assert rec.strata["admitted"] == []
 
 
 def test_ban_filter_falls_back_to_turbofit_canonical(monkeypatch):

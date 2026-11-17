@@ -8,10 +8,13 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Mapping, Sequence
 
+from .context_floor import MIN_CONTEXT_TOKENS, floor_refusal
 from .hardware import HardwareFingerprint
 from .quant_policy import default_admits
 from .runtime_profile import HardwareConstraint, Turbofile
 
+#: Context that counts as "working" for the ranking bit. The *floor* below
+#: which nothing is admissible at all is :data:`context_floor.MIN_CONTEXT_TOKENS`.
 MIN_CONTEXT = 131_072
 WORKING_CONTEXT = 262_144
 MAX_CONTEXT = 1_048_576
@@ -147,6 +150,16 @@ def recommend(
     skipped: list[dict[str, str]] = []
     for candidate in candidates:
         if not candidate.has_evidence:
+            continue
+        if candidate.max_context < MIN_CONTEXT_TOKENS:
+            # 32K is not a floor: a profile that cannot hold 64K is refused
+            # here, with the number, rather than ranked last.
+            skipped.append({
+                "profile": candidate.profile.id,
+                "reason": floor_refusal(
+                    candidate.max_context, subject=f"profile {candidate.profile.id}"
+                ),
+            })
             continue
         if policy_variant is not None and candidate.policy_variant != policy_variant:
             continue

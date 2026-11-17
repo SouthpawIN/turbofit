@@ -151,23 +151,39 @@ def test_placeholder_weights_are_not_counted_as_installed(tmp_path):
     assert missing["main:model"]["reason"].startswith("stub below")
 
 
-def test_strata_engine_on_a_cpu_without_avx512_is_unavailable(tmp_path):
+def test_strata_runs_on_an_avx2_only_cpu_and_avx512_only_annotates(tmp_path):
+    """Strata's requirement is AVX2; a missing AVX-512 costs prefill, not the rung."""
     view = _view(
         tmp_path,
         [_tier(64, STRATA_ID, STRATA_FAMILY, MAPLE_AUX_ID, 131072)],
         flags=NO_AVX512,
     )
     tier = view["tiers"][0]
+    engine = tier["recommendation"]["engine"]
+    assert engine["flavor"] == "strata"
+    assert engine["usable"] is True
+    assert tier["status"] != STATUS_ENGINE, tier["message"]
+    assert "AVX-512" in engine["reason"]
+    assert view["cpu"]["strata_supported"] is True
+    assert view["cpu"]["missing_strata_flags"] == []
+    assert "AVX2" in view["cpu"]["statement"]
+
+
+def test_strata_is_unavailable_below_avx2_with_the_flag_named(tmp_path):
+    view = _view(
+        tmp_path,
+        [_tier(64, STRATA_ID, STRATA_FAMILY, MAPLE_AUX_ID, 131072)],
+        flags=frozenset({"sse4_2", "avx"}),
+    )
+    tier = view["tiers"][0]
     assert tier["status"] == STATUS_ENGINE
     assert tier["recommendation"]["runnable"] is False
     engine = tier["recommendation"]["engine"]
-    assert engine["flavor"] == "strata"
     assert engine["usable"] is False
-    assert "AVX-512" in engine["reason"]
-    assert "avx512f" in engine["reason"]
-    assert "AVX-512" in tier["message"]
+    assert "avx2" in engine["reason"]
+    assert "avx2" in tier["message"]
     assert view["cpu"]["strata_supported"] is False
-    assert "avx512vbmi" in view["cpu"]["missing_strata_flags"]
+    assert "avx2" in view["cpu"]["missing_strata_flags"]
 
 
 def test_strata_is_usable_when_the_cpu_has_the_features(tmp_path):

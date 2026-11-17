@@ -10,7 +10,7 @@ It joins three sources that were previously only readable side by side:
 | What was measured best on this tier? | `references/intelligence-leaderboard.json` (`intel_leaderboard`) |
 | What does that configuration need? | `references/model-recipes.json` (`recipes`) — the resolved components the launcher execs |
 | Is each file installed and complete? | `artifacts.inspect_file` — the campaign's definition, so stubs and truncated downloads are absent |
-| Can this CPU execute the engine? | `cpu_features` — Strata needs AVX-512 F/BW/VL/VNNI/VBMI |
+| Can this CPU execute the engine? | `cpu_features` — Strata needs AVX2 (AVX-512 is only a prefill accelerator) |
 | Which auxiliary? | `maple-preview-tq2`, always |
 
 `GET /fit?tier=48` narrows to one tier; a tier with no measurement still
@@ -26,8 +26,8 @@ answers, with `status: "no-measurements"` and no invented recommendation.
   "cpu": {
     "flags_known": true,
     "strata_supported": false,
-    "missing_strata_flags": ["avx512_vnni", "avx512bw", "avx512f", "avx512vbmi", "avx512vl"],
-    "statement": "This CPU lacks avx512_vnni, … so Strata cannot decode here."
+    "missing_strata_flags": [],
+    "statement": "This CPU has AVX2, which is what Strata requires; AVX-512 is absent, so prefill is slower than an AVX-512 host."
   },
   "tiers": [
     {
