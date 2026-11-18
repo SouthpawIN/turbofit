@@ -100,9 +100,24 @@ def is_allowed_aux(alias: str) -> bool:
 
 
 def expert_residency(*, host_ram_gb: float) -> dict[str, object]:
+    """Where the auxiliary model's experts live, and what it costs the GPU.
+
+    The auxiliary carries 40-85% of Hermes tokens, so it must be cheap: its
+    weights stay memory-mapped on disk and the active experts stream into host
+    RAM (>=32 GB) or straight off the SSD (below that). ``gpu_layers`` is 0 in
+    both bands on purpose — the auxiliary keeps VRAM entirely free for the main
+    model. A caller that wants the auxiliary on the GPU passes an explicit
+    ``gpu_layers`` override; this default never claims a card.
+    """
     if host_ram_gb >= 32:
-        return {"mode": "ram", "cpu_moe": True, "mmap": True, "mlock": False}
-    return {"mode": "disk", "cpu_moe": True, "mmap": True, "mlock": False}
+        return {
+            "mode": "ram", "cpu_moe": True, "mmap": True, "mlock": False,
+            "gpu_layers": 0,
+        }
+    return {
+        "mode": "disk", "cpu_moe": True, "mmap": True, "mlock": False,
+        "gpu_layers": 0,
+    }
 
 
 def apple_mlx_main(*, unified_ram_gb: float) -> str:
