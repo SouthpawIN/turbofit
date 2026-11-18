@@ -603,6 +603,50 @@ def _reward(payload: Mapping[str, Any]) -> float | None:
     return None
 
 
+#: Agent-side errors that mean the endpoint failed the trial, not the model.
+#: A context overflow arrives as HTTP 503 from llama.cpp, which litellm raises as
+#: ServiceUnavailableError — indistinguishable from a dead server unless the
+#: message is read. Either way it is our plumbing, so the run is invalid.
+_ENDPOINT_FAILURE_MARKERS = (
+    "serviceunavailableerror",
+    "apiconnectionerror",
+    "apierror",
+    "internalservererror",
+    "ratelimiterror",
+    "connection refused",
+    "connection error",
+    "max retries exceeded",
+    "timed out",
+    "timeouterror",
+    "exceeds the available context size",
+    "context length exceeded",
+    "maximum context length",
+    "no local backend available",
+    "503",
+    "502",
+    "504",
+)
+
+
+def _endpoint_failure(exception: Any) -> str | None:
+    """Name the transport failure in an agent exception, or None if it is the model's own.
+
+    Only the exception text is inspected: a task the model genuinely failed has
+    no exception at all, so this never excuses a real zero.
+    """
+    if not exception:
+        return None
+    if isinstance(exception, Mapping):
+        text = " ".join(str(value) for value in exception.values())
+    else:
+        text = str(exception)
+    lowered = text.lower()
+    for marker in _ENDPOINT_FAILURE_MARKERS:
+        if marker in lowered:
+            return marker
+    return None
+
+
 def _trim(value: Any, limit: int) -> Any:
     """Keep harness failures readable without pasting 200 KB of traceback."""
     if isinstance(value, str) and len(value) > limit:
@@ -652,7 +696,13 @@ def summarize_job(
         input_tokens = int(agent_result.get("n_input_tokens") or 0) if isinstance(agent_result, Mapping) else 0
         output_tokens = int(agent_result.get("n_output_tokens") or 0) if isinstance(agent_result, Mapping) else 0
         exception = _trim(payload.get("exception_info") or payload.get("error"), 2000)
-        valid = reward is not None
+        # A verifier reward of 0.0 does not make a crashed agent a scored failure.
+        # When the agent died because the endpoint refused it — 503 on a context
+        # overflow, a refused connection, a timeout — the trial measured our
+        # plumbing, not the model, and must invalidate the run instead of
+        # publishing a zero that looks like an intelligence result.
+        endpoint_failure = _endpoint_failure(exception)
+        valid = reward is not None and not endpoint_failure
         trials.append({
             "path": str(path),
             "sha256": _sha256_bytes(raw),
@@ -661,6 +711,7 @@ def summarize_job(
             "reward": reward,
             "passed": bool(valid and reward == _PASS_REWARD and exception is None),
             "execution_valid": valid,
+            "endpoint_failure": endpoint_failure,
             "seconds": _seconds(payload),
             "input_tokens": input_tokens,
             "output_tokens": output_tokens,
