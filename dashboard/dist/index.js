@@ -55,6 +55,75 @@
     );
   }
 
+  function Gauge(props) {
+    // A round instrument dial: 240° sweep, needle, and a value in the hub.
+    const ratio = props.ratio == null ? null : Math.max(0, Math.min(1, Number(props.ratio)));
+    const sweep = 240;
+    const start = -210;
+    const angle = ratio == null ? start : start + sweep * ratio;
+    const rad = (deg) => (deg * Math.PI) / 180;
+    const cx = 60, cy = 60, r = 44;
+    const point = (deg, radius) => [cx + radius * Math.cos(rad(deg)), cy + radius * Math.sin(rad(deg))];
+    const arc = (fromDeg, toDeg, radius) => {
+      const [x1, y1] = point(fromDeg, radius);
+      const [x2, y2] = point(toDeg, radius);
+      const large = Math.abs(toDeg - fromDeg) > 180 ? 1 : 0;
+      return "M " + x1 + " " + y1 + " A " + radius + " " + radius + " 0 " + large + " 1 " + x2 + " " + y2;
+    };
+    const [nx, ny] = point(angle, r - 10);
+    const tone = ratio == null ? "tf-gauge-unknown" : ratio > 0.85 ? "tf-gauge-hot" : ratio > 0.6 ? "tf-gauge-warm" : "tf-gauge-cool";
+    return h("div", { className: "tf-gauge" },
+      h("svg", { viewBox: "0 0 120 120", width: 132, height: 132, role: "img", "aria-label": props.label },
+        h("path", { d: arc(start, start + sweep, r), className: "tf-gauge-track" }),
+        ratio == null ? null : h("path", { d: arc(start, angle, r), className: "tf-gauge-fill " + tone }),
+        h("line", { x1: cx, y1: cy, x2: nx, y2: ny, className: "tf-gauge-needle " + tone }),
+        h("circle", { cx: cx, cy: cy, r: 5, className: "tf-gauge-hub" }),
+        h("text", { x: cx, y: cy + 26, className: "tf-gauge-value", textAnchor: "middle" }, props.value),
+      ),
+      h("div", { className: "tf-gauge-label" }, props.label),
+      props.note ? h("div", { className: "tf-gauge-note" }, props.note) : null,
+    );
+  }
+
+  function GearTree(props) {
+    // The fallback chain as a gear selector: one gate per level, engaged one lit.
+    const levels = props.levels || [];
+    if (!levels.length) return h("div", { className: "tf-muted" }, "No chain loaded.");
+    return h("div", { className: "tf-gears" },
+      levels.map((level, index) => {
+        const engaged = Boolean(level.is_active);
+        const fits = level.fits_now;
+        const remote = Boolean(level.remote || level.endpoint);
+        const label = level.kind === "yield" ? "release residency"
+          : (level.model || level.id) + (level.context ? " · " + Math.round(level.context / 1024) + "K" : "");
+        const state = engaged ? "tf-gear-engaged" : fits === false ? "tf-gear-blocked" : "";
+        return h("div", { className: "tf-gear-row", key: level.id },
+          h("div", { className: "tf-gear-gate" },
+            h("span", { className: "tf-gear-knob " + state }, String(index + 1)),
+            index < levels.length - 1 ? h("span", { className: "tf-gear-rail" }) : null,
+          ),
+          h("div", { className: "tf-gear-body" },
+            h("div", { className: "tf-gear-title" },
+              label,
+              remote ? h(Badge, { className: "tf-ok" }, "tailnet") : null,
+              engaged ? h(Badge, { className: "tf-ok" }, "engaged") : null,
+              fits === false ? h(Badge, { className: "tf-muted" }, "does not fit now") : null,
+            ),
+            h("div", { className: "tf-gear-note" },
+              remote ? (level.peer || level.endpoint) + " · no local VRAM"
+                : level.needs_mb_per_card ? Math.round(level.needs_mb_per_card / 1024) + " GiB per card" : "no card needed",
+            ),
+          ),
+          level.kind === "yield" ? null : h(Button, {
+            className: "tf-gear-shift",
+            disabled: Boolean(props.busy) || engaged,
+            onClick: () => props.onShift(level),
+          }, engaged ? "in gear" : "shift"),
+        );
+      }),
+    );
+  }
+
   function TurbofitPage() {
     const [status, setStatus] = useState(null);
     const [backends, setBackends] = useState(null);
@@ -176,6 +245,25 @@
       }
     }
 
+    async function shiftTo(level) {
+      setBusy(true);
+      setMessage("");
+      try {
+        const target = level.model || level.id;
+        const result = await SDK.fetchJSON("/api/plugins/turbofit/shift", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target }),
+        });
+        setMessage(result.message || ("Shifted to " + target + "."));
+        await load();
+      } catch (error) {
+        setMessage(String(error.message || error));
+      } finally {
+        setBusy(false);
+      }
+    }
+
     async function save() {
       setBusy(true);
       setMessage("");
@@ -246,6 +334,58 @@
       message ? h("div", { className: "tf-message" }, message) : null,
 
       h("div", { className: "tf-grid" },
+        h(Card, { className: "tf-card tf-span-2" },
+          h(CardHeader, null, h(CardTitle, null, "Dashboard")),
+          h(CardContent, null,
+            h("div", { className: "tf-dials" },
+              h(Gauge, {
+                label: "Memory pressure",
+                ratio: value(status, "dials.memory_pressure.ratio", null),
+                value: (function () {
+                  const ratio = value(status, "dials.memory_pressure.ratio", null);
+                  return ratio == null ? "—" : Math.round(ratio * 100) + "%";
+                })(),
+                note: value(status, "dials.memory_pressure.state", "unknown"),
+              }),
+              h(Gauge, {
+                label: "Context window",
+                ratio: (function () {
+                  const current = Number(value(status, "dials.context.current", 0)) || 0;
+                  const native = Number(value(status, "dials.context.native_max", 0)) || 0;
+                  return native > 0 ? current / native : null;
+                })(),
+                value: (function () {
+                  const current = Number(value(status, "dials.context.current", 0)) || 0;
+                  return current ? Math.round(current / 1024) + "K" : "—";
+                })(),
+                note: "floor " + Math.round((Number(value(status, "dials.context.floor", 65536)) || 65536) / 1024) + "K",
+              }),
+              h(Gauge, {
+                label: "Tokens / second",
+                ratio: (function () {
+                  const tps = Number(value(status, "usage.tps", 0)) || 0;
+                  return tps > 0 ? Math.min(1, tps / 120) : null;
+                })(),
+                value: (function () {
+                  const tps = Number(value(status, "usage.tps", 0)) || 0;
+                  return tps ? tps.toFixed(1) : "—";
+                })(),
+                note: "measured decode",
+              }),
+            ),
+            h(Separator, null),
+            h("div", { className: "tf-gears-head" },
+              "Gear shift — " + (value(status, "dials.chain.label", "chain")),
+              h("span", { className: "tf-muted" },
+                "your order from ~/.config/turbofit/fallback-chain.json; tailnet gears cost no local VRAM"),
+            ),
+            h(GearTree, {
+              levels: value(status, "dials.chain.levels", []),
+              busy: busy,
+              onShift: shiftTo,
+            }),
+          ),
+        ),
         h(Card, { className: "tf-card tf-span-2" },
           h(CardHeader, null, h(CardTitle, null, "Setup")),
           h(CardContent, { className: "tf-form" },
