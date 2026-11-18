@@ -1,0 +1,56 @@
+{
+  "schema": "turbofit.strata-measurements/v1",
+  "generated_at": "2026-11-18T04:03:01.864792+00:00",
+  "host": {
+    "cpu_flags_note": "avx2 only; engine logged 'this CPU has no AVX-512: the expert kernels run on AVX-2'",
+    "gpus": "1x RTX 3090 (24 GB), engine bound to a single device via CUDA_VISIBLE_DEVICES",
+    "ram_gib": 377,
+    "quiet": true,
+    "note": "measured with no other engine resident (747 MiB / 88 MiB idle)"
+  },
+  "engine": {
+    "name": "strata",
+    "build": "0.1.39",
+    "packs_expect": "0.1.56"
+  },
+  "model": {
+    "id": "qwen3-8-flash-next-iq3xxs",
+    "pack": "packs/iq2_xs",
+    "weights": "Qwen3.8-Flash-Next-GSQ-RCO-IQ2_XS 68 GB (2 shards)"
+  },
+  "flags": {
+    "max_context": 65536,
+    "expert_cache": 14000,
+    "kv": "q4_0",
+    "mmap_experts": true,
+    "resident_cpu_experts": true,
+    "ple_io": "ram",
+    "prefill": 2048,
+    "spec": 4
+  },
+  "result": {
+    "decode_tps": 15.21,
+    "tokens": 32,
+    "decode_ms": 2104.5,
+    "ttft_ms": 11753.5,
+    "resident_ram_gib": 15.56,
+    "gpu_cache_experts": 13851,
+    "file_blob_reads": 0
+  },
+  "comparison": {
+    "same_model_contested_gpu": {
+      "decode_tps": 3.12,
+      "why": "GPU 0 held by a benchmark engine; expert cache capped at 9000 slots on ~5 GB free; 17.6 GB streamed from files at 1.22 GB/s"
+    },
+    "engine_docs_reference": {
+      "decode_tps": 94,
+      "config": "Q2_0 on a 12 GB RTX 5070",
+      "why_not_comparable": "different pack, current engine build, whole card available"
+    }
+  },
+  "caveats": [
+    "engine 0.1.39 is older than the 0.1.56 the packs expect",
+    "--expert-profile was generated with --no-base (placeholder ranking), not from real routing traces",
+    "single GPU; the machine has two 24 GB cards and the planner models combined VRAM, the engine binds to one device"
+  ]
+}
