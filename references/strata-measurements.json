@@ -52,5 +52,29 @@
     "engine 0.1.39 is older than the 0.1.56 the packs expect",
     "--expert-profile was generated with --no-base (placeholder ranking), not from real routing traces",
     "single GPU; the machine has two 24 GB cards and the planner models combined VRAM, the engine binds to one device"
-  ]
+  ],
+  "two_card_experiment": {
+    "result": "slower than one card: 11.74 tok/s vs 33.26 tok/s",
+    "flags": {
+      "expert_cache": 2000,
+      "expert_cache_device1": "auto",
+      "kv": "q4_0",
+      "mmap_experts": true,
+      "ple_io": "ram",
+      "prefill": 2048,
+      "spec": 4,
+      "max_context": 32768
+    },
+    "engine_lines": [
+      "CUDA1: 16910 additional experts, 22.72 GiB; results return through pinned host rows",
+      "decode: RAM 0 blobs, files 0 blobs, 161961.1 MB read from the files (161.00 MB/round, 55.0 ms/round)"
+    ],
+    "why_slower": [
+      "using card 1 as an expert cache displaced the 15.3 GiB pageable RAM expert set, so 161 GB of expert blobs were read from files over the run",
+      "each token's expert results traverse PCIe back through pinned host rows, so the second card adds transfer cost rather than bandwidth",
+      "the single-card resident-CPU-expert placement keeps experts in DRAM with zero file reads and zero cross-device traffic"
+    ],
+    "conclusion": "for this 68 GB IQ2_XS pack on a 2x24 GB box, VRAM-expert-caching on the second card loses to pageable-RAM residency on one card. Two cards only make sense with --serve --layer-split (each GPU owns layers), which generate mode does not support.",
+    "measured_at": "2026-11-18T05:19:51.427365+00:00"
+  }
 }
