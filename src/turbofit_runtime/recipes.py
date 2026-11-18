@@ -762,6 +762,17 @@ class RecipeBook:
                 command.remove("--no-mmap")
             if residency.get("mlock") is True and "--mlock" not in command:
                 command.append("--mlock")
+            # Keep VRAM for the main model: the auxiliary runs with -ngl 0 unless
+            # the recipe asked for GPU layers explicitly. Its experts still stream
+            # from RAM/SSD via --cpu-moe + mmap, so the auxiliary costs no card.
+            if "gpu_layers" not in context_override and "gpu_layers" in residency:
+                wanted = str(residency["gpu_layers"])
+                for flag in ("-ngl", "--n-gpu-layers", "--gpu-layers"):
+                    if flag in command:
+                        index = command.index(flag)
+                        if index + 1 < len(command):
+                            command[index + 1] = wanted
+                        break
             if (runtime_flavor != "strata"
                     and not n_cpu_moe
                     and residency.get("cpu_moe") is True
