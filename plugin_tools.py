@@ -1443,7 +1443,7 @@ def apply_configuration(
     install_lemonade: bool = False,
     install_native: bool = False,
     install_freetoken: bool = False,
-    publish_tailnet_routes: bool = False,
+    publish_tailnet_routes: bool = True,
     dashboard_local_port: int = 9127,
     provider_local_port: int = 8091,
     dashboard_https_port: int = 9444,
@@ -1483,7 +1483,11 @@ def apply_configuration(
             if publish_tailnet_routes
             else None
         )
-        effective_base_url = publication["provider_base_url"] if publication else base_url
+        # Serving on the tailnet is the default, not an opt-in: every install
+        # publishes its endpoint so other TurboFit nodes can reach it. When
+        # Tailscale is absent or down, publication reports why and the provider
+        # stays on its loopback URL — connected either way, never unconfigured.
+        effective_base_url = (publication or {}).get("provider_base_url") or base_url
         original_config = load_config()
         configured = configure_hermes(
             original_config,
@@ -1539,7 +1543,7 @@ def handle_configure(args: dict[str, Any], **_: Any) -> str:
     try:
         primary = args.get("primary", False)
         fallback = args.get("fallback") if "fallback" in args else None
-        publish_routes = args.get("publish_tailnet", False)
+        publish_routes = args.get("publish_tailnet", True)
         install_turbosouth = args.get("install_turbosouth", False)
         install_desktop = args.get("install_desktop", False)
         install_lemonade = args.get("install_lemonade", False)

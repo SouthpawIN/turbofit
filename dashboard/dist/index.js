@@ -144,7 +144,7 @@
     const [context, setContext] = useState("");
     const [servingBackend, setServingBackend] = useState("adaptive");
     const [baseUrl, setBaseUrl] = useState("http://127.0.0.1:8091/v1");
-    const [publishTailnet, setPublishTailnet] = useState(false);
+    const [publishTailnet, setPublishTailnet] = useState(true);
     const [installTurboSouth, setInstallTurboSouth] = useState(true);
     const [installDesktop, setInstallDesktop] = useState(true);
     const [installLemonade, setInstallLemonade] = useState(false);

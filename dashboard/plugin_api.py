@@ -417,7 +417,7 @@ async def configure(body: dict[str, Any]) -> dict[str, Any]:
     multimodal = body.get("multimodal")
     profile = body.get("profile")
     base_url = body.get("base_url")
-    publish_tailnet_routes = body.get("publish_tailnet", False)
+    publish_tailnet_routes = body.get("publish_tailnet", True)
     install_turbosouth = body.get("install_turbosouth", body.get("install_turbosouth", False))
     install_turbosouth = body.get("install_turbosouth", install_turbosouth)
     install_desktop = body.get("install_desktop", False)
