@@ -52,5 +52,33 @@
     "engine 0.1.39 is older than the 0.1.56 the packs expect",
     "--expert-profile was generated with --no-base (placeholder ranking), not from real routing traces",
     "single GPU; the machine has two 24 GB cards and the planner models combined VRAM, the engine binds to one device"
-  ]
+  ],
+  "two_card_layer_split": {
+    "status": "loads and reaches READY; not yet served over HTTP",
+    "flags": {
+      "layer_split": 24,
+      "split_device": 1,
+      "trim_stage_weights": true,
+      "max_context": 32768,
+      "expert_cache": 512,
+      "kv": "q4_0",
+      "ple_io": "direct",
+      "prefill": 2048,
+      "spec": 4,
+      "mtp": "Strata-data/mtp"
+    },
+    "engine_info": {
+      "expert_slots": 12834,
+      "expert_cache_mib": 17973,
+      "expert_slots_primary": 546,
+      "arena_mib": 33812,
+      "pool_workers": 15,
+      "spec": 6,
+      "mtp_max": 4,
+      "engine": "0.1.39"
+    },
+    "blocker": "strata --serve is a stdin line protocol (BGEN/BSTOP/QUIT), not HTTP; TurboFit needs a tokenizer+protocol bridge to expose it on /v1/chat/completions",
+    "mtp_fix": "tools/mtp_rt.py --out is a DIRECTORY; passing a file path created a directory named dense.bin",
+    "measured_at": "2026-11-18T07:44:30.511686+00:00"
+  }
 }
