@@ -34,3 +34,33 @@
 @media (max-width: 760px) { .tf-hero { flex-direction: column; } .tf-hero-status { justify-content: flex-start; } .tf-grid, .tf-two { grid-template-columns: 1fr; } .tf-span-2 { grid-column: span 1; } .tf-route { grid-template-columns: 6.5rem 1fr; } .tf-route small { grid-column: 2; } }
 
 .tf-onboard { display: grid; gap: .5rem; padding-top: .75rem; border-top: 1px solid var(--color-border); margin-top: .25rem; }
+
+/* Instrument cluster: round dials, then the gear selector for the chain. */
+.tf-dials { display: flex; flex-wrap: wrap; gap: 1.25rem; justify-content: space-around; padding: .5rem 0 1rem; }
+.tf-gauge { display: flex; flex-direction: column; align-items: center; gap: .3rem; min-width: 140px; }
+.tf-gauge svg { filter: drop-shadow(0 0 10px rgba(86, 255, 196, .07)); }
+.tf-gauge-track { fill: none; stroke: var(--color-border); stroke-width: 8; stroke-linecap: round; }
+.tf-gauge-fill { fill: none; stroke-width: 8; stroke-linecap: round; }
+.tf-gauge-needle { stroke-width: 3; stroke-linecap: round; }
+.tf-gauge-hub { fill: var(--color-muted-foreground); }
+.tf-gauge-cool { stroke: #56ffc4; }
+.tf-gauge-warm { stroke: #ffb000; }
+.tf-gauge-hot { stroke: #ff6b6b; }
+.tf-gauge-unknown { stroke: var(--color-muted-foreground); }
+.tf-gauge-value { fill: var(--color-foreground); font: 700 1.05rem/1 var(--font-mono, ui-monospace, monospace); }
+.tf-gauge-label { color: var(--color-muted-foreground); font-size: .7rem; text-transform: uppercase; letter-spacing: .09em; }
+.tf-gauge-note { color: var(--color-muted-foreground); font-size: .72rem; opacity: .8; }
+.tf-gears-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .6rem; padding: .9rem 0 .5rem; font: 700 .78rem/1 var(--font-mono, ui-monospace, monospace); letter-spacing: .08em; text-transform: uppercase; }
+.tf-gears-head .tf-muted { font: 400 .74rem/1.4 var(--font-sans, system-ui); letter-spacing: 0; text-transform: none; }
+.tf-gears { display: flex; flex-direction: column; }
+.tf-gear-row { display: grid; grid-template-columns: 2.5rem 1fr auto; gap: .8rem; align-items: center; padding: .35rem 0; }
+.tf-gear-gate { position: relative; display: flex; justify-content: center; align-self: stretch; }
+.tf-gear-knob { z-index: 1; display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 50%; border: 2px solid var(--color-border); background: var(--color-card); color: var(--color-muted-foreground); font: 700 .8rem/1 var(--font-mono, ui-monospace, monospace); }
+.tf-gear-engaged { border-color: #56ffc4; color: #56ffc4; box-shadow: 0 0 0 4px rgba(86, 255, 196, .12); }
+.tf-gear-blocked { border-style: dashed; opacity: .55; }
+.tf-gear-rail { position: absolute; top: 1.9rem; bottom: -.7rem; width: 2px; background: var(--color-border); }
+.tf-gear-body { min-width: 0; }
+.tf-gear-title { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; overflow-wrap: anywhere; font-size: .85rem; font-weight: 600; }
+.tf-gear-note { color: var(--color-muted-foreground); font-size: .74rem; }
+.tf-gear-shift { white-space: nowrap; }
+@media (max-width: 760px) { .tf-dials { gap: .75rem; } .tf-gear-row { grid-template-columns: 2.2rem 1fr; } .tf-gear-shift { grid-column: 2; justify-self: start; } }
