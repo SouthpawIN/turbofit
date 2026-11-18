@@ -69,28 +69,6 @@ scripts/turbofit-controller --once     # one bounded tick
 curl -s http://127.0.0.1:8091/v1/models
 ```
 
-## First run — scan, recommend, download that
-
-TurboFit does not download the catalog. It scans the machine, recommends one
-model for its capacity band, and fetches only that (plus any fallback-chain rung
-you accept):
-
-```bash
-scripts/turbofit-onboard                        # dry run: what it would fetch, with sizes
-scripts/turbofit-onboard --download             # fetch exactly that
-scripts/turbofit-onboard --download --include-fallback 1   # ...plus the first chain rung
-```
-
-The dry run prints the recommended configuration, each artifact with its size,
-which ones are already verified on disk, the optional fallback rungs with their
-own sizes, and the total. There is no `--all`: this path never fetches the whole
-library. The dashboard's **Fit** card shows the same plan and a
-`Download N GiB` button that runs it.
-
-When a capacity band has no measurement yet, the plan says "no measurements
-yet" and offers the first fallback-chain rung that fits this machine, labelled
-`portable-fit` rather than presented as a benchmarked winner.
-
 ## What it does at runtime
 
 | Dial | Meaning |
@@ -125,7 +103,7 @@ A vLLM recipe composes `vllm serve <checkpoint-dir>` with tensor parallelism and
 
 **88 catalog entries, 84 main models, four contexts (64K / 128K / 262K / 1M).** Every entry pins a Hugging Face revision and a sha256, and `tools/check-artifact-existence` fails the build if any pinned artifact stops resolving upstream.
 
-Two ladders, never one. Dense on dedicated VRAM — **Arete 27B is the default at every dedicated band it fits (IQ2_XXS / Q3_K_S / Q4_K_M)** — and Mixture-of-Experts on unified/CPU, because dense crawls there. **Each band lists a default and the alternatives that also fit it** — `auto` takes the default, and you can pin any alternative by name.
+Two ladders, never one. Dense on dedicated VRAM — **Arete 27B is the default at every dedicated band it fits (IQ2_XXS / Q3_K_S / Q4_K_M / Q5_K_M)** — and Mixture-of-Experts on unified/CPU, because dense crawls there. **Each band lists a default and the alternatives that also fit it** — `auto` takes the default, and you can pin any alternative by name.
 
 **Ladder 1 — dedicated VRAM**
 
@@ -134,7 +112,7 @@ Two ladders, never one. Dense on dedicated VRAM — **Arete 27B is the default a
 | 8–11 GB | **Arete 27B IQ2_XXS** | Ternary Bonsai 2 27B, LFM3 Omni 2B | 65k |
 | 12–15 GB | **Arete 27B Q3_K_S** | Arete Q3_K_M, Underdog 27B, LFM2.5 24B-A2B | 131k |
 | 16–23 GB | **Arete 27B Q4_K_M** | Qwen 3.8 27B GSQ-RCO IQ3_S, Qwen 3.6 35B-A3B (MTP), Qwen 3.5 35B-A3B, Nanbeige 4.3 33B, Nemotron Bolt 74B-A9B, Flint 40B Abliterated | 131k–262k |
-| 24–63 GB | **Arete 27B Q4_K_M** | Qwen 3.8 27B GSQ-RCO IQ3_S, DeepSeek V4.1 Flash IQ2_XS | 262k |
+| 24–63 GB | **Arete 27B Q5_K_M** | Qwen 3.8 27B GSQ-RCO IQ3_S, DeepSeek V4.1 Flash IQ2_XS | 262k |
 | 64 GB+ | Qwen 3.8 Flash Next (Strata) | Flash Next Abliterated, Inkling 2 Small (vLLM), GLM 5.3 Flash, DeepSeek V4.1 Flash | 262k–1M |
 
 **Ladder 2 — unified / CPU / Apple Silicon (MoE only)**
@@ -144,15 +122,19 @@ Two ladders, never one. Dense on dedicated VRAM — **Arete 27B is the default a
 | 8–15 GB | Maple Preview 20B-A1B (Colibri int2) | Maple TQ2_0 GGUF, LFM3 Omni 2B | 131k |
 | 16–23 GB | Qwen 3.6 35B-A3B UD-Q4_K_M (MTP) | LFM2.5 24B-A2B, Cyber-Tiel Coder 35B-A3B, **Nanbeige 4.3 33B**, Flash Next (Strata) | 262k |
 | 24–31 GB | Qwen 3.5 35B-A3B UD-Q4_K_M (MTP) | Nemotron Bolt 74B-A9B, Cyber-Tiel Q4_K_XL, Flash Next (Strata) | 262k |
-| 32–47 GB | Flint 40B-A2.5B UD-Q4_K_XL | Qwen 3.6 UD-Q4_K_M, Cyber-Tiel UD-Q4_K_XL | 131k–262k |
-| 48–63 GB | Cyber-Tiel Coder 35B-A3B UD-Q4_K_XL | Flint 40B UD-Q4_K_XL | 262k |
+| 32–47 GB | Flint 40B-A2.5B UD-Q4_K_XL | Qwen 3.6 UD-Q5_K_M, Cyber-Tiel Q5_K_XL | 131k–262k |
+| 48–63 GB | Cyber-Tiel Coder 35B-A3B UD-Q6_K_XL | Flint 40B UD-Q5_K_M | 262k |
 | 64 GB+ | Qwen 3.8 Flash Next (Strata) | DeepSeek V4.1 Flash (Strata), Inkling 2 Small (vLLM) | 262k–1M |
 
 **Also in the catalog, deliberately not a band default** — Arete 27B (Q3_K_S → Q8_0, the one sanctioned dense exception on the unified side), Qwen 3.8 27B Unleashed, Qwen 3.6 35B-A3B Abliterated, LFM2.5 24B-A2B Uncensored, Flint 40B Abliterated, Nemotron Bolt Abliterated, Darwin 180B RSI, GLM 5.3 Flash and its Maya quants.
 
 A variant never displaces a band default. It is offered *at* the band it fits, beside the default, and you can choose it yourself.
 
-**Choosing for yourself.** `auto` follows the ladder, but nothing is locked: `/turbofit shift <model>` switches to any catalog entry, `/turbofit intelligence | balanced | speed` re-ranks the same candidates by a different axis, and `references/fallback-chain.json` is a user-editable ordered chain — edit it and TurboFit serves that order instead of the default. The ladder is a recommendation, not a cage.
+**Choosing for yourself.** `auto` follows the ladder, but nothing is locked: `/turbofit shift <model>` switches to any catalog entry, `/turbofit intelligence | balanced | speed` re-ranks the same candidates by a different axis, and the fallback chain is yours to write. Put your own order in `~/.config/turbofit/fallback-chain.json` (or point `$TURBOFIT_CHAIN` at a file) and TurboFit serves that instead of the shipped default — no repo edit, and it survives updates. A level may name **any smaller model on this machine** or **any model served by another TurboFit node**: give it an `endpoint` (and optionally a `peer` name) and it costs this machine no VRAM at all, which is how you shift to a sibling box while your own GPUs are busy with something else. The ladder is a recommendation, not a cage.
+
+**The auxiliary keeps your VRAM.** Maple Preview 20B-A1B is the default auxiliary everywhere, and it runs with `-ngl 0`: its weights stay memory-mapped on disk and the active experts stream into system RAM (32 GB+) or straight off the SSD below that. Since 40–85% of Hermes tokens go through the auxiliary, that placement is what leaves the whole card for the main model. Ask for GPU layers explicitly and it will take them; the default never claims a card.
+
+**Small MoEs reach small cards.** Flint 40B-A2.5B and LFM2.5 24B-A2B offload measured expert layers to the host, so they are placed at 8–16 GB instead of being excluded: LFM2.5 sends 24 of 38 expert layers to the host at 8 GB, Flint 38 of 47. The tier table and the launcher use the same arithmetic, so a band that is advertised is a band that actually starts.
 
 **Multimodal — 16 entries, each with the runtime that serves it**
 
@@ -164,9 +146,88 @@ A variant never displaces a band default. It is offered *at* the band it fits, b
 | tts | Qwen3 TTS CustomVoice, Darwin TTS 1.7B, **Soprano TTS**, PersonaPlex (duplex), Edge TTS |
 | stt | **NVIDIA Parakeet TDT 0.6B v3**, Nemotron ASR 0.6B, faster-whisper, PersonaPlex (duplex) |
 
-**Auxiliary text slots** stay in the main catalog: **Maple Preview 20B-A1B** (`maple-preview-tq2`) is the auxiliary for every configuration — one aux model across the board, with no alternative auxiliary. `auto` still means "share the main process"; it is a routing mode, not a second model. `recommend_multimodal()` ranks every modality against the detected hardware and returns `fit`, an action and the reason.
+**Auxiliary text slots** stay in the main catalog: **Maple Preview 20B-A1B** is the default auxiliary for every configuration; **Cyber-Tiel Coder 35B-A3B** is the MoE auxiliary offered alongside it. `recommend_multimodal()` ranks every modality against the detected hardware and returns `fit`, an action and the reason.
 
 Rules that hold at every rung: MTP on wherever the model supports it; **IQ3_S is lossless**, so 32 GB and 48 GB both stay on it rather than paying for a heavier quant; DFlash2 drafters belong to Qwen only, Bonsai keeps its own Prism DSpark sidecar.
+
+## What it does at runtime
+
+| Dial | Meaning |
+|---|---|
+| **Memory pressure** | used ÷ total per card; external apps are counted as untouchable, never as reclaimable |
+| **Context** | current window vs native max, and the shed steps (262k → 131k → 65k), never below the 64K floor |
+| **Fallback chain** | context first → smaller model → release residency; heal back up when the pressure clears |
+
+Every rung is a Turbofile entry bound to an evidence digest. `external_gpu_priority: absolute` is enforced: a contended card with no cheaper rung makes TurboFit **yield** the model, and it will not reload while the pressure persists. Pressure can only lower the effective rung — never raise the ceiling your hardware was measured for.
+
+```
+hermes → Turbofit gateway :8091 → route state → local runtime
+                                    ↑            (llama.cpp / Strata unit)
+              adaptive controller ┘  probe → policy → reconcile → publish
+```
+
+## Engines
+
+Four serving paths, dispatched per model by `runtime_flavor` in its recipe. A model names its engine once; the ladder, the pressure policy and the gateway do not care which one answers.
+
+| Engine | `runtime_flavor` | Serves | Why it exists |
+|---|---|---|---|
+| **llama.cpp** (mainline) | `mainline` | GGUF quantizations | the default: every quantized build |
+| **llama.cpp** (Prism fork) | `prism` | ternary GGUF | mainline cannot load ternary weights |
+| **Strata** | `strata` | large MoE on small VRAM | its own CLI and split-engine; 8 GB cards start at 128K |
+| **vLLM** | `vllm` | raw HF checkpoints | models with no GGUF at all, e.g. Inkling 2 Small |
+| **media runtimes** | per-model `runtime` | image, video, music, TTS, STT | diffusers, ACE-Step, faster-whisper, PersonaPlex |
+
+A vLLM recipe composes `vllm serve <checkpoint-dir>` with tensor parallelism and a GPU-memory fraction; a Strata recipe composes `strata launch`; a llama.cpp recipe composes `llama-server`. Resolution is planning, not execution — a checkpoint directory that has not been materialized yet is still a valid rung.
+
+## Models
+
+**89 catalog entries, 86 main models, four contexts (64K / 128K / 262K / 1M), 1,490 matrix rows.** Every entry pins a Hugging Face revision and a sha256.
+
+Two ladders, never one. Dense on dedicated VRAM — **Arete 27B is the default at every dedicated band it fits (IQ2_XXS / Q3_K_S / Q4_K_M / Q5_K_M)** — and Mixture-of-Experts on unified/CPU, because dense crawls there.
+
+**Ladder 1 — dedicated VRAM**
+
+| Band | Model | Context |
+|---|---|---|
+| 8–11 GB | Ternary Bonsai 2 27B (PTQ1_0 / PQ2_0) · LFM3 Omni 2B | 131k |
+| 12–15 GB | Underdog 27B (PQ2_0) · LFM2.5 24B-A2B **Q4_K_M** · Arete 27B Uncensored V2 | 131k |
+| 16–23 GB | Qwen 3.8 27B GSQ-RCO **IQ3_S** · Qwen 3.6 35B-A3B **UD-Q4_K_M (MTP)** · Qwen 3.5 35B-A3B (MTP) · Nemotron Bolt 74B-A9B (24GB) · Flint 40B-A2.5B Abliterated | 131k–262k |
+| 24–63 GB | Qwen 3.8 27B GSQ-RCO **IQ3_S** · DeepSeek V4.1 Flash IQ2_XS | 262k |
+| 64 GB+ | Qwen 3.8 Flash Next (Strata) · Qwen 3.8 Flash Next Abliterated (IQ3_S) · Inkling 2 Small (**vLLM**) | 262k–1M |
+
+**Ladder 2 — unified / CPU / Apple Silicon (MoE only)**
+
+| Band | Model | Context |
+|---|---|---|
+| 8–15 GB | Maple Preview 20B-A1B (TQ2_0) | 131k |
+| 16–63 GB | Cyber-Tiel Coder 35B-A3B (UD-IQ3_XXS → Q6_K_XL by band) | 262k |
+| 64 GB+ | Qwen 3.8 Flash Next (Strata) · DeepSeek V4.1 Flash (Strata) | 262k |
+
+**Also in the catalog, deliberately not a band default** — Arete 27B (Q3_K_S → Q8_0, the one sanctioned dense exception on the unified side), Nanbeige 4.3 33B, GLM 5.3 Flash and its Maya quants, Darwin 180B RSI, Cyber-Tiel Coder, and a full uncensored line: Qwen 3.8 27B Unleashed, Qwen 3.6 35B-A3B Abliterated, LFM2.5 24B-A2B Uncensored, Flint 40B Abliterated, Nemotron Bolt Abliterated.
+
+A variant never displaces a band default. It is offered *at* the band it fits, beside the default, and evidence decides.
+
+**Multimodal — 16 entries, each with the runtime that serves it**
+
+| Modality | Models |
+|---|---|
+| image | MiniMax H3 Image (diffusers) |
+| video | MiniMax H3 (diffusers) |
+| music | MiniMax Music 3, ACE-Step 1.5 2B / 4B |
+| tts | Qwen3 TTS CustomVoice, Darwin TTS 1.7B, **Soprano TTS**, PersonaPlex (duplex), Edge TTS |
+| stt | **NVIDIA Parakeet TDT 0.6B v3**, Nemotron ASR 0.6B, faster-whisper, PersonaPlex (duplex) |
+
+**Auxiliary text slots** stay in the main catalog: **Cyber-Tiel Coder 35B-A3B** and **Maple Preview 20B-A1B** are eligible for the light slots. `recommend_multimodal()` ranks every modality against the detected hardware and returns `fit`, an action and the reason — `use-now`, `install-adapter`, `run-turbofit-local`, or `insufficient-accelerator-memory`.
+
+Rules that hold at every rung: MTP on wherever the model supports it; **IQ3_S is lossless**, so 32 GB and 48 GB both stay on it rather than paying for a heavier quant; DFlash2 drafters belong to Qwen only, Bonsai keeps its own Prism DSpark sidecar.
+
+**Chain options** — `references/fallback-chain.json`, swappable per slot, all `candidate` until measured on the box in question:
+
+- **Qwen 3.8 27B GSQ-RCO** — the promoted dense-27B default. *Unleashed is retired; GSQ-RCO replaced it.*
+- **DeepSeek V4.1 Flash** — GSQ-RCO **and** a Strata build; 763B/16B MoE, so a 96 GB+ rung, not a 48 GB default.
+- **Muse Glimmer 30B (Hermes-Agentic)** — agentic-tuned 30B, head-to-head candidate against GSQ-RCO.
+- **LFM 24A2B** — 24B total / 2B active MoE candidate. **GROOT** — candidate, artifacts not yet pinned.
 
 ## Tailscale: use any model from any of your devices
 
@@ -185,7 +246,6 @@ Start the local endpoint with `/turbofit serve` (background: `scripts/turbofit-g
 - A peer's model is addressable as `peer.ts.net/model-name`; a bare `model-name` resolves to whichever peer serves it.
 - A model you name explicitly is **never** silently answered by a hosted API — you get a retryable `503` naming it. Substitution is legal only for `auto`/`active`, and only when `TURBOFIT_ALLOW_API=true`.
 - Plain HTTP is honoured only on loopback and Tailscale addresses; anything else needs HTTPS.
-
 
 ## Built on Hermes' own runtime
 

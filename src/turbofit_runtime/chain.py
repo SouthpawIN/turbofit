@@ -22,7 +22,9 @@ DEFAULT_CHAIN_PATH = Path(__file__).resolve().parents[2] / "references" / "fallb
 
 _LEVEL_KINDS = frozenset({"model", "context", "yield"})
 _EVIDENCE = frozenset({"measured", "portable-fit", "candidate"})
-_OPTIONAL_LEVEL_KEYS = frozenset({"options", "evidence_source", "note", "quant"})
+_OPTIONAL_LEVEL_KEYS = frozenset({
+    "options", "evidence_source", "note", "quant", "endpoint", "peer",
+})
 
 
 @dataclass(frozen=True)
@@ -37,6 +39,13 @@ class Level:
     options: tuple[Mapping[str, Any], ...] = ()
     evidence_source: str | None = None
     note: str | None = None
+    endpoint: str | None = None
+    peer: str | None = None
+
+    @property
+    def remote(self) -> bool:
+        """A level served by another TurboFit node costs this machine nothing."""
+        return bool(self.endpoint)
 
     def to_dict(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -52,6 +61,11 @@ class Level:
             payload["evidence_source"] = self.evidence_source
         if self.note:
             payload["note"] = self.note
+        if self.endpoint:
+            payload["endpoint"] = self.endpoint
+            payload["remote"] = True
+        if self.peer:
+            payload["peer"] = self.peer
         if self.options:
             payload["options"] = [dict(option) for option in self.options]
         return payload
@@ -118,6 +132,13 @@ def _parse_level(raw: Any, lane: str, index: int) -> Level:
     model = raw.get("model")
     if kind != "yield":
         _require(bool(isinstance(model, str) and model), f"{where}.model is required for kind {kind!r}")
+    endpoint = raw.get("endpoint")
+    if endpoint is not None:
+        _require(
+            isinstance(endpoint, str) and endpoint.startswith(("http://", "https://")),
+            f"{where}.endpoint must be an http(s) URL to a TurboFit node",
+        )
+        _require(kind == "model", f"{where}.endpoint is only valid on a model level")
     return Level(
         id=str(raw["id"]),
         kind=kind,
@@ -131,12 +152,41 @@ def _parse_level(raw: Any, lane: str, index: int) -> Level:
         options=tuple(dict(option) for option in options),
         evidence_source=raw.get("evidence_source"),
         note=raw.get("note"),
+        endpoint=str(endpoint) if isinstance(endpoint, str) else None,
+        peer=str(raw["peer"]) if isinstance(raw.get("peer"), str) else None,
     )
 
 
+def user_chain_path(env: Mapping[str, str] | None = None) -> Path | None:
+    """The operator's own chain, if they wrote one.
+
+    Precedence: ``$TURBOFIT_CHAIN``, then ``$XDG_CONFIG_HOME/turbofit/fallback-chain.json``
+    (default ``~/.config``). A missing file is not an error — the shipped chain is
+    the default, and a user who never edits anything never sees this path.
+    """
+    import os
+
+    environ = os.environ if env is None else env
+    explicit = environ.get("TURBOFIT_CHAIN")
+    if explicit:
+        candidate = Path(explicit).expanduser()
+        return candidate if candidate.is_file() else None
+    config_home = environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
+    candidate = Path(config_home).expanduser() / "turbofit" / "fallback-chain.json"
+    return candidate if candidate.is_file() else None
+
+
 def load_chain(path: str | Path | None = None) -> Chain:
-    """Load and validate the chain document. Raises ValueError on a structural fault."""
-    source = Path(path) if path is not None else DEFAULT_CHAIN_PATH
+    """Load and validate the chain document. Raises ValueError on a structural fault.
+
+    With no explicit path the operator's own chain wins over the shipped one, so
+    the fallback order is theirs to choose: any smaller local model, or a model
+    served by another TurboFit node on the tailnet.
+    """
+    if path is not None:
+        source = Path(path)
+    else:
+        source = user_chain_path() or DEFAULT_CHAIN_PATH
     raw = json.loads(source.read_text(encoding="utf-8"))
     _require(isinstance(raw, Mapping), "chain root must be an object")
     _require(raw.get("schema") == CHAIN_SCHEMA, f"chain schema must equal {CHAIN_SCHEMA!r}")
