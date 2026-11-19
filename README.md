@@ -91,7 +91,7 @@ TurboFit is free, MIT, and always will be — nothing is paywalled and no runtim
 |---|---|
 | ☕ **[Ko-fi](https://ko-fi.com/sovthpaw)** | one-off tip, no account needed, 0% platform fee |
 | 🧋 **[Buy Me a Coffee](https://www.buymeacoffee.com/sovthpaw)** | one-off or monthly |
-| 🔧 **[Patreon](https://www.patreon.com/sovthpaw)** | monthly support, early benchmark results, a vote on what gets measured next |
+| 🔧 **[Patreon](https://www.patreon.com/sovthpaw)** | monthly support, and a one-on-one live call with me once a month |
 
 Star the repo if that's all you want to do — it genuinely helps other people find it.
 
