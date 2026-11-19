@@ -83,6 +83,18 @@ Auto keeps picking the wrong model for my card — fix it.
 
 **Install TurboSouth** with `scripts/install` — it installs the plugin first and proves it with a real completion. TurboSouth installs TurboFit when it is missing, then verifies it with a real completion. TurboSouth is a *profile*, not a second product: one TurboFit implementation, one support surface, and the sovthpaw pet arrives with it. `hermes profile install https://github.com/SouthpawIN/turbosouth.git --name turbosouth --yes` also works — but Hermes does not act on a distribution's `dependencies:`, so run the plugin install **first**, or just use `scripts/install`, which does both and verifies the result.
 
+## Support the work
+
+TurboFit is free, MIT, and always will be — nothing is paywalled and no runtime path checks whether you donated. If it saved you a cloud bill or a weekend of picking quants, these keep the benchmarks running:
+
+| | |
+|---|---|
+| ☕ **[Ko-fi](https://ko-fi.com/sovthpaw)** | one-off tip, no account needed, 0% platform fee |
+| 🧋 **[Buy Me a Coffee](https://www.buymeacoffee.com/sovthpaw)** | one-off or monthly |
+| 🔧 **[Patreon](https://www.patreon.com/sovthpaw)** | monthly support, early benchmark results, a vote on what gets measured next |
+
+Star the repo if that's all you want to do — it genuinely helps other people find it.
+
 ---
 
 ## What it does at runtime
