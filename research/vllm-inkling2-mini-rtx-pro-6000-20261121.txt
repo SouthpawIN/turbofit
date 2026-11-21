@@ -1,0 +1,8 @@
+C1 decode tok/s: [168, 168, 168] ttft ms: [32, 32, 32]
+C4: per-stream [109, 109, 109, 109] aggregate 213 tok/s
+C8: per-stream [96, 96, 96, 96, 96, 96, 96, 96] aggregate 429 tok/s
+needle prompt=22223 wall=11.1s finish=stop content='12000-ALPHA'
+  cold prefill ~21844 tok/s (1.0s)
+needle prompt=101076 wall=67.0s finish=length content=''
+  cold prefill ~9933 tok/s (10.2s)
+tool calls ok 5/5
