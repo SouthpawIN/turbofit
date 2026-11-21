@@ -1,0 +1,185 @@
+{
+ "base": {
+  "c1": [
+   248.3,
+   321.4,
+   321.7
+  ],
+  "c1_med": 321.4,
+  "c8_agg": [
+   481.1,
+   503.2,
+   499.2
+  ],
+  "c8_med": 499.2,
+  "ttft_fresh_ms": 2879.4,
+  "ttft_cached_ms": 186.5,
+  "ok": true,
+  "load": "45s",
+  "secs": 68
+ },
+ "effort-none": {
+  "c1": [
+   408.8,
+   424.6,
+   426.9
+  ],
+  "c1_med": 424.6,
+  "c8_agg": [
+   483.6,
+   567.7,
+   572.1
+  ],
+  "c8_med": 567.7,
+  "ttft_fresh_ms": 2764.7,
+  "ttft_cached_ms": 50.8,
+  "ok": true,
+  "load": "45s",
+  "secs": 68
+ },
+ "spec6": {
+  "c1": [
+   119.2,
+   317.9,
+   317.9
+  ],
+  "c1_med": 317.9,
+  "c8_agg": [
+   488.4,
+   517.2,
+   516.9
+  ],
+  "c8_med": 516.9,
+  "ttft_fresh_ms": 2905.9,
+  "ttft_cached_ms": 190.1,
+  "ok": true,
+  "load": "30s",
+  "secs": 57
+ },
+ "spec10": {
+  "c1": [
+   277.9,
+   321.5,
+   321.1
+  ],
+  "c1_med": 321.1,
+  "c8_agg": [
+   479.8,
+   507.1,
+   504.2
+  ],
+  "c8_med": 504.2,
+  "ttft_fresh_ms": 2909.4,
+  "ttft_cached_ms": 186.3,
+  "ok": true,
+  "load": "30s",
+  "secs": 55
+ },
+ "spec12": {
+  "c1": [
+   136.9,
+   201.2,
+   302.1
+  ],
+  "c1_med": 201.2,
+  "c8_agg": [
+   431.8,
+   458.3,
+   486.1
+  ],
+  "c8_med": 458.3,
+  "ttft_fresh_ms": 2965.3,
+  "ttft_cached_ms": 216.9,
+  "ok": true,
+  "load": "30s",
+  "secs": 59
+ },
+ "prefill32768": {
+  "c1": [
+   250.1,
+   320.9,
+   322.1
+  ],
+  "c1_med": 320.9,
+  "c8_agg": [
+   478.7,
+   507.1,
+   511.0
+  ],
+  "c8_med": 507.1,
+  "ttft_fresh_ms": 2929.7,
+  "ttft_cached_ms": 190.3,
+  "ok": true,
+  "load": "30s",
+  "secs": 55
+ },
+ "k8v4": {
+  "ok": false,
+  "error": "watts/.cache/basalt/747539a4eaa3f9e8/engine.log\nNov 19 22:02:05 Onyx-Linux bash[2715393]: [server] stopped\nNov 19 22:02:05 Onyx-Linux systemd[1]: basalt-serve.service: Main process exited, code=exited, status=1/FAILURE\nNov 19 22:02:05 Onyx-Linux systemd[1]: basalt-serve.service: Failed with result 'exit-code'.\nNov 19 22:02:05 Onyx-Linux systemd[1]: basalt-serve.service: Consumed 27.449s CPU time.\n"
+ },
+ "reserve700": {
+  "c1": [
+   281.3,
+   320.0,
+   320.0
+  ],
+  "c1_med": 320.0,
+  "c8_agg": [
+   477.0,
+   504.7,
+   498.1
+  ],
+  "c8_med": 498.1,
+  "ttft_fresh_ms": 2921.9,
+  "ttft_cached_ms": 180.7,
+  "ok": true,
+  "load": "30s",
+  "secs": 53
+ },
+ "relaxed0.9": {
+  "c1": [
+   280.3,
+   321.2,
+   321.1
+  ],
+  "c1_med": 321.1,
+  "c8_agg": [
+   476.2,
+   513.7,
+   511.5
+  ],
+  "c8_med": 511.5,
+  "ttft_fresh_ms": 2918.9,
+  "ttft_cached_ms": 188.9,
+  "ok": true,
+  "load": "30s",
+  "secs": 55
+ },
+ "combo": {
+  "c1": [
+   399.7,
+   425.4,
+   424.9
+  ],
+  "c1_med": 424.9,
+  "c8_agg": [
+   530.6,
+   583.2,
+   583.5
+  ],
+  "c8_med": 583.2,
+  "ttft_fresh_ms": 2767.1,
+  "ttft_cached_ms": 35.8,
+  "ok": true,
+  "load": "30s",
+  "combo": {
+   "engine": {
+    "spec": 6,
+    "relaxed-drafting": 0.9
+   },
+   "entry": {
+    "reasoning-effort": "none"
+   }
+  }
+ }
+}
