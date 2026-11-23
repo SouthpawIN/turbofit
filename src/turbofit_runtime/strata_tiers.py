@@ -88,6 +88,12 @@ class FamilyRule:
     #: share the family but not the pack (Maya-M/L) get a pack-derived floor
     #: instead of borrowing the small variant's number.
     documented_models: frozenset[str] = frozenset()
+    #: Per-catalog-id VRAM floors for a family that ships several packs sized
+    #: for different cards (Inkling 2 Mini SQ-10/15/20). Ids not listed fall
+    #: back to ``min_vram_gb``. The floor is the card the pack is *sized for*;
+    #: below it the pack is refused in favour of the smaller sibling, not
+    #: streamed onto a card the vendor never sized it for.
+    model_min_vram_gb: tuple[tuple[str, int], ...] = ()
 
 
 FAMILY_RULES: tuple[FamilyRule, ...] = (
@@ -134,6 +140,24 @@ FAMILY_RULES: tuple[FamilyRule, ...] = (
         source=(
             "model-recipes Darwin 180B RSI (Strata): PLE/SSD streaming, "
             "native_context 262144"
+        ),
+    ),
+    FamilyRule(
+        family="Inkling 2 Mini",
+        recipe_alias="inkling-2-mini-strata",
+        min_vram_gb=8,
+        min_ram_gib=None,
+        model_min_vram_gb=(
+            ("inkling-2-mini-sq10", 8),
+            ("inkling-2-mini-sq15", 16),
+            ("inkling-2-mini-sq20", 24),
+        ),
+        source=(
+            "strata-engine/Inkling-2-Mini-Strata pack card: SQ-10 100% VRAM "
+            "at 12 GiB, hybrid RAM+VRAM from 4 GiB (the ladder's smallest band "
+            "is 8 GB); SQ-15 at 16 GiB; SQ-20 native lossless at 24 GiB+ and "
+            "32 GiB+ unified memory; Strata v0.2.19 release notes "
+            "(strata-inkling 0.1.65)"
         ),
     ),
 )
@@ -319,6 +343,9 @@ def load_rows(root: str | Path | None = None) -> tuple[StrataRow, ...]:
         # card") keep the vendor's RAM figure across their quants; families with
         # no documented figure get a pack-derived floor instead of a guess.
         min_ram = rule.min_ram_gib if rule.min_ram_gib is not None else derived_ram
+        # A family can ship packs sized for different cards (Inkling 2 Mini
+        # SQ-10/15/20): each pack keeps its own documented VRAM floor.
+        min_vram = dict(rule.model_min_vram_gb).get(str(model["id"]), rule.min_vram_gb)
         rows.append(
             StrataRow(
                 model_id=str(model["id"]),
@@ -334,7 +361,7 @@ def load_rows(root: str | Path | None = None) -> tuple[StrataRow, ...]:
                     int(item) for item in (model.get("supported_contexts") or [])
                 ),
                 context_curve=curve,
-                min_vram_gb=rule.min_vram_gb,
+                min_vram_gb=min_vram,
                 min_ram_gib=int(min_ram),
                 source=rule.source,
                 documented=(
@@ -359,12 +386,16 @@ def _family_key(recipe_alias: str) -> str:
     """Map a recipe alias to the ``strata.models`` family key.
 
     The recipe alias names the pack (``glm-5-3-flash``); ``strata.models`` keys
-    the family the engine serves (``qwen3.8-flash-next``). Qwen is the one pack
-    whose family key differs, and it is the only family with a documented
-    per-VRAM-class context curve today.
+    the family the engine serves (``qwen3.8-flash-next``). Qwen's family key
+    differs from its alias, and it carries a vendor-documented per-VRAM-class
+    context curve; Inkling's alias carries the ``-strata`` suffix while its
+    ``strata.models`` entry keys the bare family (its curve is derived, and
+    says so).
     """
     if recipe_alias.startswith("qwen3-8-flash-next"):
         return "qwen3.8-flash-next"
+    if recipe_alias.startswith("inkling-2-mini"):
+        return "inkling-2-mini"
     return recipe_alias
 
 

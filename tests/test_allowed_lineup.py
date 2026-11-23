@@ -161,6 +161,8 @@ def test_matrix_alternatives_are_offered_not_defaulted() -> None:
 
 def test_glm_maya_is_offered_where_project_maya_says_it_runs() -> None:
     """Maya-XS targets 64 GB RAM + a 24 GB card; it must not appear without the RAM."""
+    from turbofit_runtime.allowed_lineup import strata_options
+
     thin = [o["alias"] for o in check_local_options(vram_gb=24, host_ram_gb=32)]
     assert "glm-5-3-flash-maya-xs" not in thin
 
@@ -169,23 +171,23 @@ def test_glm_maya_is_offered_where_project_maya_says_it_runs() -> None:
             vram_gb=24, host_ram_gb=64, cpu_flags={"avx2"},
         )
     ]
-    assert "glm-5-3-flash-maya-xs" in rich
     assert rich[0].startswith("qwen3-8-flash-next"), "Strata MoE leads at equal context"
-
-    big = [
-        o["alias"] for o in check_local_options(
-            vram_gb=64, host_ram_gb=64, cpu_flags={"avx2"},
-        )
-    ]
-    assert "glm-5-3-flash-maya-xs" in big
-    # The recommendation lists the strongest three rows; the tier view keeps the
-    # full admitted set (Maya-S24 included) for audit.
-    from turbofit_runtime.allowed_lineup import strata_options
+    # The recommendation lists the strongest three rows; Inkling SQ-20 (262K,
+    # native lossless, fully resident) earns a slot ahead of the 128K Maya
+    # packs. Maya-XS stays admitted — the tier view keeps the full set for
+    # audit even when it is outside the top three.
+    assert "inkling-2-mini-sq20" in rich
+    _preferred, view24 = strata_options(
+        vram_gb=24, host_ram_gb=64, cpu_flags={"avx2"},
+    )
+    assert view24 is not None
+    assert "glm-5-3-flash-maya-xs" in {row.model_id for row in view24.admitted}
 
     _preferred, view = strata_options(
         vram_gb=64, host_ram_gb=64, cpu_flags={"avx2"},
     )
     assert view is not None
+    assert "glm-5-3-flash-maya-xs" in {row.model_id for row in view.admitted}
     assert "glm-5-3-flash-maya-s24" in {row.model_id for row in view.admitted}
 
     small = [

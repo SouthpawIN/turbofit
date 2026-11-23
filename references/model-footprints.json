@@ -937,6 +937,30 @@
         "thinkingmachines/Inkling-2-Small"
       ],
       "moe": true
+    },
+    "inkling-2-mini-sq10": {
+      "weight_bytes": 11108052992,
+      "shard_set_complete": true,
+      "repos": [
+        "strata-engine/Inkling-2-Mini-Strata"
+      ],
+      "moe": true
+    },
+    "inkling-2-mini-sq15": {
+      "weight_bytes": 14984843264,
+      "shard_set_complete": true,
+      "repos": [
+        "strata-engine/Inkling-2-Mini-Strata"
+      ],
+      "moe": true
+    },
+    "inkling-2-mini-sq20": {
+      "weight_bytes": 19983212544,
+      "shard_set_complete": true,
+      "repos": [
+        "strata-engine/Inkling-2-Mini-Strata"
+      ],
+      "moe": true
     }
   }
 }

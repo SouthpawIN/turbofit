@@ -1289,6 +1289,52 @@
    "path": "",
    "sha256": "snapshot:ef5bf64c1b8e7d0e57b284e10c6891f8db6304c4",
    "size_bytes": 393489000000
+  },
+  {
+   "destination": "inkling-2-mini/Inkling-2-Mini-SQ-10.strata",
+   "families": [
+    "inkling-2-mini-sq10"
+   ],
+   "repo_id": "strata-engine/Inkling-2-Mini-Strata",
+   "revision": "04996a1e2c45009b6a04f2af126cb6bdb2ba3587",
+   "path": "Inkling-2-Mini-SQ-10.strata",
+   "sha256": "ac4d452ad03e4930abd9d46f9c5eec22b2f75a1da45a1e49bd24ccd58b065934",
+   "size_bytes": 10471526400
+  },
+  {
+   "destination": "inkling-2-mini/Inkling-2-Mini-SQ-15.strata",
+   "families": [
+    "inkling-2-mini-sq15"
+   ],
+   "repo_id": "strata-engine/Inkling-2-Mini-Strata",
+   "revision": "04996a1e2c45009b6a04f2af126cb6bdb2ba3587",
+   "path": "Inkling-2-Mini-SQ-15.strata",
+   "sha256": "2ea32eed533afba257e2cbee7b073dc2c3da80fe55d1d2d794779b5498e30737",
+   "size_bytes": 14348316672
+  },
+  {
+   "destination": "inkling-2-mini/Inkling-2-Mini-SQ-20.strata",
+   "families": [
+    "inkling-2-mini-sq20"
+   ],
+   "repo_id": "strata-engine/Inkling-2-Mini-Strata",
+   "revision": "04996a1e2c45009b6a04f2af126cb6bdb2ba3587",
+   "path": "Inkling-2-Mini-SQ-20.strata",
+   "sha256": "0bbfd52344f0dd4779a7807b5f73554a812f24c035e6877b63cd0d499f7e1b97",
+   "size_bytes": 19346685952
+  },
+  {
+   "destination": "inkling-2-mini/Inkling-2-Mini-Vision.strata",
+   "families": [
+    "inkling-2-mini-sq10",
+    "inkling-2-mini-sq15",
+    "inkling-2-mini-sq20"
+   ],
+   "repo_id": "strata-engine/Inkling-2-Mini-Strata",
+   "revision": "04996a1e2c45009b6a04f2af126cb6bdb2ba3587",
+   "path": "Inkling-2-Mini-Vision.strata",
+   "sha256": "6589eff47f9c20bc3a032faa3d449f10bf4f04a84cc6b2ee8a44d51d2b6fc677",
+   "size_bytes": 636526592
   }
  ]
 }

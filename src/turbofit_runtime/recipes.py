@@ -640,9 +640,14 @@ class RecipeBook:
             def strata_path(value: str) -> str:
                 # The recipes spell the root both ways; an unsubstituted
                 # "${turbofit_strata_data}" reached the engine as a literal path.
+                # Self-contained packs (Inkling 2 Mini .strata) are pinned under
+                # the model root, so that variable is substituted here too.
                 root = str(Path(data_root).expanduser())
-                return str(value).replace("${TURBOFIT_STRATA_DATA}", root).replace(
-                    "${turbofit_strata_data}", root
+                return (
+                    str(value)
+                    .replace("${TURBOFIT_STRATA_DATA}", root)
+                    .replace("${turbofit_strata_data}", root)
+                    .replace("${TURBOFIT_MODEL_ROOT}", str(self.model_root))
                 )
 
             command = [binary, "--serve", "--pack", strata_path(pack), "--native", model,

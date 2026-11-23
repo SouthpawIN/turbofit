@@ -1666,6 +1666,87 @@
     262144,
     1048576
    ]
+  },
+  {
+   "id": "inkling-2-mini-sq10",
+   "name": "Inkling 2 Mini SQ-10 (Strata)",
+   "family": "Inkling 2 Mini",
+   "source": "https://huggingface.co/strata-engine/Inkling-2-Mini-Strata",
+   "artifact": "Inkling-2-Mini-SQ-10.strata",
+   "quantization": "SQ-10",
+   "vision": true,
+   "moe": true,
+   "runtime_features": [
+    "expert-tiering",
+    "dspark",
+    "vision-projector"
+   ],
+   "roles": [
+    "main"
+   ],
+   "supported_contexts": [
+    65536,
+    131072,
+    262144,
+    1048576
+   ],
+   "revision": "04996a1e2c45009b6a04f2af126cb6bdb2ba3587",
+   "upstream_source": "https://huggingface.co/thinkingmachines/Inkling-2-Mini",
+   "upstream_revision": "b85c3cfa615fc413cc9af3379f491b963f3b586a"
+  },
+  {
+   "id": "inkling-2-mini-sq15",
+   "name": "Inkling 2 Mini SQ-15 (Strata)",
+   "family": "Inkling 2 Mini",
+   "source": "https://huggingface.co/strata-engine/Inkling-2-Mini-Strata",
+   "artifact": "Inkling-2-Mini-SQ-15.strata",
+   "quantization": "SQ-15",
+   "vision": true,
+   "moe": true,
+   "runtime_features": [
+    "expert-tiering",
+    "dspark",
+    "vision-projector"
+   ],
+   "roles": [
+    "main"
+   ],
+   "supported_contexts": [
+    65536,
+    131072,
+    262144,
+    1048576
+   ],
+   "revision": "04996a1e2c45009b6a04f2af126cb6bdb2ba3587",
+   "upstream_source": "https://huggingface.co/thinkingmachines/Inkling-2-Mini",
+   "upstream_revision": "b85c3cfa615fc413cc9af3379f491b963f3b586a"
+  },
+  {
+   "id": "inkling-2-mini-sq20",
+   "name": "Inkling 2 Mini SQ-20 (Strata, native lossless)",
+   "family": "Inkling 2 Mini",
+   "source": "https://huggingface.co/strata-engine/Inkling-2-Mini-Strata",
+   "artifact": "Inkling-2-Mini-SQ-20.strata",
+   "quantization": "SQ-20 (native SF4+MX8, bit-exact lossless)",
+   "vision": true,
+   "moe": true,
+   "runtime_features": [
+    "expert-tiering",
+    "dspark",
+    "vision-projector"
+   ],
+   "roles": [
+    "main"
+   ],
+   "supported_contexts": [
+    65536,
+    131072,
+    262144,
+    1048576
+   ],
+   "revision": "04996a1e2c45009b6a04f2af126cb6bdb2ba3587",
+   "upstream_source": "https://huggingface.co/thinkingmachines/Inkling-2-Mini",
+   "upstream_revision": "b85c3cfa615fc413cc9af3379f491b963f3b586a"
   }
  ]
 }

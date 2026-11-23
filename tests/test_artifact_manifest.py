@@ -66,7 +66,7 @@ def test_artifact_manifest_covers_every_executable_matrix_file() -> None:
 def test_model_catalog_pins_every_source_revision() -> None:
     catalog = ModelCatalog.load(ROOT / "references/model-catalog.json")
 
-    assert len(catalog.models) == 84  # Carwin Nano's two aux-only entries retired: Maple is the only auxiliary
+    assert len(catalog.models) == 87  # Carwin Nano's two aux-only entries retired: Maple is the only auxiliary
     assert all(len(model.revision) == 40 for model in catalog.models)
 
 
