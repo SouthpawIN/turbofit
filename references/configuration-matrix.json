@@ -2030,6 +2030,90 @@
       "auxiliary": "maple-preview-tq2",
       "context": 1048576,
       "status": "candidate"
+    },
+    {
+      "id": "inkling-2-mini-sq10--maple-preview-tq2--64k",
+      "main": "inkling-2-mini-sq10",
+      "auxiliary": "maple-preview-tq2",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "inkling-2-mini-sq10--maple-preview-tq2--128k",
+      "main": "inkling-2-mini-sq10",
+      "auxiliary": "maple-preview-tq2",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "inkling-2-mini-sq10--maple-preview-tq2--262k",
+      "main": "inkling-2-mini-sq10",
+      "auxiliary": "maple-preview-tq2",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "inkling-2-mini-sq10--maple-preview-tq2--1m",
+      "main": "inkling-2-mini-sq10",
+      "auxiliary": "maple-preview-tq2",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "inkling-2-mini-sq15--maple-preview-tq2--64k",
+      "main": "inkling-2-mini-sq15",
+      "auxiliary": "maple-preview-tq2",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "inkling-2-mini-sq15--maple-preview-tq2--128k",
+      "main": "inkling-2-mini-sq15",
+      "auxiliary": "maple-preview-tq2",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "inkling-2-mini-sq15--maple-preview-tq2--262k",
+      "main": "inkling-2-mini-sq15",
+      "auxiliary": "maple-preview-tq2",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "inkling-2-mini-sq15--maple-preview-tq2--1m",
+      "main": "inkling-2-mini-sq15",
+      "auxiliary": "maple-preview-tq2",
+      "context": 1048576,
+      "status": "candidate"
+    },
+    {
+      "id": "inkling-2-mini-sq20--maple-preview-tq2--64k",
+      "main": "inkling-2-mini-sq20",
+      "auxiliary": "maple-preview-tq2",
+      "context": 65536,
+      "status": "candidate"
+    },
+    {
+      "id": "inkling-2-mini-sq20--maple-preview-tq2--128k",
+      "main": "inkling-2-mini-sq20",
+      "auxiliary": "maple-preview-tq2",
+      "context": 131072,
+      "status": "candidate"
+    },
+    {
+      "id": "inkling-2-mini-sq20--maple-preview-tq2--262k",
+      "main": "inkling-2-mini-sq20",
+      "auxiliary": "maple-preview-tq2",
+      "context": 262144,
+      "status": "candidate"
+    },
+    {
+      "id": "inkling-2-mini-sq20--maple-preview-tq2--1m",
+      "main": "inkling-2-mini-sq20",
+      "auxiliary": "maple-preview-tq2",
+      "context": 1048576,
+      "status": "candidate"
     }
   ]
 }

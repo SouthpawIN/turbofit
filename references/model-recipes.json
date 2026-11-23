@@ -1051,6 +1051,48 @@
         "262144": "baseline",
         "1048576": "baseline"
       }
+    },
+    "inkling-2-mini-sq10": {
+      "family": "Inkling 2 Mini (Strata)",
+      "alias": "inkling-2-mini-sq10",
+      "model": "${TURBOFIT_MODEL_ROOT}/inkling-2-mini/Inkling-2-Mini-SQ-10.strata",
+      "draft": "",
+      "strata_model": "SQ-10",
+      "strata_pack": "${TURBOFIT_MODEL_ROOT}/inkling-2-mini/Inkling-2-Mini-SQ-10.strata",
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
+      }
+    },
+    "inkling-2-mini-sq15": {
+      "family": "Inkling 2 Mini (Strata)",
+      "alias": "inkling-2-mini-sq15",
+      "model": "${TURBOFIT_MODEL_ROOT}/inkling-2-mini/Inkling-2-Mini-SQ-15.strata",
+      "draft": "",
+      "strata_model": "SQ-15",
+      "strata_pack": "${TURBOFIT_MODEL_ROOT}/inkling-2-mini/Inkling-2-Mini-SQ-15.strata",
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
+      }
+    },
+    "inkling-2-mini-sq20": {
+      "family": "Inkling 2 Mini (Strata)",
+      "alias": "inkling-2-mini-sq20",
+      "model": "${TURBOFIT_MODEL_ROOT}/inkling-2-mini/Inkling-2-Mini-SQ-20.strata",
+      "draft": "",
+      "strata_model": "SQ-20",
+      "strata_pack": "${TURBOFIT_MODEL_ROOT}/inkling-2-mini/Inkling-2-Mini-SQ-20.strata",
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
+      }
     }
   },
   "models": {
@@ -1922,6 +1964,36 @@
       "tensor_parallel_size": 2,
       "gpu_memory_utilization": 0.9,
       "enable_prefix_caching": true
+    },
+    "Inkling 2 Mini (Strata)": {
+      "alias": "inkling-2-mini-strata",
+      "kind": "process",
+      "binary": "~/.local/share/turbofit/runtimes/strata/bin/strata",
+      "binary_args": [
+        "setup.py",
+        "serve"
+      ],
+      "model_root": "${TURBOFIT_MODEL_ROOT}/inkling-2-mini",
+      "model": "Inkling-2-Mini-SQ-10.strata",
+      "projector": "${TURBOFIT_MODEL_ROOT}/inkling-2-mini/Inkling-2-Mini-Vision.strata",
+      "port": 11645,
+      "large": true,
+      "native_context": 1048576,
+      "max_context": 1048576,
+      "methods": {
+        "65536": "baseline",
+        "131072": "baseline",
+        "262144": "baseline",
+        "1048576": "baseline"
+      },
+      "runtime_flavor": "strata",
+      "working_dir": "~/.local/share/turbofit/runtimes/strata",
+      "data_dir": "~/.local/share/turbofit/strata-data",
+      "strata_family": "inkling",
+      "strata_model": "SQ-10",
+      "strata_pack": "${TURBOFIT_MODEL_ROOT}/inkling-2-mini/Inkling-2-Mini-SQ-10.strata",
+      "strata_spec": 4,
+      "strata_kv": "int8"
     }
   },
   "native_binaries": {
@@ -1969,6 +2041,57 @@
           "rtx_pro_6000": 100
         },
         "source": "Strata 0.2.10 release notes"
+      },
+      "inkling-2-mini": {
+        "family": "inkling-2-mini",
+        "shape_engine": "strata-inkling",
+        "engine_version": "0.1.65",
+        "app_version": "0.2.19",
+        "quant": "SQ-10 / SQ-15 / SQ-20",
+        "context_tokens": {
+          "8gb": 65536,
+          "16gb": 131072,
+          "24gb+": 262144
+        },
+        "context_tokens_source": "Derived, not vendor-documented: pack+vision bytes against the fit-ladder KV ceiling (1/2/4/16 GiB at 64K/128K/262K/1M). Native context is 1M per the model card and the recipe keeps max_context 1048576; placement claims are predictions until a load test runs on the target card.",
+        "packs": {
+          "SQ-10": {
+            "file": "Inkling-2-Mini-SQ-10.strata",
+            "size_bytes": 10471526400,
+            "recommended_vram_gib": 12,
+            "top1_agreement": 0.9235,
+            "kl_divergence_test": 0.05017,
+            "hybrid_from_vram_gib": 4
+          },
+          "SQ-15": {
+            "file": "Inkling-2-Mini-SQ-15.strata",
+            "size_bytes": 14348316672,
+            "recommended_vram_gib": 16,
+            "top1_agreement": 0.9668,
+            "kl_divergence_test": 0.00889
+          },
+          "SQ-20": {
+            "file": "Inkling-2-Mini-SQ-20.strata",
+            "size_bytes": 19346685952,
+            "recommended_vram_gib": 24,
+            "top1_agreement": 1.0,
+            "kl_divergence_test": 0.0,
+            "native_lossless": true,
+            "note": "bit-exact native SF4+MX8 build of the official NVFP4+MXFP8 checkpoint; a native precision, not a post-hoc quant"
+          }
+        },
+        "vision_pack": {
+          "file": "Inkling-2-Mini-Vision.strata",
+          "size_bytes": 636526592,
+          "precision": "lossless BF16"
+        },
+        "drafting": {
+          "default": "dspark",
+          "note": "built-in W=4 Multi-Branch On-GPU Markov Beam Tree DSpark; no sidecar file"
+        },
+        "dual_gpu": "--gpus 2 Dual-GPU Expert Parallelism",
+        "vision": true,
+        "source": "https://huggingface.co/strata-engine/Inkling-2-Mini-Strata pack card; https://github.com/Niko1221/Strata/releases/tag/v0.2.19"
       }
     },
     "methods": {

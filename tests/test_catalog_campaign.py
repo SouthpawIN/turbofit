@@ -27,10 +27,10 @@ def test_catalog_campaign_materializes_canonical_rows_under_the_quant_ceiling(
     build_campaign_matrix(configurations, catalog, output)
     matrix = load_matrix(output)
 
-    # 290 canonical rows minus the rows whose main is above the Q4 ceiling
+    # 302 canonical rows minus the rows whose main is above the Q4 ceiling
     # without a recorded justification; the catalog rows themselves stay put.
-    assert len(configurations["rows"]) == 290
-    assert len(matrix.rows) == 290 - len(excluded) == 272
+    assert len(configurations["rows"]) == 302
+    assert len(matrix.rows) == 302 - len(excluded) == 284
     assert len({row.id for row in matrix.rows}) == len(matrix.rows)
     assert {row.context for row in matrix.rows} == set(catalog.contexts)
     assert any("GSQ-RCO" in row.main for row in matrix.rows)
@@ -50,7 +50,7 @@ def test_catalog_campaign_can_still_materialize_every_row_explicitly(tmp_path: P
 
     build_campaign_matrix(configurations, catalog, output, enforce_quant_policy=False)
 
-    assert len(load_matrix(output).rows) == 290
+    assert len(load_matrix(output).rows) == 302
 
 
 def test_catalog_executor_uses_original_configuration_payload() -> None:

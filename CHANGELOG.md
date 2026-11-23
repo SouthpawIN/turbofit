@@ -2,6 +2,17 @@
 
 ## Unreleased — the index is the four Hermes suites, and nothing else
 
+- **Inkling 2 Mini joins the catalog as a first-class Strata family**
+  (`strata-inkling` 0.1.65, app 0.2.19): three packs pinned at
+  `strata-engine/Inkling-2-Mini-Strata` — SQ-10 (10.47 GB, hybrid RAM+VRAM on
+  small cards, fully resident from 12 GB), SQ-15 (14.35 GB, 16 GB cards,
+  96.68% top-1 agreement) and SQ-20 (19.35 GB, **bit-exact native SF4+MX8
+  lossless**, 24 GB+ cards) — plus the 0.64 GB lossless BF16 vision pack.
+  Placement holds the 64K floor at every tier; SQ-20 is a native precision,
+  not a post-hoc quant, and carries no fabricated quant justification.
+  Launch commands resolve to `strata --serve` with the pinned pack; a live
+  load test on the target GPUs is still pending.
+
 - **`intelligence_score` is now the Hermes Index**: the equal-weight mean pass@1
   across `hermes-bench`, `terminal-bench-4`, `terminal-bench-science` and
   `skills-bench` — the same four suites Nous Research averages — over the suites

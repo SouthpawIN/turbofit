@@ -29,7 +29,7 @@ Inspect progress:
 PYTHONPATH=src:. scripts/turbofit-catalog-campaign status
 ```
 
-Status separates `current_recipe` coverage—whose `pending + resolved + deferred + waiting_download + waiting_memory + waiting_runtime` always equals all 290 active rows—from `historical_attempts`, which may contain obsolete runtime failures or successes and is never release eligibility. Deferred rows remain explicit and are never counted as resolved. Each `waiting_*` status names a different prerequisite the operator can act on, and each row carries exactly one verdict:
+Status separates `current_recipe` coverage—whose `pending + resolved + deferred + waiting_download + waiting_memory + waiting_runtime` always equals all 302 active rows—from `historical_attempts`, which may contain obsolete runtime failures or successes and is never release eligibility. Deferred rows remain explicit and are never counted as resolved. Each `waiting_*` status names a different prerequisite the operator can act on, and each row carries exactly one verdict:
 
 * `waiting_download` — the engine artifacts are not verifiably installed. Row selection uses the same `inspect_file` definition the dashboard uses (a sub-1 MiB stub, a truncated/failed download, a missing shard or an empty checkpoint directory is not installed), and each row reports the missing byte count instead of being attempted and failed.
 * `waiting_memory` — the weights are installed but the offload planner measured them as too large for this host. The row quotes the planner's own arithmetic instead of launching an engine that must OOM.
@@ -64,7 +64,7 @@ Raw evidence and resumable state live under [`references/results/catalog-campaig
 Runtime fit and decode speed do **not** imply intelligence. Turbofit therefore runs a second durable campaign against each exact production configuration after its native runtime row passes:
 
 ```bash
-# Initialize or inspect all 290 configurations × three benchmark levels
+# Initialize or inspect all 302 configurations × three benchmark levels
 PYTHONPATH=src:. scripts/turbofit-intelligence-campaign init
 PYTHONPATH=src:. scripts/turbofit-intelligence-campaign status
 
