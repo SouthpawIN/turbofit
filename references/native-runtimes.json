@@ -70,7 +70,7 @@
       "id": "strata",
       "kind": "python-cli",
       "repository": "https://github.com/Niko1221/Strata.git",
-      "revision": "v0.2.10",
+      "revision": "v0.2.19",
       "purpose": "Qwen 3.8 Flash Next and DeepSeek-V4.1-Flash (ISTA-DAS Coder) with expert tiering, DFlash2 drafter and the all-cards split engine. 8 GB cards start at 128K context; the split engine needs about 43 GiB free RAM.",
       "executable": "~/.local/share/turbofit/runtimes/strata/.venv/bin/python",
       "launch_command": "strata launch",
