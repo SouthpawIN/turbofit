@@ -35,17 +35,24 @@ def test_floor_is_64k() -> None:
 
 
 def test_strata_row_is_admitted_at_a_lower_tier_when_capable() -> None:
-    """Flash Next holds 128K on an 8 GB card with 64 GiB RAM (AVX2 host)."""
+    """An 8 GB card with 64 GiB RAM (AVX2) admits Strata at the 64K floor.
+
+    Inkling SQ-10 leads by owner preference at 64K; Flash Next still reaches
+    128K further down the same admitted list, which is what this tier proves.
+    """
     view = strata_tiers.tier_view(tier_gb=8, ram_bytes=64 * GIB, cpu_flags=AVX2)
     assert view.capability.supported is True
     assert view.admitted, view.reason
     top = view.admitted[0]
     assert top.engine == "strata"
-    assert top.model_id.startswith("qwen3-8-flash-next")
-    assert top.context == 131_072
+    assert top.model_id.startswith("inkling-2-mini")
+    assert top.context >= 65_536, "the 64K floor holds for the leading pack"
     assert top.caveats and "runs slowly" in top.caveats[0]
     assert top.reason.startswith("strata:")
-    assert "128K" in top.reason
+    flash = [r for r in view.admitted if r.model_id.startswith("qwen3-8-flash-next")]
+    assert flash and max(r.context for r in flash) == 131_072, (
+        "Flash Next still holds 128K at this tier"
+    )
 
 
 def test_strata_row_is_admitted_at_24gb_at_256k() -> None:
@@ -104,7 +111,9 @@ def test_strata_moe_outranks_the_dense_27b_at_the_same_tier() -> None:
     options = check_local_options(vram_gb=48, host_ram_gb=64, cpu_flags=AVX2)
     mains = [item for item in options if item.get("role") == "main"]
     assert mains[0]["engine"] == "strata"
-    assert str(mains[0]["alias"]).startswith("qwen3-8-flash-next")
+    assert str(mains[0]["alias"]).startswith("inkling-2-mini"), (
+        "owner preference: Inkling leads the Strata chain until Qwen Flash Next"
+    )
     assert int(mains[0]["context"]) >= MIN_CONTEXT_TOKENS
     dense = [item for item in mains if item["engine"] == "llama.cpp"]
     assert dense, "the llama.cpp options must stay listed behind the Strata pick"
@@ -117,7 +126,7 @@ def test_recommendation_reason_names_the_engine_and_the_context() -> None:
     assert why.startswith("strata:")
     assert "256K" in why
     assert "llama.cpp" in why
-    assert "Qwen 3.8 Flash Next" in why
+    assert "Inkling 2 Mini" in why, "the reason must name the model that actually leads"
 
 
 def test_strata_does_not_lead_when_llamacpp_holds_more_context() -> None:

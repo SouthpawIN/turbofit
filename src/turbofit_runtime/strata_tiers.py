@@ -96,7 +96,48 @@ class FamilyRule:
     model_min_vram_gb: tuple[tuple[str, int], ...] = ()
 
 
+# Owner-set preference order for the Strata chain. Inkling 2 Mini leads until
+# Qwen 3.8 Flash Next; everything else keeps its documented order behind them.
+# Lower number = preferred. Unlisted families sort after all listed ones.
+STRATA_FAMILY_PREFERENCE: tuple[str, ...] = (
+    "inkling-2-mini",
+    "qwen3-8-flash-next",
+)
+
+
+def _family(model_id: str) -> str:
+    """Collapse a pack id to its family for chain ordering."""
+    return next((p for p in STRATA_FAMILY_PREFERENCE
+                 if model_id.startswith(p)), model_id)
+
+
+def family_preference(model_id: str) -> int:
+    """Rank a pack by its family's position in the owner's preference order."""
+    for index, prefix in enumerate(STRATA_FAMILY_PREFERENCE):
+        if model_id.startswith(prefix):
+            return index
+    return len(STRATA_FAMILY_PREFERENCE)
+
+
 FAMILY_RULES: tuple[FamilyRule, ...] = (
+    FamilyRule(
+        family="Inkling 2 Mini",
+        recipe_alias="inkling-2-mini-strata",
+        min_vram_gb=8,
+        min_ram_gib=None,
+        model_min_vram_gb=(
+            ("inkling-2-mini-sq10", 8),
+            ("inkling-2-mini-sq15", 16),
+            ("inkling-2-mini-sq20", 24),
+        ),
+        source=(
+            "strata-engine/Inkling-2-Mini-Strata pack card: SQ-10 100% VRAM "
+            "at 12 GiB, hybrid RAM+VRAM from 4 GiB (the ladder's smallest band "
+            "is 8 GB); SQ-15 at 16 GiB; SQ-20 native lossless at 24 GiB+ and "
+            "32 GiB+ unified memory; Strata v0.2.19 release notes "
+            "(strata-inkling 0.1.65)"
+        ),
+    ),
     FamilyRule(
         family="Qwen 3.8 Flash Next",
         recipe_alias="qwen3-8-flash-next-strata",
@@ -140,24 +181,6 @@ FAMILY_RULES: tuple[FamilyRule, ...] = (
         source=(
             "model-recipes Darwin 180B RSI (Strata): PLE/SSD streaming, "
             "native_context 262144"
-        ),
-    ),
-    FamilyRule(
-        family="Inkling 2 Mini",
-        recipe_alias="inkling-2-mini-strata",
-        min_vram_gb=8,
-        min_ram_gib=None,
-        model_min_vram_gb=(
-            ("inkling-2-mini-sq10", 8),
-            ("inkling-2-mini-sq15", 16),
-            ("inkling-2-mini-sq20", 24),
-        ),
-        source=(
-            "strata-engine/Inkling-2-Mini-Strata pack card: SQ-10 100% VRAM "
-            "at 12 GiB, hybrid RAM+VRAM from 4 GiB (the ladder's smallest band "
-            "is 8 GB); SQ-15 at 16 GiB; SQ-20 native lossless at 24 GiB+ and "
-            "32 GiB+ unified memory; Strata v0.2.19 release notes "
-            "(strata-inkling 0.1.65)"
         ),
     ),
 )
@@ -567,12 +590,31 @@ def place_tier(
             admitted.append(result)
         else:
             refused.append(result)
-    # Intelligence per tier: the longest admitted context wins; among equal
-    # contexts the vendor-documented pack leads, then the larger pack (a bigger
-    # MoE at the same context is the stronger model).
+    # Owner preference first: Inkling 2 Mini is the preferred pick wherever it is
+    # admitted, with Qwen 3.8 Flash Next next in the chain. This is a deliberate
+    # product decision, not a size heuristic — Inkling is a smaller MoE that
+    # matches or beats the 27B on agentic suites, and SQ-20 is bit-exact lossless.
+    # It outranks the longer-context Flash Next at 12-16 GB on purpose; the 64K
+    # floor still holds, so no sub-floor model is ever promoted by this.
+    # Within a family: longest admitted context, then the documented pack, then
+    # the larger pack.
     documented = {row.model_id: row.documented for row in rows}
+    # One pack per family leads the chain, so the top reads Inkling -> Flash Next
+    # rather than three Inkling packs. The remaining packs stay in the list, just
+    # behind every family's best, so nothing is dropped from the tier view.
+    best_ctx: dict[str, tuple] = {}
+    for item in admitted:
+        fam = _family(item.model_id)
+        rank = (-item.context, not documented.get(item.model_id, True),
+                -item.total_bytes, item.model_id)
+        if fam not in best_ctx or rank < best_ctx[fam][0]:
+            best_ctx[fam] = (rank, item.model_id)
+    leaders = {v[1] for v in best_ctx.values()}
+
     admitted.sort(
         key=lambda item: (
+            0 if item.model_id in leaders else 1,
+            family_preference(item.model_id),
             -item.context,
             not documented.get(item.model_id, True),
             -item.total_bytes,
@@ -750,19 +792,25 @@ def tier_view(
     if admitted:
         top = admitted[0]
         reason = top.reason
-        if best is not None and best.context > top.context:
+        # The llama.cpp comparison asks what Strata CAN hold at this tier, not
+        # what the owner's preference happens to put first. Preference picks the
+        # recommended pack; capability is the longest context any admitted row
+        # reaches. Conflating the two demotes the whole engine when a preferred
+        # but shorter-context family leads the chain.
+        deepest = max(admitted, key=lambda item: item.context)
+        if best is not None and best.context > deepest.context:
             preferred = False
             reason += (
                 f"; NOT preferred at this tier: the best llama.cpp option, "
                 f"{best.label}, holds {best.context_k}K against Strata's "
-                f"{top.context_k}K"
+                f"{deepest.context_k}K"
             )
         elif best is not None:
             preferred = True
             reason += (
-                f"; the best llama.cpp option, {best.label}, holds the same "
-                f"{top.context_k}K at {best.pack_gib:.0f} GiB against this "
-                f"{top.total_bytes / GIB:.0f} GiB MoE pack"
+                f"; the best llama.cpp option, {best.label}, holds "
+                f"{best.context_k}K at {best.pack_gib:.0f} GiB against Strata's "
+                f"{deepest.context_k}K; {top.label} leads by owner preference"
             )
         else:
             preferred = True
