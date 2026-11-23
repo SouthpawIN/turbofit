@@ -118,30 +118,36 @@ Serving paths are dispatched per model by `runtime_flavor` in its recipe. A mode
 
 ## Models and hardware tiers
 
-**84 catalog models, 290 configuration rows, four contexts (64K / 128K / 262K / 1M).** Every entry pins a Hugging Face revision and a sha256, and `tools/check-artifact-existence` fails the build if a pinned artifact stops resolving upstream.
+**87 catalog models, 302 configuration rows, four contexts (64K / 128K / 262K / 1M).** Every entry pins a Hugging Face revision and a sha256, and `tools/check-artifact-existence` fails the build if a pinned artifact stops resolving upstream.
 
 **64K is the floor.** Nothing below 65,536 tokens is ever recommended. A tier that cannot hold 64K with anything says so instead of offering a smaller window.
 
-**Ladder 1 — dedicated VRAM** (AVX2 host, 64 GiB system RAM; `auto` takes the first column)
+**Ladder 1 — dedicated VRAM** (AVX2 host; `auto` takes the first column)
 
-| Band | Default | Also offered | Context |
-|---|---|---|---|
-| 8–11 GB | Maple Preview 20B-A1B (TQ2_0) | Cyber-Tiel Coder 35B-A3B IQ3_XXS · **Qwen 3.8 Flash Next (Strata)** | 128k |
-| 12–15 GB | **Qwen 3.8 Flash Next (Strata)** | Flash Next IQ3_XXS · Maple TQ2_0 · Qwen 3.8 27B GSQ-RCO IQ3_XXS | 256k |
-| 16–23 GB | **Qwen 3.8 Flash Next (Strata)** | Qwen 3.8 27B GSQ-RCO IQ3_XXS · Cyber-Tiel Coder IQ3_XXS | 256k |
-| 24–63 GB | **Qwen 3.8 Flash Next (Strata)** | **GLM 5.3 Flash Maya-XS (Strata)** · Qwen 3.8 27B GSQ-RCO IQ3_S | 256k / 128k |
-| 64–95 GB | **Qwen 3.8 Flash Next (Strata)** | GLM 5.3 Flash Maya · Qwen 3.8 27B BF16 | 256k |
-| 96 GB+ | **Darwin 180B RSI (Strata)** | **DeepSeek V4.1 Flash 1017 (Strata)** · Flash Next · Qwen 3.8 27B BF16 | 256k |
+**Inkling 2 Mini is the preferred model at every tier where it fits, with Qwen 3.8 Flash Next next in the chain.** It is a 26.4B MoE with 5.4B effective active parameters — smaller than the 35B-A3B class — that matches the 27B on the AA Index and beats it on DeepSWE, SWEBench Verified and BrowseComp. Its SQ-20 pack is **bit-exact lossless**, not a lossy quant.
 
-Strata rows lead because they hold more model at the same context on the same card. They need system RAM for the experts: at **128 GiB** the 96 GB band leads with Darwin 180B and DeepSeek V4.1 Flash at 256K; with less RAM those rows are refused *by name*, naming RAM as the constraint, never silently dropped.
+| Band | System RAM | Default | Next in the chain | Context |
+|---|---|---|---|---|
+| 8–11 GB | 32 GiB | Maple Preview 20B-A1B | Cyber-Tiel Coder 35B-A3B · **Inkling SQ-10** | 64k |
+| 12–15 GB | 64 GiB | **Inkling 2 Mini SQ-10** | **Qwen 3.8 Flash Next** | 64k / 256k |
+| 16–23 GB | 64 GiB | **Inkling 2 Mini SQ-15** | **Qwen 3.8 Flash Next** · Qwen 3.8 27B GSQ-RCO | 128k / 256k |
+| 24–63 GB | 64 GiB | **Inkling 2 Mini SQ-20 (lossless)** | **Qwen 3.8 Flash Next** · GLM 5.3 Flash Maya-XS | 256k |
+| 64–95 GB | 128 GiB | **Inkling 2 Mini SQ-20 (lossless)** | **Qwen 3.8 Flash Next** · GLM 5.3 Flash Maya | 256k |
+| 96 GB+ | 128 GiB | **Inkling 2 Mini SQ-20 (lossless)** | **Qwen 3.8 Flash Next** · Darwin 180B RSI | 256k |
 
-**Ladder 2 — unified / CPU / Apple Silicon**
+**System RAM is part of the recommendation, not an afterthought.** A Strata MoE keeps its experts in host memory, so a band is only real when the RAM column is satisfied too. At 8 GB of VRAM with 32 GiB of RAM, Inkling SQ-10 runs hybrid; the same card with less RAM falls back to Maple. Rows that cannot get the RAM are refused *by name*, naming RAM as the constraint, never silently dropped.
 
-| Band | Default | Also offered |
+**Ladder 2 — unified / CPU / Apple Silicon** (one shared pool)
+
+| Pool | Default | Also offered |
 |---|---|---|
-| 8–15 GB | Cyber-Tiel Coder 35B-A3B UD-IQ3_XXS | Arete 27B Q3 · Maple TQ2_0 |
-| 16–23 GB | Qwen 3.8 27B GSQ-RCO IQ3_S | Arete 27B Q4 |
-| 24 GB+ | Qwen 3.8 27B GSQ-RCO IQ3_S | Arete 27B Q4 · heavier quants as memory allows |
+| 8–15 GB | Maple Preview 20B-A1B | — |
+| 16–23 GB | Cyber-Tiel Coder 35B-A3B UD-IQ3_XXS | Arete 27B Q3 |
+| 24–31 GB | Qwen 3.8 27B GSQ-RCO IQ3_S | Arete 27B Q4 |
+| 32–63 GB | **Inkling 2 Mini SQ-20 (lossless)** | Qwen 3.8 27B GSQ-RCO · Arete 27B Q4 |
+| 64 GB+ | **Inkling 2 Mini SQ-20 (lossless)** | **Qwen 3.8 Flash Next** · GLM 5.3 Flash Maya-XS |
+
+Strata ships a signed, notarised macOS arm64 Metal engine, so unified memory is a first-class Strata target rather than a llama.cpp-only path. SQ-20 is documented for 32 GiB+ of unified memory, which is where Inkling takes the lead on this ladder too.
 
 **Small MoEs reach small cards.** Flint 40B-A2.5B and LFM2.5 24B-A2B offload measured expert layers to the host, so they are placed at 8–16 GB instead of being excluded: LFM2.5 sends 24 of 38 expert layers to the host at 8 GB, Flint 38 of 47. The tier table and the launcher use the same arithmetic, so a band that is advertised is a band that actually starts.
 

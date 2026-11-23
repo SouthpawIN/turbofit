@@ -287,12 +287,13 @@ def check_local_options(
     unified = memory_pool == "unified" or apple
     # A Strata-capable host gets its admitted MoE rows ahead of every llama.cpp
     # row at this tier: intelligence per tier, not tokens per second alone.
-    preferred, _strata_view = (
-        ([], None) if (apple or unified)
-        else strata_options(
-            vram_gb=vram_gb, host_ram_gb=host_ram_gb, cpu_flags=cpu_flags,
-            backend=backend, root=strata_root,
-        )
+    # Unified memory is included: Strata 0.2.19 ships a signed, notarised macOS
+    # arm64 Metal engine and documents unified-memory packs (SQ-10 on 16 GiB
+    # Macs, SQ-15 on 24 GiB, SQ-20 on 32 GiB+), plus Strix Point / Strix Halo
+    # iGPUs. Skipping the engine on unified memory hid those rows entirely.
+    preferred, _strata_view = strata_options(
+        vram_gb=vram_gb, host_ram_gb=host_ram_gb, cpu_flags=cpu_flags,
+        backend=backend, root=strata_root,
     )
 
     if apple:
@@ -354,7 +355,14 @@ def check_local_options(
                     ),
                 }
             )
-        return options + [
+        return strata_ranked(
+            preferred,
+            options,
+            tier_gb=strata_tiers.tier_for_vram(host_ram_gb),
+            ram_bytes=max(0, int(host_ram_gb * strata_tiers.GIB)),
+            root=strata_root,
+            view=_strata_view,
+        ) + [
             {
                 "role": "aux",
                 "alias": "maple-preview-tq2",

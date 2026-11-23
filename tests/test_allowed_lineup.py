@@ -156,7 +156,10 @@ def test_matrix_alternatives_are_offered_not_defaulted() -> None:
             vram_gb=64, host_ram_gb=64, cpu_flags={"avx2"},
         )
     ]
-    assert capable[0].startswith("qwen3-8-flash-next"), "Strata leads once eligible"
+    assert str(capable[0]).startswith("inkling-2-mini"), "Inkling leads once Strata is eligible"
+    assert any(str(a).startswith("qwen3-8-flash-next") for a in capable), (
+        "Qwen Flash Next is next in the chain"
+    )
 
 
 def test_glm_maya_is_offered_where_project_maya_says_it_runs() -> None:
@@ -171,7 +174,7 @@ def test_glm_maya_is_offered_where_project_maya_says_it_runs() -> None:
             vram_gb=24, host_ram_gb=64, cpu_flags={"avx2"},
         )
     ]
-    assert rich[0].startswith("qwen3-8-flash-next"), "Strata MoE leads at equal context"
+    assert rich[0].startswith("inkling-2-mini"), "Inkling leads the Strata chain by owner preference"
     # The recommendation lists the strongest three rows; Inkling SQ-20 (262K,
     # native lossless, fully resident) earns a slot ahead of the 128K Maya
     # packs. Maya-XS stays admitted — the tier view keeps the full set for

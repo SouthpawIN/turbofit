@@ -75,7 +75,7 @@ def test_nvidia_dedicated_prefers_strata_moe_over_the_dense_27b(monkeypatch):
     assert rec.backend == "cuda"
     assert rec.primary is not None
     assert rec.engine == "strata"
-    assert rec.primary.model.startswith("qwen3-8-flash-next")
+    assert rec.primary.model.startswith("inkling-2-mini")
     assert rec.primary.context_window == 262_144
     assert "strata:" in rec.why
     assert "256K" in rec.why
