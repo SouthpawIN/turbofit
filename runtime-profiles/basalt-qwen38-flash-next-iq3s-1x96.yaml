@@ -1,0 +1,92 @@
+# Basalt 0.5.0 serving Qwen3.8-Flash-Next IQ3_S on one 96 GB card.
+# Tuned combo (spec 6 + relaxed-drafting 0.9 + reasoning-effort none),
+# reproduced 2026-11-19: C1 424.9 tok/s, C8 aggregate 583.2 tok/s,
+# fresh 29K TTFT 2767 ms, cached-turn TTFT 35.8 ms, 10/10 tool calls,
+# no hallucination loops. Evidence:
+# research/basalt-tuned-combo-rtx-pro-6000-20261119.json
+# Verified localmaxxing.com run (Basalt 0.5.0, canonical reasoning-v1,
+# 473.0 tok/s decode / 1614 prefill / 187 ms TTFT / 73.9% draft accept):
+# run cmwohxfy20849mi018zbrlyqm
+
+schema: turbofit.runtime-profile/v1
+id: basalt-qwen38-flash-next-iq3s-1x96
+class_vram_gb: 96
+topology: 1x96
+status: verified-external
+engine: basalt
+engine_version: 0.5.0
+
+model:
+  repo: ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF
+  quantization: IQ3_S
+  served_as: qwen3.8-flash-next
+  max_context: 262144
+
+hardware_minimum:
+  gpu:
+    name: NVIDIA RTX PRO 6000 Blackwell
+    vram_gb: 96
+    count: 1
+  ram_gb: 64
+  os: linux
+
+# Engine arguments. Paths are relative to a model directory you place
+# yourself; everything else is transferable as-is.
+args:
+  - --model: "<model-dir>/Qwen3.8-FN-IQ3_S-ours.basalt"
+  - --alias: qwen3.8-flash-next
+  - --gpu: "0"
+  - --parallel: "8"
+  - --slot-full-context
+  - --vision: dynamic
+  - --fit-max-tokens
+  - --reasoning-effort: none
+  - --temperature: "0.7"
+  - --top-p: "0.8"
+  - --top-k: "20"
+  - --min-p: "0"
+  - --presence-penalty: "1.5"
+  - --resident-experts: false
+  - --max-context: "262144"
+  - --kv: int8
+  - --vram-reserve-mib: "1900"
+  - --spec: "6"
+  - --conversation-cache-mib: "12288"
+  - --conversation-cache-slots: "8"
+  - --conversation-cache-min-tokens: "2000"
+  - --prompt-cache: "6"
+  - --prompt-cache-every: "16384"
+  - --relaxed-drafting: "0.9"
+  - --mmap-experts
+  - --vram-elastic
+  - --suffix-draft: "0"
+
+# Engine environment. All optional; they tune batching and caching.
+env:
+  BASALT_VERSION: "0.5.0"
+
+# Optional. Control vector softens refusals; drop the three control-vector
+# args if you don't want it.
+optional:
+  control_vector:
+    args:
+      - --control-vector-scaled: "<model-dir>/Huihui-Qwen3.8-Flash-Next-refusal-direction-r.gguf:1.0"
+      - --control-vector-layer-range: "4,44"
+      - --cvec-mode: project
+      - --cvec-dir: per-layer
+    note: refusal-direction r vector, applied at strength 1.0, layers 4-44
+
+notes:
+  - --spec 6 plus --relaxed-drafting 0.9 plus reasoning-effort none is the
+    tuned combo. Spec 6 alone left C1 at 317.9 tok/s; relaxed drafting brings
+    the acceptance gate down to 0.9 (spec 10 was worse at 321, spec 12 was our
+    known cliff at 201 tok/s).
+  - --mmap-experts drops Basalt RSS from ~50 GB to ~13 GB with no decode
+    penalty (median 405 tok/s, 568 aggregate at C8), at the cost of slightly
+    slower startup.
+  - --vram-elastic lets the engine shrink VRAM to free GPU for image/video
+    renders alongside the LLM (peak 97 GB alongside renders verified).
+  - --conversation-cache-mib 12288 with 8 slots holds parked KV; the cached
+    turn is 35.8 ms at 29K context (fresh 2767 ms).
+  - 64 GB system RAM is the floor; --resident-experts false keeps the expert
+    cache streaming from host RAM instead of pinning (freed ~38 GB RAM).
