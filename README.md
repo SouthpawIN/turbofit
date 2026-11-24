@@ -110,11 +110,32 @@ Serving paths are dispatched per model by `runtime_flavor` in its recipe. A mode
 |---|---|---|---|
 | **llama.cpp** (mainline) | `mainline` | GGUF quantizations | the default for every quantized build |
 | **llama.cpp** (Prism fork) | `prism` | ternary GGUF | mainline cannot load ternary weights |
-| **Strata** | `strata` | large MoE on small VRAM | streams experts from RAM/SSD, so a 68 GB model runs on a 12–24 GB card |
-| **vLLM** | `vllm` | raw HF checkpoints | models with no GGUF at all, e.g. Inkling 2 Small |
+| **Strata** | `strata` | large MoE on small VRAM | streams experts from RAM/SSD, so a 68 GB model runs on a 12–24 GB card. Shape engines: `strata-engine`, `strata-inkling`, `strata-hy4` |
+| **vLLM** | `vllm` | raw HF / NVFP4 checkpoints | models with no GGUF, and **~10× faster cold prefill** on long prompts |
+| **Basalt** | `basalt` | Qwen3.8 Flash Next IQ3_S | tuned speculative decoding; `--mmap-experts` and `--vram-elastic` |
 | **media runtimes** | per-model `runtime` | image, video, music, TTS, STT | diffusers, ACE-Step, faster-whisper, PersonaPlex |
 
 **Strata needs AVX2, not AVX-512.** AVX-512 is an accelerator, never a requirement — the engine says so itself: *"this CPU has no AVX-512: the expert kernels run on AVX-2"*. Any modern desktop qualifies. Its documented floor is 12 GB of VRAM, with 8 GB admitted as a slow lane.
+
+**Pinned: Strata app 0.2.21, engines 0.1.67.** That release fixes Qwen *"layer 0 never rang"* on RTX 30-series and newer, fixes the long-conversation crash, and stops infinite engine restarts after three tries. It also makes Inkling dramatically faster after a long prompt — vendor-reported, versus 0.2.20 on the same machines:
+
+| Card | Before → after |
+|---|---|
+| RTX 3060 Ti 8 GB, SQ-10 | 11 → **43 tok/s** |
+| RTX 5070 12 GB, SQ-10 | 12.5 → **68 tok/s** |
+| RTX 4090, SQ-20 after a 32K prompt | 20 → **92 tok/s** |
+| RX 7900 XT, UD-IQ3_XXS | 4.9 → **66 tok/s** |
+
+Agent sessions now reuse their prompt on every backend, Apple Silicon included, so a long session no longer re-reads the whole prompt each turn.
+
+**Engine choice is workload-shaped, not one winner.** On the same 96 GB rig, vLLM reads a cold 22K prompt at ~21.8K tok/s against ~1.5K for Strata/Basalt — about 10×, which is ~3–4 s to first token instead of ~50 s on a cold 80K agentic prompt. Strata wins the warm multi-turn case through prompt reuse. Verified external profiles for both live in [`runtime-profiles/`](runtime-profiles/), each with its sweep receipts:
+
+- **vLLM · Inkling 2 Mini · 1×96** — DSpark spec 7, FP8 KV, prefix caching: **246 tok/s** C1 mean, 429 tok/s at 8 users, tool calls 5/5. FP8 KV is what makes 262K fit on one card.
+- **Basalt · Qwen3.8 Flash Next IQ3_S · 1×96** — spec 6 + relaxed drafting: **425 tok/s** C1, 583 tok/s at 8 users, **35.8 ms** cached-turn TTFT.
+
+Two Basalt flags are worth knowing beyond the speed: `--mmap-experts` cuts resident memory from ~50 GB to ~13 GB with no decode penalty, and `--vram-elastic` lets the engine shrink its VRAM so another workload can use the card — the same yield-and-heal behaviour the pressure ladder implements.
+
+*All figures above are vendor-reported or verified-external on the hardware named. They are not measurements on your machine; `/turbofit status` reports what your own host actually does.*
 
 ## Models and hardware tiers
 
