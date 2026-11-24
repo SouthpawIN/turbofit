@@ -211,13 +211,13 @@
       },
       "endpoint_discoverable": true,
       "source": "https://github.com/Niko1221/Strata",
-      "ref": "0.1.65",
+      "ref": "0.1.67",
       "revision": "",
       "maple_gguf": "incompatible",
       "qwen38_gguf": "incompatible; Strata serves Flash Next, not Qwen 3.8 27B",
       "cyber_tiel_gguf": "incompatible",
       "flash_next": "IQ2_XS recommended; 12-24 GB VRAM + 64 GB RAM; 60-95 tok/s on RTX 5070",
-      "app_version": "0.2.19",
+      "app_version": "0.2.21",
       "shape_engines": [
         "strata-engine",
         "strata-inkling",
@@ -226,7 +226,9 @@
       "platforms_note": "0.2.19 ships linux-aarch64 cuda-cuda13 for NVIDIA Grace Blackwell / DGX Spark GB10, macOS arm64 Metal, Intel Arc SYCL, and AMD RDNA2/RDNA3 including 780M/Strix Point iGPUs.",
       "sm86_gains": "0.1.65 over earlier engines on RTX 3090 / 2x A4000 (sm_86): IQ3_S / UD-Q4_K_XL / IQ2_XS prefill +12..26% (1.72x faster TTFT), decode +13..20%, 100% bit-exact. Vendor-reported.",
       "dual_gpu": "--gpus 2 Dual-GPU Expert Parallelism (strata-inkling); distinct from the all-cards layer split.",
-      "source_release": "https://github.com/Niko1221/Strata/releases/tag/v0.2.19"
+      "source_release": "https://github.com/Niko1221/Strata/releases/tag/v0.2.21",
+      "inkling_gains_0_2_21": "Vendor-reported vs 0.2.20: RTX 3060 Ti 8 GB SQ-10 43 vs 11 tok/s; RTX 5070 12 GB SQ-10 68 vs 12.5; RTX 4090 SQ-20 after a 32K prompt 92 vs 20; RTX 5090 prefill 9,019 vs 7,568 (SQ-20); RX 7900 XT UD-IQ3_XXS 66 vs 4.9. Agent sessions reuse their prompt on every backend.",
+      "rtx30_fixes": "0.2.21 fixes Qwen 'layer 0 never rang' on RTX 30-series and newer (#6713) and the long-conversation crash (#6905); repeated engine crashes now stop after three tries."
     },
     "prism-llama.cpp": {
       "serves": "Ternary Bonsai 2 27B / Underdog 27B via PrismML llama.cpp fork (CUDA, Metal, CPU)",
