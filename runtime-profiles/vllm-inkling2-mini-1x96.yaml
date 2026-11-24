@@ -1,0 +1,58 @@
+# vLLM (vllm-openai:inkling-2-mini) serving Inkling 2 Mini on one 96 GB card.
+# Reproduced 2026-11-21 on RTX PRO 6000 Blackwell: C1 156-372 tok/s (mean 246),
+# C4 aggregate 274.5 tok/s, C8 aggregate ~429 tok/s, ~21K tok/s cold prefill at
+# 22K prompt, tool calls 5/5, DSpark spec 7 (probabilistic), FP8 KV.
+# Evidence: research/vllm-inkling2-mini-sweep-20261121.jsonl +
+# research/vllm-inkling2-mini-rtx-pro-6000-20261121.txt
+
+schema: turbofit.runtime-profile/v1
+id: vllm-inkling2-mini-1x96
+class_vram_gb: 96
+topology: 1x96
+status: verified-external
+engine: vllm
+engine_version: inkling-2-mini (image vllm/vllm-openai:inkling-2-mini)
+
+model:
+  repo: <local-inkling2-mini-checkpoint>   # NVFP4 + DSpark, Inkling2LoopForConditionalGeneration
+  quantization: NVFP4
+  served_as: inkling2-mini
+  max_context: 262144
+
+hardware_minimum:
+  gpu:
+    name: NVIDIA RTX PRO 6000 Blackwell
+    vram_gb: 96
+    count: 1
+  ram_gb: 64
+  os: linux
+
+# Docker run (paraphrased from the production run-vllm.sh; adjust paths):
+args:
+  - "/model"                                # Inkling 2 Mini checkpoint dir
+  - --served-model-name: "inkling2-mini"
+  - --host: "0.0.0.0"
+  - --port: "8011"
+  - --tensor-parallel-size: "1"
+  - --max-model-len: "262144"
+  - --gpu-memory-utilization: "0.60"
+  - --max-num-seqs: "16"
+  - --max-num-batched-tokens: "8192"
+  - --chat-template: "<template>/chat_template_medium.jinja"
+  - --enable-prefix-caching
+  - --kv-cache-dtype: fp8
+  - --reasoning-parser: inkling
+  - --tool-call-parser: inkling
+  - --enable-auto-tool-choice
+  - --speculative-config: "{\"method\":\"dspark\",\"num_speculative_tokens\":7,\"draft_sample_method\":\"probabilistic\"}"
+
+env:
+  VLLM_USE_V1: "1"
+
+notes:
+  - DSpark spec 7 with probabilistic sampling is the current config; sweep winner was S7-prob-CG128 (accept 3.14) and S7-prob (accept 2.76) was the recommended default. Spec 0 (no spec) is 167 tok/s C1 baseline; S7 costs ~12 tok/s in some frames but is the fastest overall.
+  - FP8 KV cache is what makes 262K fit; BF16 KV worked but used more VRAM and left less headroom for the KV pool and the engine.
+  - Cold prefill is strong: ~21.8K tok/s at 22K prompt, ~9.9K tok/s at 101K prompt (finish at length, not stop). This is vLLM's best advantage over Strata/Basalt on this rig.
+  - Tool calls 5/5 in the bench; do not serve with SPEC=0 and tool calls untested — always validate tool-call parser separately.
+  - Optional: compilation-config CGMAX=128 caps CUDA graph capture size and helps; S7-prob-CG128 was the best sweep result.
+  - 96 GB card is the proven deployment point; 24 GB class works for smaller Inkling 2 Mini checkpoints but is not yet measured.
