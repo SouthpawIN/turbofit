@@ -13,8 +13,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 def test_app_and_engine_pins_are_current():
-    assert S.STRATA_APP_VERSION == "0.2.19"
-    assert S.STRATA_ENGINE_VERSION == "0.1.65"
+    assert S.STRATA_APP_VERSION == "0.2.21"
+    assert S.STRATA_ENGINE_VERSION == "0.1.67"
 
 
 def test_app_and_engine_versions_move_independently():
@@ -62,4 +62,4 @@ def test_native_runtime_revision_matches_the_app_pin():
 
 def test_release_source_is_cited():
     d = json.loads((ROOT / "references/engine-serve-matrix.json").read_text())
-    assert d["engines"]["strata"]["source_release"].endswith("/v0.2.19")
+    assert d["engines"]["strata"]["source_release"].endswith("/v0.2.21")

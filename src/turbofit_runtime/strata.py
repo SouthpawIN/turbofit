@@ -1,11 +1,11 @@
 """Strata engine contract — pins, capability rules, and launch planning.
 
-Strata ships two versions that move independently: the app/Terminal (0.2.19) and
-every engine package plus the Control (0.1.65). A Turbofile that names one and
+Strata ships two versions that move independently: the app/Terminal (0.2.21) and
+every engine package plus the Control (0.1.67). A Turbofile that names one and
 assumes the other is the quiet source of "it runs but is slow" reports, so both
 are pinned here and checked by :func:`version_problems`.
 
-The rules below are transcribed from the Strata 0.2.19 release notes, not guessed:
+The rules below are transcribed from the Strata 0.2.21 release notes, not guessed:
 
 * DFlash2 is the default drafter for Qwen3.8 (about 0.7 GB) on CUDA sm 8.6, 8.9,
   12.0, 12.1, Radeon gfx1100/gfx1151/gfx1201, Apple Metal and Intel Arc.
@@ -14,6 +14,10 @@ The rules below are transcribed from the Strata 0.2.19 release notes, not guesse
   family other than Qwen3.8 (DeepSeek, ISTA-DAS, ...), and on the all-cards split
   engine.
 * 8 GB cards start at 128K context (this did not work before 0.2.10).
+* 0.1.67 makes Inkling dramatically faster after a long prompt (RTX 4090 SQ-20
+  92 vs 20 tok/s after 32K), fixes the RTX 30-series "layer 0 never rang" bug and
+  the long-conversation crash, reuses the agent prompt on every backend including
+  Apple Silicon, and keeps AVX2-only CPUs working.
 * 0.1.65 adds the `strata-inkling` shape engine for Inkling 2 Mini, `--gpus 2`
   Dual-GPU Expert Parallelism, and reports +12..26% prefill / +13..20% decode on
   RTX 3090-class sm_86 for IQ3_S / UD-Q4_K_XL / IQ2_XS, bit-exact.
@@ -33,8 +37,8 @@ from dataclasses import dataclass, field
 
 from .hardware import HardwareFingerprint
 
-STRATA_APP_VERSION = "0.2.19"
-STRATA_ENGINE_VERSION = "0.1.65"
+STRATA_APP_VERSION = "0.2.21"
+STRATA_ENGINE_VERSION = "0.1.67"
 
 FEED_URL = "https://github.com/Niko1221/Strata/releases/latest/download/strata-feed.json"
 FEED_URL_ARM64 = (
